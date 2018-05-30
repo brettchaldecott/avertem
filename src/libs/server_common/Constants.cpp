@@ -36,5 +36,15 @@ const char* Constants::CONTRACTS::BASE_ACCOUNT_CONTRACT     = "base_account_tran
 const char* Constants::ACCOUNT_ACTIONS::DEBIT     = "debit";
 const char* Constants::ACCOUNT_ACTIONS::CREDIT     = "credit";
 
+
+const char* Constants::RPC_COMMANDS::HELLO = "HELLO";
+const char* Constants::RPC_COMMANDS::PEERS = "PEERS";
+const char* Constants::RPC_COMMANDS::TRANSACTION = "TRANSACTION";
+const char* Constants::RPC_COMMANDS::CONSENSUS = "CONSENSUS";
+const char* Constants::RPC_COMMANDS::ROUTE = "ROUTE";
+const char* Constants::RPC_COMMANDS::ROUTE_UPDATE = "ROUTE_UPDATE";
+const char* Constants::RPC_COMMANDS::SERVICES = "SERVICES";
+const char* Constants::RPC_COMMANDS::CLOSE = "CLOSE";
+
 }
 }

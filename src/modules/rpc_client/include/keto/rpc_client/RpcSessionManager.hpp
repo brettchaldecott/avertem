@@ -34,6 +34,7 @@ public:
     std::vector<std::string> listPeers();
     
     void start();
+    void postStart();
     void stop();
     
 private:

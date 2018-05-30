@@ -18,6 +18,7 @@
 #include "include/keto/rpc_client/RpcSession.hpp"
 #include "keto/environment/EnvironmentManager.hpp"
 #include "keto/ssl/RootCertificate.hpp"
+#include "keto/server_common/StringUtils.hpp"
 
 namespace keto {
 namespace rpc_client {
@@ -36,12 +37,17 @@ RpcSessionManager::RpcSessionManager() {
     // retrieve the configuration
     std::shared_ptr<ketoEnv::Config> config = ketoEnv::EnvironmentManager::getInstance()->getConfig();
     if (config->getVariablesMap().count(Constants::PEERS)) {
-        std::vector<std::string> peers = config->getVariablesMap()[Constants::PEERS].
-                as<std::vector<std::string>>();
+        std::cout << "Load the peers" << std::endl;
+        keto::server_common::StringVector peers = 
+                keto::server_common::StringUtils(
+                config->getVariablesMap()[Constants::PEERS].
+                as<std::string>()).tokenize(",");
+        std::cout << "Load the peers" << std::endl;
         for (std::vector<std::string>::iterator iter = peers.begin();
                 iter != peers.end(); iter++) {
-            this->sessionMap[*iter] = std::make_shared<RpcSession>(this->ioc,
-                    this->ctx,*iter);
+            std::cout << "The peer is : " << (*iter) << std::endl;
+            this->sessionMap[(*iter)] = std::make_shared<RpcSession>(this->ioc,
+                    this->ctx,(*iter));
         }
     }
     
@@ -66,12 +72,9 @@ std::vector<std::string> RpcSessionManager::listPeers() {
     return keys;
 }
 
+
+
 void RpcSessionManager::start() {
-    for (std::map<std::string,std::shared_ptr<RpcSession>>::iterator it=this->sessionMap.begin(); 
-            it!=this->sessionMap.end(); ++it) {
-        it->second->run();
-    }
-    
     // Run the I/O service on the requested number of threads
     this->threadsVector.reserve(this->threads);
     for(int i = 0; i < this->threads; i++) {
@@ -82,6 +85,14 @@ void RpcSessionManager::start() {
         });
     }
 }
+
+void RpcSessionManager::postStart() {
+    for (std::map<std::string,std::shared_ptr<RpcSession>>::iterator it=this->sessionMap.begin(); 
+            it!=this->sessionMap.end(); ++it) {
+        it->second->run();
+    }
+}
+
 void RpcSessionManager::stop() {
     this->ioc->stop();
     

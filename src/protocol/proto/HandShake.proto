@@ -90,3 +90,25 @@ message ServerRefresh {
 message ServerGoAway {
     HelloResponse response = 1;
 }
+
+// this response lists a bunch of peers
+message PeerResponse {
+    repeated string peers = 1;
+}
+
+/**
+ * The server to server hand shake
+ */
+message ConsensusMessage {
+    uint32 version = 1;
+    // account hash
+    bytes account_hash = 2;
+    // System hashes
+    repeated bytes system_hashs = 3;
+    // merkel root of all loaded modules. If root is not recognised
+    // then access will be DENIED.
+    bytes instance_merkel_root = 4;
+    // signature of merkel root
+    // must be signed by a recognised key in order to join.
+    bytes signature = 5;
+}

@@ -51,6 +51,18 @@ public:
         static const char* CREDIT;
     };
     
+    class RPC_COMMANDS {
+    public:
+        static const char* HELLO;
+        static const char* PEERS;
+        static const char* TRANSACTION;
+        static const char* CONSENSUS;
+        static const char* ROUTE;
+        static const char* ROUTE_UPDATE;
+        static const char* SERVICES;
+        static const char* CLOSE;
+    };
+    
 private:
 
 };

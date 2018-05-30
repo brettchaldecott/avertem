@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package keto.proto;
+
+/**
+ * This is an example of a protobuf message.
+ */
+message SoftwareConsensusMessage {
+    bytes encrypted_data_request = 1;
+    bytes encrypted_data_response = 2;
+}
+
+

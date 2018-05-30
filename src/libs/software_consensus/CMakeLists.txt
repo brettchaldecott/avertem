@@ -1,33 +1,31 @@
-file(GLOB HEADERS "include/keto/server_common/*.hpp")
+file(GLOB HEADERS "include/keto/software_consensus/*.hpp")
 
 include_directories(${PROTOBUF_INCLUDE_DIR})
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 ## SORT .cpp by most likely to change / break compile
-add_library( keto_server_common
+add_library( keto_software_consensus
             
-	      Constants.cpp
-              ServerInfo.cpp
-              VectorUtils.cpp
-              Events.cpp
-              EventServiceHelpers.cpp
-              TransactionHelper.cpp
-              URLUtils.cpp
-              ServiceRegistryHelper.cpp
-              StringUtils.cpp
+              SoftwareMerkelUtils.cpp
+	      ConsensusBuilder.cpp
+              ConsensusMessageHelper.cpp
 
              ${HEADERS}
            )
 
-target_link_libraries( keto_server_common )
-target_include_directories( keto_server_common
+target_link_libraries( keto_software_consensus)
+target_include_directories( keto_software_consensus
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../common/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../environment/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../event_service_api/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../transaction_manager_api/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../module_manager/include"
+                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../asn1/include"
+                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../server_common/include"
+                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../crypto/include"
                             
+                            PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/asn1/" 
                             PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/proto/"
                             PUBLIC "${PROTO_HDRS}"
 
@@ -40,10 +38,10 @@ target_include_directories( keto_server_common
 #endif(MSVC)
 
 INSTALL( TARGETS
-   keto_server_common
+   keto_software_consensus
 
    RUNTIME DESTINATION bin
    LIBRARY DESTINATION lib
    ARCHIVE DESTINATION lib
 )
-INSTALL( FILES ${HEADERS} DESTINATION "include/keto/server_common" )
+INSTALL( FILES ${HEADERS} DESTINATION "include/keto/software_consensus" )

@@ -54,6 +54,24 @@ public:
     // sparql events
     static const char* SPARQL_QUERY_MESSAGE;
     
+    // consensus events
+    class CONSENSUS {
+    public:
+        static const char* TEST;
+        static const char* TRANSACTION;
+        static const char* ROUTER;
+        static const char* HTTPD;
+        static const char* EVENT;
+        static const char* BLOCK;
+        static const char* SANBOX;
+        static const char* VERSION;
+        static const char* KEYSTORE;
+        static const char* BALANCER;
+        static const char* ACCOUNT;
+        static const char* RPC_CLIENT;
+        static const char* RPC_SERVER;
+    };
+    
 private:
 
 };

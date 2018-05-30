@@ -27,6 +27,7 @@
 #include <string>
 
 #include "keto/rpc_client/Constants.hpp"
+#include "keto/crypto/KeyLoader.hpp"
 
 
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
@@ -79,6 +80,17 @@ private:
     boost::beast::multi_buffer buffer_;
     std::string host;
     std::string port;
+    std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr;
+    
+    
+    std::string buildConsensus();
+    
+    std::string buildMessage(const std::string& command, const std::string& message);
+    
+    // response handling
+    void closeResponse(const std::string& command, const std::string& message);
+    void consensusResponse(const std::string& command, const std::string& message);
+    
 };
 
 

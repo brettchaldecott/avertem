@@ -32,6 +32,10 @@ public:
     
     static constexpr const char* RPC_CLIENT_THREADS = "rpc-server-thread-number";
     static constexpr const int DEFAULT_RPC_CLIENT_THREADS = 1;
+    
+    // keys for server
+    static constexpr const char* PRIVATE_KEY    = "server-private-key";
+    static constexpr const char* PUBLIC_KEY     = "server-public-key";
 };
 
 }

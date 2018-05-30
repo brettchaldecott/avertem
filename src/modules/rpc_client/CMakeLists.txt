@@ -16,14 +16,19 @@ add_library( 0060_keto_rpc_client_module
            )
 
 target_link_libraries( 0060_keto_rpc_client_module 
-                            PRIVATE ${OPENSSL_LIBRARIES}
-                            PRIVATE keto_proto_environment ${PROTOBUF_LIBRARIES} )
+                            PRIVATE keto_software_consensus
+                            PRIVATE keto_transaction_common keto_server_common
+                            PRIVATE keto_proto_environment ${PROTOBUF_LIBRARIES}
+                            PRIVATE keto_asn1_common keto_asn1_protocol
+                            PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
+                            PRIVATE ${OPENSSL_LIBRARIES} )
 target_include_directories( 0060_keto_rpc_client_module
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/common/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/environment/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/module_manager/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/event_service_api/include"
+                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/server_common/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/ssl/include"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/libs/common/include/"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/proto/"

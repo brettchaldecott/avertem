@@ -48,6 +48,19 @@ const char* Events::GET_CONTRACT  = "GET_CONTRACT";
 // sparql events
 const char* Events::SPARQL_QUERY_MESSAGE = "SPARQL_QUERY_MESSAGE";
 
+const char* Events::CONSENSUS::TEST         = "CONSENSUS_TEST";
+const char* Events::CONSENSUS::TRANSACTION  = "CONSENSUS_TRANSACTION";
+const char* Events::CONSENSUS::ROUTER       = "CONSENSUS_ROUTER";
+const char* Events::CONSENSUS::HTTPD        = "CONSENSUS_HTTPD";
+const char* Events::CONSENSUS::EVENT        = "CONSENSUS_EVENT";
+const char* Events::CONSENSUS::BLOCK        = "CONSENSUS_BLOCK";
+const char* Events::CONSENSUS::SANBOX       = "CONSENSUS_SANDBOX";
+const char* Events::CONSENSUS::VERSION      = "CONSENSUS_VERSION";
+const char* Events::CONSENSUS::KEYSTORE     = "CONSENSUS_KEY_STORE";
+const char* Events::CONSENSUS::BALANCER     = "CONSENSUS_BALANCER";
+const char* Events::CONSENSUS::ACCOUNT      = "CONSENSUS_ACCOUNT";
+const char* Events::CONSENSUS::RPC_CLIENT   = "CONSENSUS_RPC_CLIENT";
+const char* Events::CONSENSUS::RPC_SERVER   = "CONSENSUS_RPC_SERVER";
 
 }
 }

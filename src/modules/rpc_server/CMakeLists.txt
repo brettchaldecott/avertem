@@ -18,11 +18,11 @@ add_library( 0030_keto_rpc_server_module
            )
 
 target_link_libraries( 0030_keto_rpc_server_module 
-                            PRIVATE ${OPENSSL_LIBRARIES}
-                            PRIVATE keto_server_common keto_asn1_common keto_asn1_protocol
+                            PRIVATE keto_transaction_common keto_server_common
                             PRIVATE keto_proto_environment ${PROTOBUF_LIBRARIES}
+                            PRIVATE keto_asn1_common keto_asn1_protocol
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
-                             )
+                            PRIVATE ${OPENSSL_LIBRARIES} )
 target_include_directories( 0030_keto_rpc_server_module
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/common/include"

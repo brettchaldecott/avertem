@@ -11,7 +11,11 @@
  * Created on January 22, 2018, 7:08 AM
  */
 
+#include <string>
+#include <sstream>
 
+#include "keto/server_common/Constants.hpp"
+#include "keto/server_common/StringUtils.hpp"
 #include "keto/rpc_server/RpcServer.hpp"
 #include "keto/rpc_server/Constants.hpp"
 #include "keto/ssl/ServerCertificate.hpp"
@@ -118,6 +122,41 @@ public:
 
         if(ec)
             fail(ec, "read");
+        
+        std::stringstream ss;
+        ss << boost::beast::buffers(buffer_.data());
+        std::string data = ss.str();
+        std::cout << "The buffer is : " << data << std::endl;
+
+        // Clear the buffer
+        buffer_.consume(buffer_.size());
+
+        // Close the WebSocket connection
+        keto::server_common::StringVector stringVector = keto::server_common::StringUtils(data).tokenize(" ");
+
+        std::string command = stringVector[0];
+        std::string payload;
+        if (stringVector.size() == 2) {
+            payload = stringVector[1];
+        }
+        
+        if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO) == 0) {
+            
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PEERS) == 0) {
+
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
+
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS) == 0) {
+
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ROUTE) == 0) {
+
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ROUTE_UPDATE) == 0) {
+
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::SERVICES) == 0) {
+
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLOSE) == 0) {
+
+        }
 
         // Echo the message
         ws_.text(ws_.got_text());
