@@ -27,6 +27,9 @@ public:
     virtual ~Constants() = delete;
     
     static const std::vector<std::string> EVENT_ORDER;
+    
+    static constexpr char* H_FILE_VERSION = "$Id$";
+    static const char* CPP_FILE_VERSION;
 private:
 
 };

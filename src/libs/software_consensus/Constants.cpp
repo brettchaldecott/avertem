@@ -34,5 +34,7 @@ const std::vector<std::string> Constants::EVENT_ORDER = {
     keto::server_common::Events::CONSENSUS::RPC_CLIENT,
     keto::server_common::Events::CONSENSUS::RPC_SERVER};
 
+const char* Constants::CPP_FILE_VERSION = "$Id$";
+
 }
 }
