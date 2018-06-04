@@ -148,7 +148,7 @@ RpcSession::on_handshake(boost::system::error_code ec)
         return fail(ec, "handshake");
 
     // Send the message
-    
+    std::cout << "Send the consensus message" << std::endl;
     ws_.async_write(
         boost::asio::buffer(
             buildMessage(Constants::PEER_HELLO,buildConsensus())),

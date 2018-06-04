@@ -13,6 +13,7 @@
 
 #include <vector>
 
+#include "keto/software_consensus/Exception.hpp"
 #include "keto/crypto/HashGenerator.hpp"
 #include "keto/software_consensus/SoftwareMerkelUtils.hpp"
 
@@ -40,6 +41,9 @@ std::vector<keto::asn1::HashHelper> SoftwareMerkelUtils::sort(
 
 keto::asn1::HashHelper SoftwareMerkelUtils::compute(
         std::vector<keto::asn1::HashHelper> hashs) {
+    if (!hashs.size()) {
+        BOOST_THROW_EXCEPTION(keto::software_consensus::NoSoftwareHashConsensusException());
+    }
     if (hashs.size() == 1) {
         return hashs[0];
     }

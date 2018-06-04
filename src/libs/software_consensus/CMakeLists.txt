@@ -9,6 +9,8 @@ add_library( keto_software_consensus
               SoftwareMerkelUtils.cpp
 	      ConsensusBuilder.cpp
               ConsensusMessageHelper.cpp
+              Constants.cpp
+              HashBuilder.cpp
 
              ${HEADERS}
            )

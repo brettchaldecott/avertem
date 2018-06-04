@@ -75,7 +75,17 @@ std::vector<std::string> RpcSessionManager::listPeers() {
 
 
 void RpcSessionManager::start() {
+    std::cout << "The start has been called" << std::endl;
     // Run the I/O service on the requested number of threads
+    
+}
+
+void RpcSessionManager::postStart() {
+    std::cout << "The post start has been called" << std::endl;
+    for (std::map<std::string,std::shared_ptr<RpcSession>>::iterator it=this->sessionMap.begin(); 
+            it!=this->sessionMap.end(); ++it) {
+        it->second->run();
+    }
     this->threadsVector.reserve(this->threads);
     for(int i = 0; i < this->threads; i++) {
         this->threadsVector.emplace_back(
@@ -84,13 +94,8 @@ void RpcSessionManager::start() {
             this->ioc->run();
         });
     }
-}
-
-void RpcSessionManager::postStart() {
-    for (std::map<std::string,std::shared_ptr<RpcSession>>::iterator it=this->sessionMap.begin(); 
-            it!=this->sessionMap.end(); ++it) {
-        it->second->run();
-    }
+    std::cout << "All the threads have been started" << std::endl;
+    
 }
 
 void RpcSessionManager::stop() {

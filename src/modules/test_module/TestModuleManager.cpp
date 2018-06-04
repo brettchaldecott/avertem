@@ -21,7 +21,8 @@
 #include "keto/common/MetaInfo.hpp"
 #include "keto/common/Log.hpp"
 
-#include "include/keto/test/TestModuleManager.hpp"
+#include "keto/test/TestModuleManager.hpp"
+#include "keto/test/EventRegistry.hpp"
 
 namespace keto {
 namespace test {
@@ -50,10 +51,13 @@ const std::string TestModuleManager::getVersion() const {
 void TestModuleManager::start() {
     KETO_LOG_INFO << "Start has been called on the test module manager";
     modules["test_module"] = std::make_shared<TestModule>();
+    EventRegistry::registerEventHandlers();
+    
 }
 
 void TestModuleManager::stop() {
     KETO_LOG_INFO << "Stop has been called on the test module manager";
+    EventRegistry::deregisterEventHandlers();
     modules.clear();
     KETO_LOG_INFO << "The test module has been stopped";
     

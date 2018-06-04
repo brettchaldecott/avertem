@@ -98,6 +98,7 @@ public:
     do_read()
     {
         // Read a message into our buffer
+        std::cout << "Wait for data to be sent" << std::endl;
         ws_.async_read(
             buffer_,
             boost::asio::bind_executor(
@@ -122,7 +123,7 @@ public:
 
         if(ec)
             fail(ec, "read");
-        
+        std::cout << "Read the data in:" << std::endl;
         std::stringstream ss;
         ss << boost::beast::buffers(buffer_.data());
         std::string data = ss.str();

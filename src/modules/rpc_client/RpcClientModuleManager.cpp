@@ -52,6 +52,11 @@ void RpcClientModuleManager::start() {
     KETO_LOG_INFO << "[RpcClientModuleManager] Started the RpcClientModuleManager";
 }
 
+void RpcClientModuleManager::postStart() {
+    rpcSessionManager->postStart();
+    KETO_LOG_INFO << "[RpcClientModuleManager] Post Started the RpcClientModuleManager";
+}
+
 void RpcClientModuleManager::stop() {
     modules.clear();
     rpcSessionManager->stop();

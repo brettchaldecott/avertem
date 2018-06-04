@@ -30,8 +30,8 @@ const std::vector<std::string> Constants::EVENT_ORDER = {
     keto::server_common::Events::CONSENSUS::VERSION,
     keto::server_common::Events::CONSENSUS::KEYSTORE,
     keto::server_common::Events::CONSENSUS::BALANCER,
-    keto::server_common::Events::CONSENSUS::ACCOUNT
-    keto::server_common::Events::CONSENSUS::RPC_CLIENT
+    keto::server_common::Events::CONSENSUS::ACCOUNT,
+    keto::server_common::Events::CONSENSUS::RPC_CLIENT,
     keto::server_common::Events::CONSENSUS::RPC_SERVER};
 
 }
