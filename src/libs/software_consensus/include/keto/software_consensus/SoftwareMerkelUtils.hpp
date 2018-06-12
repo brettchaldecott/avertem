@@ -18,12 +18,21 @@
 
 #include "keto/asn1/HashHelper.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
 namespace keto {
 namespace software_consensus {
 
 
 class SoftwareMerkelUtils {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
+
     SoftwareMerkelUtils();
     SoftwareMerkelUtils(const SoftwareMerkelUtils& orig) = default;
     virtual ~SoftwareMerkelUtils();

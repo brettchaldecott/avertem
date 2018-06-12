@@ -19,12 +19,21 @@
 #include "keto/crypto/HashGenerator.hpp"
 #include "keto/crypto/Containers.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
 namespace keto {
 namespace software_consensus {
 
 
 class HashBuilder {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
+    
     HashBuilder();
     HashBuilder(const HashBuilder& orig) = default;
     virtual ~HashBuilder();

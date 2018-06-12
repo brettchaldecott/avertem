@@ -16,6 +16,9 @@
 
 #include <vector>
 #include <string>
+#include <iostream>
+
+#include "keto/obfuscate/MetaString.hpp"
 
 namespace keto {
 namespace software_consensus {
@@ -28,8 +31,13 @@ public:
     
     static const std::vector<std::string> EVENT_ORDER;
     
-    static constexpr char* H_FILE_VERSION = "$Id$";
-    static const char* CPP_FILE_VERSION;
+    static std::string getVersion() {
+        return OBFUSCATED("$Id: cd6f953fdc6d6011f27667fc3267cb9f0e6fa962 $");
+    };
+    
+    static std::string getSourceVersion();
+    
+    //static const MetaStringType CPP_FILE_VERSION;
 private:
 
 };

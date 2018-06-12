@@ -23,6 +23,9 @@
 namespace keto {
 namespace software_consensus {
 
+std::string ConsensusMessageHelper::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 ConsensusMessageHelper::ConsensusMessageHelper(
     const std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr) : keyLoaderPtr(keyLoaderPtr){

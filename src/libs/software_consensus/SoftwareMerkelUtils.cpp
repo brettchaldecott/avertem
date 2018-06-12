@@ -20,6 +20,11 @@
 namespace keto {
 namespace software_consensus {
 
+
+std::string SoftwareMerkelUtils::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+    
 SoftwareMerkelUtils::SoftwareMerkelUtils() {
 }
 

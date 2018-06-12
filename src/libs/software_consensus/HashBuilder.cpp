@@ -19,6 +19,11 @@
 namespace keto {
 namespace software_consensus {
 
+std::string HashBuilder::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
+    
 HashBuilder::HashBuilder() {
 }
 

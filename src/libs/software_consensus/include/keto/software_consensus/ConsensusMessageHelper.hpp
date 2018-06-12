@@ -22,6 +22,7 @@
 #include "keto/asn1/HashHelper.hpp"
 #include "keto/crypto/KeyLoader.hpp"
 #include "keto/software_consensus/SoftwareMerkelUtils.hpp"
+#include "keto/obfuscate/MetaString.hpp"
 
 namespace keto {
 namespace software_consensus {
@@ -31,6 +32,11 @@ typedef std::shared_ptr<ConsensusMessageHelper> ConsensusMessageHelperPtr;
     
 class ConsensusMessageHelper {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+    
     ConsensusMessageHelper(
             const std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr);
     ConsensusMessageHelper(

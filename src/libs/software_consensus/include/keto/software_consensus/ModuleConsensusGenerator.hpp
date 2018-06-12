@@ -16,11 +16,20 @@
 
 #include "keto/software_consensus/ModuleConsensusInterface.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
 namespace keto {
 namespace software_consensus {
 
 class ModuleConsensusGenerator {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
+    
     ModuleConsensusGenerator(const keto::proto::SoftwareConsensusMessage& 
             softwareConsensusMessage);
     ModuleConsensusGenerator(const ModuleConsensusGenerator& orig) = default;

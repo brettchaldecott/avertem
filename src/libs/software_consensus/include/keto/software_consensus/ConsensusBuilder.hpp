@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "keto/software_consensus/ConsensusMessageHelper.hpp"
+#include "keto/obfuscate/MetaString.hpp"
 
 namespace keto {
 namespace software_consensus {
@@ -27,6 +28,11 @@ typedef std::shared_ptr<ConsensusBuilder> ConsensusBuilderPtr;
     
 class ConsensusBuilder {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+    
     ConsensusBuilder(
         const std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr);
     ConsensusBuilder(const ConsensusBuilder& orig) = delete;
