@@ -171,6 +171,10 @@ if [ $ARCH == "ubuntu" ]; then
     cp -rf ${TEMP_DIR}/WAVM/Include/* ${HOME}/opt/wavm/include/.
     cd ${HOME}
     rm -rf ${TEMP_DIR}/WAVM
+    
+    # install beast
+    cd ${HOME}/opt
+    git clone https://github.com/ChaiScript/ChaiScript.git
 
     cd ${HOME}
 

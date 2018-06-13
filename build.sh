@@ -84,6 +84,9 @@ if [ $ARCH == "ubuntu" ]; then
     JSON_ROOT=${HOME}/opt/nlohmann/
     export JSON_ROOT
 
+    CHAI_SCRIPT_ROOT=${HOME}/opt/ChaiScript/
+    export CHAI_SCRIPT_ROOT
+
     LIBWAVM_ROOT=${HOME}/opt/wavm/
     export LIBWAVM_ROOT
 fi
