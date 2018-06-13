@@ -175,6 +175,8 @@ if [ $ARCH == "ubuntu" ]; then
     # install beast
     cd ${HOME}/opt
     git clone https://github.com/ChaiScript/ChaiScript.git
+    cd ${HOME}/opt/ChaiScript
+    git checkout -b v6.1.0
 
     cd ${HOME}
 

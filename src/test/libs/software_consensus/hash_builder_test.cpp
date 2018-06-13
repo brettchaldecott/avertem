@@ -23,7 +23,11 @@
 #include <iostream>
 
 #include "keto/software_consensus/Constants.hpp"
+#include <chaiscript/chaiscript.hpp>
 
+std::string helloWorld(const std::string &t_name) {
+  return "Hello " + t_name + "!";
+}
 
 BOOST_AUTO_TEST_CASE( hash_builder_test ) {
     
@@ -31,5 +35,11 @@ BOOST_AUTO_TEST_CASE( hash_builder_test ) {
     std::cout << "The version : " << keto::software_consensus::Constants::getVersion() << std::endl;
     std::cout << "The source version : " << keto::software_consensus::Constants::getSourceVersion() << std::endl;
     
+    chaiscript::ChaiScript chai;
+  chai.add(chaiscript::fun(&helloWorld), "helloWorld");
+
+  chai.eval(R"(
+    puts(helloWorld("Bob"));
+  )");
     
 }
