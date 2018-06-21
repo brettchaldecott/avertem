@@ -27,6 +27,7 @@ KETO_DECLARE_EXCEPTION( SoftwareConsensusException, "Software Consensus Exeption
 // the 
 KETO_DECLARE_DERIVED_EXCEPTION (SoftwareConsensusException, FailedParseConsensusObjectException , "Failed to parse the consensus string object.");
 KETO_DECLARE_DERIVED_EXCEPTION (SoftwareConsensusException, NoSoftwareHashConsensusException , "Failed to parse the consensus string object.");
+KETO_DECLARE_DERIVED_EXCEPTION (SoftwareConsensusException, FailedToAddSystemHashException , "Failed to parse the consensus string object.");
 
 }
 }

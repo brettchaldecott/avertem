@@ -1,23 +1,18 @@
-file(GLOB HEADERS "include/keto/software_consensus/*.hpp")
+file(GLOB HEADERS "include/keto/key_tools/*.hpp")
 
 include_directories(${PROTOBUF_INCLUDE_DIR})
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 ## SORT .cpp by most likely to change / break compile
-add_library( keto_software_consensus
+add_library( keto_key_tools
             
-              SoftwareMerkelUtils.cpp
-	      ConsensusBuilder.cpp
-              ConsensusMessageHelper.cpp
-              Constants.cpp
-              HashBuilder.cpp
-              SoftwareConsensusHelper.cpp
+              ContentDecryptor.cpp
 
              ${HEADERS}
            )
 
-target_link_libraries( keto_software_consensus)
-target_include_directories( keto_software_consensus
+target_link_libraries( keto_rpc_protocol)
+target_include_directories( keto_rpc_protocol
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../common/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../environment/include"
@@ -43,10 +38,10 @@ target_include_directories( keto_software_consensus
 #endif(MSVC)
 
 INSTALL( TARGETS
-   keto_software_consensus
+   keto_rpc_protocol
 
    RUNTIME DESTINATION bin
    LIBRARY DESTINATION lib
    ARCHIVE DESTINATION lib
 )
-INSTALL( FILES ${HEADERS} DESTINATION "include/keto/software_consensus" )
+INSTALL( FILES ${HEADERS} DESTINATION "include/keto/rpc_protocol" )

@@ -11,14 +11,17 @@
  * Created on May 28, 2018, 5:23 PM
  */
 
+#include "SoftwareConsensus.h"
 
 #include "keto/asn1/SignatureHelper.hpp"
 #include "keto/crypto/SignatureGenerator.hpp"
 
+#include "keto/asn1/SerializationHelper.hpp"
 
 #include "keto/software_consensus/Exception.hpp"
 #include "keto/software_consensus/ConsensusMessageHelper.hpp"
 #include "keto/software_consensus/SoftwareMerkelUtils.hpp"
+#include "keto/software_consensus/SoftwareConsensusHelper.hpp"
 
 namespace keto {
 namespace software_consensus {
@@ -57,7 +60,23 @@ ConsensusMessageHelper& ConsensusMessageHelper::setAccountHash(
     return *this;
 }
 
-ConsensusMessageHelper& ConsensusMessageHelper::addSystemHash(
+ConsensusMessageHelper& ConsensusMessageHelper::setMsg(
+        keto::software_consensus::SoftwareConsensusHelper& softwareConsensusHelper) {
+    const keto::asn1::HashHelper hashHelper = softwareConsensusHelper.getAccount();
+    this->consensusMessage.set_account_hash(
+        hashHelper.operator keto::crypto::SecureVector().data(),
+        hashHelper.operator keto::crypto::SecureVector().size());
+    
+    SoftwareConsensus_t* softwareConsensus_t = 
+            softwareConsensusHelper.operator SoftwareConsensus_t*();
+    std::vector<uint8_t> bytes = 
+            keto::asn1::SerializationHelper<SoftwareConsensus_t>(
+            softwareConsensus_t,&asn_DEF_SoftwareConsensus).operator std::vector<uint8_t>&();
+    this->consensusMessage.set_msg(bytes.data(),bytes.size());
+    return *this;
+}
+
+/*ConsensusMessageHelper& ConsensusMessageHelper::addSystemHash(
         const keto::asn1::HashHelper& hashHelper) {
     softwareMerkelUtils.addHash(hashHelper);
     this->consensusMessage.add_system_hashs(
@@ -83,7 +102,7 @@ ConsensusMessageHelper& ConsensusMessageHelper::sign() {
     std::vector<uint8_t> data = signatureHelper;
     this->consensusMessage.set_signature(data.data(),data.size());
     return *this;
-}
+}*/
 
 ConsensusMessageHelper::operator keto::proto::ConsensusMessage() {
     return this->consensusMessage;

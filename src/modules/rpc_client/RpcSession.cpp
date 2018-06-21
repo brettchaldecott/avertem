@@ -24,12 +24,15 @@
 #include "keto/environment/Config.hpp"
 
 #include "keto/server_common/Constants.hpp"
+#include "keto/server_common/ServerInfo.hpp"
 #include "keto/ssl/RootCertificate.hpp"
 #include "keto/server_common/StringUtils.hpp"
 
 #include "keto/rpc_client/RpcSession.hpp"
 #include "keto/rpc_client/Constants.hpp"
 #include "keto/rpc_client/Exception.hpp"
+
+#include "keto/rpc_protocol/ServerHelloProtoHelper.hpp"
 
 #include "keto/software_consensus/ConsensusBuilder.hpp"
 
@@ -151,7 +154,7 @@ RpcSession::on_handshake(boost::system::error_code ec)
     std::cout << "Send the consensus message" << std::endl;
     ws_.async_write(
         boost::asio::buffer(
-            buildMessage(Constants::PEER_HELLO,buildConsensus())),
+            buildMessage(keto::server_common::Constants::RPC_COMMANDS::HELLO,buildHeloMessage())),
         std::bind(
             &RpcSession::on_write,
             shared_from_this(),
@@ -210,6 +213,7 @@ RpcSession::on_read(
     // Close the WebSocket connection
     if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO) == 0) {
         
+        
     } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PEERS) == 0) {
         
     } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
@@ -252,6 +256,11 @@ RpcSession::on_close(boost::system::error_code ec)
     std::string data = ss.str();
     std::cout << "The buffer is : " << data << std::endl;
     
+}
+
+std::string RpcSession::buildHeloMessage() {
+    return keto::rpc_protocol::ServerHelloProtoHelper(this->keyLoaderPtr).setAccountHash(
+            keto::server_common::ServerInfo::getInstance()->getAccountHash()).sign().operator std::string();
 }
 
 std::string RpcSession::buildConsensus() {

@@ -82,6 +82,7 @@ private:
     std::string port;
     std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr;
     
+    std::string buildHeloMessage();
     
     std::string buildConsensus();
     

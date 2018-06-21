@@ -46,16 +46,16 @@ ConsensusBuilder::~ConsensusBuilder() {
 ConsensusBuilder& ConsensusBuilder::buildConsensus() {
     for (std::string event : Constants::EVENT_ORDER) {
         try {
-            keto::proto::SoftwareConsensusMessage consensusMessage;
+            keto::proto::ModuleConsensusMessage consensusMessage;
             
             consensusMessage = 
-                keto::server_common::fromEvent<keto::proto::SoftwareConsensusMessage>(
+                keto::server_common::fromEvent<keto::proto::ModuleConsensusMessage>(
                     keto::server_common::processEvent(
-                    keto::server_common::toEvent<keto::proto::SoftwareConsensusMessage>(
+                    keto::server_common::toEvent<keto::proto::ModuleConsensusMessage>(
                     event,consensusMessage)));
             keto::asn1::HashHelper hashHelper;
-            hashHelper = consensusMessage.encrypted_data_response();
-            consensusMessageHelper.addSystemHash(hashHelper);
+            //hashHelper = consensusMessage.encrypted_data_response();
+            //consensusMessageHelper.addSystemHash(hashHelper);
         } catch (keto::common::Exception& ex) {
             KETO_LOG_ERROR << "Failed to process the event [" << event  << "] : " << ex.what();
             KETO_LOG_ERROR << "Cause: " << boost::diagnostic_information(ex,true);
@@ -69,8 +69,8 @@ ConsensusBuilder& ConsensusBuilder::buildConsensus() {
             KETO_LOG_ERROR << "Failed to process the event [" << event << "]";
         }
     }
-    consensusMessageHelper.generateMerkelRoot();
-    consensusMessageHelper.sign();
+    //consensusMessageHelper.generateMerkelRoot();
+    //consensusMessageHelper.sign();
     return *this;
 }
 

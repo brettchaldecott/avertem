@@ -5,9 +5,16 @@ package keto.proto;
 /**
  * This is an example of a protobuf message.
  */
-message SoftwareConsensusMessage {
-    bytes encrypted_data_request = 1;
-    bytes encrypted_data_response = 2;
+message ModuleConsensusMessage {
+    uint32 version = 1;
+    bytes secret = 2;
+    bytes seed_hash = 3;
+    bytes module_hash = 4;
+}
+
+message ModuleSecretMessage {
+    uint32 version = 1;
+    bytes secret = 2;
 }
 
 

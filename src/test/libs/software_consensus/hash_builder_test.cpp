@@ -31,7 +31,9 @@ std::string helloWorld(const std::string &t_name) {
 
 BOOST_AUTO_TEST_CASE( hash_builder_test ) {
     
-    std::cout << "The obfuscated string : " << DEF_OBFUSCATED("cd6f953fdc6d6011f27667fc3267cb9f0e6fa962 $").decrypt() << std::endl;
+    std::cout << "The obfuscated string : " << DEF_OBFUSCATED(R"(cd6f953fdc6d6011f27667fc3267cb9f0e6fa962 $
+            this is
+            and now)").decrypt() << std::endl;
     std::cout << "The version : " << keto::software_consensus::Constants::getVersion() << std::endl;
     std::cout << "The source version : " << keto::software_consensus::Constants::getSourceVersion() << std::endl;
     
@@ -39,7 +41,7 @@ BOOST_AUTO_TEST_CASE( hash_builder_test ) {
   chai.add(chaiscript::fun(&helloWorld), "helloWorld");
 
   chai.eval(R"(
-    puts(helloWorld("Bob"));
+    print(helloWorld("Bob"));
   )");
     
 }

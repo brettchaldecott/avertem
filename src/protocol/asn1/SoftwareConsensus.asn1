@@ -1,0 +1,18 @@
+SofwareConsensusModule DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+    IMPORTS Number, Version, Hash , Signature
+    FROM BasicModule;
+
+SoftwareConsensus ::= SEQUENCE {
+    version         Version,
+    date            UTCTime,
+    previousHash    Hash,
+    account         Hash,
+    seed            Hash,
+    systemHashs     SEQUENCE OF Hash,
+    merkelRoot      Hash,
+    signature       Signature
+}
+
+
+
+END
