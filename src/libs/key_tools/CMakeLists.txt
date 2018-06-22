@@ -7,12 +7,14 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 add_library( keto_key_tools
             
               ContentDecryptor.cpp
+              ContentEncryptor.cpp
+              KeyPairCreator.cpp
 
              ${HEADERS}
            )
 
-target_link_libraries( keto_rpc_protocol)
-target_include_directories( keto_rpc_protocol
+target_link_libraries( keto_key_tools )
+target_include_directories( keto_key_tools
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../common/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../environment/include"
@@ -38,10 +40,10 @@ target_include_directories( keto_rpc_protocol
 #endif(MSVC)
 
 INSTALL( TARGETS
-   keto_rpc_protocol
+   keto_key_tools
 
    RUNTIME DESTINATION bin
    LIBRARY DESTINATION lib
    ARCHIVE DESTINATION lib
 )
-INSTALL( FILES ${HEADERS} DESTINATION "include/keto/rpc_protocol" )
+INSTALL( FILES ${HEADERS} DESTINATION "include/keto/key_tools" )

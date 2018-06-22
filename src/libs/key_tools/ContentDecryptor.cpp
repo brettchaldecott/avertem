@@ -11,16 +11,46 @@
  * Created on June 19, 2018, 11:00 AM
  */
 
-#include "keto/keto_tools/ContentDecryptor.hpp"
+#include <botan/pkcs8.h>
+#include <botan/hash.h>
+#include <botan/data_src.h>
+#include <botan/pubkey.h>
+#include <botan/rng.h>
+#include <botan/auto_rng.h>
+
+#include "keto/key_tools/ContentDecryptor.hpp"
+#include "keto/key_tools/Constants.hpp"
 
 namespace keto {
-namespace keto_tools {
+namespace key_tools {
 
 
-ContentDecryptor::ContentDecryptor() {
+ContentDecryptor::ContentDecryptor(const keto::crypto::SecureVector& secret, const keto::crypto::SecureVector& encodedKey,
+        const std::vector<uint8_t>& encyptedContent) {
+    
+    keto::crypto::SecureVector encryptionKeyBits;
+    for (int index = 0; index < encryptionKeyBits.size(); index++) {
+        encryptionKeyBits.push_back(encryptionKeyBits[index] ^ secret[index]);
+    }
+    
+    Botan::DataSource_Memory memoryDatasource(encryptionKeyBits);
+    std::shared_ptr<Botan::Private_Key> privateKey =
+            Botan::PKCS8::load_key(memoryDatasource);
+    
+    std::unique_ptr<Botan::RandomNumberGenerator> rng(new Botan::AutoSeeded_RNG);
+    Botan::PK_Decryptor_EME dec(*privateKey,*rng.get(), keto::key_tools::Constants::ENCRYPTION_PADDING);
+    this->content = dec.decrypt(encyptedContent);
 }
 
 ContentDecryptor::~ContentDecryptor() {
+}
+
+keto::crypto::SecureVector ContentDecryptor::getContent() {
+    return this->content;
+}
+
+ContentDecryptor::operator keto::crypto::SecureVector() {
+    return this->content;
 }
 
 

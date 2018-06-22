@@ -17,15 +17,15 @@
 #include <vector>
 #include <string>
 
-#include "keto/cryto/Containers.hpp"
+#include "keto/crypto/Containers.hpp"
 
 namespace keto {
 namespace key_tools {
 
 class ContentDecryptor {
 public:
-    ContentDecryptor(const keto::crypto::SecureVector secret, const keto::crypto::SecureVector encodedKey,
-        const keto::crypto::SecureVector encyptedContent);
+    ContentDecryptor(const keto::crypto::SecureVector& secret, const keto::crypto::SecureVector& encodedKey,
+        const std::vector<uint8_t>& encyptedContent);
     ContentDecryptor(const ContentDecryptor& orig) = default;
     virtual ~ContentDecryptor();
     

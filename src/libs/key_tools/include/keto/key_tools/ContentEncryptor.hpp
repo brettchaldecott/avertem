@@ -17,7 +17,7 @@
 #include <vector>
 #include <string>
 
-#include "keto/cryto/Containers.hpp"
+#include "keto/crypto/Containers.hpp"
 
 namespace keto {
 namespace key_tools {
@@ -25,17 +25,17 @@ namespace key_tools {
 
 class ContentEncryptor {
 public:
-    ContentEncryptor(const keto::crypto::SecureVector secret, const keto::crypto::SecureVector encodedKey,
+    ContentEncryptor(const keto::crypto::SecureVector& secret, const keto::crypto::SecureVector& encodedKey,
         const std::vector<uint8_t>& content);
     ContentEncryptor(const ContentEncryptor& orig) = default;
     virtual ~ContentEncryptor();
 
-    keto::crypto::SecureVector getEncryptedContent();
-    operator keto::crypto::SecureVector(); 
+    std::vector<uint8_t> getEncryptedContent();
+    operator std::vector<uint8_t>(); 
 
     
 private:
-    const keto::crypto::SecureVector encyptedContent;
+    std::vector<uint8_t> encyptedContent;
 };
 
 

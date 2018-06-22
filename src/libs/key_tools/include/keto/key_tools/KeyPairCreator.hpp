@@ -14,14 +14,34 @@
 #ifndef KEYPAIRCREATOR_HPP
 #define KEYPAIRCREATOR_HPP
 
+#include <vector>
+#include <string>
+
+#include "keto/crypto/Containers.hpp"
+
+
+namespace keto {
+namespace key_tools {
+
 class KeyPairCreator {
 public:
     KeyPairCreator();
-    KeyPairCreator(const KeyPairCreator& orig);
+    KeyPairCreator(const KeyPairCreator& orig) = default;
     virtual ~KeyPairCreator();
+    
+    keto::crypto::SecureVector getSecret();
+    keto::crypto::SecureVector getEncodedKey();
+    
 private:
+    keto::crypto::SecureVector secret;
+    keto::crypto::SecureVector encodedKey;
     
 };
+
+
+}
+}
+
 
 #endif /* KEYPAIRCREATOR_HPP */
 
