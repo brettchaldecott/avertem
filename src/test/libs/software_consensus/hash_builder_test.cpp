@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-#define BOOST_TEST_MODULE ChainCommonsTest
+#define BOOST_TEST_MODULE SoftwareConsensusTest
 
 #pragma warning(disable: 4503)
 
