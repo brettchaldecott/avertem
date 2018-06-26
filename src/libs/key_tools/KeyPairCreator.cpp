@@ -11,6 +11,7 @@
  * Created on June 21, 2018, 3:04 AM
  */
 
+#include <iostream>
 #include <memory>
 
 #include <botan/pkcs8.h>
@@ -30,10 +31,10 @@ KeyPairCreator::KeyPairCreator() {
     std::shared_ptr<Botan::AutoSeeded_RNG> generator(new Botan::AutoSeeded_RNG());
     std::shared_ptr<Botan::Private_Key> secretKey(
             new Botan::RSA_PrivateKey(*generator, 2056));
-    this->secret = secretKey->private_key_bits();
+    this->secret = Botan::PKCS8::BER_encode(*secretKey);
     std::shared_ptr<Botan::Private_Key> encryptionKey(
             new Botan::RSA_PrivateKey(*generator, 2056));
-    keto::crypto::SecureVector encryptionKeyBits = encryptionKey->private_key_bits();
+    keto::crypto::SecureVector encryptionKeyBits = Botan::PKCS8::BER_encode(*encryptionKey);
     for (int index = 0; index < encryptionKeyBits.size(); index++) {
         this->encodedKey.push_back(encryptionKeyBits[index] ^ this->secret[index]);
     }

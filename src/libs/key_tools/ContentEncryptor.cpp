@@ -11,6 +11,8 @@
  * Created on June 21, 2018, 3:02 AM
  */
 
+#include <iostream>
+
 #include <botan/pkcs8.h>
 #include <botan/hash.h>
 #include <botan/data_src.h>
@@ -30,14 +32,13 @@ ContentEncryptor::ContentEncryptor(const keto::crypto::SecureVector& secret, con
         const std::vector<uint8_t>& content) {
     
     keto::crypto::SecureVector encryptionKeyBits;
-    for (int index = 0; index < encryptionKeyBits.size(); index++) {
-        encryptionKeyBits.push_back(encryptionKeyBits[index] ^ secret[index]);
+    for (int index = 0; index < encodedKey.size(); index++) {
+        encryptionKeyBits.push_back(encodedKey[index] ^ secret[index]);
     }
     
     Botan::DataSource_Memory memoryDatasource(encryptionKeyBits);
     std::shared_ptr<Botan::Private_Key> privateKey =
             Botan::PKCS8::load_key(memoryDatasource);
-    
     
     std::unique_ptr<Botan::RandomNumberGenerator> rng(new Botan::AutoSeeded_RNG);
     

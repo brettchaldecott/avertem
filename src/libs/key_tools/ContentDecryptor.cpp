@@ -29,8 +29,8 @@ ContentDecryptor::ContentDecryptor(const keto::crypto::SecureVector& secret, con
         const std::vector<uint8_t>& encyptedContent) {
     
     keto::crypto::SecureVector encryptionKeyBits;
-    for (int index = 0; index < encryptionKeyBits.size(); index++) {
-        encryptionKeyBits.push_back(encryptionKeyBits[index] ^ secret[index]);
+    for (int index = 0; index < encodedKey.size(); index++) {
+        encryptionKeyBits.push_back(encodedKey[index] ^ secret[index]);
     }
     
     Botan::DataSource_Memory memoryDatasource(encryptionKeyBits);
