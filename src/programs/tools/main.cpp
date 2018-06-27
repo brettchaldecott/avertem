@@ -1,3 +1,6 @@
+#include <cstdlib>
+#include <iostream>
+#include <string>
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
@@ -6,29 +9,30 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ssl/error.hpp>
 #include <boost/asio/ssl/stream.hpp>
-#include <cstdlib>
-#include <iostream>
-#include <string>
 #include <boost/exception/exception.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/exception_ptr.hpp> 
+
+#include <nlohmann/json.hpp>
+#include <botan/hex.h>
+
+#include "keto/environment/EnvironmentManager.hpp"
+#include "keto/environment/Constants.hpp"
 
 #include "keto/common/MetaInfo.hpp"
 #include "keto/common/Log.hpp"
 #include "keto/common/Exception.hpp"
 #include "keto/common/StringCodec.hpp"
-#include "keto/environment/EnvironmentManager.hpp"
-#include "keto/environment/Constants.hpp"
-#include "keto/ssl/RootCertificate.hpp"
-#include "keto/cli/Constants.hpp"
-#include "keto/session/HttpSession.hpp"
 
-#include "keto/chain_common/TransactionBuilder.hpp"
-#include "keto/chain_common/SignedTransactionBuilder.hpp"
-#include "keto/chain_common/ActionBuilder.hpp"
-#include "keto/transaction_common/TransactionMessageHelper.hpp"
+#include "keto/crypto/SecureVectorUtils.hpp"
 
-#include "keto/account_utils/AccountGenerator.hpp"
+#include "keto/server_common/VectorUtils.hpp"
+
+#include "keto/key_tools/KeyPairCreator.hpp"
+#include "keto/key_tools/ContentDecryptor.hpp"
+#include "keto/key_tools/ContentEncryptor.hpp"
+
+#include "keto/tools/Constants.hpp"
 
 namespace ketoEnv = keto::environment;
 namespace ketoCommon = keto::common;
@@ -43,7 +47,9 @@ boost::program_options::options_description generateOptionDescriptions() {
             ("help,h", "Print this help message and exit.")
             ("version,v", "Print version information.")
             ("generate,G", "Generate private key, secrete and encoded private key.")
-            ("encode,E", "Encode a file using a private key.")
+            ("encrypt,E", "Encode a file using a private key.")
+            ("decrypt,D", "Decrypt a file using a private key.")
+            ("keys,k", po::value<std::string>(),"Key information needed for the encryption")
             ("source,s", po::value<std::string>(),"Source file to encode.")
             ("output,o",po::value<std::string>(), "Output encoded file.")
             ("input,i", po::value<std::string>(), "Input to encode from the command line.");
@@ -53,10 +59,136 @@ boost::program_options::options_description generateOptionDescriptions() {
 
 int generateKey(std::shared_ptr<ketoEnv::Config> config,
         boost::program_options::options_description optionDescription) {
+    keto::key_tools::KeyPairCreator keyPairCreator;
+    nlohmann::json json = {
+        {keto::tools::Constants::SECRET_KEY, Botan::hex_encode(keyPairCreator.getSecret(),true)},
+        {keto::tools::Constants::ENCODED_KEY, Botan::hex_encode(keyPairCreator.getEncodedKey(),true)}
+      };
+    
+    std::cout << json.dump() << std::endl;
+    
+    return 0;
+}
+
+int encryptData(std::shared_ptr<ketoEnv::Config> config,
+        boost::program_options::options_description optionDescription) {
+    
+    if (!config->getVariablesMap().count(keto::tools::Constants::KEYS)) {
+        std::cerr << "The keys to encrypt the data must be provided [" << 
+                keto::tools::Constants::KEYS << "]" << std::endl;
+        return -1;
+    }
+    
+    std::ifstream ifs(config->getVariablesMap()[keto::tools::Constants::KEYS].as<std::string>());
+    nlohmann::json jsonKeys;
+    ifs >> jsonKeys;
+    
+    keto::crypto::SecureVector secretKey = 
+            Botan::hex_decode_locked(jsonKeys[keto::tools::Constants::SECRET_KEY],true);
+    keto::crypto::SecureVector encodedKey = 
+            Botan::hex_decode_locked(jsonKeys[keto::tools::Constants::ENCODED_KEY],true);
+    
+    std::vector<uint8_t> content;
+    if (config->getVariablesMap().count(keto::tools::Constants::INPUT)) {
+        std::string strContent =
+                config->getVariablesMap()[keto::tools::Constants::INPUT].as<std::string>();
+        content = keto::server_common::VectorUtils().copyStringToVector(strContent);
+    } else if (config->getVariablesMap().count(keto::tools::Constants::SOURCE)){
+        std::ifstream ifs(
+            config->getVariablesMap()[keto::tools::Constants::SOURCE].as<std::string>());
+        if (ifs) {
+            int character = -1;
+            while ((character = ifs.get()) != -1) {
+                content.push_back((uint8_t)character);
+            }
+        } else {
+            std::cerr << "The source file was not read [" << 
+                config->getVariablesMap()[keto::tools::Constants::SOURCE].as<std::string>()
+                    << "]" << std::endl;
+            return -1;
+        }
+    } else {
+        std::cerr << "Content must be provided either [" << 
+                keto::tools::Constants::INPUT << "] or ["  << 
+                keto::tools::Constants::SOURCE<< "]" << std::endl;
+        return -1;
+    }
+    
+    
+    keto::key_tools::ContentEncryptor contentEncryptor(secretKey,
+            encodedKey,content);
+    
+    if (!config->getVariablesMap().count(keto::tools::Constants::OUTPUT)) {
+        std::cerr << "Must specify the output file [" << 
+                keto::tools::Constants::OUTPUT << "]" << std::endl;
+        return -1;
+    }
+    
+    std::ofstream output(config->getVariablesMap()[keto::tools::Constants::OUTPUT].as<std::string>());
+    output << Botan::hex_encode(contentEncryptor.getEncryptedContent());
+    output.close();
+    
     
     
     return 0;
 }
+
+
+int decryptData(std::shared_ptr<ketoEnv::Config> config,
+        boost::program_options::options_description optionDescription) {
+    
+    std::cout << "Decrypt" << std::endl;
+    if (!config->getVariablesMap().count(keto::tools::Constants::KEYS)) {
+        std::cerr << "The keys to encrypt the data must be provided [" << 
+                keto::tools::Constants::KEYS << "]" << std::endl;
+        return -1;
+    }
+    
+    std::cout << "Ifs stream" << std::endl;
+    std::ifstream ifs(config->getVariablesMap()[keto::tools::Constants::KEYS].as<std::string>());
+    nlohmann::json jsonKeys;
+    ifs >> jsonKeys;
+    
+    std::cout << "Secure vector" << std::endl;
+    keto::crypto::SecureVector secretKey = 
+            Botan::hex_decode_locked(jsonKeys[keto::tools::Constants::SECRET_KEY],true);
+    keto::crypto::SecureVector encodedKey = 
+            Botan::hex_decode_locked(jsonKeys[keto::tools::Constants::ENCODED_KEY],true);
+    
+    std::cout << "read in the content" << std::endl;
+    std::vector<uint8_t> content;
+    if (config->getVariablesMap().count(keto::tools::Constants::SOURCE)){
+        std::ifstream ifs(
+            config->getVariablesMap()[keto::tools::Constants::SOURCE].as<std::string>());
+        if (ifs) {
+            std::string buffer;
+            std::copy(std::istream_iterator<uint8_t>(ifs), 
+                std::istream_iterator<uint8_t>(),
+                std::back_inserter(buffer));
+            content = Botan::hex_decode(buffer,true);
+        } else {
+            std::cerr << "The source file was not read [" << 
+                config->getVariablesMap()[keto::tools::Constants::SOURCE].as<std::string>()
+                    << "]" << std::endl;
+            return -1;
+        }
+    } else {
+        std::cerr << "Content must be provided a source ["  << 
+                keto::tools::Constants::SOURCE<< "] to decrypt" << std::endl;
+        return -1;
+    }
+    
+    std::cout << "Decrypt" << std::endl;
+    keto::key_tools::ContentDecryptor contentDecryptor(secretKey,
+            encodedKey,content);
+    
+    std::cout << keto::crypto::SecureVectorUtils().copySecureToString(
+            contentDecryptor.getContent()) << std::endl;
+    
+    return 0;
+    
+}
+
 
 
 /**
@@ -89,15 +221,14 @@ int main(int argc, char** argv)
             return 0;
         }
         
-        if (config->getVariablesMap().count(keto::cli::Constants::KETO_TRANSACTION_GEN)) 
-        {
-            return generateTransaction(config,optionDescription);
-        } else if (config->getVariablesMap().count(keto::cli::Constants::KETO_ACCOUNT_GEN)) {
-            return generateAccount(config,optionDescription);
-        } else if (config->getVariablesMap().count(keto::cli::Constants::KETO_SESSION_GEN)) {
-            return generateSession(config);
+        if (config->getVariablesMap().count(keto::tools::Constants::GENERATE)) {
+            return generateKey(config,optionDescription);
+        } else if (config->getVariablesMap().count(keto::tools::Constants::ENCRYPT)) {
+            return encryptData(config,optionDescription);
+        } else if (config->getVariablesMap().count(keto::tools::Constants::DECRYPT)) {
+            return decryptData(config,optionDescription);
         }
-        KETO_LOG_INFO << "CLI Executed";
+        KETO_LOG_INFO << "Keto Tools Executed";
     } catch (keto::common::Exception& ex) {
         KETO_LOG_ERROR << "Failed to start because : " << ex.what();
         KETO_LOG_ERROR << "Cause: " << boost::diagnostic_information(ex,true);
