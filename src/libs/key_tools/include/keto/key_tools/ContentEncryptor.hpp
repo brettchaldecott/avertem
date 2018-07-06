@@ -27,10 +27,13 @@ class ContentEncryptor {
 public:
     ContentEncryptor(const keto::crypto::SecureVector& secret, const keto::crypto::SecureVector& encodedKey,
         const std::vector<uint8_t>& content);
+    ContentEncryptor(const keto::crypto::SecureVector& secret, const keto::crypto::SecureVector& encodedKey,
+        const keto::crypto::SecureVector& content);
     ContentEncryptor(const ContentEncryptor& orig) = default;
     virtual ~ContentEncryptor();
 
     std::vector<uint8_t> getEncryptedContent();
+    keto::crypto::SecureVector getEncryptedContent_locked();
     operator std::vector<uint8_t>(); 
 
     

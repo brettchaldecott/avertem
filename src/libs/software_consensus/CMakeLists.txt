@@ -12,6 +12,8 @@ add_library( keto_software_consensus
               Constants.cpp
               HashBuilder.cpp
               SoftwareConsensusHelper.cpp
+              ConsensusHashScriptInfo.cpp
+              ConsensusHashGenerator.cpp
 
              ${HEADERS}
            )
@@ -28,6 +30,7 @@ target_include_directories( keto_software_consensus
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../server_common/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../crypto/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../obfuscate/include"
+                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../key_tools/include"
                             
                             PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/proto/"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/asn1/" 
@@ -36,6 +39,7 @@ target_include_directories( keto_software_consensus
 
                             ${Boost_INCLUDE_DIRS}
                             ${BOTAN_INCLUDE_DIR}
+                            ${CHAI_SCRIPT_INCLUDE_DIR}
                             )
 
 #if(MSVC)

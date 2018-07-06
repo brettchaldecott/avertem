@@ -26,10 +26,15 @@ class ContentDecryptor {
 public:
     ContentDecryptor(const keto::crypto::SecureVector& secret, const keto::crypto::SecureVector& encodedKey,
         const std::vector<uint8_t>& encyptedContent);
+    ContentDecryptor(const keto::crypto::SecureVector& secret, const keto::crypto::SecureVector& encodedKey,
+        const keto::crypto::SecureVector& encyptedContent);
     ContentDecryptor(const ContentDecryptor& orig) = default;
     virtual ~ContentDecryptor();
     
     keto::crypto::SecureVector getContent();
+    keto::crypto::SecureVector getDerivedKey(
+            const keto::crypto::SecureVector& secret,
+            const keto::crypto::SecureVector& encodedKey);
     operator keto::crypto::SecureVector(); 
     
 private:

@@ -34,6 +34,8 @@
 
 #include "keto/tools/Constants.hpp"
 
+#include "keto/crypto/HashGenerator.hpp"
+
 namespace ketoEnv = keto::environment;
 namespace ketoCommon = keto::common;
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
@@ -49,6 +51,7 @@ boost::program_options::options_description generateOptionDescriptions() {
             ("generate,G", "Generate private key, secrete and encoded private key.")
             ("encrypt,E", "Encode a file using a private key.")
             ("decrypt,D", "Decrypt a file using a private key.")
+            ("hash,H", "Generate a has for a files contents.")
             ("keys,k", po::value<std::string>(),"Key information needed for the encryption")
             ("source,s", po::value<std::string>(),"Source file to encode.")
             ("output,o",po::value<std::string>(), "Output encoded file.")
@@ -137,25 +140,21 @@ int encryptData(std::shared_ptr<ketoEnv::Config> config,
 int decryptData(std::shared_ptr<ketoEnv::Config> config,
         boost::program_options::options_description optionDescription) {
     
-    std::cout << "Decrypt" << std::endl;
     if (!config->getVariablesMap().count(keto::tools::Constants::KEYS)) {
         std::cerr << "The keys to encrypt the data must be provided [" << 
                 keto::tools::Constants::KEYS << "]" << std::endl;
         return -1;
     }
     
-    std::cout << "Ifs stream" << std::endl;
     std::ifstream ifs(config->getVariablesMap()[keto::tools::Constants::KEYS].as<std::string>());
     nlohmann::json jsonKeys;
     ifs >> jsonKeys;
     
-    std::cout << "Secure vector" << std::endl;
     keto::crypto::SecureVector secretKey = 
             Botan::hex_decode_locked(jsonKeys[keto::tools::Constants::SECRET_KEY],true);
     keto::crypto::SecureVector encodedKey = 
             Botan::hex_decode_locked(jsonKeys[keto::tools::Constants::ENCODED_KEY],true);
     
-    std::cout << "read in the content" << std::endl;
     std::vector<uint8_t> content;
     if (config->getVariablesMap().count(keto::tools::Constants::SOURCE)){
         std::ifstream ifs(
@@ -178,18 +177,51 @@ int decryptData(std::shared_ptr<ketoEnv::Config> config,
         return -1;
     }
     
-    std::cout << "Decrypt" << std::endl;
     keto::key_tools::ContentDecryptor contentDecryptor(secretKey,
             encodedKey,content);
     
     std::cout << keto::crypto::SecureVectorUtils().copySecureToString(
-            contentDecryptor.getContent()) << std::endl;
+            contentDecryptor.getContent());
     
     return 0;
     
 }
 
-
+int hashFile(std::shared_ptr<ketoEnv::Config> config,
+        boost::program_options::options_description optionDescription) {
+    std::vector<uint8_t> content;
+    if (config->getVariablesMap().count(keto::tools::Constants::SOURCE)){
+        std::ifstream ifs(
+            config->getVariablesMap()[keto::tools::Constants::SOURCE].as<std::string>());
+        if (ifs) {
+            int character = -1;
+            while ((character = ifs.get()) != -1) {
+                content.push_back((uint8_t)character);
+            }
+        } else {
+            std::cerr << "The source file was not read [" << 
+                config->getVariablesMap()[keto::tools::Constants::SOURCE].as<std::string>()
+                    << "]" << std::endl;
+            return -1;
+        }
+    } else {
+        std::cerr << "Content must be provided the source [" << 
+                keto::tools::Constants::SOURCE<< "]" << std::endl;
+        return -1;
+    }
+    
+    if (!config->getVariablesMap().count(keto::tools::Constants::OUTPUT)) {
+        std::cerr << "Must specify the output file [" << 
+                keto::tools::Constants::OUTPUT << "]" << std::endl;
+        return -1;
+    }
+    
+    std::ofstream output(config->getVariablesMap()[keto::tools::Constants::OUTPUT].as<std::string>());
+    output << Botan::hex_encode(keto::crypto::HashGenerator().generateHash(content));
+    output.close();
+    
+    return 0;
+}
 
 /**
  * The CLI main file
@@ -227,6 +259,8 @@ int main(int argc, char** argv)
             return encryptData(config,optionDescription);
         } else if (config->getVariablesMap().count(keto::tools::Constants::DECRYPT)) {
             return decryptData(config,optionDescription);
+        } else if (config->getVariablesMap().count(keto::tools::Constants::HASH)) {
+            return hashFile(config,optionDescription);
         }
         KETO_LOG_INFO << "Keto Tools Executed";
     } catch (keto::common::Exception& ex) {

@@ -28,6 +28,7 @@ public:
     static constexpr const char* GENERATE = "generate";
     static constexpr const char* ENCRYPT = "encrypt";
     static constexpr const char* DECRYPT = "decrypt";
+    static constexpr const char* HASH = "hash";
     
     // arguments
     static constexpr const char* KEYS = "keys";

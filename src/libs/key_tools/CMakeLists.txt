@@ -8,6 +8,7 @@ add_library( keto_key_tools
             
               ContentDecryptor.cpp
               ContentEncryptor.cpp
+              ContentSigner.cpp
               KeyPairCreator.cpp
 
              ${HEADERS}
