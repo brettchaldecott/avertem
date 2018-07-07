@@ -25,7 +25,7 @@ namespace software_consensus {
 
 class ConsensusHashGenerator;
 typedef std::shared_ptr<ConsensusHashGenerator> ConsensusHashGeneratorPtr;
-typedef std::vector<ConsensusHashScriptInfo> ConsensusHashScriptInfoVector;
+typedef std::vector<ConsensusHashScriptInfoPtr> ConsensusHashScriptInfoVector;
 typedef keto::crypto::SecureVector (*getModuleSignature)();
 typedef keto::crypto::SecureVector (*getModuleKey)();
 typedef keto::crypto::SecureVector (*getSourceVersion)();
@@ -51,12 +51,10 @@ public:
     static void finInstance();
     
     // method to set the session key
-    keto::crypto::SecureVector decryptWithSessionKey(
-        const std::vector<uint8_t>& bytes);
     void setSession(
         const keto::crypto::SecureVector& sessionKey);
-    std::vector<uint8_t> generateSeed();
-    std::vector<uint8_t> generateHash(const std::vector<uint8_t>& seed);
+    keto::crypto::SecureVector generateSeed();
+    keto::crypto::SecureVector generateHash(const keto::crypto::SecureVector& seed);
     
     
 private:

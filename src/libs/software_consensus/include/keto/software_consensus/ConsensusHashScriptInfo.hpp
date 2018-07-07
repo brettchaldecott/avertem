@@ -16,6 +16,7 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 
 #include "keto/server_common/VectorUtils.hpp"
 #include "keto/crypto/Containers.hpp"
@@ -24,9 +25,12 @@
 namespace keto {
 namespace software_consensus {
 
+class ConsensusHashScriptInfo;
+typedef std::shared_ptr<ConsensusHashScriptInfo> ConsensusHashScriptInfoPtr;
 typedef keto::crypto::SecureVector (*getHash)();
 typedef keto::crypto::SecureVector (*getEncodedKey)();
 typedef std::vector<uint8_t> (*getCode)();
+
 
 class ConsensusHashScriptInfo {
 public:

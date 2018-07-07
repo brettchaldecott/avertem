@@ -1,0 +1,72 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+/* 
+ * File:   hash_generator_test_config.hpp.in
+ * Author: ubuntu
+ *
+ * Created on July 6, 2018, 9:28 AM
+ */
+
+#ifndef HASH_GENERATOR_TEST_CONFIG_HPP_IN
+#define HASH_GENERATOR_TEST_CONFIG_HPP_IN
+
+#include <string>
+
+#include "keto/obfuscate/MetaString.hpp"
+#include "keto/crypto/Containers.hpp"
+#include "keto/crypto/SecureVectorUtils.hpp"
+
+
+namespace keto {
+namespace software_consensus {
+
+namespace test_module {
+
+keto::crypto::SecureVector getModuleSignature() {
+    std::string signature = OBFUSCATED("${TEST_MODULE_SIGNATURE}");
+    return keto::crypto::SecureVectorUtils().copyStringToSecure(signature);
+}
+
+keto::crypto::SecureVector getModuleKey() {
+    std::string key = OBFUSCATED("${TEST_MODULE_KEY}");
+    return keto::crypto::SecureVectorUtils().copyStringToSecure(key);
+}
+
+}
+
+class SourceClass1 {
+public:
+    static keto::crypto::SecureVector getHeaderVersion() {
+        std::string version = OBFUSCATED("TEST_VERSION1");
+        return keto::crypto::SecureVectorUtils().copyStringToSecure(version);
+    }
+    
+    static keto::crypto::SecureVector getSourceVersion() {
+        std::string version = OBFUSCATED("TEST_SOURCE_VERSION1");
+        return keto::crypto::SecureVectorUtils().copyStringToSecure(version);
+    }
+};
+
+class SourceClass2 {
+public:
+    static keto::crypto::SecureVector getHeaderVersion() {
+        std::string version = OBFUSCATED("TEST_VERSION2");
+        return keto::crypto::SecureVectorUtils().copyStringToSecure(version);
+    }
+    
+    static keto::crypto::SecureVector getSourceVersion() {
+        std::string version = OBFUSCATED("TEST_SOURCE_VERSION2");
+        return keto::crypto::SecureVectorUtils().copyStringToSecure(version);
+    }
+};
+
+}
+}
+
+
+#endif /* HASH_GENERATOR_TEST_CONFIG_HPP_IN */
+
