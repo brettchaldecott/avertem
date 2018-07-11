@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "keto/software_consensus/ConsensusMessageHelper.hpp"
+#include "keto/software_consensus/ConsensusHashGenerator.hpp"
 #include "keto/obfuscate/MetaString.hpp"
 
 namespace keto {
@@ -33,15 +34,20 @@ public:
     };
     static std::string getSourceVersion();
     
+    
     ConsensusBuilder(
-        const std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr);
+            const ConsensusHashGeneratorPtr consensusHashGeneratorPtr,
+            const std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr);
     ConsensusBuilder(const ConsensusBuilder& orig) = delete;
     virtual ~ConsensusBuilder();
     
-    ConsensusBuilder& buildConsensus();
+    ConsensusBuilder& buildConsensus(const keto::asn1::HashHelper& previousHash);
     ConsensusMessageHelper getConsensus();
 private:
     ConsensusMessageHelper consensusMessageHelper;
+    ConsensusHashGeneratorPtr consensusHashGeneratorPtr;
+    
+    
 };
 
 

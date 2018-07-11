@@ -138,7 +138,11 @@ BOOST_AUTO_TEST_CASE( hash_generator_test ) {
     
     consensusHashGenerator->setSession(keto::software_consensus::example_code1::keyPairCreator.getSecret());
     
-    keto::crypto::SecureVector seed = consensusHashGenerator->generateSeed();
+    keto::crypto::HashGenerator hashGenerator;
+    
+    keto::asn1::HashHelper previousHash(hashGenerator.generateHash("this is a test"));
+    
+    keto::crypto::SecureVector seed = consensusHashGenerator->generateSeed(previousHash);
     consensusHashGenerator->generateHash(seed);
     
 }

@@ -18,15 +18,18 @@
 #include "keto/common/Log.hpp"
 
 #include "keto/rpc_client/RpcClientModuleManager.hpp"
-#include "include/keto/rpc_client/RpcSessionManager.hpp"
+#include "keto/rpc_client/RpcClientModuleManagerMisc.hpp"
+#include "keto/rpc_client/RpcSessionManager.hpp"
 #include "keto/common/MetaInfo.hpp"
+
 
 namespace keto {
 namespace rpc_client {
 
     
 RpcClientModuleManager::RpcClientModuleManager() {
-    rpcSessionManager = std::make_shared<RpcSessionManager>();
+    rpcSessionManager = std::make_shared<RpcSessionManager>(
+            getConsensusHash());
 }
 
 RpcClientModuleManager::~RpcClientModuleManager() {

@@ -20,12 +20,16 @@
 #include "keto/ssl/RootCertificate.hpp"
 #include "keto/server_common/StringUtils.hpp"
 
+#include "keto/software_consensus/ConsensusHashGenerator.hpp"
+
 namespace keto {
 namespace rpc_client {
 
 namespace ketoEnv = keto::environment;
 
-RpcSessionManager::RpcSessionManager() {
+RpcSessionManager::RpcSessionManager(
+        const keto::software_consensus::ConsensusHashGeneratorPtr& consensusHashGeneratorPtr) :
+    consensusHashGeneratorPtr(consensusHashGeneratorPtr) {
     
     this->ioc = std::make_shared<boost::asio::io_context>();
     
@@ -46,7 +50,9 @@ RpcSessionManager::RpcSessionManager() {
         for (std::vector<std::string>::iterator iter = peers.begin();
                 iter != peers.end(); iter++) {
             std::cout << "The peer is : " << (*iter) << std::endl;
-            this->sessionMap[(*iter)] = std::make_shared<RpcSession>(this->ioc,
+            this->sessionMap[(*iter)] = std::make_shared<RpcSession>(
+                    this->consensusHashGeneratorPtr,
+                    this->ioc,
                     this->ctx,(*iter));
         }
     }

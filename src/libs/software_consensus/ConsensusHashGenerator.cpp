@@ -40,18 +40,21 @@ private:
     SourceVersionMap sourceVersionMap;
     keto::crypto::SecureVector sessionKey;
     keto::crypto::SecureVector encodedKey;
-    keto::crypto::SecureVector seed; 
+    keto::crypto::SecureVector seed;
+    keto::asn1::HashHelper previousHash;
 public:
     ChaiScriptSession(getModuleSignature moduleSignatureRef,
             getModuleKey moduleKeyRef,
-            SourceVersionMap sourceVersionMap,
-            keto::crypto::SecureVector sessionKey,
-            keto::crypto::SecureVector encodedKey) : 
+            const SourceVersionMap& sourceVersionMap,
+            const keto::crypto::SecureVector& sessionKey,
+            const keto::crypto::SecureVector& encodedKey,
+            const keto::asn1::HashHelper& previousHash) : 
         moduleSignatureRef(moduleSignatureRef),
         moduleKeyRef(moduleKeyRef),
         sourceVersionMap(sourceVersionMap),
         sessionKey(sessionKey),
-        encodedKey(encodedKey)
+        encodedKey(encodedKey),
+        previousHash(previousHash)
     {
     }
     
@@ -92,6 +95,10 @@ public:
     
     keto::crypto::SecureVector getSeed() {
         return this->seed;
+    }
+    
+    keto::crypto::SecureVector getPreviousHash() {
+        return this->previousHash.operator keto::crypto::SecureVector();
     }
 };
 
@@ -137,13 +144,18 @@ keto::crypto::SecureVector chai_getSeed() {
     return chaiScriptSessionPtr->getSeed();
 }
 
+keto::crypto::SecureVector chai_getPreviousHash() {
+    return chaiScriptSessionPtr->getPreviousHash();
+}
+
 ChaiScriptPtr initChaiScript(getModuleSignature moduleSignatureRef,
             getModuleKey moduleKeyRef,
-            SourceVersionMap sourceVersionMap,
-            keto::crypto::SecureVector sessionKey,
-            keto::crypto::SecureVector encodedKey) {
+            const SourceVersionMap& sourceVersionMap,
+            const keto::crypto::SecureVector& sessionKey,
+            const keto::crypto::SecureVector& encodedKey,
+            const keto::asn1::HashHelper& previousHash) {
     chaiScriptSessionPtr = std::make_shared<ChaiScriptSession>(
-            moduleSignatureRef,moduleKeyRef,sourceVersionMap,sessionKey,encodedKey);
+            moduleSignatureRef,moduleKeyRef,sourceVersionMap,sessionKey,encodedKey,previousHash);
     
     ChaiScriptPtr chaiScriptPtr = std::make_shared<chaiscript::ChaiScript>();
     
@@ -155,16 +167,17 @@ ChaiScriptPtr initChaiScript(getModuleSignature moduleSignatureRef,
     chaiScriptPtr->add(chaiscript::fun(&chai_signBytes), "signBytes");
     chaiScriptPtr->add(chaiscript::fun(&chai_encryptBytes), "encryptBytes");
     chaiScriptPtr->add(chaiscript::fun(&chai_decryptBytes), "decryptBytes");
+    chaiScriptPtr->add(chaiscript::fun(&chai_getPreviousHash), "getPreviousHash");
     
     return chaiScriptPtr;
 }
 
 ChaiScriptPtr initChaiScript(getModuleSignature moduleSignatureRef,
             getModuleKey moduleKeyRef,
-            SourceVersionMap sourceVersionMap,
-            keto::crypto::SecureVector sessionKey,
-            keto::crypto::SecureVector encodedKey,
-            keto::crypto::SecureVector seed) {
+            const SourceVersionMap& sourceVersionMap,
+            const keto::crypto::SecureVector& sessionKey,
+            const keto::crypto::SecureVector& encodedKey,
+            const keto::crypto::SecureVector& seed) {
     chaiScriptSessionPtr = std::make_shared<ChaiScriptSession>(
             moduleSignatureRef,moduleKeyRef,sourceVersionMap,sessionKey,encodedKey,seed);
     
@@ -195,19 +208,20 @@ private:
 public:
     ChaiScriptSessionScope(getModuleSignature moduleSignatureRef,
             getModuleKey moduleKeyRef,
-            SourceVersionMap sourceVersionMap,
-            keto::crypto::SecureVector sessionKey,
-            keto::crypto::SecureVector encodedKey) {
+            const SourceVersionMap& sourceVersionMap,
+            const keto::crypto::SecureVector& sessionKey,
+            const keto::crypto::SecureVector& encodedKey,
+            const keto::asn1::HashHelper& previousHash) {
         this->chaiScriptPtr = initChaiScript(moduleSignatureRef,moduleKeyRef,sourceVersionMap,
-                sessionKey,encodedKey);
+                sessionKey,encodedKey,previousHash);
     }
     
     ChaiScriptSessionScope(getModuleSignature moduleSignatureRef,
             getModuleKey moduleKeyRef,
-            SourceVersionMap sourceVersionMap,
-            keto::crypto::SecureVector sessionKey,
-            keto::crypto::SecureVector encodedKey,
-            keto::crypto::SecureVector seed) {
+            const SourceVersionMap& sourceVersionMap,
+            const keto::crypto::SecureVector& sessionKey,
+            const keto::crypto::SecureVector& encodedKey,
+            const keto::crypto::SecureVector& seed) {
         this->chaiScriptPtr = initChaiScript(moduleSignatureRef,moduleKeyRef,sourceVersionMap,
                 sessionKey,encodedKey,seed);
     }
@@ -222,9 +236,6 @@ public:
 };
 
 
-// singleton
-static ConsensusHashGeneratorPtr singleton;
-    
 ConsensusHashGenerator::ConsensusHashGenerator(
         const ConsensusHashScriptInfoVector& consensusVector,
         getModuleSignature moduleSignatureRef,
@@ -240,23 +251,13 @@ ConsensusHashGenerator::~ConsensusHashGenerator() {
 }
 
 // singleton methods
-ConsensusHashGeneratorPtr ConsensusHashGenerator::getInstance() {
-    return singleton;
-}
-
 ConsensusHashGeneratorPtr ConsensusHashGenerator::initInstance(
         const ConsensusHashScriptInfoVector consensusVector,
         getModuleSignature moduleSignatureRef,
         getModuleKey moduleKeyRef,
         SourceVersionMap sourceVersionMap) {
-    return singleton =  std::make_shared<ConsensusHashGenerator>(consensusVector,
-            moduleSignatureRef, moduleKeyRef, sourceVersionMap);
-}
-
-void ConsensusHashGenerator::finInstance() {
-    if (singleton) {
-        singleton.reset();
-    }
+    return ConsensusHashGeneratorPtr(new ConsensusHashGenerator(consensusVector,
+            moduleSignatureRef, moduleKeyRef, sourceVersionMap));
 }
 
 // method to set the session key
@@ -281,8 +282,8 @@ void ConsensusHashGenerator::setSession(
     }
 }
 
-keto::crypto::SecureVector ConsensusHashGenerator::generateSeed() {
-    ChaiScriptSessionScope scope(moduleSignatureRef,moduleKeyRef,sourceVersionMap,sessionKey,encodedKey);
+keto::crypto::SecureVector ConsensusHashGenerator::generateSeed(const keto::asn1::HashHelper& previousHash) {
+    ChaiScriptSessionScope scope(moduleSignatureRef,moduleKeyRef,sourceVersionMap,sessionKey,encodedKey,previousHash);
     ChaiScriptPtr chaiScriptPtr = scope.getChaiScriptPtr();
     
     std::string code(this->sessionScript.begin(),this->sessionScript.end());

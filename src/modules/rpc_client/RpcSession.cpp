@@ -46,8 +46,11 @@ fail(boost::system::error_code ec, char const* what)
     std::cerr << what << ": " << ec.message() << "\n";
 }
 
-RpcSession::RpcSession(std::shared_ptr<boost::asio::io_context> ioc, 
+RpcSession::RpcSession(
+    const keto::software_consensus::ConsensusHashGeneratorPtr& consensusHashGeneratorPtr,
+    std::shared_ptr<boost::asio::io_context> ioc, 
     std::shared_ptr<boostSsl::context> ctx, const std::string& host) :
+        consensusHashGeneratorPtr(consensusHashGeneratorPtr),
         resolver(*ioc),
         ws_(*ioc, *ctx),
         host(host) {
@@ -263,9 +266,12 @@ std::string RpcSession::buildHeloMessage() {
             keto::server_common::ServerInfo::getInstance()->getAccountHash()).sign().operator std::string();
 }
 
-std::string RpcSession::buildConsensus() {
-    return keto::software_consensus::ConsensusBuilder(this->keyLoaderPtr).
-            buildConsensus().getConsensus();
+std::string RpcSession::buildConsensus(const keto::asn1::HashHelper& hashHelper) {
+    
+    return keto::software_consensus::ConsensusBuilder(
+            this->consensusHashGeneratorPtr,
+            this->keyLoaderPtr).
+            buildConsensus(hashHelper).getConsensus();
 }
 
 std::string RpcSession::buildMessage(const std::string& command, const std::string& message) {
@@ -286,9 +292,10 @@ void RpcSession::closeResponse(const std::string& command, const std::string& me
 }
 
 void RpcSession::consensusResponse(const std::string& command, const std::string& message) {
+    keto::asn1::HashHelper hashHelper(message,keto::common::StringEncoding::HEX);
     ws_.async_write(
         boost::asio::buffer(
-            buildMessage(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS,buildConsensus())),
+            buildMessage(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS,buildConsensus(hashHelper))),
         std::bind(
             &RpcSession::on_write,
             shared_from_this(),

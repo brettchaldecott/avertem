@@ -22,6 +22,7 @@
 
 #include "keto/software_consensus/Constants.hpp"
 #include "keto/software_consensus/ConsensusBuilder.hpp"
+#include "keto/software_consensus/ConsensusBuilder.hpp"
 #include "keto/server_common/ServerInfo.hpp"
 
 namespace keto {
@@ -32,8 +33,11 @@ std::string ConsensusBuilder::getSourceVersion() {
 }
 
 ConsensusBuilder::ConsensusBuilder(
+        const ConsensusHashGeneratorPtr consensusHashGeneratorPtr,
         const std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr) : 
-    consensusMessageHelper(keyLoaderPtr) {
+    consensusMessageHelper(keyLoaderPtr) ,
+    consensusHashGeneratorPtr(consensusHashGeneratorPtr)
+{
     std::vector<uint8_t> accountHash = 
             keto::server_common::ServerInfo::getInstance()->getAccountHash();
     consensusMessageHelper.setAccountHash(accountHash);
@@ -43,7 +47,11 @@ ConsensusBuilder::~ConsensusBuilder() {
     
 }
 
-ConsensusBuilder& ConsensusBuilder::buildConsensus() {
+ConsensusBuilder& ConsensusBuilder::buildConsensus(const keto::asn1::HashHelper& previousHash) {
+    keto::asn1::HashHelper seedHash(this->consensusHashGeneratorPtr->generateSeed(previousHash));
+    
+    //SoftwareConsensusHelper
+    
     for (std::string event : Constants::EVENT_ORDER) {
         try {
             keto::proto::ModuleConsensusMessage consensusMessage;

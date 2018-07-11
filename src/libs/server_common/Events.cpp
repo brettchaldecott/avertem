@@ -48,7 +48,11 @@ const char* Events::GET_CONTRACT  = "GET_CONTRACT";
 // sparql events
 const char* Events::SPARQL_QUERY_MESSAGE = "SPARQL_QUERY_MESSAGE";
 
+// the test consensus method cannot be called as it is loaded before the event
+// registry
 const char* Events::CONSENSUS::TEST         = "CONSENSUS_TEST";
+
+
 const char* Events::CONSENSUS::TRANSACTION  = "CONSENSUS_TRANSACTION";
 const char* Events::CONSENSUS::ROUTER       = "CONSENSUS_ROUTER";
 const char* Events::CONSENSUS::HTTPD        = "CONSENSUS_HTTPD";

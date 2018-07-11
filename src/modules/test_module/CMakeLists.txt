@@ -11,7 +11,12 @@ add_library( 0001_keto_test_module
              ${HEADERS}
            )
 
-target_link_libraries( 0001_keto_test_module )
+target_link_libraries( 0001_keto_test_module 
+                            PRIVATE keto_transaction_common keto_server_common keto_rpc_protocol
+                            PRIVATE keto_proto_environment ${PROTOBUF_LIBRARIES}
+                            PRIVATE keto_asn1_common keto_asn1_protocol
+                            PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
+                            PRIVATE ${OPENSSL_LIBRARIES} )
 target_include_directories( 0001_keto_test_module
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/common/include"

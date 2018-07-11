@@ -29,6 +29,9 @@
 #include "keto/rpc_client/Constants.hpp"
 #include "keto/crypto/KeyLoader.hpp"
 
+#include "keto/asn1/HashHelper.hpp"
+
+#include "keto/software_consensus/ConsensusHashGenerator.hpp"
 
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 namespace boostSsl = boost::asio::ssl;               // from <boost/asio/ssl.hpp>
@@ -43,7 +46,9 @@ typedef std::shared_ptr<RpcSession> RpcSessionPtr;
 
 class RpcSession : public std::enable_shared_from_this<RpcSession> {
 public:
-    RpcSession(std::shared_ptr<boost::asio::io_context> ioc, 
+    RpcSession(
+            const keto::software_consensus::ConsensusHashGeneratorPtr& consensusHashGeneratorPtr,
+            std::shared_ptr<boost::asio::io_context> ioc, 
             std::shared_ptr<boostSsl::context> ctx,
             const std::string& host);
     RpcSession(const RpcSession& orig) = delete;
@@ -75,6 +80,7 @@ public:
     void
     on_close(boost::system::error_code ec);
 private:
+    keto::software_consensus::ConsensusHashGeneratorPtr consensusHashGeneratorPtr;
     tcp::resolver resolver;
     websocket::stream<boostSsl::stream<tcp::socket>> ws_;
     boost::beast::multi_buffer buffer_;
@@ -84,7 +90,7 @@ private:
     
     std::string buildHeloMessage();
     
-    std::string buildConsensus();
+    std::string buildConsensus(const keto::asn1::HashHelper& hashHelper);
     
     std::string buildMessage(const std::string& command, const std::string& message);
     

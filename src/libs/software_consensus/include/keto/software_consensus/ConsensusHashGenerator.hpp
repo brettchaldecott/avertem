@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 
+#include "keto/asn1/HashHelper.hpp"
 #include "keto/software_consensus/ConsensusHashScriptInfo.hpp"
 
 namespace keto {
@@ -34,26 +35,20 @@ typedef std::map<std::string,getSourceVersion> SourceVersionMap;
 
 class ConsensusHashGenerator {
 public:
-    ConsensusHashGenerator(const ConsensusHashScriptInfoVector& consensusVector,
-            getModuleSignature moduleSignatureRef,
-            getModuleKey moduleKeyRef,
-            SourceVersionMap sourceVersionMap);
     ConsensusHashGenerator(const ConsensusHashGenerator& orig) = delete;
     virtual ~ConsensusHashGenerator();
     
     // singleton methods
-    static ConsensusHashGeneratorPtr getInstance();
     static ConsensusHashGeneratorPtr initInstance(
             const ConsensusHashScriptInfoVector consensusVector,
             getModuleSignature moduleSignatureRef,
             getModuleKey moduleKeyRef,
             SourceVersionMap sourceVersionMap);
-    static void finInstance();
     
     // method to set the session key
     void setSession(
         const keto::crypto::SecureVector& sessionKey);
-    keto::crypto::SecureVector generateSeed();
+    keto::crypto::SecureVector generateSeed(const keto::asn1::HashHelper& previousHash);
     keto::crypto::SecureVector generateHash(const keto::crypto::SecureVector& seed);
     
     
@@ -67,6 +62,12 @@ private:
     getModuleSignature moduleSignatureRef; 
     getModuleKey moduleKeyRef;
     SourceVersionMap sourceVersionMap;
+    
+    ConsensusHashGenerator(const ConsensusHashScriptInfoVector& consensusVector,
+            getModuleSignature moduleSignatureRef,
+            getModuleKey moduleKeyRef,
+            SourceVersionMap sourceVersionMap);
+    
 };
 
 

@@ -50,6 +50,8 @@ public:
 private:
     std::map<std::string,std::shared_ptr<keto::module::ModuleInterface>> modules;
     RpcSessionManagerPtr rpcSessionManager;
+    
+    keto::software_consensus::ConsensusHashGeneratorPtr getConsensusHash();
 
 };
 
