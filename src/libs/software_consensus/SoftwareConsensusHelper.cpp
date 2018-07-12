@@ -11,19 +11,22 @@
  * Created on June 14, 2018, 10:50 AM
  */
 
+#include "keto/common/MetaInfo.hpp"
+
 #include "keto/software_consensus/SoftwareConsensusHelper.hpp"
 
-
-#include "keto/common/MetaInfo.hpp"
 #include "keto/crypto/SignatureGenerator.hpp"
 #include "keto/asn1/DeserializationHelper.hpp"
 #include "keto/asn1/SignatureHelper.hpp"
 #include "keto/software_consensus/Exception.hpp"
-#include "keto/software_consensus/SoftwareConsensusHelper.hpp"
 #include "keto/software_consensus/SoftwareMerkelUtils.hpp"
 
 namespace keto {
 namespace software_consensus {
+
+std::string SoftwareConsensusHelper::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 
 SoftwareConsensusHelper::SoftwareConsensusHelper() {
@@ -113,6 +116,7 @@ SoftwareConsensusHelper& SoftwareConsensusHelper::sign(
     keto::asn1::SignatureHelper signatureHelper(generator.sign(hashHelper));
     this->softwareConsensus->signature = signatureHelper;
     
+    return *this;
 }
 
 SoftwareConsensusHelper::operator SoftwareConsensus_t*() {

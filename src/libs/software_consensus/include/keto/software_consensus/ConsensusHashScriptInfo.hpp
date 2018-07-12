@@ -18,6 +18,8 @@
 #include <string>
 #include <memory>
 
+#include "keto/obfuscate/MetaString.hpp"
+
 #include "keto/server_common/VectorUtils.hpp"
 #include "keto/crypto/Containers.hpp"
 
@@ -34,6 +36,13 @@ typedef std::vector<uint8_t> (*getCode)();
 
 class ConsensusHashScriptInfo {
 public:
+    inline static std::string getVersion() {
+        return OBFUSCATED("$Id: cd6f953fdc6d6011f27667fc3267cb9f0e6fa962 $");
+    };
+    
+    static std::string getSourceVersion();
+    
+    
     ConsensusHashScriptInfo(keto::software_consensus::getHash hashFunctionRef, 
             keto::software_consensus::getEncodedKey keyFunctionRef,
             keto::software_consensus::getCode codeFunctionRef);

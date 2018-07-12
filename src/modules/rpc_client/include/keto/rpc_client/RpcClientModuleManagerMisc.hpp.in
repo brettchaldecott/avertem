@@ -47,7 +47,7 @@ keto::software_consensus::ConsensusHashGeneratorPtr RpcClientModuleManager::getC
 
     keto::software_consensus::SourceVersionMap sourceVersionMap = ${RPC_CLIENT_SOURCE_VERSION_METHOD_MAP}();
 
-    keto::software_consensus::ConsensusHashScriptInfoVector consensusVector = ${RPC_CLIENT_CONSENSUS_HASH_SCRIPT_METHOD};
+    keto::software_consensus::ConsensusHashScriptInfoVector consensusVector = ${RPC_CLIENT_CONSENSUS_HASH_SCRIPT_METHOD}();
     
     
     keto::software_consensus::ConsensusHashGeneratorPtr consensusHashGenerator = 

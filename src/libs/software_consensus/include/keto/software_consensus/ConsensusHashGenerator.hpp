@@ -18,6 +18,8 @@
 #include <string>
 #include <vector>
 
+#include "keto/obfuscate/MetaString.hpp"
+
 #include "keto/asn1/HashHelper.hpp"
 #include "keto/software_consensus/ConsensusHashScriptInfo.hpp"
 
@@ -35,6 +37,13 @@ typedef std::map<std::string,getSourceVersion> SourceVersionMap;
 
 class ConsensusHashGenerator {
 public:
+    inline static std::string getVersion() {
+        return OBFUSCATED("$Id: cd6f953fdc6d6011f27667fc3267cb9f0e6fa962 $");
+    };
+    
+    static std::string getSourceVersion();
+    
+    
     ConsensusHashGenerator(const ConsensusHashGenerator& orig) = delete;
     virtual ~ConsensusHashGenerator();
     

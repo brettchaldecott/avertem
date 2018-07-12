@@ -14,8 +14,6 @@
 #ifndef MODULECONSENSUSGENERATOR_HPP
 #define MODULECONSENSUSGENERATOR_HPP
 
-#include "keto/software_consensus/ModuleConsensusInterface.hpp"
-
 #include "keto/obfuscate/MetaString.hpp"
 
 namespace keto {
@@ -30,16 +28,15 @@ public:
     static std::string getSourceVersion();
 
     
-    ModuleConsensusGenerator(const keto::proto::SoftwareConsensusMessage& 
-            softwareConsensusMessage);
+    ModuleConsensusGenerator(
+            const keto::proto::ModuleConsensusMessage& moduleConsensusMessage);
     ModuleConsensusGenerator(const ModuleConsensusGenerator& orig) = default;
     virtual ~ModuleConsensusGenerator();
     
-    keto::proto::SoftwareConsensusMessage generate(
-            const ModuleConsensusInterface& moduleConsensusInterface);
+    keto::proto::ModuleConsensusMessage generate();
     
 private:
-    keto::proto::SoftwareConsensusMessage softwareConsensusMessage;
+    keto::proto::ModuleConsensusMessage softwareConsensusMessage;
 };
 
 

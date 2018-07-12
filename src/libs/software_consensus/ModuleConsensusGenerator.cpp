@@ -20,16 +20,15 @@ std::string ModuleConsensusGenerator::getSourceVersion() {
     return OBFUSCATED("$Id:$");
 }
     
-ModuleConsensusGenerator::ModuleConsensusGenerator(const keto::proto::SoftwareConsensusMessage& 
+ModuleConsensusGenerator::ModuleConsensusGenerator(const keto::proto::ModuleConsensusMessage& 
             softwareConsensusMessage) : softwareConsensusMessage(softwareConsensusMessage) {
 }
 
 ModuleConsensusGenerator::~ModuleConsensusGenerator() {
 }
 
-keto::proto::SoftwareConsensusMessage ModuleConsensusGenerator::generate(
-            const ModuleConsensusInterface& moduleConsensusInterface) {
-    
+keto::proto::SoftwareConsensusMessage ModuleConsensusGenerator::generate() {
+    return softwareConsensusMessage;
 }
 
 }
