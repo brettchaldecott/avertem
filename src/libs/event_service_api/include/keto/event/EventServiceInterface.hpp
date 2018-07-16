@@ -21,6 +21,9 @@
 #include "keto/module/ModuleInterface.hpp"
 #include "keto/event/Event.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace event {
 
@@ -28,6 +31,10 @@ typedef Event (*handler)(const Event&);
     
 class EventServiceInterface {
 public:
+    inline static std::string getVersion() {
+        return OBFUSCATED("$Id: $");
+    };
+    
     static constexpr const char* KETO_EVENT_SERVICE_MODULE = "event_service";
     
     virtual void triggerEvent(const Event& event) = 0;

@@ -17,6 +17,9 @@
 #include <string>
 #include "keto/common/Exception.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace event {
 

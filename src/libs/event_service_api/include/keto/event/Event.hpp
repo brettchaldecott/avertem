@@ -19,11 +19,19 @@
 #include <array>
 #include <stdlib.h>
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace event {
 
 class Event {
 public:
+    inline static std::string getVersion() {
+        return OBFUSCATED("$Id: $");
+    };
+    
+    
     Event(std::vector<uint8_t> message) : 
         message(message)  {
     }
