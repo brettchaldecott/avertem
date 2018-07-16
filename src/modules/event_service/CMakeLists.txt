@@ -2,7 +2,7 @@ file(GLOB HEADERS "include/keto/event/*.hpp")
 
 
 ## SORT .cpp by most likely to change / break compile
-add_library( 0002_keto_event_service_module
+add_library( 0001_keto_event_service_module
             SHARED
 
             EventServiceModuleManager.cpp
@@ -11,8 +11,8 @@ add_library( 0002_keto_event_service_module
              ${HEADERS}
            )
 
-target_link_libraries( 0002_keto_event_service_module )
-target_include_directories( 0002_keto_event_service_module
+target_link_libraries( 0001_keto_event_service_module )
+target_include_directories( 0001_keto_event_service_module
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/common/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/environment/include"
@@ -28,7 +28,7 @@ target_include_directories( 0002_keto_event_service_module
 #endif(MSVC)
 
 INSTALL( TARGETS
-   0002_keto_event_service_module
+   0001_keto_event_service_module
 
    RUNTIME DESTINATION bin
    LIBRARY DESTINATION shared

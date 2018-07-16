@@ -51,13 +51,13 @@ const std::string TestModuleManager::getVersion() const {
 void TestModuleManager::start() {
     KETO_LOG_INFO << "Start has been called on the test module manager";
     modules["test_module"] = std::make_shared<TestModule>();
-    //EventRegistry::registerEventHandlers();
+    EventRegistry::registerEventHandlers();
     
 }
 
 void TestModuleManager::stop() {
     KETO_LOG_INFO << "Stop has been called on the test module manager";
-    //EventRegistry::deregisterEventHandlers();
+    EventRegistry::deregisterEventHandlers();
     modules.clear();
     KETO_LOG_INFO << "The test module has been stopped";
     
