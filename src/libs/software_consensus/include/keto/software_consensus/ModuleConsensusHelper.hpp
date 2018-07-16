@@ -22,6 +22,8 @@
 
 #include "keto/obfuscate/MetaString.hpp"
 
+#include "keto/crypto/Containers.hpp"
+
 #include "keto/asn1/HashHelper.hpp"
 
 namespace keto {
@@ -46,8 +48,10 @@ public:
     ModuleConsensusHelper& setSeedHash(const keto::asn1::HashHelper& hashHelper);
     keto::asn1::HashHelper getSeedHash();
     ModuleConsensusHelper& setModuleHash(const std::vector<uint8_t>& moduleHash);
+    ModuleConsensusHelper& setModuleHash(const keto::crypto::SecureVector& moduleHash);
     ModuleConsensusHelper& setModuleHash(const keto::asn1::HashHelper& hashHelper);
     keto::asn1::HashHelper getModuleHash();
+    keto::crypto::SecureVector getModuleHash_lock();
     
     operator keto::proto::ModuleConsensusMessage();
     keto::proto::ModuleConsensusMessage getModuleConsensusMessage();

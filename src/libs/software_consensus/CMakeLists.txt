@@ -15,6 +15,7 @@ add_library( keto_software_consensus
               ConsensusHashScriptInfo.cpp
               ConsensusHashGenerator.cpp
               ModuleConsensusHelper.cpp
+              ModuleConsensusGenerator.cpp
 
              ${HEADERS}
            )

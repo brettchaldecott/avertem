@@ -66,6 +66,11 @@ ModuleConsensusHelper& ModuleConsensusHelper::setModuleHash(const std::vector<ui
     return *this;
 }
 
+ModuleConsensusHelper& ModuleConsensusHelper::setModuleHash(const keto::crypto::SecureVector& moduleHash) {
+    this->moduleConsensusMessage.set_module_hash(keto::crypto::SecureVectorUtils().copySecureToString(moduleHash));
+    return *this; 
+}
+
 ModuleConsensusHelper& ModuleConsensusHelper::setModuleHash(const keto::asn1::HashHelper& hashHelper) {
     this->moduleConsensusMessage.set_module_hash(
             keto::crypto::SecureVectorUtils().copySecureToString(
@@ -77,6 +82,11 @@ keto::asn1::HashHelper ModuleConsensusHelper::getModuleHash() {
     return keto::asn1::HashHelper(
             keto::crypto::SecureVectorUtils().copyStringToSecure(
             this->moduleConsensusMessage.module_hash()));
+}
+
+keto::crypto::SecureVector ModuleConsensusHelper::getModuleHash_lock() {
+    return keto::crypto::SecureVectorUtils().copyStringToSecure(
+            this->moduleConsensusMessage.module_hash());
 }
 
 ModuleConsensusHelper::operator keto::proto::ModuleConsensusMessage() {

@@ -16,6 +16,11 @@
 
 #include "keto/obfuscate/MetaString.hpp"
 
+#include "SoftwareConsensus.pb.h"
+
+#include "keto/software_consensus/ConsensusHashGenerator.hpp"
+#include "keto/software_consensus/ModuleConsensusHelper.hpp"
+
 namespace keto {
 namespace software_consensus {
 
@@ -29,6 +34,7 @@ public:
 
     
     ModuleConsensusGenerator(
+            const ConsensusHashGeneratorPtr& consensusHashGeneratorPtr,
             const keto::proto::ModuleConsensusMessage& moduleConsensusMessage);
     ModuleConsensusGenerator(const ModuleConsensusGenerator& orig) = default;
     virtual ~ModuleConsensusGenerator();
@@ -36,7 +42,8 @@ public:
     keto::proto::ModuleConsensusMessage generate();
     
 private:
-    keto::proto::ModuleConsensusMessage softwareConsensusMessage;
+    ConsensusHashGeneratorPtr consensusHashGeneratorPtr;
+    ModuleConsensusHelper moduleConsensusHelper;
 };
 
 

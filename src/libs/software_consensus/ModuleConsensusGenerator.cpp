@@ -12,6 +12,7 @@
  */
 
 #include "keto/software_consensus/ModuleConsensusGenerator.hpp"
+#include "include/keto/software_consensus/ModuleConsensusHelper.hpp"
 
 namespace keto {
 namespace software_consensus {
@@ -20,15 +21,21 @@ std::string ModuleConsensusGenerator::getSourceVersion() {
     return OBFUSCATED("$Id:$");
 }
     
-ModuleConsensusGenerator::ModuleConsensusGenerator(const keto::proto::ModuleConsensusMessage& 
-            softwareConsensusMessage) : softwareConsensusMessage(softwareConsensusMessage) {
+ModuleConsensusGenerator::ModuleConsensusGenerator(
+            const ConsensusHashGeneratorPtr& consensusHashGeneratorPtr,
+            const keto::proto::ModuleConsensusMessage& moduleConsensusMessage) 
+    : consensusHashGeneratorPtr(consensusHashGeneratorPtr),
+        moduleConsensusHelper(moduleConsensusMessage) {
 }
 
 ModuleConsensusGenerator::~ModuleConsensusGenerator() {
+    
 }
 
-keto::proto::SoftwareConsensusMessage ModuleConsensusGenerator::generate() {
-    return softwareConsensusMessage;
+keto::proto::ModuleConsensusMessage ModuleConsensusGenerator::generate() {
+    this->moduleConsensusHelper.setModuleHash(
+            consensusHashGeneratorPtr->generateHash(this->moduleConsensusHelper.getModuleHash_lock()));
+    return this->moduleConsensusHelper.getModuleConsensusMessage();
 }
 
 }
