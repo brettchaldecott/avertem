@@ -15,15 +15,20 @@
 
 #include "keto/common/Log.hpp"
 
+#include "keto/crypto/SecureVectorUtils.hpp"
+
 #include "keto/server_common/EventUtils.hpp"
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
-
+#include "keto/server_common/ServerInfo.hpp"
 
 #include "keto/software_consensus/Constants.hpp"
 #include "keto/software_consensus/ConsensusBuilder.hpp"
 #include "keto/software_consensus/ConsensusBuilder.hpp"
+#include "keto/software_consensus/ModuleConsensusHelper.hpp"
+
 #include "keto/server_common/ServerInfo.hpp"
+#include "include/keto/software_consensus/ModuleConsensusHelper.hpp"
 
 namespace keto {
 namespace software_consensus {
@@ -35,8 +40,8 @@ std::string ConsensusBuilder::getSourceVersion() {
 ConsensusBuilder::ConsensusBuilder(
         const ConsensusHashGeneratorPtr consensusHashGeneratorPtr,
         const std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr) : 
-    consensusMessageHelper(keyLoaderPtr) ,
-    consensusHashGeneratorPtr(consensusHashGeneratorPtr)
+    consensusHashGeneratorPtr(consensusHashGeneratorPtr),
+    keyLoaderPtr(keyLoaderPtr)
 {
     std::vector<uint8_t> accountHash = 
             keto::server_common::ServerInfo::getInstance()->getAccountHash();
@@ -48,22 +53,29 @@ ConsensusBuilder::~ConsensusBuilder() {
 }
 
 ConsensusBuilder& ConsensusBuilder::buildConsensus(const keto::asn1::HashHelper& previousHash) {
+    keto::software_consensus::SoftwareConsensusHelper softwareConsensusHelper;
+    
+    softwareConsensusHelper.setPreviousHash(previousHash);
+    
     keto::asn1::HashHelper seedHash(this->consensusHashGeneratorPtr->generateSeed(previousHash));
     
     //SoftwareConsensusHelper
-    
+    softwareConsensusHelper.setSeed(seedHash).
+        setAccount(keto::asn1::HashHelper(keto::crypto::SecureVectorUtils().copyToSecure(
+        keto::server_common::ServerInfo::getInstance()->getAccountHash()))).
+        setDate(keto::asn1::TimeHelper());
     for (std::string event : Constants::EVENT_ORDER) {
         try {
-            keto::proto::ModuleConsensusMessage consensusMessage;
-            
-            consensusMessage = 
+            keto::software_consensus::ModuleConsensusHelper moduleConsensusHelper;
+            moduleConsensusHelper.setSeedHash(seedHash);
+            keto::proto::ModuleConsensusMessage moduleeConsensusMessage = 
+                    moduleConsensusHelper.getModuleConsensusMessage();
+            keto::software_consensus::ModuleConsensusHelper moduleConsensusResult(
                 keto::server_common::fromEvent<keto::proto::ModuleConsensusMessage>(
                     keto::server_common::processEvent(
                     keto::server_common::toEvent<keto::proto::ModuleConsensusMessage>(
-                    event,consensusMessage)));
-            keto::asn1::HashHelper hashHelper;
-            //hashHelper = consensusMessage.encrypted_data_response();
-            //consensusMessageHelper.addSystemHash(hashHelper);
+                    event,moduleeConsensusMessage))));
+            softwareConsensusHelper.addSystemHash(moduleConsensusResult.getModuleHash());
         } catch (keto::common::Exception& ex) {
             KETO_LOG_ERROR << "Failed to process the event [" << event  << "] : " << ex.what();
             KETO_LOG_ERROR << "Cause: " << boost::diagnostic_information(ex,true);
@@ -77,8 +89,9 @@ ConsensusBuilder& ConsensusBuilder::buildConsensus(const keto::asn1::HashHelper&
             KETO_LOG_ERROR << "Failed to process the event [" << event << "]";
         }
     }
-    //consensusMessageHelper.generateMerkelRoot();
-    //consensusMessageHelper.sign();
+    softwareConsensusHelper.generateMerkelRoot();
+    softwareConsensusHelper.sign(this->keyLoaderPtr);
+    consensusMessageHelper.setMsg(softwareConsensusHelper);
     return *this;
 }
 

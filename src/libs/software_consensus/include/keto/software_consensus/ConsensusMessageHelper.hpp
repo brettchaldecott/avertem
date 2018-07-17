@@ -38,8 +38,7 @@ public:
     };
     static std::string getSourceVersion();
     
-    ConsensusMessageHelper(
-            const std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr);
+    ConsensusMessageHelper();
     ConsensusMessageHelper(
             const std::string& consensus);
     ConsensusMessageHelper(const ConsensusMessageHelper& orig) = default;
@@ -54,7 +53,6 @@ public:
     operator std::string();
     
 private:
-    std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr;
     keto::proto::ConsensusMessage consensusMessage;
     
     

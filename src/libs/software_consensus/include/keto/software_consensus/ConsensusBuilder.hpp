@@ -46,6 +46,7 @@ public:
 private:
     ConsensusMessageHelper consensusMessageHelper;
     ConsensusHashGeneratorPtr consensusHashGeneratorPtr;
+    std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr;
     
     
 };

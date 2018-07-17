@@ -30,8 +30,7 @@ std::string ConsensusMessageHelper::getSourceVersion() {
     return OBFUSCATED("$Id:$");
 }
 
-ConsensusMessageHelper::ConsensusMessageHelper(
-    const std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr) : keyLoaderPtr(keyLoaderPtr){
+ConsensusMessageHelper::ConsensusMessageHelper() {
     this->consensusMessage.set_version(1);
 }
 
