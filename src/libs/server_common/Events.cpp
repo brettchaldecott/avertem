@@ -66,5 +66,9 @@ const char* Events::CONSENSUS::ACCOUNT      = "CONSENSUS_ACCOUNT";
 const char* Events::CONSENSUS::RPC_CLIENT   = "CONSENSUS_RPC_CLIENT";
 const char* Events::CONSENSUS::RPC_SERVER   = "CONSENSUS_RPC_SERVER";
 
+
+const char* Events::GET_SOFTWARE_CONSENSUS_MESSAGE
+                                            = "GET_SOFTWARE_CONSENSUS_MESSAGE";
+
 }
 }

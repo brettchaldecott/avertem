@@ -1,5 +1,15 @@
 file(GLOB HEADERS "include/keto/rpc_server/*.hpp")
 
+SET(RPC_SERVER_MODULE_SIGNATURE_METHOD "getRpcServerModuleSignature")
+SET(RPC_SERVER_MODULE_SIGNATURE "this is a signature")
+SET(RPC_SERVER_MODULE_KEY_METHOD "getRpcClientModuleKey")
+SET(RPC_SERVER_MODULE_SIGNATURE "this is a key")
+SET(RPC_SERVER_SOURCE_VERSION_METHOD_MAP "getClientSourceVersionMap")
+SET(RPC_SERVER_CONSENSUS_HASH_SCRIPT_METHOD "getConsensusHashScriptConfig")
+
+configure_file(include/keto/rpc_server/RpcServerModuleManagerMisc.hpp.in include/keto/rpc_server/RpcServerModuleManagerMisc.hpp)
+
+
 find_package(OpenSSL REQUIRED)
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
@@ -18,6 +28,7 @@ add_library( 0030_keto_rpc_server_module
            )
 
 target_link_libraries( 0030_keto_rpc_server_module 
+                            PRIVATE keto_software_consensus
                             PRIVATE keto_transaction_common keto_server_common
                             PRIVATE keto_proto_environment ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_asn1_common keto_asn1_protocol

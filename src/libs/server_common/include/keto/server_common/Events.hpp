@@ -72,6 +72,9 @@ public:
         static const char* RPC_SERVER;
     };
     
+    static const char* GET_SOFTWARE_CONSENSUS_MESSAGE;
+    
+    
 private:
 
 };

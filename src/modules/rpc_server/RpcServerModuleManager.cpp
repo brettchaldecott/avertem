@@ -18,6 +18,7 @@
 #include "keto/common/Log.hpp"
 
 #include "keto/rpc_server/RpcServerModuleManager.hpp"
+#include "keto/rpc_server/RpcServerModuleManagerMisc.hpp"
 #include "keto/rpc_server/RpcServer.hpp"
 #include "keto/rpc_server/EventRegistry.hpp"
 #include "keto/rpc_server/RpcServerService.hpp"
@@ -29,6 +30,7 @@ namespace rpc_server {
 
 RpcServerModuleManager::RpcServerModuleManager() {
     this->rpcServerPtr = std::make_shared<RpcServer>();
+    this->consensusHashGeneratorPtr = getConsensusHash();
 }
 
 RpcServerModuleManager::~RpcServerModuleManager() {

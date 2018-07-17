@@ -22,6 +22,7 @@ add_library( 0060_keto_rpc_client_module
             RpcClientModule.cpp
             RpcSession.cpp
             RpcSessionManager.cpp
+            EventRegistry.cpp
 
              ${HEADERS}
            )

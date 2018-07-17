@@ -20,6 +20,7 @@
 #include "keto/rpc_client/RpcClientModuleManager.hpp"
 #include "keto/rpc_client/RpcClientModuleManagerMisc.hpp"
 #include "keto/rpc_client/RpcSessionManager.hpp"
+#include "keto/rpc_client/EventRegistry.hpp"
 #include "keto/common/MetaInfo.hpp"
 
 
@@ -51,12 +52,14 @@ const std::string RpcClientModuleManager::getVersion() const {
 // lifecycle methods
 void RpcClientModuleManager::start() {
     modules["RpcClientModule"] = std::make_shared<RpcClientModule>();
+    EventRegistry::registerEventHandlers();
     rpcSessionManager->start();
     KETO_LOG_INFO << "[RpcClientModuleManager] Started the RpcClientModuleManager";
 }
 
 void RpcClientModuleManager::postStart() {
     rpcSessionManager->postStart();
+    EventRegistry::deregisterEventHandlers();
     KETO_LOG_INFO << "[RpcClientModuleManager] Post Started the RpcClientModuleManager";
 }
 
