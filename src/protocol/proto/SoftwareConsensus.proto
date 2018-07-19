@@ -16,4 +16,10 @@ message ModuleSecretMessage {
     bytes secret = 2;
 }
 
+message ModuleSessionMessage {
+    uint32 version = 1;
+    bytes secret = 2;
+}
+
+
 

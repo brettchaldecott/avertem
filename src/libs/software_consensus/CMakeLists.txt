@@ -9,6 +9,7 @@ add_library( keto_software_consensus
               SoftwareMerkelUtils.cpp
 	      ConsensusBuilder.cpp
               ConsensusMessageHelper.cpp
+              ConsensusSessionManager.cpp
               Constants.cpp
               HashBuilder.cpp
               SoftwareConsensusHelper.cpp
@@ -16,6 +17,7 @@ add_library( keto_software_consensus
               ConsensusHashGenerator.cpp
               ModuleConsensusHelper.cpp
               ModuleConsensusGenerator.cpp
+              ModuleSessionMessageHelper.cpp
 
              ${HEADERS}
            )

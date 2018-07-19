@@ -70,6 +70,26 @@ public:
         static const char* ACCOUNT;
         static const char* RPC_CLIENT;
         static const char* RPC_SERVER;
+        static const char* CONSENSUS_QUERY;
+    };
+    
+    // consensus events
+    class CONSENSUS_SESSION {
+    public:
+        static const char* TEST;
+        static const char* TRANSACTION;
+        static const char* ROUTER;
+        static const char* HTTPD;
+        static const char* EVENT;
+        static const char* BLOCK;
+        static const char* SANBOX;
+        static const char* VERSION;
+        static const char* KEYSTORE;
+        static const char* BALANCER;
+        static const char* ACCOUNT;
+        static const char* RPC_CLIENT;
+        static const char* RPC_SERVER;
+        static const char* CONSENSUS_QUERY;
     };
     
     static const char* GET_SOFTWARE_CONSENSUS_MESSAGE;
