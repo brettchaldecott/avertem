@@ -11,10 +11,11 @@
  * Created on March 8, 2018, 3:15 AM
  */
 
-#include "keto/rpc_client/EventRegistry.hpp"
-
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
+
+#include "keto/consensus_module/EventRegistry.hpp"
+#include "keto/consensus_module/ConsensusServices.hpp"
 
 
 namespace keto {
@@ -29,19 +30,38 @@ EventRegistry::~EventRegistry() {
 
 
 void EventRegistry::registerEventHandlers() {
-    //keto::server_common::registerEventHandler (
-    //        keto::server_common::Events::RPC_SEND_MESSAGE,
-    //        &keto::rpc_server::EventRegistry::sendMessage);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::GET_SOFTWARE_CONSENSUS_MESSAGE,
+            &keto::consensus_module::EventRegistry::generateSoftwareConsensus);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::CONSENSUS::CONSENSUS_QUERY,
+            &keto::consensus_module::EventRegistry::generateSoftwareHash);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION::CONSENSUS_QUERY,
+            &keto::consensus_module::EventRegistry::setModuleSession);
 }
 
 void EventRegistry::deregisterEventHandlers() {
-    //keto::server_common::deregisterEventHandler (
-    //        keto::server_common::Events::RPC_SEND_MESSAGE);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::GET_SOFTWARE_CONSENSUS_MESSAGE);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::CONSENSUS::CONSENSUS_QUERY);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION::CONSENSUS_QUERY);
 }
 
-keto::event::Event EventRegistry::sendMessage(const keto::event::Event& event) {
-    //return RpcServerService::getInstance()->sendMessage(event);
+keto::event::Event EventRegistry::generateSoftwareConsensus(const keto::event::Event& event) {
+    return ConsensusServices::getInstance()->generateSoftwareConsensus(event);
 }
+
+keto::event::Event EventRegistry::generateSoftwareHash(const keto::event::Event& event) {
+    return ConsensusServices::getInstance()->generateSoftwareHash(event);
+}
+
+keto::event::Event EventRegistry::setModuleSession(const keto::event::Event& event) {
+    return ConsensusServices::getInstance()->setModuleSession(event);
+}
+
 
 }
 }

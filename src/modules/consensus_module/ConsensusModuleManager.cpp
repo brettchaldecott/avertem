@@ -19,6 +19,10 @@
 #include "keto/common/MetaInfo.hpp"
 
 #include "keto/consensus_module/ConsensusModuleManager.hpp"
+#include "keto/consensus_module/ConsensusModuleManagerMisc.hpp"
+#include "keto/consensus_module/ConsensusServices.hpp"
+#include "include/keto/consensus_module/ConsensusServices.hpp"
+#include "include/keto/consensus_module/EventRegistry.hpp"
 
 namespace keto {
 namespace consensus_module {
@@ -46,11 +50,15 @@ const std::string ConsensusModuleManager::getVersion() const {
 // lifecycle methods
 void ConsensusModuleManager::start() {
     modules["ConsensusModule"] = std::make_shared<ConsensusModule>();
+    ConsensusServices::init(getConsensusSeedHash(),getConsensusModuleHash());
+    EventRegistry::registerEventHandlers();
     KETO_LOG_INFO << "[ConsensusModuleManager] Started the ConsensusModule";
 
 }
 
 void ConsensusModuleManager::stop() {
+    EventRegistry::deregisterEventHandlers();
+    ConsensusServices::fin();
     modules.clear();
     KETO_LOG_INFO << "[ConsensusModuleManager] The ConsensusModuleManager is being stopped";
 }

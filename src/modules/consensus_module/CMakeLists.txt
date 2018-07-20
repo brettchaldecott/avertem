@@ -1,11 +1,23 @@
 file(GLOB HEADERS "include/keto/consensus_module/*.hpp")
 
+SET(CONSENSUS_MODULE_SIGNATURE_METHOD "getConsensusModuleSignature")
+SET(CONSENSUS_MODULE_SIGNATURE "this is a signature")
+SET(CONSENSUS_MODULE_KEY_METHOD "getConsensusModuleKey")
+SET(CONSENSUS_MODULE_SIGNATURE "this is a key")
+SET(CONSENSUS_SOURCE_VERSION_METHOD_MAP "getClientSourceVersionMap")
+SET(CONSENSUS_CONSENSUS_HASH_SCRIPT_METHOD "getConsensusHashScriptConfig")
+
+configure_file(include/keto/consensus_module/ConsensusModuleManagerMisc.hpp.in include/keto/consensus_module/ConsensusModuleManagerMisc.hpp)
+
+
 ## SORT .cpp by most likely to change / break compile
 add_library( 0100_keto_consensus_module
             SHARED
 
             ConsensusModuleManager.cpp
             ConsensusModule.cpp
+            ConsensusServices.cpp
+            EventRegistry.cpp
 
              ${HEADERS}
            )

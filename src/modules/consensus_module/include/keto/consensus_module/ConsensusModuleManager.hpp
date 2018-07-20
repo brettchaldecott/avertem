@@ -20,6 +20,8 @@
 
 #include "keto/module/ModuleManagementInterface.hpp"
 
+#include "keto/software_consensus/ConsensusHashGenerator.hpp"
+
 #include "keto/consensus_module/ConsensusModule.hpp"
 
 
@@ -51,6 +53,9 @@ public:
     
 private:
     std::map<std::string,std::shared_ptr<keto::module::ModuleInterface>> modules;
+    
+    keto::software_consensus::ConsensusHashGeneratorPtr getConsensusSeedHash();
+    keto::software_consensus::ConsensusHashGeneratorPtr getConsensusModuleHash();
 };
 
 }
