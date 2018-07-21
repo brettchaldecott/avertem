@@ -59,7 +59,7 @@ keto::software_consensus::ConsensusHashGeneratorPtr ConsensusModuleManager::getC
     return consensusHashGenerator;
 }
 
-keto::software_consensus::ConsensusHashGeneratorPtr getConsensusModuleHash() {
+keto::software_consensus::ConsensusHashGeneratorPtr ConsensusModuleManager::getConsensusModuleHash() {
 
     keto::software_consensus::SourceVersionMap sourceVersionMap = ${CONSENSUS_SOURCE_VERSION_METHOD_MAP}();
 
