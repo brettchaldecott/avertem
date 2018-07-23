@@ -30,6 +30,9 @@ public:
     static keto::event::Event sparqlQuery(const keto::event::Event& event);
     static keto::event::Event getContract(const keto::event::Event& event);
     
+    static keto::event::Event generateSoftwareHash(const keto::event::Event& event);
+    static keto::event::Event setModuleSession(const keto::event::Event& event);
+    
     static void registerEventHandlers();
     static void deregisterEventHandlers();
 private:

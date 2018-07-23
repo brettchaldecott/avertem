@@ -18,10 +18,12 @@
 
 #include "keto/common/Log.hpp"
 #include "keto/account/AccountModuleManager.hpp"
+#include "keto/account/AccountModuleManagerMisc.hpp"
 #include "keto/account/AccountModule.hpp"
 #include "keto/account/StorageManager.hpp"
 #include "keto/account/AccountService.hpp"
 #include "keto/account/EventRegistry.hpp"
+#include "include/keto/account/ConsensusService.hpp"
 
 
 namespace keto {
@@ -51,6 +53,7 @@ const std::string AccountModuleManager::getVersion() const {
 void AccountModuleManager::start() {
     StorageManager::init();
     AccountService::init();
+    ConsensusService::init(this->getConsensusHash());
     modules["accountModule"] = std::make_shared<AccountModule>();
     EventRegistry::registerEventHandlers();
     KETO_LOG_INFO << "[AccountModuleManager] Started the AccountModuleManager";
@@ -59,6 +62,7 @@ void AccountModuleManager::start() {
 void AccountModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
     modules.clear();
+    ConsensusService::fin();
     AccountService::fin();
     StorageManager::fin();
     KETO_LOG_INFO << "[AccountModuleManager] The AccountModuleManager is being stopped";

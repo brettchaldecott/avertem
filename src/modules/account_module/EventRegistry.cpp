@@ -18,7 +18,8 @@
 
 
 #include "keto/account/AccountService.hpp"
-#include "include/keto/account/AccountService.hpp"
+#include "keto/account/ConsensusService.hpp"
+#include "include/keto/account/ConsensusService.hpp"
 
 namespace keto {
 namespace account {
@@ -43,6 +44,14 @@ keto::event::Event EventRegistry::sparqlQuery(const keto::event::Event& event) {
 
 keto::event::Event EventRegistry::getContract(const keto::event::Event& event) {
     return AccountService::getInstance()->getContract(event);
+}
+
+keto::event::Event EventRegistry::generateSoftwareHash(const keto::event::Event& event) {
+    return ConsensusService::getInstance()->generateSoftwareHash(event);
+}
+
+keto::event::Event EventRegistry::setModuleSession(const keto::event::Event& event) {
+    return ConsensusService::getInstance()->setModuleSession(event);
 }
 
 void EventRegistry::registerEventHandlers() {

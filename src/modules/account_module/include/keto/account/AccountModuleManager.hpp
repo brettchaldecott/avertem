@@ -18,7 +18,10 @@
 #include <map>
 #include <memory>
 
+#include "keto/software_consensus/ConsensusHashGenerator.hpp"
+
 #include "keto/module/ModuleManagementInterface.hpp"
+
 
 namespace keto {
 namespace account {
@@ -45,6 +48,8 @@ public:
 
 private:
     std::map<std::string,std::shared_ptr<keto::module::ModuleInterface>> modules;
+    
+    keto::software_consensus::ConsensusHashGeneratorPtr getConsensusHash();
 };
 
 

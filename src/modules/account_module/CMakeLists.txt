@@ -1,5 +1,15 @@
 file(GLOB HEADERS "include/keto/account/*.hpp")
 
+SET(ACCOUNT_MODULE_SIGNATURE_METHOD "getAccountServerModuleSignature")
+SET(ACCOUNT_MODULE_SIGNATURE "this is a signature")
+SET(ACCOUNT_MODULE_KEY_METHOD "getAccountModuleKey")
+SET(ACCOUNT_MODULE_SIGNATURE "this is a key")
+SET(ACCOUNT_MODULE_SOURCE_VERSION_METHOD_MAP "getClientSourceVersionMap")
+SET(ACCOUNT_MODULE_CONSENSUS_HASH_SCRIPT_METHOD "getConsensusHashScriptConfig")
+
+configure_file(include/keto/account/AccountModuleManagerMisc.hpp.in include/keto/account/AccountModuleManagerMisc.hpp)
+
+
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
 ## SORT .cpp by most likely to change / break compile
@@ -10,6 +20,7 @@ add_library( 0015_account_module
             AccountModuleManager.cpp
             AccountModule.cpp
             AccountService.cpp
+            ConsensusService.cpp
             EventRegistry.cpp
 
              ${HEADERS}
@@ -17,6 +28,7 @@ add_library( 0015_account_module
 
 target_link_libraries( 0015_account_module 
                             PRIVATE keto_account_db keto_rocks_db keto_transaction_common 
+                            PRIVATE keto_software_consensus
                             PRIVATE keto_server_common keto_asn1_common keto_asn1_protocol
                             PRIVATE keto_proto_environment ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
