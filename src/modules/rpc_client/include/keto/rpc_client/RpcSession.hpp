@@ -95,7 +95,9 @@ private:
     std::string buildMessage(const std::string& command, const std::string& message);
     
     // response handling
+    void helloResponse(const std::string& command, const std::string& sessionKey, const std::string& initHash);
     void closeResponse(const std::string& command, const std::string& message);
+    void consensusSessionResponse(const std::string& command, const std::string& sessionKey);
     void consensusResponse(const std::string& command, const std::string& message);
     
 };

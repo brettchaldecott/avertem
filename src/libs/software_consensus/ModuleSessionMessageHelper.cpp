@@ -11,6 +11,9 @@
  * Created on July 19, 2018, 6:30 AM
  */
 
+
+#include "SoftwareConsensus.pb.h"
+
 #include "keto/common/MetaInfo.hpp"
 
 #include "keto/software_consensus/ModuleSessionMessageHelper.hpp"

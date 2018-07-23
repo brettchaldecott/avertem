@@ -18,6 +18,7 @@ add_library( keto_software_consensus
               ModuleConsensusHelper.cpp
               ModuleConsensusGenerator.cpp
               ModuleSessionMessageHelper.cpp
+              ModuleHashMessageHelper.cpp
 
              ${HEADERS}
            )

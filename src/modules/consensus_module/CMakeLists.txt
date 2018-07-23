@@ -9,6 +9,7 @@ SET(CONSENSUS_CONSENSUS_HASH_SCRIPT_METHOD "getConsensusHashScriptConfig")
 
 configure_file(include/keto/consensus_module/ConsensusModuleManagerMisc.hpp.in include/keto/consensus_module/ConsensusModuleManagerMisc.hpp)
 
+include_directories(${PROTOBUF_INCLUDE_DIR})
 
 ## SORT .cpp by most likely to change / break compile
 add_library( 0100_keto_consensus_module
@@ -28,7 +29,7 @@ target_link_libraries( 0100_keto_consensus_module
                             PRIVATE keto_proto_environment ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_asn1_common keto_asn1_protocol
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
-                            PRIVATE ${OPENSSL_LIBRARIES})
+                            PRIVATE ${OPENSSL_LIBRARIES} )
 target_include_directories( 0100_keto_consensus_module
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/common/include"
@@ -37,6 +38,7 @@ target_include_directories( 0100_keto_consensus_module
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/module_manager/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/event_service_api/include"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/libs/common/include/"
+                            PUBLIC "${PROTO_HDRS}"
 
                             ${Boost_INCLUDE_DIRS}
                             )

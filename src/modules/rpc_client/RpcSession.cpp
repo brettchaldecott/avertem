@@ -15,6 +15,8 @@
 #include <string>
 #include <sstream>
 
+#include <botan/hex.h>
+#include <botan/base64.h>
 
 #include <boost/algorithm/string.hpp>
 
@@ -23,10 +25,12 @@
 #include "keto/environment/EnvironmentManager.hpp"
 #include "keto/environment/Config.hpp"
 
+#include "keto/ssl/RootCertificate.hpp"
 #include "keto/server_common/Constants.hpp"
 #include "keto/server_common/ServerInfo.hpp"
-#include "keto/ssl/RootCertificate.hpp"
 #include "keto/server_common/StringUtils.hpp"
+#include "keto/server_common/Events.hpp"
+#include "keto/server_common/EventServiceHelpers.hpp"
 
 #include "keto/rpc_client/RpcSession.hpp"
 #include "keto/rpc_client/Constants.hpp"
@@ -35,6 +39,9 @@
 #include "keto/rpc_protocol/ServerHelloProtoHelper.hpp"
 
 #include "keto/software_consensus/ConsensusBuilder.hpp"
+#include "keto/software_consensus/ConsensusSessionManager.hpp"
+#include "keto/software_consensus/ModuleConsensusHelper.hpp"
+#include "keto/software_consensus/ModuleHashMessageHelper.hpp"
 
 namespace keto {
 namespace rpc_client {
@@ -207,22 +214,19 @@ RpcSession::on_read(
     keto::server_common::StringVector stringVector = keto::server_common::StringUtils(data).tokenize(" ");
     
     std::string command = stringVector[0];
-    std::string payload;
-    if (stringVector.size() == 2) {
-        payload = stringVector[1];
-    }
     
     
     // Close the WebSocket connection
     if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO) == 0) {
-        
-        
+        helloResponse(command,stringVector[1],stringVector[2]);
     } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PEERS) == 0) {
         
     } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
         
+    } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS_SESSION) == 0) {
+        consensusSessionResponse(command,stringVector[1]);
     } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS) == 0) {
-        consensusResponse(command,payload);
+        consensusResponse(command,stringVector[1]);
     } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ROUTE) == 0) {
         
     } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ROUTE_UPDATE) == 0) {
@@ -230,7 +234,7 @@ RpcSession::on_read(
     } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::SERVICES) == 0) {
         
     } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLOSE) == 0) {
-        closeResponse(command,payload);
+        closeResponse(command,stringVector[1]);
     }
     
     // Read a message into our buffer
@@ -267,11 +271,17 @@ std::string RpcSession::buildHeloMessage() {
 }
 
 std::string RpcSession::buildConsensus(const keto::asn1::HashHelper& hashHelper) {
-    
-    return keto::software_consensus::ConsensusBuilder(
-            this->consensusHashGeneratorPtr,
-            this->keyLoaderPtr).
-            buildConsensus(hashHelper).getConsensus();
+    keto::software_consensus::ModuleHashMessageHelper moduleHashMessageHelper;
+    moduleHashMessageHelper.setHash(hashHelper.operator keto::crypto::SecureVector());
+    keto::proto::ModuleHashMessage moduleHashMessage = moduleHashMessageHelper.getModuleHashMessage();
+    keto::proto::ConsensusMessage consensusMessage =
+            keto::server_common::fromEvent<keto::proto::ConsensusMessage>(
+                    keto::server_common::processEvent(
+                    keto::server_common::toEvent<keto::proto::ModuleHashMessage>(
+                    keto::server_common::Events::GET_SOFTWARE_CONSENSUS_MESSAGE,moduleHashMessage)));
+    std::string result;
+    consensusMessage.SerializePartialToString(&result);
+    return result;
 }
 
 std::string RpcSession::buildMessage(const std::string& command, const std::string& message) {
@@ -289,6 +299,33 @@ void RpcSession::closeResponse(const std::string& command, const std::string& me
                 &RpcSession::on_close,
                 shared_from_this(),
                 std::placeholders::_1));
+}
+
+void RpcSession::helloResponse(const std::string& command, const std::string& sessionKey, const std::string& initHash) {
+    keto::asn1::HashHelper initHashHelper(initHash,keto::common::StringEncoding::HEX);
+    keto::crypto::SecureVector initVector = Botan::hex_decode_locked(sessionKey,true);
+    keto::software_consensus::ConsensusSessionManager().updateSessionKey(initVector);
+    ws_.async_write(
+        boost::asio::buffer(
+            buildMessage(keto::server_common::Constants::RPC_COMMANDS::HELLO,buildConsensus(initHashHelper))),
+        std::bind(
+            &RpcSession::on_write,
+            shared_from_this(),
+            std::placeholders::_1,
+            std::placeholders::_2));
+}
+
+void RpcSession::consensusSessionResponse(const std::string& command, const std::string& sessionKey) {
+    keto::crypto::SecureVector initVector = Botan::hex_decode_locked(sessionKey,true);
+    keto::software_consensus::ConsensusSessionManager().updateSessionKey(initVector);
+    ws_.async_write(
+        boost::asio::buffer(
+            buildMessage(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS_SESSION,"OK")),
+        std::bind(
+            &RpcSession::on_write,
+            shared_from_this(),
+            std::placeholders::_1,
+            std::placeholders::_2));
 }
 
 void RpcSession::consensusResponse(const std::string& command, const std::string& message) {

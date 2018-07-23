@@ -2,6 +2,13 @@ syntax = "proto3";
 
 package keto.proto;
 
+
+message ModuleHashMessage {
+    uint32 version = 1;
+    bytes hash = 2;
+}
+
+
 /**
  * This is an example of a protobuf message.
  */

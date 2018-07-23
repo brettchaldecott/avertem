@@ -17,6 +17,8 @@
 #include <string>
 #include <memory>
 
+#include "keto/crypto/KeyLoader.hpp"
+
 #include "keto/event/Event.hpp"
 
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
@@ -45,6 +47,8 @@ public:
     keto::event::Event setModuleSession(const keto::event::Event& event);
     
 private:
+    keto::crypto::KeyLoaderPtr keyLoaderPtr;
+    
     keto::software_consensus::ConsensusHashGeneratorPtr seedHashGenerator;
     keto::software_consensus::ConsensusHashGeneratorPtr moduleHashGenerator;
     

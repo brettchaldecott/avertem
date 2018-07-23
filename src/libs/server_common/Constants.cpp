@@ -40,6 +40,7 @@ const char* Constants::ACCOUNT_ACTIONS::CREDIT     = "credit";
 const char* Constants::RPC_COMMANDS::HELLO = "HELLO";
 const char* Constants::RPC_COMMANDS::PEERS = "PEERS";
 const char* Constants::RPC_COMMANDS::TRANSACTION = "TRANSACTION";
+const char* Constants::RPC_COMMANDS::CONSENSUS_SESSION = "CONSENSUS_SESSION";
 const char* Constants::RPC_COMMANDS::CONSENSUS = "CONSENSUS";
 const char* Constants::RPC_COMMANDS::ROUTE = "ROUTE";
 const char* Constants::RPC_COMMANDS::ROUTE_UPDATE = "ROUTE_UPDATE";
