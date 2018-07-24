@@ -18,6 +18,7 @@
 #include "keto/common/Log.hpp"
 #include "keto/common/MetaInfo.hpp"
 #include "keto/block/BlockModuleManager.hpp"
+#include "keto/block/BlockModuleManagerMisc.hpp"
 #include "keto/block/StorageManager.hpp"
 
 #include "keto/transaction/Transaction.hpp"
@@ -28,8 +29,8 @@
 #include "keto/block/EventRegistry.hpp"
 #include "keto/block/TransactionProcessor.hpp"
 #include "keto/block/BlockProducer.hpp"
-#include "include/keto/block/BlockProducer.hpp"
-
+#include "keto/block/ConsensusService.hpp"
+#include "include/keto/block/ConsensusService.hpp"
 
 namespace keto {
 namespace block {
@@ -60,6 +61,7 @@ void BlockModuleManager::start() {
     StorageManager::init();
     modules["blockModule"] = std::make_shared<BlockModule>();
     BlockService::init();
+    ConsensusService::init(getConsensusHash());
     EventRegistry::registerEventHandlers();
     KETO_LOG_INFO << "[BlockModuleManager] Started the BlockModuleManager";
 }
@@ -77,6 +79,7 @@ void BlockModuleManager::postStart() {
 
 void BlockModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
+    ConsensusService::fin();
     BlockService::fin();
     modules.clear();
     TransactionProcessor::fin();

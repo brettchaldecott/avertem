@@ -21,6 +21,8 @@
 #include "keto/module/ModuleManagementInterface.hpp"
 #include "keto/block/BlockModule.hpp"
 
+#include "keto/software_consensus/ConsensusHashGenerator.hpp"
+
 namespace keto {
 namespace block {
 
@@ -50,6 +52,7 @@ private:
     
     std::map<std::string,std::shared_ptr<keto::module::ModuleInterface>> modules;
     
+    keto::software_consensus::ConsensusHashGeneratorPtr getConsensusHash();
 
 };
 

@@ -17,6 +17,8 @@
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
 
+#include "keto/block/ConsensusService.hpp"
+
 namespace keto {
 namespace block {
 
@@ -32,9 +34,19 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::BLOCK_MESSAGE,
             &keto::block::EventRegistry::blockMessage);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::CONSENSUS::BLOCK,
+            &keto::block::EventRegistry::generateSoftwareHash);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION::BLOCK,
+            &keto::block::EventRegistry::setModuleSession);
 }
 
 void EventRegistry::deregisterEventHandlers() {
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::CONSENSUS::BLOCK);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION::BLOCK);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::BLOCK_MESSAGE);
     
@@ -42,6 +54,15 @@ void EventRegistry::deregisterEventHandlers() {
 
 keto::event::Event EventRegistry::blockMessage(const keto::event::Event& event) {
     return BlockService::getInstance()->blockMessage(event);
+}
+
+
+keto::event::Event EventRegistry::generateSoftwareHash(const keto::event::Event& event) {
+    return ConsensusService::getInstance()->generateSoftwareHash(event);
+}
+
+keto::event::Event EventRegistry::setModuleSession(const keto::event::Event& event) {
+    return ConsensusService::getInstance()->setModuleSession(event);
 }
 
 

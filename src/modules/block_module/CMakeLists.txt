@@ -1,5 +1,14 @@
 file(GLOB HEADERS "include/keto/block/*.hpp")
 
+SET(BLOCK_MODULE_SIGNATURE_METHOD "getBlockServerModuleSignature")
+SET(BLOCK_MODULE_SIGNATURE "this is a signature")
+SET(BLOCK_MODULE_KEY_METHOD "getBlockModuleKey")
+SET(BLOCK_MODULE_SIGNATURE "this is a key")
+SET(BLOCK_MODULE_SOURCE_VERSION_METHOD_MAP "getClientSourceVersionMap")
+SET(BLOCK_MODULE_CONSENSUS_HASH_SCRIPT_METHOD "getConsensusHashScriptConfig")
+
+configure_file(include/keto/block/BlockModuleManagerMisc.hpp.in include/keto/block/BlockModuleManagerMisc.hpp)
+
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
 ## SORT .cpp by most likely to change / break compile
@@ -16,11 +25,13 @@ add_library( 0020_keto_block_module
             GenesisLoader.cpp
             BlockProducer.cpp
             TransactionProcessor.cpp
+            ConsensusService.cpp
 
              ${HEADERS}
            )
 
 target_link_libraries( 0020_keto_block_module
+                            PRIVATE keto_software_consensus
                             PRIVATE keto_block_db keto_chain_common keto_rocks_db
                             PRIVATE keto_server_common keto_asn1_common keto_asn1_protocol
                             PRIVATE keto_transaction_common keto_proto_environment ${PROTOBUF_LIBRARIES}
