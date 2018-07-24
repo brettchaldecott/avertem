@@ -67,9 +67,19 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::GET_CONTRACT,
             &keto::account::EventRegistry::getContract);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::CONSENSUS::ACCOUNT,
+            &keto::account::EventRegistry::generateSoftwareHash);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION::ACCOUNT,
+            &keto::account::EventRegistry::setModuleSession);
 }
 
 void EventRegistry::deregisterEventHandlers() {
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION::ACCOUNT);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::CONSENSUS::ACCOUNT);
     keto::server_common::deregisterEventHandler(
             keto::server_common::Events::GET_CONTRACT);
     keto::server_common::deregisterEventHandler(

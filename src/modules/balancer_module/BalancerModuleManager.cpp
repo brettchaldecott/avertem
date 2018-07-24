@@ -18,14 +18,17 @@
 #include "keto/common/Log.hpp"
 #include "keto/common/MetaInfo.hpp"
 #include "keto/balancer/BalancerModuleManager.hpp"
+#include "keto/balancer/BalancerModuleManagerMisc.hpp"
 #include "keto/balancer/BalancerService.hpp"
 #include "keto/balancer/EventRegistry.hpp"
 #include "keto/balancer/BlockRouting.hpp"
 #include "keto/balancer/TransactionCache.hpp"
+#include "keto/balancer/ConsensusService.hpp"
 #include "keto/server_common/ServiceRegistryHelper.hpp"
 #include "keto/server_common/Constants.hpp"
 #include "include/keto/balancer/BlockRouting.hpp"
 #include "include/keto/balancer/TransactionCache.hpp"
+#include "include/keto/balancer/ConsensusService.hpp"
 
 namespace keto {
 namespace balancer {
@@ -57,12 +60,14 @@ void BalancerModuleManager::start() {
     BalancerService::init();
     BlockRouting::init();
     TransactionCache::init();
+    ConsensusService::init(getConsensusHash());
     EventRegistry::registerEventHandlers();
     KETO_LOG_INFO << "[BalancerModuleManager] Started the BalancerModuleManager";
 }
 
 void BalancerModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
+    ConsensusService::fin();
     TransactionCache::fin();
     BlockRouting::fin();
     BalancerService::fin();

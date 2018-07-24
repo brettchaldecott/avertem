@@ -21,6 +21,8 @@
 #include "keto/module/ModuleManagementInterface.hpp"
 #include "keto/balancer/BalancerModule.hpp"
 
+#include "keto/software_consensus/ConsensusHashGenerator.hpp"
+
 
 namespace keto {
 namespace balancer {
@@ -50,6 +52,7 @@ public:
 private:
     std::map<std::string,std::shared_ptr<keto::module::ModuleInterface>> modules;
     
+    keto::software_consensus::ConsensusHashGeneratorPtr getConsensusHash();
 };
 
 

@@ -13,6 +13,7 @@
 
 #include "keto/balancer/EventRegistry.hpp"
 #include "keto/balancer/BalancerService.hpp"
+#include "keto/balancer/ConsensusService.hpp"
 
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
@@ -33,9 +34,21 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::BALANCER_MESSAGE,
             &keto::balancer::EventRegistry::balanceMessage);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::CONSENSUS::BALANCER,
+            &keto::balancer::EventRegistry::generateSoftwareHash);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION::BALANCER,
+            &keto::balancer::EventRegistry::setModuleSession);
+    
 }
 
 void EventRegistry::deregisterEventHandlers() {
+    
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::CONSENSUS::BALANCER);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION::BALANCER);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::BALANCER_MESSAGE);
 }
@@ -43,6 +56,15 @@ void EventRegistry::deregisterEventHandlers() {
 keto::event::Event EventRegistry::balanceMessage(const keto::event::Event& event) {
     return BalancerService::getInstance()->balanceMessage(event);
 }
+
+keto::event::Event EventRegistry::generateSoftwareHash(const keto::event::Event& event) {
+    return ConsensusService::getInstance()->generateSoftwareHash(event);
+}
+
+keto::event::Event EventRegistry::setModuleSession(const keto::event::Event& event) {
+    return ConsensusService::getInstance()->setModuleSession(event);
+}
+
 
 }
 }
