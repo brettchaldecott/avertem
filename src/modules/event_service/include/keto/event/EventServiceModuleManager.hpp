@@ -17,6 +17,8 @@
 #include "keto/event/EventServiceInterface.hpp"
 #include "keto/module/ModuleManagementInterface.hpp"
 
+#include "keto/software_consensus/ConsensusHashGenerator.hpp"
+
 namespace keto {
 namespace event {
         
@@ -34,6 +36,7 @@ public:
     
     // lifecycle methods
     virtual void start();
+    virtual void postStart();
     virtual void stop();
     
     virtual const std::vector<std::string> listModules();
@@ -43,6 +46,8 @@ public:
     
 private:
     std::map<std::string,std::shared_ptr<keto::module::ModuleInterface>> modules;
+    
+    keto::software_consensus::ConsensusHashGeneratorPtr getConsensusHash();
 };
 
 

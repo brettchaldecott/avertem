@@ -1,5 +1,16 @@
 file(GLOB HEADERS "include/keto/event/*.hpp")
 
+SET(EVENT_MODULE_SIGNATURE_METHOD "getEventServerModuleSignature")
+SET(EVENT_MODULE_SIGNATURE "this is a signature")
+SET(EVENT_MODULE_KEY_METHOD "getEventModuleKey")
+SET(EVENT_MODULE_SIGNATURE "this is a key")
+SET(EVENT_MODULE_SOURCE_VERSION_METHOD_MAP "getClientSourceVersionMap")
+SET(EVENT_MODULE_CONSENSUS_HASH_SCRIPT_METHOD "getConsensusHashScriptConfig")
+
+configure_file(include/keto/event/EventServiceModuleManagerMisc.hpp.in include/keto/event/EventServiceModuleManagerMisc.hpp)
+
+include_directories(${PROTOBUF_INCLUDE_DIR})
+
 
 ## SORT .cpp by most likely to change / break compile
 add_library( 0001_keto_event_service_module
@@ -7,11 +18,18 @@ add_library( 0001_keto_event_service_module
 
             EventServiceModuleManager.cpp
             EventServiceModule.cpp
-
+            ConsensusService.cpp
+            EventRegistry.cpp
              ${HEADERS}
            )
 
-target_link_libraries( 0001_keto_event_service_module )
+target_link_libraries( 0001_keto_event_service_module 
+                            PRIVATE keto_software_consensus
+                            PRIVATE keto_server_common keto_asn1_common keto_asn1_protocol
+                            PRIVATE keto_proto_environment ${PROTOBUF_LIBRARIES}
+                            PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
+                            PRIVATE ${ROCKSDB_LIBRARY} ${ROCKSDB_EXTRA_LIBRARY} ${ROCKSDB_SNAPPY_LIBRARY}
+                            PRIVATE ${OPENSSL_LIBRARIES})
 target_include_directories( 0001_keto_event_service_module
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/common/include"

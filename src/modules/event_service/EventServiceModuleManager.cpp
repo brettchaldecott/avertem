@@ -16,10 +16,14 @@
 #include <boost/shared_ptr.hpp>
 
 #include "keto/event/EventServiceModuleManager.hpp"
+#include "keto/event/EventServiceModuleManagerMisc.hpp"
 #include "keto/event/EventServiceModule.hpp"
+#include "keto/event/EventRegistry.hpp"
+#include "keto/event/ConsensusService.hpp"
 #include "keto/common/MetaInfo.hpp"
 
 #include "keto/common/Log.hpp"
+#include "include/keto/event/ConsensusService.hpp"
 
 
 namespace keto {
@@ -46,14 +50,21 @@ const std::string EventServiceModuleManager::getVersion() const {
 
 // lifecycle methods
 void EventServiceModuleManager::start() {
+    ConsensusService::init(getConsensusHash());
     modules[keto::event::EventServiceInterface::KETO_EVENT_SERVICE_MODULE] = 
             std::make_shared<EventServiceModule>();
     KETO_LOG_INFO << "[EventService] The event service has been started";
     
 }
 
+void EventServiceModuleManager::postStart() {
+    EventRegistry::registerEventHandlers();
+    KETO_LOG_INFO << "[EventService] The event service has been started";
+}
+
 void EventServiceModuleManager::stop() {
     modules.clear();
+    ConsensusService::fin();
     KETO_LOG_INFO << "[EventService] The event service is being stopped";
 }
 
