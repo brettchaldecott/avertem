@@ -13,9 +13,11 @@
 
 #include "keto/router/EventRegistry.hpp"
 #include "keto/router/RouterService.hpp"
+#include "keto/router/ConsensusService.hpp"
 
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
+#include "include/keto/router/ConsensusService.hpp"
 
 
 namespace keto {
@@ -42,6 +44,14 @@ keto::event::Event EventRegistry::registerService(const keto::event::Event& even
     return RouterService::getInstance()->registerService(event);
 }
 
+keto::event::Event EventRegistry::generateSoftwareHash(const keto::event::Event& event) {
+    return ConsensusService::getInstance()->generateSoftwareHash(event);
+}
+
+keto::event::Event EventRegistry::setModuleSession(const keto::event::Event& event) {
+    return ConsensusService::getInstance()->setModuleSession(event);
+}
+
 
 
 void EventRegistry::registerEventHandlers() {
@@ -54,9 +64,19 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::REGISTER_SERVICE_MESSAGE,
             &keto::router::EventRegistry::registerService);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::CONSENSUS::ROUTER,
+            &keto::router::EventRegistry::generateSoftwareHash);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION::ROUTER,
+            &keto::router::EventRegistry::setModuleSession);
 }
 
 void EventRegistry::deregisterEventHandlers() {
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::CONSENSUS::ROUTER);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION::ROUTER);
     keto::server_common::deregisterEventHandler(keto::server_common::Events::REGISTER_SERVICE_MESSAGE);
     keto::server_common::deregisterEventHandler(keto::server_common::Events::UPDATE_STATUS_ROUTE_MESSSAGE);
     keto::server_common::deregisterEventHandler(keto::server_common::Events::ROUTE_MESSAGE);

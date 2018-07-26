@@ -18,6 +18,8 @@
 #include "keto/common/Log.hpp"
 #include "keto/common/MetaInfo.hpp"
 #include "keto/router/RouterModuleManager.hpp"
+#include "keto/router/RouterModuleManagerMisc.hpp"
+#include "keto/router/ConsensusService.hpp"
 #include "keto/router/RouterService.hpp"
 #include "keto/router/RouterRegistry.hpp"
 #include "keto/router/EventRegistry.hpp"
@@ -55,6 +57,7 @@ void RouterModuleManager::start() {
     RouterRegistry::init();
     StorageManager::init();
     RouterService::init();
+    ConsensusService::init(getConsensusHash());
     modules["routerModule"] = std::make_shared<RouterModule>();
     EventRegistry::registerEventHandlers();
     KETO_LOG_INFO << "[RouterModuleManager] Started the RouterModuleManager";
@@ -64,6 +67,7 @@ void RouterModuleManager::start() {
 void RouterModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
     modules.clear();
+    ConsensusService::fin();
     RouterService::fin();
     StorageManager::fin();
     RouterRegistry::fin();

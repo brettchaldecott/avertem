@@ -28,6 +28,9 @@ public:
     static keto::event::Event routeMessage(const keto::event::Event& event);
     static keto::event::Event updateStateRouteMessage(const keto::event::Event& event);
     
+    static keto::event::Event generateSoftwareHash(const keto::event::Event& event);
+    static keto::event::Event setModuleSession(const keto::event::Event& event);
+    
     static void registerEventHandlers();
     static void deregisterEventHandlers();
 private:

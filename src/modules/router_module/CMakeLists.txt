@@ -1,5 +1,15 @@
 file(GLOB HEADERS "include/keto/router/*.hpp")
 
+SET(ROUTER_MODULE_SIGNATURE_METHOD "getRouterServerModuleSignature")
+SET(ROUTER_MODULE_SIGNATURE "this is a signature")
+SET(ROUTER_MODULE_KEY_METHOD "getRouterModuleKey")
+SET(ROUTER_MODULE_SIGNATURE "this is a key")
+SET(ROUTER_MODULE_SOURCE_VERSION_METHOD_MAP "getClientSourceVersionMap")
+SET(ROUTER_MODULE_CONSENSUS_HASH_SCRIPT_METHOD "getConsensusHashScriptConfig")
+
+configure_file(include/keto/router/RouterModuleManagerMisc.hpp.in include/keto/router/RouterModuleManagerMisc.hpp)
+
+
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
 ## SORT .cpp by most likely to change / break compile
@@ -10,6 +20,7 @@ add_library( 0015_keto_router_module
             RouterModule.cpp
             RouterService.cpp
             EventRegistry.cpp
+            ConsensusService.cpp
             StorageManager.cpp
             RouterRegistry.cpp
 
@@ -17,6 +28,7 @@ add_library( 0015_keto_router_module
            )
 
 target_link_libraries( 0015_keto_router_module 
+                            PRIVATE keto_software_consensus
                             PRIVATE keto_router_db keto_rocks_db
                             PRIVATE keto_server_common
                             PRIVATE keto_transaction_common keto_proto_environment ${PROTOBUF_LIBRARIES}
