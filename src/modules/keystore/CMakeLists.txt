@@ -1,5 +1,15 @@
 file(GLOB HEADERS "include/keto/keystore/*.hpp")
 
+SET(KEYSTORE_MODULE_SIGNATURE_METHOD "getBlockServerModuleSignature")
+SET(KEYSTORE_MODULE_SIGNATURE "this is a signature")
+SET(KEYSTORE_MODULE_KEY_METHOD "getBlockModuleKey")
+SET(KEYSTORE_MODULE_SIGNATURE "this is a key")
+SET(KEYSTORE_MODULE_SOURCE_VERSION_METHOD_MAP "getClientSourceVersionMap")
+SET(KEYSTORE_MODULE_CONSENSUS_HASH_SCRIPT_METHOD "getConsensusHashScriptConfig")
+
+configure_file(include/keto/keystore/KeystoreModuleManagerMisc.hpp.in include/keto/keystore/KeystoreModuleManagerMisc.hpp)
+
+
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
 ## SORT .cpp by most likely to change / break compile
@@ -11,12 +21,14 @@ add_library( 0010_keto_keystore_module
             EventRegistry.cpp
             KeyStoreService.cpp
             SessionKeyManager.cpp
+            ConsensusService.cpp
 
              ${HEADERS}
            )
 
 target_link_libraries( 0010_keto_keystore_module 
-                            PRIVATE keto_server_common
+                            PRIVATE keto_software_consensus
+                            PRIVATE keto_server_common keto_asn1_common keto_asn1_protocol
                             PRIVATE keto_proto_environment ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
                             PRIVATE ${OPENSSL_LIBRARIES} )

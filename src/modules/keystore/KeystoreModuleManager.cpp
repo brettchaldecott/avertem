@@ -19,9 +19,11 @@
 #include "keto/common/MetaInfo.hpp"
 
 #include "keto/keystore/KeystoreModuleManager.hpp"
+#include "keto/keystore/KeystoreModuleManagerMisc.hpp"
 #include "keto/keystore/KeyStoreService.hpp"
 #include "keto/keystore/EventRegistry.hpp"
 #include "include/keto/keystore/EventRegistry.hpp"
+#include "include/keto/keystore/ConsensusService.hpp"
 
 namespace keto {
 namespace keystore {
@@ -50,12 +52,14 @@ const std::string KeystoreModuleManager::getVersion() const {
 void KeystoreModuleManager::start() {
     KeyStoreService::init();
     modules["KeystoreModule"] = std::make_shared<KeystoreModule>();
+    ConsensusService::init(this->getConsensusHash());
     EventRegistry::registerEventHandlers();
     KETO_LOG_INFO << "[KeystoreModuleManager] Started the KeystoreModuleManager";
 }
 
 void KeystoreModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
+    ConsensusService::fin();
     modules.clear();
     KeyStoreService::fin();
     KETO_LOG_INFO << "[KeystoreModuleManager] The KeystoreModuleManager is being stopped";

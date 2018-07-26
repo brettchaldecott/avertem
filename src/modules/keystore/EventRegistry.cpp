@@ -20,7 +20,8 @@
 
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
-#include "include/keto/keystore/EventRegistry.hpp"
+#include "keto/keystore/EventRegistry.hpp"
+#include "keto/keystore/ConsensusService.hpp"
 
 namespace keto {
 namespace keystore {
@@ -43,6 +44,15 @@ keto::event::Event EventRegistry::removeSessionKey(
     return KeyStoreService::getInstance()->getSessionKeyManager()->removeKey(event);
 }
 
+keto::event::Event EventRegistry::generateSoftwareHash(const keto::event::Event& event) {
+    return ConsensusService::getInstance()->generateSoftwareHash(event);
+}
+
+keto::event::Event EventRegistry::setModuleSession(const keto::event::Event& event) {
+    return ConsensusService::getInstance()->setModuleSession(event);
+}
+
+
 
 void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
@@ -52,10 +62,20 @@ void EventRegistry::registerEventHandlers() {
             keto::server_common::Events::REMOVE_SESSION_KEY,
             &EventRegistry::removeSessionKey);
     
+    keto::server_common::registerEventHandler(
+            keto::server_common::Events::CONSENSUS::KEYSTORE,
+            &EventRegistry::generateSoftwareHash);
+    keto::server_common::registerEventHandler(
+            keto::server_common::Events::CONSENSUS_SESSION::KEYSTORE,
+            &EventRegistry::setModuleSession);
 }
 
 
 void EventRegistry::deregisterEventHandlers() {
+    keto::server_common::deregisterEventHandler(
+            keto::server_common::Events::CONSENSUS::KEYSTORE);
+    keto::server_common::deregisterEventHandler(
+            keto::server_common::Events::CONSENSUS_SESSION::KEYSTORE);
     keto::server_common::deregisterEventHandler(keto::server_common::Events::REMOVE_SESSION_KEY);
     keto::server_common::deregisterEventHandler(keto::server_common::Events::REQUEST_SESSION_KEY);
 }

@@ -29,6 +29,9 @@ public:
     static keto::event::Event requestSessionKey(const keto::event::Event& event);
     static keto::event::Event removeSessionKey(const keto::event::Event& event);
     
+    static keto::event::Event generateSoftwareHash(const keto::event::Event& event);
+    static keto::event::Event setModuleSession(const keto::event::Event& event);
+
     
     static void registerEventHandlers();
     static void deregisterEventHandlers();
