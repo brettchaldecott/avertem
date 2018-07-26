@@ -18,6 +18,8 @@
 #include <boost/shared_ptr.hpp>
 
 #include "keto/test/TestModuleManager.hpp"
+#include "keto/test/TestModuleManagerMisc.hpp"
+#include "keto/test/ConsensusService.hpp"
 #include "keto/common/MetaInfo.hpp"
 #include "keto/common/Log.hpp"
 
@@ -50,6 +52,7 @@ const std::string TestModuleManager::getVersion() const {
 // lifecycle methods
 void TestModuleManager::start() {
     KETO_LOG_INFO << "Start has been called on the test module manager";
+    ConsensusService::init(getConsensusHash());
     modules["test_module"] = std::make_shared<TestModule>();
     EventRegistry::registerEventHandlers();
     
@@ -58,6 +61,7 @@ void TestModuleManager::start() {
 void TestModuleManager::stop() {
     KETO_LOG_INFO << "Stop has been called on the test module manager";
     EventRegistry::deregisterEventHandlers();
+    ConsensusService::fin();
     modules.clear();
     KETO_LOG_INFO << "The test module has been stopped";
     

@@ -1,0 +1,65 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+#include <boost/dll/alias.hpp>
+#include <boost/dll/shared_library.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include "keto/common/Log.hpp"
+
+#include "keto/obfuscate/MetaString.hpp"
+#include "keto/crypto/Containers.hpp"
+#include "keto/crypto/SecureVectorUtils.hpp"
+
+#include "keto/test/TestModuleManager.hpp"
+#include "keto/common/MetaInfo.hpp"
+
+namespace keto {
+namespace test {
+
+keto::crypto::SecureVector ${TEST_MODULE_SIGNATURE_METHOD}() {
+    std::string signature = OBFUSCATED("${TEST_MODULE_SIGNATURE}");
+    return keto::crypto::SecureVectorUtils().copyStringToSecure(signature);
+}
+
+keto::crypto::SecureVector ${TEST_MODULE_KEY_METHOD}() {
+    std::string key = OBFUSCATED("${TEST_MODULE_KEY}");
+    return keto::crypto::SecureVectorUtils().copyStringToSecure(key);
+}
+
+keto::software_consensus::SourceVersionMap ${TEST_SOURCE_VERSION_METHOD_MAP}() {
+    keto::software_consensus::SourceVersionMap sourceVersionMap;
+
+    return sourceVersionMap;
+}
+
+keto::software_consensus::ConsensusHashScriptInfoVector ${TEST_CONSENSUS_HASH_SCRIPT_METHOD}() {
+    keto::software_consensus::ConsensusHashScriptInfoVector consensusHashScript;
+
+    return consensusHashScript;
+}
+
+keto::software_consensus::ConsensusHashGeneratorPtr TestModuleManager::getConsensusHash() {
+
+    keto::software_consensus::SourceVersionMap sourceVersionMap = ${TEST_SOURCE_VERSION_METHOD_MAP}();
+
+    keto::software_consensus::ConsensusHashScriptInfoVector consensusVector = ${TEST_CONSENSUS_HASH_SCRIPT_METHOD}();
+    
+    
+    keto::software_consensus::ConsensusHashGeneratorPtr consensusHashGenerator = 
+        keto::software_consensus::ConsensusHashGenerator::initInstance(
+            consensusVector,
+            &${TEST_MODULE_SIGNATURE_METHOD},
+            &${TEST_MODULE_KEY_METHOD},
+            sourceVersionMap);
+    
+    return consensusHashGenerator;
+}
+
+
+}
+}
+

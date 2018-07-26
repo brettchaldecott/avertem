@@ -16,6 +16,8 @@
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
 
+#include "keto/test/ConsensusService.hpp"
+
 
 namespace keto {
 namespace test {
@@ -31,17 +33,27 @@ EventRegistry::~EventRegistry() {
 void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::CONSENSUS::TEST,
-            &keto::test::EventRegistry::consensusTest);
+            &keto::test::EventRegistry::generateSoftwareHash);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION::TEST,
+            &keto::test::EventRegistry::setModuleSession);
 }
 
 void EventRegistry::deregisterEventHandlers() {
     keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION::TEST);
+    keto::server_common::deregisterEventHandler (
             keto::server_common::Events::CONSENSUS::TEST);
 }
 
-keto::event::Event EventRegistry::consensusTest(const keto::event::Event& event) {
-    return event;
+keto::event::Event EventRegistry::generateSoftwareHash(const keto::event::Event& event) {
+    return ConsensusService::getInstance()->generateSoftwareHash(event);
 }
+
+keto::event::Event EventRegistry::setModuleSession(const keto::event::Event& event) {
+    return ConsensusService::getInstance()->setModuleSession(event);
+}
+
 
 }
 }

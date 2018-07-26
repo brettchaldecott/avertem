@@ -27,7 +27,8 @@ public:
     static void registerEventHandlers();
     static void deregisterEventHandlers();
     
-    static keto::event::Event consensusTest(const keto::event::Event& event);
+    static keto::event::Event generateSoftwareHash(const keto::event::Event& event);
+    static keto::event::Event setModuleSession(const keto::event::Event& event);
 private:
     EventRegistry();
     

@@ -1,5 +1,17 @@
 file(GLOB HEADERS "include/keto/environment/*.hpp")
 
+SET(TEST_MODULE_SIGNATURE_METHOD "getSandboxModuleSignature")
+SET(TEST_MODULE_SIGNATURE "this is a signature")
+SET(TEST_MODULE_KEY_METHOD "getSandboxModuleKey")
+SET(TEST_MODULE_SIGNATURE "this is a key")
+SET(TEST_SOURCE_VERSION_METHOD_MAP "getClientSourceVersionMap")
+SET(TEST_CONSENSUS_HASH_SCRIPT_METHOD "getConsensusHashScriptConfig")
+
+configure_file(include/keto/test/TestModuleManagerMisc.hpp.in include/keto/test/TestModuleManagerMisc.hpp)
+
+include_directories(${PROTOBUF_INCLUDE_DIR})
+
+
 ## SORT .cpp by most likely to change / break compile
 add_library( 0002_keto_test_module
             SHARED
@@ -7,11 +19,13 @@ add_library( 0002_keto_test_module
             TestModuleManager.cpp
             TestModule.cpp
             EventRegistry.cpp
+            ConsensusService.cpp
 
              ${HEADERS}
            )
 
 target_link_libraries( 0002_keto_test_module 
+                            PRIVATE keto_software_consensus
                             PRIVATE keto_transaction_common keto_server_common keto_rpc_protocol
                             PRIVATE keto_proto_environment ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_asn1_common keto_asn1_protocol
