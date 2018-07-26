@@ -63,7 +63,7 @@ public:
         static const char* HTTPD;
         static const char* EVENT;
         static const char* BLOCK;
-        static const char* SANBOX;
+        static const char* SANDBOX;
         static const char* VERSION;
         static const char* KEYSTORE;
         static const char* BALANCER;
@@ -82,7 +82,7 @@ public:
         static const char* HTTPD;
         static const char* EVENT;
         static const char* BLOCK;
-        static const char* SANBOX;
+        static const char* SANDBOX;
         static const char* VERSION;
         static const char* KEYSTORE;
         static const char* BALANCER;

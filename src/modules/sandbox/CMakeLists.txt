@@ -1,5 +1,14 @@
 file(GLOB HEADERS "include/keto/rpc_server/*.hpp")
 
+SET(SANDBOX_MODULE_SIGNATURE_METHOD "getSandboxModuleSignature")
+SET(SANDBOX_MODULE_SIGNATURE "this is a signature")
+SET(SANDBOX_MODULE_KEY_METHOD "getSandboxModuleKey")
+SET(SANDBOX_MODULE_SIGNATURE "this is a key")
+SET(SANDBOX_SOURCE_VERSION_METHOD_MAP "getClientSourceVersionMap")
+SET(SANDBOX_CONSENSUS_HASH_SCRIPT_METHOD "getConsensusHashScriptConfig")
+
+configure_file(include/keto/sandbox/SandboxModuleManagerMisc.hpp.in include/keto/sandbox/SandboxModuleManagerMisc.hpp)
+
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
 ## SORT .cpp by most likely to change / break compile
@@ -10,11 +19,13 @@ add_library( 0020_keto_sandbox_module
             SandboxModule.cpp
             EventRegistry.cpp
             SandboxService.cpp
+            ConsensusService.cpp
 
              ${HEADERS}
            )
 
 target_link_libraries( 0020_keto_sandbox_module 
+                            PRIVATE keto_software_consensus
                             PRIVATE keto_wavm_common keto_server_common
                             PRIVATE keto_transaction_common keto_proto_environment ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_asn1_common keto_asn1_protocol

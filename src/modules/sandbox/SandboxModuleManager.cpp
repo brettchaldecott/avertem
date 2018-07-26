@@ -19,7 +19,9 @@
 #include "keto/common/MetaInfo.hpp"
 
 #include "keto/sandbox/SandboxModuleManager.hpp"
+#include "keto/sandbox/SandboxModuleManagerMisc.hpp"
 #include "keto/sandbox/SandboxService.hpp"
+#include "keto/sandbox/ConsensusService.hpp"
 #include "keto/sandbox/EventRegistry.hpp"
 #include "keto/server_common/ServiceRegistryHelper.hpp"
 #include "keto/server_common/Constants.hpp"
@@ -54,12 +56,14 @@ void SandboxModuleManager::start() {
     modules["SandboxModule"] = std::make_shared<SandboxModule>();
     keto::wavm_common::WavmEngineManager::init();
     SandboxService::init();
+    ConsensusService::init(getConsensusHash());
     EventRegistry::registerEventHandlers();
     KETO_LOG_INFO << "[SandboxModuleManager] Started the SandboxModuleManager";
 }
 
 void SandboxModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
+    ConsensusService::fin();
     SandboxService::fin();
     keto::wavm_common::WavmEngineManager::fin();
     modules.clear();
