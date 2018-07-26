@@ -17,6 +17,8 @@
 #include "keto/module/ModuleManagementInterface.hpp"
 #include "keto/transaction/TransactionServiceModule.hpp"
 
+#include "keto/software_consensus/ConsensusHashGenerator.hpp"
+
 namespace keto {
 namespace transaction {
 
@@ -43,6 +45,8 @@ public:
     
 private:
     std::map<std::string,std::shared_ptr<keto::module::ModuleInterface>> modules;
+    
+    keto::software_consensus::ConsensusHashGeneratorPtr getConsensusHash();
 };
 
 

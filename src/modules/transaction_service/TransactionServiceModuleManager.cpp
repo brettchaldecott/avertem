@@ -18,8 +18,11 @@
 #include "keto/transaction/TransactionWrapper.hpp"
 #include "keto/transaction/TransactionService.hpp"
 #include "keto/transaction/TransactionServiceModuleManager.hpp"
+#include "keto/transaction/TransactionServiceModuleManagerMisc.hpp"
 #include "keto/common/MetaInfo.hpp"
 #include "keto/common/Log.hpp"
+#include "keto/transaction/ConsensusService.hpp"
+#include "keto/transaction/EventRegistry.hpp"
 
 namespace keto {
 namespace transaction {
@@ -52,11 +55,15 @@ const std::string TransactionServiceModuleManager::getVersion() const {
 void TransactionServiceModuleManager::start() {
     modules[keto::transaction::TransactionService::KETO_TRANSACTION_MANAGER] = 
             std::make_shared<TransactionServiceModule>();
+    ConsensusService::init(getConsensusHash());
+    EventRegistry::registerEventHandlers();
     KETO_LOG_INFO << "[TransactionService] The transaction service has been started";
     
 }
 
 void TransactionServiceModuleManager::stop() {
+    EventRegistry::deregisterEventHandlers();
+    ConsensusService::fin();
     modules.clear();
     KETO_LOG_INFO << "[TransactionService] The transaction service is being stopped";
 }
