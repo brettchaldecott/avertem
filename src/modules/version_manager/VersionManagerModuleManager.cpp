@@ -19,6 +19,9 @@
 #include "keto/common/MetaInfo.hpp"
 
 #include "keto/version_manager/VersionManagerModuleManager.hpp"
+#include "keto/version_manager/VersionManagerModuleManagerMisc.hpp"
+#include "keto/version_manager/ConsensusService.hpp"
+#include "keto/version_manager/EventRegistry.hpp"
 
 namespace keto {
 namespace version_manager {
@@ -46,10 +49,14 @@ const std::string VersionManagerModuleManager::getVersion() const {
 // lifecycle methods
 void VersionManagerModuleManager::start() {
     modules["VersionManagerModule"] = std::make_shared<VersionManagerModule>();
+    ConsensusService::init(getConsensusHash());
+    EventRegistry::registerEventHandlers();
     KETO_LOG_INFO << "[VersionManagerModuleManager] Started the VersionManagerModuleManager";
 }
 
 void VersionManagerModuleManager::stop() {
+    EventRegistry::deregisterEventHandlers();
+    ConsensusService::fin();
     modules.clear();
     KETO_LOG_INFO << "[VersionManagerModuleManager] The VersionManagerModuleManager is being stopped";
 
