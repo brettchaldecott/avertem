@@ -27,9 +27,7 @@ namespace rpc_client {
 
 namespace ketoEnv = keto::environment;
 
-RpcSessionManager::RpcSessionManager(
-        const keto::software_consensus::ConsensusHashGeneratorPtr& consensusHashGeneratorPtr) :
-    consensusHashGeneratorPtr(consensusHashGeneratorPtr) {
+RpcSessionManager::RpcSessionManager()  {
     
     this->ioc = std::make_shared<boost::asio::io_context>();
     
@@ -51,7 +49,6 @@ RpcSessionManager::RpcSessionManager(
                 iter != peers.end(); iter++) {
             std::cout << "The peer is : " << (*iter) << std::endl;
             this->sessionMap[(*iter)] = std::make_shared<RpcSession>(
-                    this->consensusHashGeneratorPtr,
                     this->ioc,
                     this->ctx,(*iter));
         }

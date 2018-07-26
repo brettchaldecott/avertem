@@ -54,10 +54,8 @@ fail(boost::system::error_code ec, char const* what)
 }
 
 RpcSession::RpcSession(
-    const keto::software_consensus::ConsensusHashGeneratorPtr& consensusHashGeneratorPtr,
     std::shared_ptr<boost::asio::io_context> ioc, 
     std::shared_ptr<boostSsl::context> ctx, const std::string& host) :
-        consensusHashGeneratorPtr(consensusHashGeneratorPtr),
         resolver(*ioc),
         ws_(*ioc, *ctx),
         host(host) {

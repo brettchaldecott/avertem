@@ -47,7 +47,6 @@ typedef std::shared_ptr<RpcSession> RpcSessionPtr;
 class RpcSession : public std::enable_shared_from_this<RpcSession> {
 public:
     RpcSession(
-            const keto::software_consensus::ConsensusHashGeneratorPtr& consensusHashGeneratorPtr,
             std::shared_ptr<boost::asio::io_context> ioc, 
             std::shared_ptr<boostSsl::context> ctx,
             const std::string& host);
@@ -80,7 +79,6 @@ public:
     void
     on_close(boost::system::error_code ec);
 private:
-    keto::software_consensus::ConsensusHashGeneratorPtr consensusHashGeneratorPtr;
     tcp::resolver resolver;
     websocket::stream<boostSsl::stream<tcp::socket>> ws_;
     boost::beast::multi_buffer buffer_;

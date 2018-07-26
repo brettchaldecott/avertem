@@ -19,8 +19,6 @@
 #include <thread>
 #include <vector>
 
-#include "keto/software_consensus/ConsensusHashGenerator.hpp"
-
 
 namespace keto {
 namespace rpc_client {
@@ -30,7 +28,7 @@ typedef std::shared_ptr<RpcSessionManager> RpcSessionManagerPtr;
 
 class RpcSessionManager {
 public:
-    RpcSessionManager(const keto::software_consensus::ConsensusHashGeneratorPtr& consensusHashGeneratorPtr);
+    RpcSessionManager();
     RpcSessionManager(const RpcSessionManager& orig) = delete;
     virtual ~RpcSessionManager();
     
@@ -41,7 +39,6 @@ public:
     void stop();
     
 private:
-    keto::software_consensus::ConsensusHashGeneratorPtr consensusHashGeneratorPtr;
     std::map<std::string,RpcSessionPtr> sessionMap;
     // The io_context is required for all I/O
     std::shared_ptr<boost::asio::io_context> ioc;

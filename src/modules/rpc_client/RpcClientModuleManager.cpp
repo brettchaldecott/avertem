@@ -22,6 +22,7 @@
 #include "keto/rpc_client/RpcSessionManager.hpp"
 #include "keto/rpc_client/EventRegistry.hpp"
 #include "keto/common/MetaInfo.hpp"
+#include "include/keto/rpc_client/ConsensusService.hpp"
 
 
 namespace keto {
@@ -29,8 +30,7 @@ namespace rpc_client {
 
     
 RpcClientModuleManager::RpcClientModuleManager() {
-    rpcSessionManager = std::make_shared<RpcSessionManager>(
-            getConsensusHash());
+    rpcSessionManager = std::make_shared<RpcSessionManager>();
 }
 
 RpcClientModuleManager::~RpcClientModuleManager() {
@@ -52,6 +52,7 @@ const std::string RpcClientModuleManager::getVersion() const {
 // lifecycle methods
 void RpcClientModuleManager::start() {
     modules["RpcClientModule"] = std::make_shared<RpcClientModule>();
+    ConsensusService::init(getConsensusHash());
     EventRegistry::registerEventHandlers();
     rpcSessionManager->start();
     KETO_LOG_INFO << "[RpcClientModuleManager] Started the RpcClientModuleManager";
@@ -60,6 +61,7 @@ void RpcClientModuleManager::start() {
 void RpcClientModuleManager::postStart() {
     rpcSessionManager->postStart();
     EventRegistry::deregisterEventHandlers();
+    ConsensusService::fin();
     KETO_LOG_INFO << "[RpcClientModuleManager] Post Started the RpcClientModuleManager";
 }
 

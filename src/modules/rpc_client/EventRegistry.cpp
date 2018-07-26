@@ -15,6 +15,7 @@
 
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
+#include "keto/rpc_client/ConsensusService.hpp"
 
 
 namespace keto {
@@ -28,19 +29,30 @@ EventRegistry::~EventRegistry() {
 }
 
 
+keto::event::Event EventRegistry::generateSoftwareHash(const keto::event::Event& event) {
+    return ConsensusService::getInstance()->generateSoftwareHash(event);
+}
+
+keto::event::Event EventRegistry::setModuleSession(const keto::event::Event& event) {
+    return ConsensusService::getInstance()->setModuleSession(event);
+}
+
+
+
 void EventRegistry::registerEventHandlers() {
-    //keto::server_common::registerEventHandler (
-    //        keto::server_common::Events::RPC_SEND_MESSAGE,
-    //        &keto::rpc_server::EventRegistry::sendMessage);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::CONSENSUS::RPC_CLIENT,
+            &keto::rpc_client::EventRegistry::generateSoftwareHash);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION::RPC_CLIENT,
+            &keto::rpc_client::EventRegistry::setModuleSession);
 }
 
 void EventRegistry::deregisterEventHandlers() {
-    //keto::server_common::deregisterEventHandler (
-    //        keto::server_common::Events::RPC_SEND_MESSAGE);
-}
-
-keto::event::Event EventRegistry::sendMessage(const keto::event::Event& event) {
-    //return RpcServerService::getInstance()->sendMessage(event);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::CONSENSUS::RPC_CLIENT);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION::RPC_CLIENT);
 }
 
 }
