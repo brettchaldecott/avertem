@@ -1,5 +1,15 @@
 file(GLOB HEADERS "include/keto/http/*.hpp")
 
+SET(HTTPD_MODULE_SIGNATURE_METHOD "getHttpServerModuleSignature")
+SET(HTTPD_MODULE_SIGNATURE "this is a signature")
+SET(HTTPD_MODULE_KEY_METHOD "getBlockModuleKey")
+SET(HTTPD_MODULE_SIGNATURE "this is a key")
+SET(HTTPD_MODULE_SOURCE_VERSION_METHOD_MAP "getClientSourceVersionMap")
+SET(HTTPD_MODULE_CONSENSUS_HASH_SCRIPT_METHOD "getConsensusHashScriptConfig")
+
+configure_file(include/keto/http/HttpdModuleManagerMisc.hpp.in include/keto/http/HttpdModuleManagerMisc.hpp)
+
+
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
 ## SORT .cpp by most likely to change / break compile
@@ -9,12 +19,15 @@ add_library( 0050_keto_httpd_module
             HttpdModuleManager.cpp
             HttpdModule.cpp
             HttpdServer.cpp
+            ConsensusService.cpp
+            EventRegistry.cpp
 
              ${HEADERS}
            )
 
 target_link_libraries( 0050_keto_httpd_module 
                             PRIVATE keto_http_server_session
+                            PRIVATE keto_software_consensus
                             PRIVATE keto_transaction_common keto_server_common
                             PRIVATE keto_proto_environment ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_asn1_common keto_asn1_protocol

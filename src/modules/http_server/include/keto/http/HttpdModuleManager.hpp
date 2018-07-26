@@ -22,6 +22,9 @@
 #include "keto/http/HttpdModule.hpp"
 #include "keto/http/HttpdServer.hpp"
 
+#include "keto/software_consensus/ConsensusHashGenerator.hpp"
+
+
 namespace keto {
 namespace http {
 
@@ -49,6 +52,8 @@ public:
 private:
     std::map<std::string,std::shared_ptr<keto::module::ModuleInterface>> modules;
     std::shared_ptr<HttpdServer> httpServer;
+    
+    keto::software_consensus::ConsensusHashGeneratorPtr getConsensusHash();
 };
 
 }
