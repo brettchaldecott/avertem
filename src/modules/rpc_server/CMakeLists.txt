@@ -23,6 +23,7 @@ add_library( 0030_keto_rpc_server_module
             RpcServer.cpp
             EventRegistry.cpp
             RpcServerService.cpp
+            ConsensusService.cpp
 
              ${HEADERS}
            )
