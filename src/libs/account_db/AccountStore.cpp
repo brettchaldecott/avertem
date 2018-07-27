@@ -35,7 +35,11 @@ namespace keto {
 namespace account_db {
 
 static std::shared_ptr<AccountStore> singleton;
-    
+
+std::string AccountStore::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 AccountStore::AccountStore() {
     dbManagerPtr = std::shared_ptr<keto::rocks_db::DBManager>(
             new keto::rocks_db::DBManager(Constants::DB_LIST));

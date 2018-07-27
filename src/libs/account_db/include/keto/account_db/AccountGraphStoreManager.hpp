@@ -19,6 +19,7 @@
 #include <map>
 
 #include "keto/account_db/AccountGraphStore.hpp"
+#include "keto/obfuscate/MetaString.hpp"
 
 namespace keto {
 namespace account_db {
@@ -28,6 +29,11 @@ typedef std::shared_ptr<AccountGraphStoreManager> AccountGraphStoreManagerPtr;
 
 class AccountGraphStoreManager {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+    
     AccountGraphStoreManager();
     AccountGraphStoreManager(const AccountGraphStoreManager& orig) = delete;
     virtual ~AccountGraphStoreManager();

@@ -21,6 +21,8 @@
 #include <rdf_storage.h>
 #include <rdf_model.h>
 
+#include "keto/obfuscate/MetaString.hpp"
+
 namespace keto {
 namespace account_db {
 
@@ -29,6 +31,11 @@ typedef std::shared_ptr<AccountGraphStore> AccountGraphStorePtr;
     
 class AccountGraphStore {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+    
     friend class AccountGraphSession;
     AccountGraphStore(const std::string& dbName);
     AccountGraphStore(const AccountGraphStore& orig) = delete;

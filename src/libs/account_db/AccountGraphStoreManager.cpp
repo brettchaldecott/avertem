@@ -20,6 +20,9 @@
 namespace keto {
 namespace account_db {
 
+std::string AccountGraphStoreManager::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 AccountGraphStoreManager::AccountGraphStoreManager() {
     // if the base graph exists load it otherwise assume it will not be

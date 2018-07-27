@@ -25,6 +25,10 @@
 namespace keto {
 namespace software_consensus {
 
+std::string ConsensusSessionManager::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+    
 ConsensusSessionManager::ConsensusSessionManager() {
 }
 

@@ -25,6 +25,10 @@
 namespace keto {
 namespace account_db {
 
+std::string AccountRDFStatementBuilder::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+    
 AccountRDFStatementBuilder::AccountRDFStatementBuilder(
     const keto::transaction_common::TransactionMessageHelperPtr& transactionMessageHelper,
     bool existingAccount) :

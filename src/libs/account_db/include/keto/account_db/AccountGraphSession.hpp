@@ -26,6 +26,8 @@
 
 #include "keto/account_db/AccountGraphStore.hpp"
 #include "keto/asn1/RDFSubjectHelper.hpp"
+#include "keto/obfuscate/MetaString.hpp"
+
 
 namespace keto {
 namespace account_db {
@@ -37,6 +39,11 @@ typedef std::vector<ResultMap> ResultVectorMap;
     
 class AccountGraphSession {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+    
     friend class AccountResource;
     AccountGraphSession(const AccountGraphSession& orig) = delete;
     virtual ~AccountGraphSession();

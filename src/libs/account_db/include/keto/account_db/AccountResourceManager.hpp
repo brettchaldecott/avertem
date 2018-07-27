@@ -23,6 +23,8 @@
 #include "keto/account_db/AccountResource.hpp"
 #include "keto/account_db/AccountGraphStoreManager.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
 
 namespace keto {
 namespace account_db {
@@ -33,6 +35,11 @@ typedef std::shared_ptr<AccountResourceManager> AccountResourceManagerPtr;
     
 class AccountResourceManager : keto::transaction::Resource {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+    
     AccountResourceManager(std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr,
             const AccountGraphStoreManagerPtr& accountGraphStoreManagerPtr);
     AccountResourceManager(const AccountResourceManager& orig) = delete;

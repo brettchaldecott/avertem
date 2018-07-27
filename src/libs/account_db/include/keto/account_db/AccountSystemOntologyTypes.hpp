@@ -19,6 +19,7 @@
 
 #include "keto/asn1/HashHelper.hpp"
 #include "keto/asn1/RDFSubjectHelper.hpp"
+#include "keto/obfuscate/MetaString.hpp"
 
 namespace keto {
 namespace account_db {
@@ -26,6 +27,11 @@ namespace account_db {
 
 class AccountSystemOntologyTypes {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+    
     static const char* ACCOUNT_ONTOLOGY_CLASS;
     
     // PREDICATE identifiers

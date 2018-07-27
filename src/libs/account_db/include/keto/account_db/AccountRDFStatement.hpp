@@ -22,6 +22,7 @@
 #include "keto/asn1/RDFSubjectHelper.hpp"
 #include "keto/asn1/RDFModelHelper.hpp"
 #include "keto/account_db/RDFDBOperation.hpp"
+#include "keto/obfuscate/MetaString.hpp"
 
 namespace keto {
 namespace account_db {
@@ -31,6 +32,11 @@ typedef std::shared_ptr<AccountRDFStatement> AccountRDFStatementPtr;
 
 class AccountRDFStatement {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+    
     AccountRDFStatement(ChangeData* changeData);
     AccountRDFStatement(const AccountRDFStatement& orig) = delete;
     virtual ~AccountRDFStatement();

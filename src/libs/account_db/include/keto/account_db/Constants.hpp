@@ -17,6 +17,9 @@
 #include <vector>
 #include <string>
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace account_db {
 
@@ -24,6 +27,10 @@ namespace account_db {
 class
 Constants {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
     
     // string constants
     static const char* ACCOUNTS_MAPPING;

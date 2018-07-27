@@ -24,6 +24,7 @@
 #include "keto/account_db/AccountGraphStoreManager.hpp"
 #include "keto/transaction_common/TransactionMessageHelper.hpp"
 #include "keto/account_db/AccountRDFStatementBuilder.hpp"
+#include "keto/obfuscate/MetaString.hpp"
 
 namespace keto {
 namespace account_db {
@@ -31,6 +32,11 @@ namespace account_db {
 
 class AccountStore {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+    
     AccountStore(const AccountStore& orig) = delete;
     virtual ~AccountStore();
     

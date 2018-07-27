@@ -19,6 +19,10 @@ namespace account_db {
 
 thread_local AccountResourcePtr AccountResourceManager::accountResourcePtr;
 
+std::string AccountResourceManager::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 AccountResourceManager::AccountResourceManager(
         std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr,
         const AccountGraphStoreManagerPtr& accountGraphStoreManagerPtr) :

@@ -16,11 +16,18 @@
 
 #include "keto/crypto/Containers.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
 namespace keto {
 namespace software_consensus {
 
 class ConsensusSessionManager {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+    
     ConsensusSessionManager();
     ConsensusSessionManager(const ConsensusSessionManager& orig) = default;
     virtual ~ConsensusSessionManager();

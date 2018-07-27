@@ -23,6 +23,10 @@
 namespace keto {
 namespace account_db {
 
+std::string AccountRDFStatement::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+    
 AccountRDFStatement::AccountRDFStatement(ChangeData* changeData) {
     if (changeData->present != ChangeData_PR_asn1Change) {
         BOOST_THROW_EXCEPTION(keto::account_db::UnsupportedChangeTypeFormatException());

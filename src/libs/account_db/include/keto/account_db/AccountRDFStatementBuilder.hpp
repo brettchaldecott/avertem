@@ -28,6 +28,7 @@
 
 #include "keto/account_db/AccountRDFStatement.hpp"
 #include "keto/transaction_common/TransactionMessageHelper.hpp"
+#include "keto/obfuscate/MetaString.hpp"
 
 
 namespace keto {
@@ -38,6 +39,11 @@ typedef std::shared_ptr<AccountRDFStatementBuilder> AccountRDFStatementBuilderPt
 
 class AccountRDFStatementBuilder {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+    
     AccountRDFStatementBuilder(
             const keto::transaction_common::TransactionMessageHelperPtr& transactionMessageHelper,
             bool existingAccount);
