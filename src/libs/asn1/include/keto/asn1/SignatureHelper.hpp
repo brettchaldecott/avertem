@@ -20,11 +20,19 @@
 #include "keto/common/StringCodec.hpp"
 #include "keto/crypto/Containers.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace asn1 {
 
 class SignatureHelper {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     SignatureHelper();
     SignatureHelper(const std::vector<uint8_t>& signature);
     SignatureHelper(const Signature_t& signature);

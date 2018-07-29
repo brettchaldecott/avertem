@@ -15,6 +15,10 @@
 
 namespace keto {
 namespace asn1 {
+    
+std::string TimeHelper::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 TimeHelper::TimeHelper() {
     this->time_point = std::chrono::system_clock::now();

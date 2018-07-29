@@ -23,6 +23,8 @@
 #include "keto/crypto/Containers.hpp"
 #include "keto/asn1/Exception.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
 
 namespace keto {
 namespace asn1 {
@@ -31,6 +33,12 @@ namespace asn1 {
 template <typename Data> 
 class DeserializationHelper {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
+    
     DeserializationHelper(const uint8_t* buffer, size_t size,
             const struct asn_TYPE_descriptor_s *type_descriptor) : type_descriptor(type_descriptor) {
         instance = 0;

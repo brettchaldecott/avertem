@@ -20,6 +20,9 @@
 namespace keto {
 namespace asn1 {
 
+std::string ChangeSetHelper::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 ChangeSetHelper::ChangeSetHelper() {
 }

@@ -18,6 +18,9 @@
 namespace keto {
 namespace asn1 {
 
+std::string RDFObjectHelper::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 RDFObjectHelper::RDFObjectHelper() : 
     type(Constants::RDF_NODE::LITERAL), lang(Constants::RDF_LANGUAGE)

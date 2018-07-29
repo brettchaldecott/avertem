@@ -21,6 +21,9 @@
 #include "UTF8String.h"
 #include "ANY.h"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace asn1 {
 
@@ -29,6 +32,11 @@ typedef std::shared_ptr<RDFObjectHelper> RDFObjectHelperPtr;
 
 class RDFObjectHelper {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     RDFObjectHelper();
     RDFObjectHelper(const std::string& value, const std::string& dataType);
     RDFObjectHelper(const RDFObject& rdfObject);

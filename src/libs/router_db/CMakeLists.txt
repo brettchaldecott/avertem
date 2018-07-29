@@ -26,6 +26,7 @@ target_include_directories( keto_router_db
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../module_manager/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../asn1/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../rocks_db/include"
+                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../obfuscate/include"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/proto/"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/asn1/" 
                             PUBLIC "${PROTO_HDRS}"

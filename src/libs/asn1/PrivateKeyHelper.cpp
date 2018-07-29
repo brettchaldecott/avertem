@@ -25,6 +25,10 @@
 namespace keto {
 namespace asn1 {
     
+std::string PrivateKeyHelper::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+    
 PrivateKeyHelper::PrivateKeyHelper() {
     initPrivateKey();
 }

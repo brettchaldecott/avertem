@@ -17,6 +17,9 @@
 namespace keto {
 namespace asn1 {
 
+std::string NumberHelper::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 NumberHelper::NumberHelper() : value(0) {
 }

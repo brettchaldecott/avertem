@@ -27,12 +27,18 @@
 
 #include "keto/crypto/Containers.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
 
 namespace keto {
 namespace account_utils {
         
 class AccountGenerator {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     AccountGenerator();
     AccountGenerator(const std::string& privateKeyPath);
     AccountGenerator(const AccountGenerator& orig) = default;

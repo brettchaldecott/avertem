@@ -14,13 +14,19 @@
 #ifndef ASN1_CONSTANTS_HPP
 #define ASN1_CONSTANTS_HPP
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace asn1 {
 
 class
 Constants {
 public:
-    
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+
     static constexpr const char* RDF_LANGUAGE = "en";
     class RDF_NODE {
     public:

@@ -20,11 +20,19 @@
 #include "keto/common/StringCodec.hpp"
 #include "keto/crypto/Containers.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace asn1 {
 
 class HashHelper {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     HashHelper();
     HashHelper(const std::string& hash);
     HashHelper(const keto::crypto::SecureVector& hash);

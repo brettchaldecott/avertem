@@ -20,11 +20,20 @@
 #include "keto/common/StringCodec.hpp"
 #include "keto/crypto/Containers.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace asn1 {
 
 class KeyHelper {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
+    
     KeyHelper();
     KeyHelper(const keto::crypto::SecureVector& key);
     KeyHelper(const Key_t& key);

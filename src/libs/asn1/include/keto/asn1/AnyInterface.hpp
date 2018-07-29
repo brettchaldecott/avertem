@@ -16,12 +16,19 @@
 
 #include "ANY.h"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace asn1 {
 
 
 class AnyInterface {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
     virtual void* getPtr() = 0;
     virtual struct asn_TYPE_descriptor_s* getType() = 0;
 };

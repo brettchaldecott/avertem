@@ -23,6 +23,9 @@
 
 #include "keto/asn1/RDFPredicateHelper.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace asn1 {
 
@@ -31,6 +34,11 @@ typedef std::shared_ptr<RDFSubjectHelper> RDFSubjectHelperPtr;
 
 class RDFSubjectHelper {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     RDFSubjectHelper();
     RDFSubjectHelper(RDFSubject_t* subject);
     RDFSubjectHelper(RDFSubject_t* subject, bool own);

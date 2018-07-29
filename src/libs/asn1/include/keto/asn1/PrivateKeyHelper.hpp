@@ -22,12 +22,19 @@
 #include "keto/asn1/BerEncodingHelper.hpp"
 #include "keto/asn1/SerializationHelper.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
 
 namespace keto {
 namespace asn1 {
 
 class PrivateKeyHelper {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     PrivateKeyHelper();
     PrivateKeyHelper(const keto::crypto::SecureVector& privateKey);
     PrivateKeyHelper(const PrivateKey_t& privateKey);

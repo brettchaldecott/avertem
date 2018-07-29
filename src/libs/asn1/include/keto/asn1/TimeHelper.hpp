@@ -17,11 +17,20 @@
 #include "UTCTime.h"
 #include <chrono>
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace asn1 {
 
 class TimeHelper {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
+    
     TimeHelper();
     TimeHelper(const UTCTime_t& time);
     TimeHelper(const TimeHelper& orig) = default;

@@ -26,6 +26,7 @@
 #include "keto/asn1/Exception.hpp"
 #include "keto/asn1/AnyInterface.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
 
 namespace keto {
 namespace asn1 {
@@ -33,6 +34,12 @@ namespace asn1 {
 
 class AnyHelper {
 public:
+    
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     /**
      * This constructor takes a reference to an any interface but does not take
      * ownership of the pointer.

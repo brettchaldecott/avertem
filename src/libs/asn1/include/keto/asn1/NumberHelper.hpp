@@ -16,11 +16,18 @@
 
 #include "Number.h"
 
+#include "keto/obfuscate/MetaString.hpp"
+
 namespace keto {
 namespace asn1 {
 
 class NumberHelper {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     NumberHelper();
     NumberHelper(const long& number);
     NumberHelper(const Number_t& number);

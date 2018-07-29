@@ -23,12 +23,21 @@
 #include "keto/asn1/HashHelper.hpp"
 #include "keto/asn1/SignatureHelper.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace asn1 {
 
 
 class ChangeSetHelper {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
+
     ChangeSetHelper();
     ChangeSetHelper(const HashHelper& transactionHash,const HashHelper& accountHash);
     ChangeSetHelper(const ChangeSetHelper& orig) = default;

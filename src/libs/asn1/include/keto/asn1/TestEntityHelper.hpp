@@ -17,12 +17,20 @@
 #include "TestEntity.h"
 #include "keto/asn1/AnyInterface.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace asn1 {
 
 
 class TestEntityHelper : virtual public AnyInterface {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+    
     TestEntityHelper(const TestEntity& testEntity);
     TestEntityHelper(const TestEntityHelper& orig) = default;
     virtual ~TestEntityHelper();

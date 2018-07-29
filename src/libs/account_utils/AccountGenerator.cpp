@@ -24,6 +24,10 @@
 namespace keto {
 namespace account_utils {
 
+std::string AccountGenerator::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 
 AccountGenerator::AccountGenerator() : generator(new Botan::AutoSeeded_RNG()) {
     std::cout << "Generate a new key " << std::endl;

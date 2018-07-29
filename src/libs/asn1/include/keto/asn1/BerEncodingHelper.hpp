@@ -20,11 +20,20 @@
 #include "keto/common/StringCodec.hpp"
 #include "keto/crypto/Containers.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace asn1 {
 
 class BerEncodingHelper {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
+    
     BerEncodingHelper();
     BerEncodingHelper(const keto::crypto::SecureVector& berEncoding);
     BerEncodingHelper(const BerEncoding_t& berEncoding);
