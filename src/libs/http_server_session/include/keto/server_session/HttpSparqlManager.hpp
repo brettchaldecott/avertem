@@ -23,12 +23,20 @@
 
 #include "keto/server_session/HttpSessionManager.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace server_session {
 
 
 class HttpSparqlManager {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     HttpSparqlManager(std::shared_ptr<HttpSessionManager>& httpSessionManagerPtr);
     HttpSparqlManager(const HttpSparqlManager& orig) = delete;
     virtual ~HttpSparqlManager();

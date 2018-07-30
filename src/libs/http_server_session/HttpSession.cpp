@@ -29,7 +29,10 @@
 namespace keto {
 namespace server_session {
 
-
+std::string HttpSession::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+    
 HttpSession::HttpSession(const std::vector<uint8_t>& clientHash) :
     clientHash(clientHash) {
     keto::crypto::SessionHashGenerator hashGenerator(

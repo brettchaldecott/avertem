@@ -21,6 +21,9 @@
 namespace keto {
 namespace server_session {
 
+std::string URISparqlParser::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 URISparqlParser::URISparqlParser(const std::string& uri,const std::string& body) {
     // remove data segment from path

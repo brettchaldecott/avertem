@@ -24,11 +24,19 @@
 
 #include "keto/server_session/HttpSessionManager.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace server_session {
 
 class HttpTransactionManager {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     HttpTransactionManager(std::shared_ptr<HttpSessionManager>& httpSessionManagerPtr);
     HttpTransactionManager(const HttpTransactionManager& orig) = delete;
     virtual ~HttpTransactionManager();

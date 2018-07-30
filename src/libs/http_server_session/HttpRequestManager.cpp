@@ -22,6 +22,9 @@ namespace server_session {
 
 static std::shared_ptr<HttpRequestManager> singleton;
 
+std::string HttpRequestManager::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 HttpRequestManager::HttpRequestManager() {
     httpSessionManagerPtr = std::make_shared<HttpSessionManager>();

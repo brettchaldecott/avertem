@@ -16,12 +16,18 @@
 
 #include <string>
 
+#include "keto/obfuscate/MetaString.hpp"
+
 
 namespace keto {
 namespace server_session {
         
 class URISparqlParser {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
     
     static constexpr const char* QUERY_PARAM = "query=";
     

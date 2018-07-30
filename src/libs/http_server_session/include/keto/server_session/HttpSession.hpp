@@ -20,6 +20,8 @@
 
 #include "keto/crypto/Containers.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
 
 namespace keto {
 namespace server_session {
@@ -27,6 +29,12 @@ namespace server_session {
 
 class HttpSession {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
+    
     HttpSession(const std::vector<uint8_t>& clientHash);
     HttpSession(const HttpSession& orig) = delete;
     virtual ~HttpSession();

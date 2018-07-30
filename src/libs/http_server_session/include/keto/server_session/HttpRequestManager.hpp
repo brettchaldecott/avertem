@@ -27,11 +27,19 @@
 #include "keto/server_session/HttpTransactionManager.hpp"
 #include "keto/server_session/HttpSparqlManager.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace server_session {
 
 class HttpRequestManager {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     HttpRequestManager(const HttpRequestManager& orig) = delete;
     virtual ~HttpRequestManager();
     
