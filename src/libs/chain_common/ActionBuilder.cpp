@@ -19,6 +19,10 @@
 namespace keto {
 namespace chain_common {
 
+std::string ActionBuilder::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 
 ActionBuilder::ActionBuilder() {
     this->action = (Action*)calloc(1, sizeof *action);

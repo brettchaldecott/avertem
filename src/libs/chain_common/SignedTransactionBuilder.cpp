@@ -26,8 +26,11 @@
 
 
 namespace keto {
-    namespace chain_common {
-        
+namespace chain_common {
+
+std::string SignedTransactionBuilder::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 SignedTransactionBuilder::~SignedTransactionBuilder() {
     if (this->signedTransaction) {

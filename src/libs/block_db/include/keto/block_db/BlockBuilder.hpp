@@ -37,7 +37,7 @@ typedef std::shared_ptr<BlockBuilder> BlockBuilderPtr;
 
 class BlockBuilder {
 public:
-    static std::string getVersion() {
+    static std::string getHeaderVersion() {
         return OBFUSCATED("$Id:$");
     };
     static std::string getSourceVersion();

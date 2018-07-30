@@ -29,7 +29,7 @@ typedef std::shared_ptr<AccountGraphStoreManager> AccountGraphStoreManagerPtr;
 
 class AccountGraphStoreManager {
 public:
-    static std::string getVersion() {
+    static std::string getHeaderVersion() {
         return OBFUSCATED("$Id:$");
     };
     static std::string getSourceVersion();

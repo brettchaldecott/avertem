@@ -28,7 +28,7 @@ namespace asn1 {
 
 class SignatureHelper {
 public:
-    static std::string getVersion() {
+    static std::string getHeaderVersion() {
         return OBFUSCATED("$Id:$");
     };
     static std::string getSourceVersion();

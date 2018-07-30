@@ -28,6 +28,7 @@
 #include "keto/asn1/AnyInterface.hpp"
 #include "keto/asn1/AnyHelper.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
 
 namespace keto {
 namespace chain_common {
@@ -36,6 +37,12 @@ namespace chain_common {
 class ActionBuilder : virtual public keto::asn1::AnyInterface {
 public:
     friend class TransactionBuilder;
+    
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     
     ActionBuilder(const ActionBuilder& orig) = delete;
     virtual ~ActionBuilder();

@@ -34,7 +34,7 @@ typedef std::shared_ptr<RDFSubjectHelper> RDFSubjectHelperPtr;
 
 class RDFSubjectHelper {
 public:
-    static std::string getVersion() {
+    static std::string getHeaderVersion() {
         return OBFUSCATED("$Id:$");
     };
     static std::string getSourceVersion();

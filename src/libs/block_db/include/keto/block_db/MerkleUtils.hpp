@@ -32,7 +32,7 @@ namespace block_db {
 
 class MerkleUtils {
 public:
-    static std::string getVersion() {
+    static std::string getHeaderVersion() {
         return OBFUSCATED("$Id:$");
     };
     static std::string getSourceVersion();

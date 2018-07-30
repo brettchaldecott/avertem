@@ -34,7 +34,7 @@ typedef std::shared_ptr<SignedBlockBuilder> SignedBlockBuilderPtr;
 
 class SignedBlockBuilder {
 public:
-    static std::string getVersion() {
+    static std::string getHeaderVersion() {
         return OBFUSCATED("$Id:$");
     };
     static std::string getSourceVersion();

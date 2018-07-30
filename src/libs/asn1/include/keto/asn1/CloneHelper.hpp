@@ -28,7 +28,7 @@ namespace asn1 {
 
 class CloneHelper {
 public:
-    static std::string getVersion() {
+    static std::string getHeaderVersion() {
         return OBFUSCATED("$Id:$");
     };
     static std::string getSourceVersion();

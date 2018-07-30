@@ -38,7 +38,7 @@ typedef std::shared_ptr<AccountResource> AccountResourcePtr;
 
 class AccountResource {
 public:
-    static std::string getVersion() {
+    static std::string getHeaderVersion() {
         return OBFUSCATED("$Id:$");
     };
     static std::string getSourceVersion();

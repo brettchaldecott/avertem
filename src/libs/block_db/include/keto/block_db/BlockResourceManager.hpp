@@ -34,7 +34,7 @@ typedef std::shared_ptr<BlockResourceManager> BlockResourceManagerPtr;
     
 class BlockResourceManager : keto::transaction::Resource {
 public:
-    static std::string getVersion() {
+    static std::string getHeaderVersion() {
         return OBFUSCATED("$Id:$");
     };
     static std::string getSourceVersion();

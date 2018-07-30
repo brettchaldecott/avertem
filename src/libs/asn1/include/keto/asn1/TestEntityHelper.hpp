@@ -26,7 +26,7 @@ namespace asn1 {
 
 class TestEntityHelper : virtual public AnyInterface {
 public:
-    static std::string getVersion() {
+    static std::string getHeaderVersion() {
         return OBFUSCATED("$Id:$");
     };
     static std::string getSourceVersion();

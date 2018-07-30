@@ -32,7 +32,7 @@ typedef std::shared_ptr<SignedChangeSetBuilder> SignedChangeSetBuilderPtr;
 
 class SignedChangeSetBuilder {
 public:
-    static std::string getVersion() {
+    static std::string getHeaderVersion() {
         return OBFUSCATED("$Id:$");
     };
     static std::string getSourceVersion();
