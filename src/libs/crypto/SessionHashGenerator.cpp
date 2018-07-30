@@ -25,6 +25,10 @@
 namespace keto {
 namespace crypto {
 
+std::string SessionHashGenerator::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 
 SessionHashGenerator::SessionHashGenerator(const std::vector<uint8_t>& clientHash,
             const std::vector<uint8_t>& accountHash) {

@@ -19,6 +19,9 @@
 namespace keto {
 namespace crypto {
 
+std::string HashGenerator::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 HashGenerator::HashGenerator() : 
     hash256(Botan::HashFunction::create(Constants::HASH_TYPE)) {

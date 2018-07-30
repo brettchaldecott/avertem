@@ -17,12 +17,18 @@
 #include <botan/hash.h>
 
 #include "keto/crypto/Containers.hpp"
+#include "keto/obfuscate/MetaString.hpp"
 
 namespace keto {
 namespace crypto {
 
 class HashGenerator {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     HashGenerator();
     HashGenerator(const HashGenerator& orig) = default;
     virtual ~HashGenerator();

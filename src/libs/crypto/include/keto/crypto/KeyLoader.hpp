@@ -25,6 +25,7 @@
 #include <botan/rng.h>
 #include <botan/auto_rng.h>
 
+#include "keto/obfuscate/MetaString.hpp"
 
 
 namespace keto {
@@ -35,6 +36,11 @@ typedef std::shared_ptr<KeyLoader> KeyLoaderPtr;
 
 class KeyLoader {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+    
     KeyLoader();
     KeyLoader(const std::string& publicKeyPath);
     KeyLoader(const boost::filesystem::path& publicKeyPath);

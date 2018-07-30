@@ -24,12 +24,20 @@
 
 #include "keto/crypto/Containers.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace crypto {
 
 
 class SignatureVerification {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+    
     SignatureVerification(std::shared_ptr<Botan::Public_Key> publicKey,
             const std::vector<uint8_t>& source);
     SignatureVerification(const std::vector<uint8_t>& key,

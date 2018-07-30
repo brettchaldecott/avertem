@@ -18,11 +18,19 @@
 #include <vector>
 #include "keto/crypto/Containers.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace crypto {
 
 class SecureVectorUtils {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+    
     SecureVectorUtils();
     SecureVectorUtils(const SecureVectorUtils& orig) = default;
     virtual ~SecureVectorUtils();

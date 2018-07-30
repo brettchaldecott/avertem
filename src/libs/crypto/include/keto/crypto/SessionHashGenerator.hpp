@@ -16,12 +16,21 @@
 
 #include <vector>
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace crypto {
 
 
 class SessionHashGenerator {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
+    
     SessionHashGenerator(const std::vector<uint8_t>& clientHash,
                 const std::vector<uint8_t>& accountHash);
     SessionHashGenerator(const SessionHashGenerator& orig) = default;

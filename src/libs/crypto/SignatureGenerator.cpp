@@ -26,6 +26,9 @@
 namespace keto {
 namespace crypto {
 
+std::string SignatureGenerator::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 SignatureGenerator::SignatureGenerator(const keto::crypto::SecureVector& key) : 
     key(key){

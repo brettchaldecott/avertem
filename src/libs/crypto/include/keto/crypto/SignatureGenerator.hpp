@@ -18,12 +18,20 @@
 #include "keto/crypto/Containers.hpp"
 #include "keto/crypto/KeyLoader.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace crypto {
 
 
 class SignatureGenerator {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+    
     SignatureGenerator(const keto::crypto::SecureVector& key);
     SignatureGenerator(const keto::crypto::KeyLoader& loader);
     SignatureGenerator(const SignatureGenerator& orig) = default;

@@ -16,9 +16,19 @@
 
 #include <botan/secmem.h>
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace crypto {
 
+class Containers {
+public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+
+};
 using SecureVector = Botan::secure_vector<uint8_t>;
     
 }

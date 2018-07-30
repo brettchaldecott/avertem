@@ -14,12 +14,20 @@
 #ifndef CONSTANTS_HPP
 #define CONSTANTS_HPP
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace crypto {
 
 
 class Constants {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    
     static constexpr const char* SIGNATURE_TYPE = "EMSA3(SHA-256)";
     static constexpr const char* HASH_TYPE = "SHA-256";
     
