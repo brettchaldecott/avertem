@@ -16,6 +16,7 @@ target_link_libraries( keto_environment )
 target_include_directories( keto_environment
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../common/include"
+                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../obfuscate/include"
                             ${Boost_INCLUDE_DIRS}
                             )
 

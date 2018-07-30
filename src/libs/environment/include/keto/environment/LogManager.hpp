@@ -19,11 +19,19 @@
 #include "keto/environment/Env.hpp"
 #include "keto/environment/Config.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace environment {
 
 class LogManager {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     LogManager(
             const std::shared_ptr<Env>& envPtr,
             const std::shared_ptr<Config>& configPtr);

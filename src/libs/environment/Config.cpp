@@ -38,8 +38,13 @@ namespace keywords = boost::log::keywords;
 
 
 namespace keto {
-    namespace environment {
+namespace environment {
 
+std::string Config::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
+    
 Config::Config(const boost::filesystem::path& ketoHome, const std::string& file,
             const boost::program_options::options_description& optionDescription,
             int argc, char** argv) :

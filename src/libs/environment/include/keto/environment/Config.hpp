@@ -24,12 +24,21 @@
 #include <boost/program_options/variables_map.hpp>
 #include <boost/filesystem/path.hpp>
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace environment {
 
 
 class Config {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
+
     Config(const boost::filesystem::path& ketoHome, const std::string& file,
             const boost::program_options::options_description& optionDescription,
             int argc, char** argv);

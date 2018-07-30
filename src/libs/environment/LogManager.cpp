@@ -30,6 +30,10 @@ namespace keywords = boost::log::keywords;
 
 namespace keto {
     namespace environment {
+        
+std::string LogManager::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
     
 LogManager::LogManager(
     const std::shared_ptr<Env>& envPtr,

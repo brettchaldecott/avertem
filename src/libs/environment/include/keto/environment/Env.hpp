@@ -18,11 +18,19 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/path.hpp>
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace environment {
 
 class Env {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     Env();
     virtual ~Env();
     Env(const Env& origin) = delete;

@@ -21,6 +21,8 @@
 #include "keto/environment/Config.hpp"
 #include "keto/environment/LogManager.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
 namespace po = boost::program_options;
 
 
@@ -32,6 +34,11 @@ namespace environment {
  */
 class EnvironmentManager {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+    
     EnvironmentManager(const std::string& config,
         const po::options_description& optionDescription,
         int argc, char** argv);
