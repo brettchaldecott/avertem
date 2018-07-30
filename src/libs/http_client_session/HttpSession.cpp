@@ -34,6 +34,9 @@
 namespace keto {
 namespace session {
 
+std::string HttpSession::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 HttpSession::HttpSession(
         boost::asio::io_context& ioc, boost::asio::ssl::context& ctx,

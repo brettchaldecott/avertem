@@ -47,12 +47,20 @@
 #include "keto/chain_common/SignedTransactionBuilder.hpp"
 #include "keto/transaction_common/TransactionMessageHelper.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace session {
 
 
 class HttpSession {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     HttpSession(
             boost::asio::io_context& ioc, boost::asio::ssl::context& ctx,
             const std::string& privateKey, const std::string& publicKey);
