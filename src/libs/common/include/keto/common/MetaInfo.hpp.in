@@ -14,6 +14,8 @@
 #ifndef METAINFO_HPP
 #define METAINFO_HPP
 
+#include "keto/obfuscate/MetaString.hpp"
+
 namespace keto {
 namespace common {
 
@@ -21,8 +23,11 @@ namespace common {
  * This class contains the meta information for the 
  */
 class MetaInfo {
-
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+
     MetaInfo() = delete;
     MetaInfo(const MetaInfo& orig) = delete;
     virtual ~MetaInfo() = delete;

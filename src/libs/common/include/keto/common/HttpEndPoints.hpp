@@ -14,11 +14,18 @@
 #ifndef HTTPENDPOINTS_HPP
 #define HTTPENDPOINTS_HPP
 
+#include "keto/obfuscate/MetaString.hpp"
+
 namespace keto {
 namespace common {
 
 class HttpEndPoints {
 public:
+    
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+
     HttpEndPoints() = delete;
     HttpEndPoints(const HttpEndPoints& orig) = delete;
     virtual ~HttpEndPoints() = delete;

@@ -14,9 +14,18 @@
 #ifndef STRINGCODEC_HPP
 #define STRINGCODEC_HPP
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace common {
-    
+
+class StringCodec {
+public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+};
 enum StringEncoding {
     BASE64,
     HEX,
