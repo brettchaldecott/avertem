@@ -19,12 +19,19 @@
 
 #include "keto/crypto/Containers.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
 
 namespace keto {
 namespace key_tools {
 
 class KeyPairCreator {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     KeyPairCreator();
     KeyPairCreator(const KeyPairCreator& orig) = default;
     virtual ~KeyPairCreator();

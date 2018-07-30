@@ -19,6 +19,8 @@
 
 #include "keto/crypto/Containers.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
 
 namespace keto {
 namespace key_tools {
@@ -26,6 +28,11 @@ namespace key_tools {
 
 class ContentSigner {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     ContentSigner(const keto::crypto::SecureVector& secret, const keto::crypto::SecureVector& encodedKey,
             const std::vector<uint8_t>& content);
     ContentSigner(const keto::crypto::SecureVector& secret, const keto::crypto::SecureVector& encodedKey,

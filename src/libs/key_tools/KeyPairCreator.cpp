@@ -27,6 +27,10 @@
 namespace keto {
 namespace key_tools {
 
+std::string KeyPairCreator::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+    
 KeyPairCreator::KeyPairCreator() {
     std::shared_ptr<Botan::AutoSeeded_RNG> generator(new Botan::AutoSeeded_RNG());
     std::shared_ptr<Botan::Private_Key> secretKey(

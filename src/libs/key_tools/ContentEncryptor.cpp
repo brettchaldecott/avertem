@@ -25,10 +25,16 @@
 
 #include "keto/crypto/SecureVectorUtils.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace key_tools {
 
-
+std::string ContentEncryptor::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+    
 ContentEncryptor::ContentEncryptor(const keto::crypto::SecureVector& secret, const keto::crypto::SecureVector& encodedKey,
         const std::vector<uint8_t>& content) {
     
