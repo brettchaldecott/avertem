@@ -31,7 +31,7 @@ typedef Event (*handler)(const Event&);
     
 class EventServiceInterface {
 public:
-    inline static std::string getVersion() {
+    inline static std::string getHeaderVersion() {
         return OBFUSCATED("$Id: $");
     };
     

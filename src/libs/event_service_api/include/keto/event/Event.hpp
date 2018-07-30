@@ -27,7 +27,7 @@ namespace event {
 
 class Event {
 public:
-    inline static std::string getVersion() {
+    inline static std::string getHeaderVersion() {
         return OBFUSCATED("$Id: $");
     };
     
