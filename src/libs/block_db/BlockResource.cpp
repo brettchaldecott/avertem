@@ -18,6 +18,9 @@
 namespace keto {
 namespace block_db {
 
+std::string BlockResource::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 BlockResource::BlockResource(std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr) : 
 dbManagerPtr(dbManagerPtr) {

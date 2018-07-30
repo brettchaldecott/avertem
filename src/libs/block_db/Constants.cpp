@@ -11,6 +11,9 @@
 namespace keto {
 namespace block_db {
 
+std::string Constants::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
     
 const char* Constants::BLOCKS_INDEX = "blocks";
 const char* Constants::TRANSACTIONS_INDEX = "transactions";

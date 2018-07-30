@@ -20,6 +20,11 @@
 
 namespace keto {
 namespace block_db {
+    
+std::string MerkleUtils::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 
 MerkleUtils::MerkleUtils(const Block_t* block) {
     // place the parent hash as the first hash in the merkel tree.

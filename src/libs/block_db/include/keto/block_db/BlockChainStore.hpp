@@ -23,11 +23,19 @@
 #include "keto/rocks_db/DBManager.hpp"
 #include "keto/block_db/BlockResourceManager.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace block_db {
 
 class BlockChainStore {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     BlockChainStore();
     BlockChainStore(const BlockChainStore& orig) = delete;
     virtual ~BlockChainStore();

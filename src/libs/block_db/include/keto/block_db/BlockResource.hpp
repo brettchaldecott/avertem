@@ -26,6 +26,9 @@
 
 #include "keto/rocks_db/DBManager.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace block_db {
 
@@ -34,6 +37,12 @@ typedef std::shared_ptr<BlockResource> BlockResourcePtr;
 
 class BlockResource {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
+    
     BlockResource(std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr);
     BlockResource(const BlockResource& orig) = delete;
     virtual ~BlockResource();

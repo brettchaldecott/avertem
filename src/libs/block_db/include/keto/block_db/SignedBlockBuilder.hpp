@@ -24,6 +24,8 @@
 #include "keto/crypto/KeyLoader.hpp"
 #include "keto/block_db/BlockBuilder.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
 namespace keto {
 namespace block_db {
 
@@ -32,6 +34,11 @@ typedef std::shared_ptr<SignedBlockBuilder> SignedBlockBuilderPtr;
 
 class SignedBlockBuilder {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+    
     SignedBlockBuilder();
     SignedBlockBuilder(const std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr);
     SignedBlockBuilder(Block_t* block,

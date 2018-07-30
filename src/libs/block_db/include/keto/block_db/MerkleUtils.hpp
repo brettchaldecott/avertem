@@ -23,12 +23,20 @@
 #include "keto/asn1/HashHelper.hpp"
 #include "keto/block_db/SignedChangeSetBuilder.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace block_db {
 
 
 class MerkleUtils {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     MerkleUtils(const Block_t* block);
     MerkleUtils(const MerkleUtils& orig) = default;
     virtual ~MerkleUtils();

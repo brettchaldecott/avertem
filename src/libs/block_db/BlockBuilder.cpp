@@ -24,6 +24,11 @@
 namespace keto {
 namespace block_db {
 
+std::string BlockBuilder::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
+    
 BlockBuilder::BlockBuilder() {
     this->block = (Block_t*)calloc(1, sizeof *block);
     this->block->version = keto::common::MetaInfo::PROTOCOL_VERSION;

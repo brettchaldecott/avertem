@@ -26,6 +26,8 @@
 #include "keto/asn1/TimeHelper.hpp"
 #include "keto/asn1/HashHelper.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
 
 namespace keto {
 namespace block_db {
@@ -35,6 +37,11 @@ typedef std::shared_ptr<BlockBuilder> BlockBuilderPtr;
 
 class BlockBuilder {
 public:
+    static std::string getVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     BlockBuilder();
     BlockBuilder(const keto::asn1::HashHelper& parentHash);
     BlockBuilder(const BlockBuilder& orig) = delete;

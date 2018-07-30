@@ -25,6 +25,9 @@
 namespace keto {
 namespace block_db {
 
+std::string SignedBlockBuilder::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 SignedBlockBuilder::SignedBlockBuilder() {
     this->signedBlock = (SignedBlock_t*)calloc(1, sizeof *signedBlock);
