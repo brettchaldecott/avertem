@@ -23,7 +23,10 @@
 
 namespace keto {
 namespace transaction_common {
-    
+
+std::string TransactionProtoHelper::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 TransactionProtoHelper::TransactionProtoHelper() {
 }

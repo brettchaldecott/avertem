@@ -22,6 +22,9 @@
 namespace keto {
 namespace transaction_common {
 
+std::string SignedChangeSetBuilder::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 SignedChangeSetBuilder::SignedChangeSetBuilder() {
     this->signedChangedSet = (SignedChangeSet_t*)calloc(1, sizeof *signedChangedSet);

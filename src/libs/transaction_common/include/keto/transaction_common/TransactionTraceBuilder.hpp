@@ -22,6 +22,8 @@
 #include "keto/asn1/HashHelper.hpp"
 #include "keto/crypto/KeyLoader.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
 namespace keto {
 namespace transaction_common {
 
@@ -30,6 +32,12 @@ typedef std::shared_ptr<TransactionTraceBuilder> TransactionTraceBuilderPtr;
 
 class TransactionTraceBuilder {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     TransactionTraceBuilder(const TransactionTraceBuilder& orig) = delete;
     virtual ~TransactionTraceBuilder();
     

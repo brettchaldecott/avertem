@@ -22,6 +22,8 @@
 
 #include "keto/transaction_common/TransactionMessageHelper.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
 namespace keto {
 namespace transaction_common {
 
@@ -30,6 +32,12 @@ typedef std::shared_ptr<TransactionProtoHelper> TransactionProtoHelperPtr;
 
 class TransactionProtoHelper {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     TransactionProtoHelper();
     TransactionProtoHelper(const keto::proto::Transaction& transaction);
     TransactionProtoHelper(const TransactionMessageHelperPtr& transactionMessageHelper);

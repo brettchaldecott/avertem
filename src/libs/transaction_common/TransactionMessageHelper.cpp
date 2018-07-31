@@ -22,6 +22,10 @@
 namespace keto {
 namespace transaction_common {
 
+std::string TransactionMessageHelper::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+    
 TransactionMessageHelper::TransactionMessageHelper() {
     this->transactionMessage = (TransactionMessage_t*)calloc(1, sizeof *transactionMessage);
     this->transactionMessage->version = keto::common::MetaInfo::PROTOCOL_VERSION;

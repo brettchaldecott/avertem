@@ -23,6 +23,9 @@
 namespace keto {
 namespace transaction_common {
 
+std::string ChangeSetBuilder::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 ChangeSetBuilder::ChangeSetBuilder() {
     this->changeSet = (ChangeSet_t*)calloc(1, sizeof *changeSet);

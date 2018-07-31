@@ -21,6 +21,8 @@
 #include "SignedChangeSet.h"
 
 #include "keto/crypto/KeyLoader.hpp"
+#include "keto/obfuscate/MetaString.hpp"
+
 
 namespace keto {
 namespace transaction_common {
@@ -31,6 +33,12 @@ typedef std::shared_ptr<SignedChangeSetBuilder> SignedChangeSetBuilderPtr;
 
 class SignedChangeSetBuilder {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     SignedChangeSetBuilder();
     SignedChangeSetBuilder(ChangeSet_t* changeSet);
     SignedChangeSetBuilder(ChangeSet_t* changeSet, const keto::crypto::KeyLoader& keyloader);

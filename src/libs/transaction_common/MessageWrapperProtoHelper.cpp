@@ -22,6 +22,9 @@
 namespace keto {
 namespace transaction_common {
 
+std::string MessageWrapperProtoHelper::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 MessageWrapperProtoHelper::MessageWrapperProtoHelper() {
     wrapper.set_version(1);

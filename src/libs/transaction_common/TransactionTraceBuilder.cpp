@@ -19,6 +19,10 @@
 
 namespace keto {
 namespace transaction_common {
+    
+std::string TransactionTraceBuilder::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 TransactionTraceBuilder::TransactionTraceBuilder(
     const keto::asn1::HashHelper& accountHash, keto::crypto::KeyLoader& keyloader) {

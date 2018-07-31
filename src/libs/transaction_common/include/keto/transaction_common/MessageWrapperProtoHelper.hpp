@@ -21,12 +21,20 @@
 #include "keto/asn1/HashHelper.hpp"
 #include "keto/transaction_common/TransactionProtoHelper.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
 namespace keto {
 namespace transaction_common {
 
 
 class MessageWrapperProtoHelper {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     MessageWrapperProtoHelper();
     MessageWrapperProtoHelper(const keto::proto::MessageWrapper& wrapper);
     MessageWrapperProtoHelper(const keto::proto::Transaction& transaction);

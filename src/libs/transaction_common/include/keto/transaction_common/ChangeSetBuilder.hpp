@@ -22,6 +22,8 @@
 
 #include "keto/asn1/HashHelper.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
 
 namespace keto {
 namespace transaction_common {
@@ -31,6 +33,12 @@ typedef std::shared_ptr<ChangeSetBuilder> ChangeSetBuilderPtr;
 
 class ChangeSetBuilder {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     ChangeSetBuilder();
     ChangeSetBuilder(const keto::asn1::HashHelper& transactionHash, 
         const keto::asn1::HashHelper& accountHash);
