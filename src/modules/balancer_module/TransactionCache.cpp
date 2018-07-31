@@ -20,7 +20,11 @@
 namespace keto {
 namespace balancer {
 
-static TransactionCachePtr singleton;    
+static TransactionCachePtr singleton;
+
+std::string TransactionCache::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 TransactionCache::TransactionCache() {
 }

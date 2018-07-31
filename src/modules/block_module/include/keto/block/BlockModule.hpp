@@ -27,6 +27,12 @@ namespace block {
 
 class BlockModule : public keto::module::ModuleInterface {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+    
     BlockModule();
     BlockModule(const BlockModule& orig) = delete;
     virtual ~BlockModule();

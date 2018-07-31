@@ -25,6 +25,8 @@
 #include "BlockChain.pb.h"
 
 #include "keto/crypto/KeyLoader.hpp"
+#include "keto/common/MetaInfo.hpp"
+
 
 namespace keto {
 namespace block {
@@ -34,6 +36,12 @@ typedef std::shared_ptr<BlockProducer> BlockProducerPtr;
 
 class BlockProducer {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     /**
      * The state enum containing the various states that the module manager can
      * be in.

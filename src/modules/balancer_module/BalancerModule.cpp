@@ -16,6 +16,10 @@
 namespace keto {
 namespace balancer {
 
+std::string BalancerModule::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 
 BalancerModule::BalancerModule() {
 }

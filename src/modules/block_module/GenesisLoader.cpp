@@ -63,6 +63,10 @@
 
 namespace keto {
 namespace block {
+    
+std::string GenesisLoader::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 GenesisLoader::GenesisLoader(const GenesisReader& reader) : reader(reader) {
     std::shared_ptr<keto::environment::Config> config = 

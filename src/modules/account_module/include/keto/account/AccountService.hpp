@@ -15,6 +15,7 @@
 #define ACCOUNTSERVICE_HPP
 
 #include "keto/event/Event.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 
 namespace keto {
@@ -22,6 +23,12 @@ namespace account {
 
 class AccountService {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     AccountService(const AccountService& orig) = delete;
     virtual ~AccountService();
     

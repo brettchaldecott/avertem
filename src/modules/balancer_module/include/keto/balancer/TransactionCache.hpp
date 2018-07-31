@@ -19,6 +19,8 @@
 #include <vector>
 #include <set>
 
+#include "keto/common/MetaInfo.hpp"
+
 namespace keto {
 namespace balancer {
 
@@ -28,6 +30,12 @@ typedef std::shared_ptr<TransactionCache> TransactionCachePtr;
 
 class TransactionCache {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     TransactionCache();
     TransactionCache(const TransactionCache& orig) = delete;
     virtual ~TransactionCache();

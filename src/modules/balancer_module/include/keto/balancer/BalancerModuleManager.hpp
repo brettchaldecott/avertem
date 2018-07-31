@@ -22,6 +22,7 @@
 #include "keto/balancer/BalancerModule.hpp"
 
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 
 namespace keto {
@@ -30,6 +31,12 @@ namespace balancer {
 
 class BalancerModuleManager : public keto::module::ModuleManagementInterface {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     BalancerModuleManager();
     BalancerModuleManager(const BalancerModuleManager& orig) = delete;
     virtual ~BalancerModuleManager();

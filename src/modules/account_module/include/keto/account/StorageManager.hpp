@@ -17,6 +17,7 @@
 #include <string>
 #include <memory>
 
+#include "keto/common/MetaInfo.hpp"
 
 
 namespace keto {
@@ -25,6 +26,12 @@ namespace account {
 
 class StorageManager {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     StorageManager(const StorageManager& orig) = delete;
     virtual ~StorageManager();
     

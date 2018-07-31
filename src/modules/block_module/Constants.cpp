@@ -16,6 +16,10 @@
 namespace keto {
 namespace block {
 
+std::string Constants::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 const char* Constants::GENESIS_CONFIG = "genesis_config";
 
 // keys for server

@@ -28,6 +28,12 @@ namespace account {
 
 class AccountModule : public keto::module::ModuleInterface {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     AccountModule();
     AccountModule(const AccountModule& orig) = delete;
     virtual ~AccountModule();

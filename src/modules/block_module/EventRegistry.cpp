@@ -22,6 +22,9 @@
 namespace keto {
 namespace block {
 
+std::string EventRegistry::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 EventRegistry::EventRegistry() {
 }

@@ -41,6 +41,9 @@ namespace block {
 
 static std::shared_ptr<BlockService> singleton;
 
+std::string BlockService::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 BlockService::BlockService() {
 }

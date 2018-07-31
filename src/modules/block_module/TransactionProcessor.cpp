@@ -32,6 +32,10 @@ namespace block {
 
 static TransactionProcessorPtr singleton;
 
+std::string TransactionProcessor::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 TransactionProcessor::TransactionProcessor() {
 }
 

@@ -23,12 +23,20 @@
 
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
 
+#include "keto/common/MetaInfo.hpp"
+
 namespace keto {
 namespace block {
 
 
 class BlockModuleManager : public keto::module::ModuleManagementInterface {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+    
     BlockModuleManager();
     BlockModuleManager(const BlockModuleManager& orig) = delete;
     virtual ~BlockModuleManager();

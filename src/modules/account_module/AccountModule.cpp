@@ -16,6 +16,9 @@
 namespace keto {
 namespace account {
 
+std::string AccountModule::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 AccountModule::AccountModule() {
 }

@@ -24,6 +24,9 @@ namespace account {
 
 static std::shared_ptr<StorageManager> singleton;
 
+std::string StorageManager::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 StorageManager::StorageManager() {
     keto::account_db::AccountStore::init();

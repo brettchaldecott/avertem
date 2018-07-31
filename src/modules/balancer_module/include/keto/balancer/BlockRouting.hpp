@@ -19,6 +19,7 @@
 #include <memory>
 #include <mutex>
 
+#include "keto/common/MetaInfo.hpp"
 
 namespace keto {
 namespace balancer {
@@ -29,6 +30,12 @@ typedef std::shared_ptr<BlockRouting> BlockRoutingPtr;
 
 class BlockRouting {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     BlockRouting();
     BlockRouting(const BlockRouting& orig) = delete;
     virtual ~BlockRouting();

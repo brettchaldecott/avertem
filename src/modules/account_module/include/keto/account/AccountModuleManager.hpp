@@ -21,6 +21,7 @@
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
 
 #include "keto/module/ModuleManagementInterface.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 
 namespace keto {
@@ -28,6 +29,12 @@ namespace account {
 
 class AccountModuleManager : public keto::module::ModuleManagementInterface {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     AccountModuleManager();
     AccountModuleManager(const AccountModuleManager& orig) = delete;
     virtual ~AccountModuleManager();

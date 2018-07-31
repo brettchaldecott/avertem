@@ -27,7 +27,11 @@ namespace keto {
 namespace balancer {
 
 static BalancerServicePtr singleton;
-    
+
+std::string BalancerService::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 BalancerService::BalancerService() {
 }
 

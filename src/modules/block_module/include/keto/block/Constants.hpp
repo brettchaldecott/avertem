@@ -14,11 +14,20 @@
 #ifndef CONSTANTS_HPP
 #define CONSTANTS_HPP
 
+#include "keto/common/MetaInfo.hpp"
+
+
 namespace keto {
 namespace block {
 
 class Constants {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     // string constants
     static const char* GENESIS_CONFIG;
     

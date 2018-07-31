@@ -32,6 +32,10 @@ namespace account {
 
 static std::shared_ptr<AccountService> singleton;
 
+std::string AccountService::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 AccountService::AccountService() {
 }
 

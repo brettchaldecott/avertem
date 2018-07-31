@@ -19,6 +19,8 @@
 
 #include "BlockChain.pb.h"
 
+#include "keto/common/MetaInfo.hpp"
+
 namespace keto {
 namespace block {
 
@@ -27,6 +29,12 @@ typedef std::shared_ptr<TransactionProcessor> TransactionProcessorPtr;
 
 class TransactionProcessor {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     TransactionProcessor();
     TransactionProcessor(const TransactionProcessor& orig) = delete;
     virtual ~TransactionProcessor();

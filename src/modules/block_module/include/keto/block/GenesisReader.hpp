@@ -18,12 +18,20 @@
 #include <nlohmann/json.hpp>
 #include <boost/filesystem/path.hpp>
 
+#include "keto/common/MetaInfo.hpp"
+
 
 namespace keto {
 namespace block {
 
 class GenesisReader {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     GenesisReader(const boost::filesystem::path& path);
     GenesisReader(const GenesisReader& orig) = default;
     virtual ~GenesisReader();

@@ -19,11 +19,20 @@
 #include "keto/block/GenesisReader.hpp"
 #include "keto/crypto/KeyLoader.hpp"
 
+#include "keto/common/MetaInfo.hpp"
+
 namespace keto {
 namespace block {
 
 class GenesisLoader {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
+    
     GenesisLoader(const GenesisReader& reader);
     GenesisLoader(const GenesisLoader& orig);
     virtual ~GenesisLoader();

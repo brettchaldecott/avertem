@@ -18,6 +18,7 @@
 #include <memory>
 
 #include "keto/event/Event.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 namespace keto {
 namespace balancer {
@@ -27,6 +28,12 @@ typedef std::shared_ptr<BalancerService> BalancerServicePtr;
 
 class BalancerService {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     BalancerService();
     BalancerService(const BalancerService& orig) = delete;
     virtual ~BalancerService();

@@ -19,6 +19,7 @@
 #include <map>
 
 #include "keto/event/Event.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 namespace keto {
 namespace block {
@@ -27,6 +28,12 @@ typedef std::vector<uint8_t> AccountHashVector;
     
 class BlockService {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     BlockService();
     BlockService(const BlockService& orig) = delete;
     virtual ~BlockService();

@@ -30,6 +30,10 @@ namespace balancer {
 
 static BlockRoutingPtr singleton;
 
+std::string BlockRouting::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 BlockRouting::BlockRouting() {
     // retrieve the configuration
     std::shared_ptr<keto::environment::Config> config = 

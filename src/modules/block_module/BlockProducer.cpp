@@ -52,7 +52,10 @@ namespace block {
 
 static BlockProducerPtr singleton;
 static std::shared_ptr<std::thread> producerThreadPtr; 
-    
+
+std::string BlockProducer::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 BlockProducer::BlockProducer() : currentState(State::inited) {
     std::shared_ptr<keto::environment::Config> config = 
