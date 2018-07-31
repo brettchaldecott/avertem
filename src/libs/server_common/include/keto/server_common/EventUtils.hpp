@@ -20,10 +20,20 @@
 #include "keto/event/Event.hpp"
 #include "keto/server_common/VectorUtils.hpp"
 #include "keto/server_common/Exception.hpp"
+#include "keto/obfuscate/MetaString.hpp"
+
 
 namespace keto {
 namespace server_common {
 
+class EventUtils {
+public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+};
+
+    
 template<class PbType>
 keto::event::Event toEvent(PbType& type) {
     std::string pbValue;

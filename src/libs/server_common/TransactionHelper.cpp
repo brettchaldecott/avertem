@@ -19,6 +19,10 @@
 namespace keto {
 namespace server_common {
 
+std::string TransactionHelper::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+    
 keto::transaction::TransactionPtr createTransaction() {
     return std::dynamic_pointer_cast<keto::transaction::TransactionService>(
             keto::module::ModuleManager::getInstance()->getModule(

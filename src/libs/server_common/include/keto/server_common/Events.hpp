@@ -14,11 +14,18 @@
 #ifndef EVENTS_HPP
 #define EVENTS_HPP
 
+#include "keto/obfuscate/MetaString.hpp"
+
 namespace keto {
 namespace server_common {
 
 class Events {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     Events() = delete;
     Events(const Events& orig) = delete;
     virtual ~Events() = delete;

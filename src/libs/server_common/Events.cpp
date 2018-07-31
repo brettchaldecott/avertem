@@ -16,6 +16,10 @@
 namespace keto {
 namespace server_common {
 
+std::string Events::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 
 // events for the key store
 const char* Events::REQUEST_SESSION_KEY = "REQUEST_SESSION_KEY";

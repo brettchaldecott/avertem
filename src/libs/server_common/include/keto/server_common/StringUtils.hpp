@@ -16,6 +16,7 @@
 
 #include <string>
 #include <vector>
+#include "keto/obfuscate/MetaString.hpp"
 
 namespace keto {
 namespace server_common {
@@ -24,6 +25,11 @@ typedef std::vector<std::string> StringVector;
 
 class StringUtils {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     StringUtils(const std::string& value);
     StringUtils(const StringUtils& orig) = default;
     virtual ~StringUtils();

@@ -19,11 +19,19 @@
 
 #include <boost/filesystem/path.hpp>
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace server_common {
 
 class ServerInfo {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     ServerInfo(const ServerInfo& orig) = delete;
     virtual ~ServerInfo();
     

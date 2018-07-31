@@ -15,10 +15,20 @@
 #define SERVICEREGISTRYHELPER_HPP
 
 #include <string>
+#include "keto/obfuscate/MetaString.hpp"
 
 namespace keto {
 namespace server_common {
+
+class ServiceRegistryHelper {
+public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
     
+};
+
 void registerService(const std::string& service);
 
 }

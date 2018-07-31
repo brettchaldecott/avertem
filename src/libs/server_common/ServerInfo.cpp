@@ -30,6 +30,11 @@ namespace server_common {
 static std::mutex singletonMutex;
 static std::shared_ptr<ServerInfo> singleton;
 
+std::string ServerInfo::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
+
 ServerInfo::ServerInfo() {
     
     // retrieve the configuration

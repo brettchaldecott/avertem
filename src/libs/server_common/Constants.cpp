@@ -13,8 +13,13 @@
 
 #include "keto/server_common/Constants.hpp"
 
+
 namespace keto {
 namespace server_common {
+
+std::string Constants::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 
 const char* Constants::PUBLIC_KEY_DIR = "public-key-dir";

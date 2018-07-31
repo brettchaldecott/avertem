@@ -17,12 +17,19 @@
 #include <vector>
 #include <string>
 
+#include "keto/obfuscate/MetaString.hpp"
+
 namespace keto {
 namespace server_common {
 
 
 class VectorUtils {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     VectorUtils();
     VectorUtils(const VectorUtils& orig) = default;
     virtual ~VectorUtils();

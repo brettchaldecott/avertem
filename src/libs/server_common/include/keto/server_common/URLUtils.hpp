@@ -14,11 +14,18 @@
 #ifndef URLUTILS_HPP
 #define URLUTILS_HPP
 
+#include "keto/obfuscate/MetaString.hpp"
+
 namespace keto {
 namespace server_common {
 
 class URLUtils {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     static std::string unescape(const std::string& escapedString);
       
 private:

@@ -14,11 +14,20 @@
 #ifndef CONSTANTS_HPP
 #define CONSTANTS_HPP
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace server_common {
 
 class Constants {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+    
+    
     Constants() = delete;
     Constants(const Constants& orig) = delete;
     virtual ~Constants() = delete;

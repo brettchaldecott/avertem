@@ -24,7 +24,11 @@
 
 namespace keto {
 namespace server_common {
-    
+
+std::string ServiceRegistryHelper::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 void registerService(const std::string& service) {
     std::vector<uint8_t> accountVector = ServerInfo::getInstance()->getAccountHash();
     

@@ -9,6 +9,11 @@
 
 namespace keto {
 namespace server_common {
+    
+std::string EventServiceHelpers::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 
 void triggerEvent(const keto::event::Event& event) {
     std::dynamic_pointer_cast<keto::event::EventServiceInterface>(keto::module::ModuleManager::getInstance()->getModule(keto::event::EventServiceInterface::KETO_EVENT_SERVICE_MODULE))->triggerEvent(event);

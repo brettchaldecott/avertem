@@ -23,9 +23,21 @@
 #include "keto/server_common/ServerInfo.hpp"
 #include "keto/server_common/VectorUtils.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace server_common {
-
+    
+class EventServiceHelpers {
+public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+    
+};
+    
 void triggerEvent(const keto::event::Event& event);
 
 keto::event::Event processEvent(const keto::event::Event& event);
