@@ -14,11 +14,18 @@
 #ifndef KETO_MODULE_CONSTANTS_HPP
 #define KETO_MODULE_CONSTANTS_HPP
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace module {
 
 class Constants {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+
     static constexpr const char* KETO_SHARE = "shared";
     static constexpr const char* KETO_TMP = "tmp";
     

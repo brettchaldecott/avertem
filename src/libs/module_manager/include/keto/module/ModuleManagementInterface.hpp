@@ -19,6 +19,7 @@
 #include <memory>
 
 #include "keto/module/ModuleInterface.hpp"
+#include "keto/obfuscate/MetaString.hpp"
 
 
 namespace keto {
@@ -26,6 +27,10 @@ namespace module {
 
 class ModuleManagementInterface {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+
     friend class ModuleManager;
 
     // meta methods

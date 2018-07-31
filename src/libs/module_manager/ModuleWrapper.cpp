@@ -20,6 +20,10 @@
 namespace keto {
 namespace module {
 
+std::string ModuleWrapper::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 ModuleWrapper::ModuleWrapper(boost::filesystem::path sourcePath,
             boost::filesystem::path tmpDir) : sourcePath(sourcePath) {
     this->loadPath = boost::filesystem::unique_path(tmpDir / "%%%%-%%%%-%%%%-%%%%.so");

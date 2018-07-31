@@ -23,6 +23,7 @@
 
 #include "keto/module/ModuleManagementInterface.hpp"
 #include "keto/module/ModuleWrapper.hpp"
+#include "keto/obfuscate/MetaString.hpp"
 
 namespace keto {
 namespace module {
@@ -33,6 +34,11 @@ namespace module {
  */
 class ModuleManager {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     /**
      * The state enum containing the various states that the module manager can
      * be in.

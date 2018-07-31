@@ -14,11 +14,18 @@
 #ifndef MODULEINTERFACE_HPP
 #define MODULEINTERFACE_HPP
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace module {
 
 class ModuleInterface {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
     // meta methods
     virtual const std::string getName() const = 0;
     virtual const std::string getDescription() const = 0;

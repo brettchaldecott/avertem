@@ -37,6 +37,10 @@ namespace ketoEnv = keto::environment;
 
 static std::shared_ptr<ModuleManager> singleton;
 
+std::string ModuleManager::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 ModuleManager::ModuleManager() {
     this->currentState = inited;
     this->moduleDir = ketoEnv::EnvironmentManager::getInstance()->getEnv()->getInstallDir()

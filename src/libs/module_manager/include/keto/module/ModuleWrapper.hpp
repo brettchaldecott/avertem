@@ -23,6 +23,8 @@
 
 // keto includes
 #include "keto/module/ModuleManagementInterface.hpp"
+#include "keto/obfuscate/MetaString.hpp"
+
 
 namespace keto {
 namespace module {
@@ -31,6 +33,11 @@ namespace module {
 
 class ModuleWrapper {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     // enable the module manager to access the protected member variables
     friend class ModuleManager;
     
