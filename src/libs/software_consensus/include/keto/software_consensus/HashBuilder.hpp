@@ -27,7 +27,7 @@ namespace software_consensus {
 
 class HashBuilder {
 public:
-    static std::string getVersion() {
+    static std::string getHeaderVersion() {
         return OBFUSCATED("$Id:$");
     };
     

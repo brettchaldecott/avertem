@@ -37,7 +37,7 @@ typedef std::map<std::string,getSourceVersion> SourceVersionMap;
 
 class ConsensusHashGenerator {
 public:
-    inline static std::string getVersion() {
+    inline static std::string getHeaderVersion() {
         return OBFUSCATED("$Id: cd6f953fdc6d6011f27667fc3267cb9f0e6fa962 $");
     };
     

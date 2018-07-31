@@ -26,7 +26,7 @@ namespace software_consensus {
 
 class ModuleConsensusGenerator {
 public:
-    static std::string getVersion() {
+    static std::string getHeaderVersion() {
         return OBFUSCATED("$Id:$");
     };
     

@@ -33,7 +33,7 @@ typedef std::shared_ptr<ConsensusMessageHelper> ConsensusMessageHelperPtr;
     
 class ConsensusMessageHelper {
 public:
-    static std::string getVersion() {
+    static std::string getHeaderVersion() {
         return OBFUSCATED("$Id:$");
     };
     static std::string getSourceVersion();
