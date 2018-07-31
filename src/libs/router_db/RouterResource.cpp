@@ -19,6 +19,10 @@
 namespace keto {
 namespace router_db {
 
+std::string RouterResource::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 
 RouterResource::RouterResource(std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr) : 
 dbManagerPtr(dbManagerPtr) {

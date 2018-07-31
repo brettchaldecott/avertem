@@ -23,12 +23,18 @@
 
 #include "keto/asn1/HashHelper.hpp"
 #include "keto/router_db/RouterResourceManager.hpp"
+#include "keto/obfuscate/MetaString.hpp"
 
 namespace keto {
 namespace router_db {
 
 class RouterStore {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     RouterStore();
     RouterStore(const RouterStore& orig) = delete;
     virtual ~RouterStore();

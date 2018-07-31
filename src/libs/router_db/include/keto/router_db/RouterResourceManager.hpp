@@ -21,6 +21,7 @@
 
 #include "keto/rocks_db/DBManager.hpp"
 #include "keto/router_db/RouterResource.hpp"
+#include "keto/obfuscate/MetaString.hpp"
 
 
 namespace keto {
@@ -32,6 +33,11 @@ typedef std::shared_ptr<RouterResourceManager> RouterResourceManagerPtr;
     
 class RouterResourceManager : keto::transaction::Resource {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     RouterResourceManager(std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr);
     RouterResourceManager(const RouterResourceManager& orig) = delete;
     virtual ~RouterResourceManager();

@@ -25,7 +25,11 @@ namespace keto {
 namespace router_db {
 
 static std::shared_ptr<RouterStore> singleton;
-    
+
+std::string RouterStore::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 RouterStore::RouterStore() {
     dbManagerPtr = std::shared_ptr<keto::rocks_db::DBManager>(
             new keto::rocks_db::DBManager(Constants::DB_LIST));

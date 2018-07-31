@@ -17,6 +17,9 @@
 #include <vector>
 #include <string>
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace router_db {
 
@@ -24,6 +27,10 @@ namespace router_db {
 class
 Constants {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
     
     // string constants
     static const char* ROUTER_INDEX;

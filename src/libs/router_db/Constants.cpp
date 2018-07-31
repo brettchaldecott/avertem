@@ -11,6 +11,10 @@
 namespace keto {
 namespace router_db {
 
+std::string Constants::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
     
 const char* Constants::ROUTER_INDEX = "routes";
 

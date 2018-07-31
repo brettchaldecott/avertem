@@ -21,6 +21,10 @@ namespace router_db {
 
 thread_local RouterResourcePtr RouterResourceManager::routerResourcePtr;
 
+std::string RouterResourceManager::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 RouterResourceManager::RouterResourceManager(
     std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr) :
     dbManagerPtr(dbManagerPtr) {
