@@ -22,12 +22,18 @@
 
 #include "keto/crypto/KeyLoader.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
 
 namespace keto {
 namespace rpc_protocol {
 
 class ServerHelloProtoHelper {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+    
     ServerHelloProtoHelper(const std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr);
     ServerHelloProtoHelper(const std::string& value);
     ServerHelloProtoHelper(const ServerHelloProtoHelper& orig) = default;

@@ -20,6 +20,10 @@
 
 namespace keto {
 namespace rpc_protocol {
+    
+std::string ServerHelloProtoHelper::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 ServerHelloProtoHelper::ServerHelloProtoHelper(const std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr) :
     keyLoaderPtr(keyLoaderPtr){
