@@ -20,6 +20,7 @@
 #include <memory>
 
 #include "keto/rocks_db/DBConnector.hpp"
+#include "keto/obfuscate/MetaString.hpp"
 
 namespace keto {
 namespace rocks_db {
@@ -27,6 +28,11 @@ namespace rocks_db {
 
 class DBManager {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     DBManager(const std::vector<std::string>& databases);
     DBManager(const DBManager& orig) = delete;
     virtual ~DBManager();

@@ -20,6 +20,9 @@
 namespace keto {
 namespace rocks_db {
 
+std::string SliceHelper::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 SliceHelper::SliceHelper() {
 }

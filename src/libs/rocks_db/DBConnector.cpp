@@ -21,6 +21,11 @@
 namespace keto {
 namespace rocks_db {
 
+std::string DBConnector::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
+
 DBConnector::DBConnector(const std::string& path) : db(NULL) {
     options.create_if_missing = true;
     

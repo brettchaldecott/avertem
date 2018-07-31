@@ -18,12 +18,18 @@
 #include <memory>
 
 #include "rocksdb/slice.h"
+#include "keto/obfuscate/MetaString.hpp"
 
 namespace keto {
 namespace rocks_db {
 
 class SliceHelper {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     SliceHelper();
     SliceHelper(const std::string& sliceBytes);
     SliceHelper(const std::vector<uint8_t>& sliceBytes);

@@ -26,6 +26,10 @@
 namespace keto {
 namespace rocks_db {
 
+std::string DBManager::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+    
 DBManager::DBManager(const std::vector<std::string>& databases) {
     std::shared_ptr<keto::environment::Config> config = 
             keto::environment::EnvironmentManager::getInstance()->getConfig();

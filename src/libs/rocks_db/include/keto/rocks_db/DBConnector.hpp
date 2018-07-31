@@ -20,6 +20,7 @@
 #include "rocksdb/db.h"
 #include "rocksdb/utilities/transaction.h"
 #include "rocksdb/utilities/transaction_db.h"
+#include "keto/obfuscate/MetaString.hpp"
 
 namespace keto {
 namespace rocks_db {
@@ -29,6 +30,11 @@ typedef std::shared_ptr<DBConnector> DBConnectorPtr;
 
 class DBConnector { 
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    static std::string getSourceVersion();
+
     DBConnector(const std::string& path);
     DBConnector(const DBConnector& orig) = delete;
     virtual ~DBConnector();
