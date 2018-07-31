@@ -11,6 +11,9 @@
 
 #include "Runtime/Runtime.h"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 //namespace IR { struct Module; }
 //namespace Runtime { struct ModuleInstance; struct Context; struct Compartment; }
 
@@ -18,21 +21,27 @@ namespace keto {
 
     namespace Emscripten
     {
-            //using namespace Runtime;
+        static std::string getHeaderVersion() {
+            return OBFUSCATED("$Id:$");
+        };
 
-            struct Instance
-            {
-                    Runtime::GCPointer<Runtime::ModuleInstance> env;
-                    Runtime::GCPointer<Runtime::ModuleInstance> asm2wasm;
-                    Runtime::GCPointer<Runtime::ModuleInstance> global;
-                    Runtime::GCPointer<Runtime::ModuleInstance> keto;
+        static std::string getSourceVersion();
 
-                    Runtime::GCPointer<Runtime::MemoryInstance> emscriptenMemory;
-            };
+        //using namespace Runtime;
 
-            EMSCRIPTEN_API keto::Emscripten::Instance* instantiate(Runtime::Compartment* compartment);
-            EMSCRIPTEN_API void initializeGlobals(Runtime::Context* context,const IR::Module& module,Runtime::ModuleInstance* moduleInstance);
-            EMSCRIPTEN_API void injectCommandArgs(Emscripten::Instance* instance,const std::vector<const char*>& argStrings,std::vector<Runtime::Value>& outInvokeArgs);
+        struct Instance
+        {
+                Runtime::GCPointer<Runtime::ModuleInstance> env;
+                Runtime::GCPointer<Runtime::ModuleInstance> asm2wasm;
+                Runtime::GCPointer<Runtime::ModuleInstance> global;
+                Runtime::GCPointer<Runtime::ModuleInstance> keto;
+
+                Runtime::GCPointer<Runtime::MemoryInstance> emscriptenMemory;
+        };
+
+        EMSCRIPTEN_API keto::Emscripten::Instance* instantiate(Runtime::Compartment* compartment);
+        EMSCRIPTEN_API void initializeGlobals(Runtime::Context* context,const IR::Module& module,Runtime::ModuleInstance* moduleInstance);
+        EMSCRIPTEN_API void injectCommandArgs(Emscripten::Instance* instance,const std::vector<const char*>& argStrings,std::vector<Runtime::Value>& outInvokeArgs);
     }
 }
 

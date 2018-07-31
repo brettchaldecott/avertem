@@ -35,6 +35,10 @@
 namespace keto {
 namespace wavm_common {
 
+std::string WavmSession::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+    
 WavmSession::WavmSession(const keto::proto::SandboxCommandMessage& sandboxCommandMessage,
         const keto::crypto::KeyLoaderPtr& keyLoaderPtr) : 
     sandboxCommandMessage(sandboxCommandMessage) , modelHelper(RDFChange_persist),

@@ -21,6 +21,10 @@
 namespace keto {
 namespace wavm_common {
 
+std::string WavmUtils::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+    
 std::string WavmUtils::readCString(Runtime::MemoryInstance* memory,I32 stringAddress) {
     // Validate the path name and make a local copy of it.
     std::string returnString;

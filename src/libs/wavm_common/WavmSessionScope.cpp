@@ -16,6 +16,10 @@
 
 namespace keto {
 namespace wavm_common {
+    
+std::string WavmSessionScope::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 WavmSessionScope::WavmSessionScope(keto::proto::SandboxCommandMessage& sandboxCommandMessage) {
     keto::wavm_common::WavmSessionManager::getInstance()->initWavmSession(sandboxCommandMessage);

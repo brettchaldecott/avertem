@@ -14,11 +14,20 @@
 #ifndef RDFCONSTANTS_HPP
 #define RDFCONSTANTS_HPP
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace wavm_common {
 
 class RDFConstants {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     RDFConstants() = delete;
     RDFConstants(const RDFConstants& orig) = delete;
     virtual ~RDFConstants() = delete;

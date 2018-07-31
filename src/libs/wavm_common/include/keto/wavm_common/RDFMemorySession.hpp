@@ -27,6 +27,9 @@
 
 #include "keto/asn1/RDFSubjectHelper.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace wavm_common {
 
@@ -38,6 +41,12 @@ typedef std::vector<ResultMap> ResultVectorMap;
 
 class RDFMemorySession {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     RDFMemorySession();
     RDFMemorySession(const RDFMemorySession& orig) = delete;
     virtual ~RDFMemorySession();

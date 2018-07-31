@@ -18,11 +18,20 @@
 
 #include "keto/wavm_common/WavmSession.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace wavm_common {
 
 class WavmSessionScope {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     WavmSessionScope(keto::proto::SandboxCommandMessage& sandboxCommandMessage);
     WavmSessionScope(const WavmSessionScope& orig) = default;
     virtual ~WavmSessionScope();

@@ -27,6 +27,9 @@ namespace wavm_common {
 static WavmSessionManagerPtr singleton;
 thread_local WavmSessionPtr WavmSessionManager::wavmSessionPtr;
 
+std::string WavmSessionManager::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 WavmSessionManager::WavmSessionManager() {
     std::shared_ptr<keto::environment::Config> config = 

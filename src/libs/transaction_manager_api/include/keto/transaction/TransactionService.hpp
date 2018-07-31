@@ -17,11 +17,18 @@
 #include "keto/transaction/Transaction.hpp"
 #include "keto/transaction/Resource.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace transaction {
 
 class TransactionService {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+
     static constexpr const char* KETO_TRANSACTION_MANAGER = "transaction_manager";
     
     virtual TransactionPtr createTransaction() = 0;

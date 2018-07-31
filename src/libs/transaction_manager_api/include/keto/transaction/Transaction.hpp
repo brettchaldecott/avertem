@@ -15,6 +15,8 @@
 #define KETO_MEMORY_TRANSACTION_HPP
 
 #include <memory>
+#include "keto/obfuscate/MetaString.hpp"
+
 
 namespace keto {
 namespace transaction {
@@ -24,6 +26,10 @@ typedef std::shared_ptr<Transaction> TransactionPtr;
     
 class Transaction {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+
     virtual void commit() = 0;
     virtual void rollback() = 0;
 };

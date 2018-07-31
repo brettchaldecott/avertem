@@ -16,6 +16,10 @@
 namespace keto {
 namespace wavm_common {
 
+std::string RDFConstants::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 const char* RDFConstants::ACCOUNT_TRANSACTION_SUBJECTS::ID = "id";
 const char* RDFConstants::ACCOUNT_TRANSACTION_SUBJECTS::ACCOUNT_HASH = "accountHash";
 const char* RDFConstants::ACCOUNT_TRANSACTION_SUBJECTS::TYPE = "type";

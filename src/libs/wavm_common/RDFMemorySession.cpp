@@ -21,6 +21,10 @@
 
 namespace keto {
 namespace wavm_common {
+    
+std::string RDFMemorySession::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 RDFMemorySession::RDFMemorySession() {
     this->world = librdf_new_world();

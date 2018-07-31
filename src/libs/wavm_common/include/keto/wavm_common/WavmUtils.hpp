@@ -20,11 +20,20 @@
 #include "Inline/BasicTypes.h"
 #include "Runtime/Runtime.h"
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace wavm_common {
 
 class WavmUtils {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     WavmUtils() = delete;
     WavmUtils(const WavmUtils& orig) = delete;
     virtual ~WavmUtils() = delete;

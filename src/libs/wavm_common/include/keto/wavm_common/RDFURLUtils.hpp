@@ -16,12 +16,21 @@
 
 #include <string>
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace wavm_common {
 
 
 class RDFURLUtils {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     RDFURLUtils(const std::string& url);
     RDFURLUtils(const RDFURLUtils& orig) = default;
     virtual ~RDFURLUtils();

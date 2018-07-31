@@ -14,11 +14,18 @@
 #ifndef RESOURCE_HPP
 #define RESOURCE_HPP
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace transaction {
 
 class Resource {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+
     virtual void commit() = 0;
     virtual void rollback() = 0;
     

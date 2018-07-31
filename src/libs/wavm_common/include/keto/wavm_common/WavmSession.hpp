@@ -29,6 +29,8 @@
 #include "keto/transaction_common/TransactionProtoHelper.hpp"
 #include "keto/crypto/KeyLoader.hpp"
 
+#include "keto/obfuscate/MetaString.hpp"
+
 
 namespace keto {
 namespace wavm_common {
@@ -38,6 +40,12 @@ typedef std::shared_ptr<WavmSession> WavmSessionPtr;
 
 class WavmSession {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     WavmSession(const keto::proto::SandboxCommandMessage& sandboxCommandMessage,
             const keto::crypto::KeyLoaderPtr& keyLoaderPtr);
     WavmSession(const WavmSession& orig) = delete;

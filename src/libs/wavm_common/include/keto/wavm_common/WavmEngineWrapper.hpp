@@ -17,6 +17,9 @@
 #include <string>
 #include <memory>
 
+#include "keto/obfuscate/MetaString.hpp"
+
+
 namespace keto {
 namespace wavm_common {
 
@@ -25,6 +28,12 @@ typedef std::shared_ptr<WavmEngineWrapper> WavmEngineWrapperPtr;
 
 class WavmEngineWrapper {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     WavmEngineWrapper(const std::string& wast);
     WavmEngineWrapper(const WavmEngineWrapper& orig) = delete;
     virtual ~WavmEngineWrapper();

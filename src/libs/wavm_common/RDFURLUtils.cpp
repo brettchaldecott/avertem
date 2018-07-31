@@ -20,6 +20,9 @@
 namespace keto {
 namespace wavm_common {
 
+std::string RDFURLUtils::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 RDFURLUtils::RDFURLUtils(const std::string& url) {
     int pos = url.find("#");
