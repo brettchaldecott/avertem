@@ -23,6 +23,7 @@
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
 
 #include "keto/consensus_module/ConsensusModule.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 
 namespace keto {
@@ -33,6 +34,12 @@ typedef std::shared_ptr<ConsensusModuleManager> ConsensusModuleManagerPtr;
 
 class ConsensusModuleManager : public keto::module::ModuleManagementInterface {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     ConsensusModuleManager();
     ConsensusModuleManager(const ConsensusModuleManager& orig) = delete;
     virtual ~ConsensusModuleManager();

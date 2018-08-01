@@ -14,12 +14,18 @@
 #ifndef CONSENSUS_MODULE_CONSTANTS_HPP
 #define CONSENSUS_MODULE_CONSTANTS_HPP
 
+#include "keto/common/MetaInfo.hpp"
+
 namespace keto {
 namespace consensus_module {
 
 
 class Constants {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+
     Constants() = delete;
     Constants(const Constants& orig) = delete;
     virtual ~Constants() = delete;

@@ -23,6 +23,7 @@
 #include "keto/http/HttpdServer.hpp"
 
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 
 namespace keto {
@@ -31,6 +32,12 @@ namespace http {
 
 class HttpdModuleManager : public keto::module::ModuleManagementInterface {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     HttpdModuleManager();
     HttpdModuleManager(const HttpdModuleManager& orig) = delete;
     virtual ~HttpdModuleManager();

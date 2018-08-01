@@ -540,6 +540,11 @@ std::shared_ptr<listener> listenerPtr;
 
 namespace ketoEnv = keto::environment;
 
+std::string HttpdServer::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
+
 HttpdServer::HttpdServer() {
     // retrieve the configuration
     std::shared_ptr<ketoEnv::Config> config = ketoEnv::EnvironmentManager::getInstance()->getConfig();

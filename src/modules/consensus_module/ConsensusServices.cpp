@@ -40,6 +40,10 @@ namespace consensus_module {
 
 static ConsensusServicesPtr singleton;
 
+std::string ConsensusServices::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 ConsensusServices::ConsensusServices(
             const keto::software_consensus::ConsensusHashGeneratorPtr& seedHashGenerator,
             const keto::software_consensus::ConsensusHashGeneratorPtr& moduleHashGenerator) :

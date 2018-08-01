@@ -28,6 +28,10 @@
 namespace keto {
 namespace http {
 
+std::string HttpdModuleManager::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 
 HttpdModuleManager::HttpdModuleManager() {
     keto::server_session::HttpRequestManager::init();

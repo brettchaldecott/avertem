@@ -32,6 +32,9 @@
 #include <vector>
 #include <boost/filesystem/path.hpp>
 
+#include "keto/common/MetaInfo.hpp"
+
+
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 namespace ssl = boost::asio::ssl;       // from <boost/asio/ssl.hpp>
 namespace httpBeast = boost::beast::http;    // from <boost/beast/http.hpp>
@@ -42,6 +45,12 @@ namespace http {
 
 class HttpdServer {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+    
     HttpdServer();
     HttpdServer(const HttpdServer& orig) = delete;
     virtual ~HttpdServer();

@@ -25,6 +25,9 @@
 #include "keto/module/ModuleInterface.hpp"
 #include "keto/event/Exception.hpp"
 
+#include "keto/common/MetaInfo.hpp"
+
+
 namespace keto {
 namespace event {
 
@@ -32,6 +35,12 @@ namespace event {
 class EventServiceModule : public keto::module::ModuleInterface, 
         public EventServiceInterface {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     typedef boost::signals2::signal<Event (const Event&)> signalHandler;
     typedef std::shared_ptr<signalHandler> Signal;
     

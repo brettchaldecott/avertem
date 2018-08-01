@@ -20,6 +20,7 @@
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
 
 #include "keto/event/Event.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 
 namespace keto {
@@ -30,6 +31,12 @@ typedef std::shared_ptr<ConsensusService> ConsensusServicePtr;
 
 class ConsensusService {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     ConsensusService(
             const keto::software_consensus::ConsensusHashGeneratorPtr& consensusHashGenerator);
     ConsensusService(const ConsensusService& orig) = delete;

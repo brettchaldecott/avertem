@@ -21,6 +21,9 @@
 namespace keto {
 namespace consensus_module {
 
+std::string EventRegistry::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 EventRegistry::EventRegistry() {
 }

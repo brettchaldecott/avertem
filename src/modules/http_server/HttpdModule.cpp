@@ -18,6 +18,11 @@
 namespace keto {
 namespace http {
 
+std::string HttpdModule::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
+    
 HttpdModule::HttpdModule() {
 }
 

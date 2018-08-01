@@ -19,12 +19,21 @@
 
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
 
+#include "keto/common/MetaInfo.hpp"
+
+
 namespace keto {
 namespace event {
         
 
 class EventServiceModuleManager : public keto::module::ModuleManagementInterface  {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     EventServiceModuleManager();
     EventServiceModuleManager(const EventServiceModuleManager& orig) = delete;
     virtual ~EventServiceModuleManager();

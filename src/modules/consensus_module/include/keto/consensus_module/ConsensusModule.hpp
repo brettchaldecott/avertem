@@ -19,12 +19,19 @@
 #include <memory>
 
 #include "keto/module/ModuleInterface.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 namespace keto {
 namespace consensus_module {
 
 class ConsensusModule : public keto::module::ModuleInterface {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     ConsensusModule();
     ConsensusModule(const ConsensusModule& orig) = delete;
     virtual ~ConsensusModule();

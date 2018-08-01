@@ -19,6 +19,7 @@
 #include <memory>
 
 #include "keto/module/ModuleInterface.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 
 namespace keto {
@@ -27,6 +28,12 @@ namespace http {
 
 class HttpdModule : public keto::module::ModuleInterface {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     HttpdModule();
     HttpdModule(const HttpdModule& orig) = delete;
     virtual ~HttpdModule();
