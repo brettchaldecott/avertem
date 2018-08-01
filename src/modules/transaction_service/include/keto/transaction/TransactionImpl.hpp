@@ -16,6 +16,7 @@
 
 #include "keto/transaction/Transaction.hpp"
 #include "keto/transaction/TransactionService.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 namespace keto {
 namespace transaction {
@@ -24,6 +25,12 @@ class TransactionServiceModule;
     
 class TransactionImpl : public Transaction {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     TransactionImpl(TransactionServiceModule& transactionService);
     TransactionImpl(const TransactionImpl& orig) = delete;
     virtual ~TransactionImpl();

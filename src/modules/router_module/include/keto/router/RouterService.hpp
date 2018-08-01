@@ -21,6 +21,7 @@
 #include "Protocol.pb.h"
 
 #include "keto/event/Event.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 
 namespace keto {
@@ -29,6 +30,12 @@ namespace router {
 
 class RouterService {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     RouterService(const RouterService& orig) = delete;
     virtual ~RouterService();
     

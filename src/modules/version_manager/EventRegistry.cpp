@@ -22,6 +22,9 @@
 namespace keto {
 namespace version_manager {
 
+std::string EventRegistry::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 EventRegistry::EventRegistry() {
 }

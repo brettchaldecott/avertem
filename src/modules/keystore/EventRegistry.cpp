@@ -23,9 +23,14 @@
 #include "keto/keystore/EventRegistry.hpp"
 #include "keto/keystore/ConsensusService.hpp"
 
+
 namespace keto {
 namespace keystore {
 
+
+std::string EventRegistry::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 EventRegistry::EventRegistry() {
 }

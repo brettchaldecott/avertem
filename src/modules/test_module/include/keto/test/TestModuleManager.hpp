@@ -20,6 +20,7 @@
 #include "keto/test/TestModule.hpp"
 
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 
 namespace keto {
@@ -28,6 +29,12 @@ namespace test {
 
 class TestModuleManager : public keto::module::ModuleManagementInterface {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     TestModuleManager();
     TestModuleManager(const TestModuleManager& orig) = delete;
     virtual ~TestModuleManager();

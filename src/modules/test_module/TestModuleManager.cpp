@@ -29,6 +29,11 @@
 namespace keto {
 namespace test {
 
+std::string TestModuleManager::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
+    
 TestModuleManager::TestModuleManager() {
     KETO_LOG_INFO << "The test module manager has been loaded";
 }

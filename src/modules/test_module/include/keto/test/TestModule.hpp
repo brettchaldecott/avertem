@@ -16,12 +16,21 @@
 
 #include "keto/module/ModuleInterface.hpp"
 
+#include "keto/common/MetaInfo.hpp"
+
+
 namespace keto {
 namespace test {
 
 
 class TestModule : public keto::module::ModuleInterface {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     TestModule();
     TestModule(const TestModule& orig) = delete;
     virtual ~TestModule();

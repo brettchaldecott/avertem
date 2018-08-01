@@ -26,6 +26,8 @@
 
 #include "keto/event/Event.hpp"
 #include "keto/crypto/Containers.hpp"
+#include "keto/common/MetaInfo.hpp"
+
 
 namespace keto {
 namespace keystore {
@@ -33,6 +35,12 @@ namespace keystore {
 
 class SessionKeyManager {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     SessionKeyManager();
     SessionKeyManager(const SessionKeyManager& orig) = delete;
     virtual ~SessionKeyManager();

@@ -23,6 +23,10 @@
 namespace keto {
 namespace sandbox {
 
+std::string EventRegistry::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 
 EventRegistry::EventRegistry() {
 }

@@ -19,7 +19,11 @@ namespace keto {
 namespace router {
 
 static std::shared_ptr<StorageManager> singleton;
-    
+
+std::string StorageManager::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 StorageManager::StorageManager() {
     keto::router_db::RouterStore::init();
 }

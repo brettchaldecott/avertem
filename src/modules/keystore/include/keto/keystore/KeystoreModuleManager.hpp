@@ -22,6 +22,7 @@
 #include "keto/keystore/KeystoreModule.hpp"
 
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 
 namespace keto {
@@ -29,6 +30,12 @@ namespace keystore {
 
 class KeystoreModuleManager : public keto::module::ModuleManagementInterface {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     KeystoreModuleManager();
     KeystoreModuleManager(const KeystoreModuleManager& orig) = delete;
     virtual ~KeystoreModuleManager();

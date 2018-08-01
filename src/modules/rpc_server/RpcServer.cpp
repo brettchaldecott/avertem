@@ -281,6 +281,10 @@ std::shared_ptr<listener> listenerPtr;
 
 namespace ketoEnv = keto::environment;
 
+std::string RpcServer::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 RpcServer::RpcServer() {
     // retrieve the configuration
     std::shared_ptr<ketoEnv::Config> config = ketoEnv::EnvironmentManager::getInstance()->getConfig();

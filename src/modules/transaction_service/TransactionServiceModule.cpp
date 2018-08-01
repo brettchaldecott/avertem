@@ -22,7 +22,12 @@ namespace keto {
 namespace transaction {
 
 thread_local TransactionWrapperPtr TransactionServiceModule::transactionWrapper;
-    
+
+std::string TransactionServiceModule::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
+
 TransactionServiceModule::TransactionServiceModule() {
 }
 

@@ -32,6 +32,10 @@
 namespace keto {
 namespace keystore {
 
+std::string SessionKeyManager::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+    
 SessionKeyManager::SessionKeyManager() : rng(new Botan::AutoSeeded_RNG) {
 }
 

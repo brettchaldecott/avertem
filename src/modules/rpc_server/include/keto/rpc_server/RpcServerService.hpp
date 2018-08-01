@@ -17,6 +17,9 @@
 #include <string>
 #include <memory>
 
+#include "keto/common/MetaInfo.hpp"
+
+
 namespace keto {
 namespace rpc_server {
 
@@ -25,6 +28,12 @@ typedef std::shared_ptr<RpcServerService> RpcServerServicePtr;
 
 class RpcServerService {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     RpcServerService();
     RpcServerService(const RpcServerService& orig) = delete;
     virtual ~RpcServerService();

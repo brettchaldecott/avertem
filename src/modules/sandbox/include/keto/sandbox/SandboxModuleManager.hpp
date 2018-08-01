@@ -23,6 +23,7 @@
 #include "keto/sandbox/SandboxModule.hpp"
 
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 
 namespace keto {
@@ -30,6 +31,12 @@ namespace sandbox {
 
 class SandboxModuleManager : public keto::module::ModuleManagementInterface {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     SandboxModuleManager();
     SandboxModuleManager(const SandboxModuleManager& orig) = delete;
     virtual ~SandboxModuleManager();

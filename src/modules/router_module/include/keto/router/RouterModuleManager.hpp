@@ -22,12 +22,19 @@
 #include "keto/router/RouterModule.hpp"
 
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 namespace keto {
 namespace router {
 
 class RouterModuleManager : public keto::module::ModuleManagementInterface {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     RouterModuleManager();
     RouterModuleManager(const RouterModuleManager& orig) = delete;
     virtual ~RouterModuleManager();

@@ -18,6 +18,7 @@
 #include "keto/transaction/TransactionServiceModule.hpp"
 
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 namespace keto {
 namespace transaction {
@@ -25,6 +26,12 @@ namespace transaction {
 
 class TransactionServiceModuleManager : public keto::module::ModuleManagementInterface {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     TransactionServiceModuleManager();
     TransactionServiceModuleManager(const TransactionServiceModuleManager& orig) = delete;
     virtual ~TransactionServiceModuleManager();

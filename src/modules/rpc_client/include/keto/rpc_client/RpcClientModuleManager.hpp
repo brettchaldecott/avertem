@@ -22,11 +22,19 @@
 #include "keto/rpc_client/RpcClientModule.hpp"
 #include "keto/rpc_client/RpcSessionManager.hpp"
 
+#include "keto/common/MetaInfo.hpp"
+
 namespace keto {
 namespace rpc_client {
 
 class RpcClientModuleManager : public keto::module::ModuleManagementInterface {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     RpcClientModuleManager();
     RpcClientModuleManager(const RpcClientModuleManager& orig) = delete;
     virtual ~RpcClientModuleManager();

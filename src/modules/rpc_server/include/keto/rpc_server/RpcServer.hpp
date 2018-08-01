@@ -30,6 +30,9 @@
 #include <thread>
 #include <vector>
 
+#include "keto/common/MetaInfo.hpp"
+
+
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 namespace beastSsl = boost::asio::ssl;               // from <boost/asio/ssl.hpp>
 namespace websocket = boost::beast::websocket;  // from <boost/beast/websocket.hpp>
@@ -43,6 +46,12 @@ typedef std::shared_ptr<RpcServer> RpcServerPtr;
     
 class RpcServer {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     RpcServer();
     RpcServer(const RpcServer& orig) = delete;
     virtual ~RpcServer();

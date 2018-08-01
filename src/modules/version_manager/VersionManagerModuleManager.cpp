@@ -26,6 +26,9 @@
 namespace keto {
 namespace version_manager {
 
+std::string VersionManagerModuleManager::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 VersionManagerModuleManager::VersionManagerModuleManager() {
 }

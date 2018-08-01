@@ -19,6 +19,7 @@
 #include <thread>
 #include <vector>
 
+#include "keto/common/MetaInfo.hpp"
 
 namespace keto {
 namespace rpc_client {
@@ -28,6 +29,12 @@ typedef std::shared_ptr<RpcSessionManager> RpcSessionManagerPtr;
 
 class RpcSessionManager {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+    
     RpcSessionManager();
     RpcSessionManager(const RpcSessionManager& orig) = delete;
     virtual ~RpcSessionManager();

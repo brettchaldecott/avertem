@@ -20,6 +20,10 @@
 namespace keto {
 namespace transaction {
 
+std::string TransactionWrapper::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 TransactionWrapper::TransactionWrapper() {
     
 }

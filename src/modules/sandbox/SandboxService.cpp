@@ -41,6 +41,10 @@ namespace sandbox {
 
 static SandboxServicePtr singleton;
 
+std::string SandboxService::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 SandboxService::SandboxService() {
     boost::filesystem::path helloFile =  
             keto::environment::EnvironmentManager::getInstance()->getEnv()->getInstallDir() / 

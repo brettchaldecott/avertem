@@ -17,7 +17,11 @@
 
 namespace keto {
 namespace test {
-        
+
+std::string TestModule::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 
 TestModule::TestModule() {
     KETO_LOG_INFO << "The test module has been started";

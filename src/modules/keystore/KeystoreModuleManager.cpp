@@ -28,6 +28,10 @@
 namespace keto {
 namespace keystore {
 
+std::string KeystoreModuleManager::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+    
 KeystoreModuleManager::KeystoreModuleManager() {
 }
 

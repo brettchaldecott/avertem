@@ -30,6 +30,10 @@ namespace router {
 
 static RouterRegistryPtr singleton; 
     
+std::string RouterRegistry::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 RouterRegistry::RouterRegistry() {
 }
 

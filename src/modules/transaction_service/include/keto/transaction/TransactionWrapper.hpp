@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "keto/transaction/Resource.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 namespace keto {
 namespace transaction {
@@ -28,6 +29,12 @@ typedef std::shared_ptr<TransactionWrapper> TransactionWrapperPtr;
 
 class TransactionWrapper {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     TransactionWrapper();
     TransactionWrapper(const TransactionWrapper& orig) = delete;
     virtual ~TransactionWrapper();

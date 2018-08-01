@@ -29,6 +29,10 @@ namespace keystore {
     
 static ConsensusServicePtr singleton;
 
+std::string ConsensusService::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 ConsensusService::ConsensusService(
         const keto::software_consensus::ConsensusHashGeneratorPtr& consensusHashGenerator) :
     consensusHashGenerator(consensusHashGenerator) {

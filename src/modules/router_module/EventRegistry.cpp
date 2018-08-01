@@ -23,6 +23,10 @@
 namespace keto {
 namespace router {
 
+std::string EventRegistry::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 
 EventRegistry::EventRegistry() {
 }

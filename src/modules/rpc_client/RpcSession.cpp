@@ -53,6 +53,10 @@ fail(boost::system::error_code ec, char const* what)
     std::cerr << what << ": " << ec.message() << "\n";
 }
 
+std::string RpcSession::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 RpcSession::RpcSession(
     std::shared_ptr<boost::asio::io_context> ioc, 
     std::shared_ptr<boostSsl::context> ctx, const std::string& host) :

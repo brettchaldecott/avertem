@@ -27,6 +27,10 @@ namespace rpc_client {
 
 namespace ketoEnv = keto::environment;
 
+std::string RpcSessionManager::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 RpcSessionManager::RpcSessionManager()  {
     
     this->ioc = std::make_shared<boost::asio::io_context>();

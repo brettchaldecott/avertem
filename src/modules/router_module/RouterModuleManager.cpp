@@ -29,6 +29,10 @@
 namespace keto {
 namespace router {
 
+std::string RouterModuleManager::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 
 RouterModuleManager::RouterModuleManager() {
 }

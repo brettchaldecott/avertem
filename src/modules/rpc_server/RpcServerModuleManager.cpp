@@ -29,6 +29,10 @@
 namespace keto {
 namespace rpc_server {
 
+std::string RpcServerModuleManager::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 RpcServerModuleManager::RpcServerModuleManager() {
     this->rpcServerPtr = std::make_shared<RpcServer>();
 }

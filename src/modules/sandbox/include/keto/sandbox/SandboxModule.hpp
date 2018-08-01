@@ -19,6 +19,7 @@
 #include <memory>
 
 #include "keto/module/ModuleInterface.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 namespace keto {
 namespace sandbox {
@@ -26,6 +27,12 @@ namespace sandbox {
 
 class SandboxModule : public keto::module::ModuleInterface {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     SandboxModule();
     SandboxModule(const SandboxModule& orig) = delete;
     virtual ~SandboxModule();

@@ -19,7 +19,11 @@ namespace keto {
 namespace keystore {
 
 static std::shared_ptr<KeyStoreService> singleton;
-    
+
+std::string KeyStoreService::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 KeyStoreService::KeyStoreService() : 
     sessionKeyManager(new SessionKeyManager()) {
 }

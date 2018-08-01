@@ -28,7 +28,10 @@
 namespace keto {
 namespace rpc_client {
 
-    
+std::string RpcClientModuleManager::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 RpcClientModuleManager::RpcClientModuleManager() {
     rpcSessionManager = std::make_shared<RpcSessionManager>();
 }

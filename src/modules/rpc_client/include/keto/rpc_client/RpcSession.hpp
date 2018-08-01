@@ -33,6 +33,8 @@
 
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
 
+#include "keto/common/MetaInfo.hpp"
+
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 namespace boostSsl = boost::asio::ssl;               // from <boost/asio/ssl.hpp>
 namespace websocket = boost::beast::websocket;  // from <boost/beast/websocket.hpp>
@@ -46,6 +48,12 @@ typedef std::shared_ptr<RpcSession> RpcSessionPtr;
 
 class RpcSession : public std::enable_shared_from_this<RpcSession> {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     RpcSession(
             std::shared_ptr<boost::asio::io_context> ioc, 
             std::shared_ptr<boostSsl::context> ctx,

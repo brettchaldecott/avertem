@@ -18,12 +18,19 @@
 #include <memory>
 
 #include "keto/keystore/SessionKeyManager.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 namespace keto {
 namespace keystore {
 
 class KeyStoreService {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     KeyStoreService(const KeyStoreService& orig) = delete;
     virtual ~KeyStoreService();
     

@@ -18,6 +18,7 @@
 #include <memory>
 
 #include "keto/event/Event.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 namespace keto {
 namespace sandbox {
@@ -27,6 +28,12 @@ typedef std::shared_ptr<SandboxService> SandboxServicePtr;
     
 class SandboxService {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     SandboxService();
     SandboxService(const SandboxService& orig) = delete;
     virtual ~SandboxService();

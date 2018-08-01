@@ -20,6 +20,7 @@
 
 #include "keto/module/ModuleInterface.hpp"
 #include "keto/transaction/TransactionService.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 namespace keto {
 namespace transaction {
@@ -28,6 +29,12 @@ namespace transaction {
 class TransactionServiceModule : public keto::module::ModuleInterface,
     public TransactionService {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     friend class TransactionImpl;
     
     TransactionServiceModule();

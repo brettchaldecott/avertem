@@ -25,7 +25,12 @@ namespace keto {
 namespace rpc_server {
 
 static RpcServerServicePtr singleton;
-    
+
+std::string RpcServerService::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
+
 RpcServerService::RpcServerService() {
 }
 

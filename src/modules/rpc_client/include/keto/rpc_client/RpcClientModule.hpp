@@ -19,12 +19,19 @@
 #include <memory>
 
 #include "keto/module/ModuleInterface.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 namespace keto {
 namespace rpc_client {
 
 class RpcClientModule : public keto::module::ModuleInterface {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     RpcClientModule();
     RpcClientModule(const RpcClientModule& orig) = delete;
     virtual ~RpcClientModule();

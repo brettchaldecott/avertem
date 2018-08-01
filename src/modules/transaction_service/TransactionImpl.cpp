@@ -18,6 +18,10 @@
 namespace keto {
 namespace transaction {
 
+std::string TransactionImpl::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
+
 
 TransactionImpl::TransactionImpl(TransactionServiceModule& transactionService) :
     transactionService(transactionService), complete(false) {

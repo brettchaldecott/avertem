@@ -15,12 +15,19 @@
 #define RPC_SERVER_EVENTREGISTRY_HPP
 
 #include "keto/event/Event.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 namespace keto {
 namespace transaction {
 
 class EventRegistry {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     EventRegistry(const EventRegistry& orig) = delete;
     virtual ~EventRegistry();
     

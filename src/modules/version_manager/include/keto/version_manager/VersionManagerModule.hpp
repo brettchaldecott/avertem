@@ -19,12 +19,19 @@
 #include <memory>
 
 #include "keto/module/ModuleInterface.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 namespace keto {
 namespace version_manager {
 
 class VersionManagerModule : public keto::module::ModuleInterface {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     VersionManagerModule();
     VersionManagerModule(const VersionManagerModule& orig) = delete;
     virtual ~VersionManagerModule();

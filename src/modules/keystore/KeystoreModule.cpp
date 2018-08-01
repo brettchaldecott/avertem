@@ -17,6 +17,9 @@
 namespace keto {
 namespace keystore {
 
+std::string KeystoreModule::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 KeystoreModule::KeystoreModule() {
 }

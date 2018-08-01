@@ -24,12 +24,20 @@
 #include "keto/rpc_server/RpcServerModule.hpp"
 #include "keto/rpc_server/RpcServer.hpp"
 
+#include "keto/common/MetaInfo.hpp"
+
 
 namespace keto {
 namespace rpc_server {
 
 class RpcServerModuleManager : public keto::module::ModuleManagementInterface {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     RpcServerModuleManager();
     RpcServerModuleManager(const RpcServerModuleManager& orig) = delete;
     virtual ~RpcServerModuleManager();

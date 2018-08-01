@@ -22,6 +22,7 @@
 #include "keto/version_manager/VersionManagerModule.hpp"
 
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 
 namespace keto {
@@ -29,6 +30,12 @@ namespace version_manager {
 
 class VersionManagerModuleManager : public keto::module::ModuleManagementInterface {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id:$");
+    };
+    
+    static std::string getSourceVersion();
+
     VersionManagerModuleManager();
     VersionManagerModuleManager(const VersionManagerModuleManager& orig) = delete;
     virtual ~VersionManagerModuleManager();

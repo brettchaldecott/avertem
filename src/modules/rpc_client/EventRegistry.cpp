@@ -21,6 +21,9 @@
 namespace keto {
 namespace rpc_client {
 
+std::string EventRegistry::getSourceVersion() {
+    return OBFUSCATED("$Id:$");
+}
 
 EventRegistry::EventRegistry() {
 }
