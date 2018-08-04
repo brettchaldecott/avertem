@@ -7,6 +7,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/builds/CMakeModules")
 
 INCLUDE( VersionMacros )
 INCLUDE( SetupTargetMacros )
+INCLUDE( KetoVersionInfo )
 
 SET( BLOCKCHAIN_NAME "KETO" )
 SET( CMAKE_CXX_STANDARD 14 )

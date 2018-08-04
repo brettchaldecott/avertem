@@ -11,8 +11,8 @@
  * Created on January 11, 2018, 9:47 AM
  */
 
-#ifndef CONSTANTS_HPP
-#define CONSTANTS_HPP
+#ifndef ENVIRONMENT_CONSTANTS_HPP
+#define ENVIRONMENT_CONSTANTS_HPP
 
 #include "keto/obfuscate/MetaString.hpp"
 

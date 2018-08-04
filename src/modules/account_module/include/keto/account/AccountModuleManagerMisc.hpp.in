@@ -17,6 +17,8 @@
 #include "keto/account/AccountModuleManager.hpp"
 #include "keto/common/MetaInfo.hpp"
 
+${0015_account_module_headerList}
+
 namespace keto {
 namespace account {
 
@@ -32,7 +34,10 @@ keto::crypto::SecureVector ${ACCOUNT_MODULE_KEY_METHOD}() {
 
 keto::software_consensus::SourceVersionMap ${ACCOUNT_MODULE_SOURCE_VERSION_METHOD_MAP}() {
     keto::software_consensus::SourceVersionMap sourceVersionMap;
-
+    
+    ${0015_account_module_headerClassList}
+    ${0015_account_module_sourceClassList}
+    
     return sourceVersionMap;
 }
 

@@ -31,7 +31,7 @@ typedef std::shared_ptr<ConsensusHashGenerator> ConsensusHashGeneratorPtr;
 typedef std::vector<ConsensusHashScriptInfoPtr> ConsensusHashScriptInfoVector;
 typedef keto::crypto::SecureVector (*getModuleSignature)();
 typedef keto::crypto::SecureVector (*getModuleKey)();
-typedef keto::crypto::SecureVector (*getSourceVersion)();
+typedef std::string (*getSourceVersion)();
 typedef std::map<std::string,getSourceVersion> SourceVersionMap;
 
 

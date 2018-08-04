@@ -122,7 +122,8 @@ keto::crypto::SecureVector chai_getModuleKeyRef() {
 }
 
 keto::crypto::SecureVector chai_getSourceVersion(const std::string &name) {
-    return chaiScriptSessionPtr->getSourceVersionMap()[name]();
+    return keto::crypto::SecureVectorUtils().copyStringToSecure(
+            chaiScriptSessionPtr->getSourceVersionMap()[name]());
 }
 
 keto::crypto::SecureVector chai_generateHash(const keto::crypto::SecureVector &value) {

@@ -7,7 +7,6 @@ SET(ACCOUNT_MODULE_SIGNATURE "this is a key")
 SET(ACCOUNT_MODULE_SOURCE_VERSION_METHOD_MAP "getClientSourceVersionMap")
 SET(ACCOUNT_MODULE_CONSENSUS_HASH_SCRIPT_METHOD "getConsensusHashScriptConfig")
 
-configure_file(include/keto/account/AccountModuleManagerMisc.hpp.in include/keto/account/AccountModuleManagerMisc.hpp)
 
 
 include_directories(${PROTOBUF_INCLUDE_DIR})
@@ -26,7 +25,7 @@ add_library( 0015_account_module
              ${HEADERS}
            )
 
-target_link_libraries( 0015_account_module 
+KetoModuleDepencencies( 0015_account_module 
                             PRIVATE keto_account_db keto_rocks_db keto_transaction_common 
                             PRIVATE keto_software_consensus
                             PRIVATE keto_server_common keto_asn1_common keto_asn1_protocol
@@ -39,6 +38,9 @@ target_link_libraries( 0015_account_module
                             PRIVATE ${LIBRDF_PCRE_EXTRA_LIBRARY} ${LIBRDF_LTDL_EXTRA_LIBRARY}
                             PRIVATE ${LIBRDF_GMP_EXTRA_LIBRARY}
                             PRIVATE ${OPENSSL_LIBRARIES} )
+
+configure_file(include/keto/account/AccountModuleManagerMisc.hpp.in include/keto/account/AccountModuleManagerMisc.hpp)
+
 target_include_directories( 0015_account_module
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/common/include"

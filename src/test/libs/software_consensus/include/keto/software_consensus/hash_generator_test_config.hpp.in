@@ -40,27 +40,23 @@ keto::crypto::SecureVector getModuleKey() {
 
 class SourceClass1 {
 public:
-    static keto::crypto::SecureVector getHeaderVersion() {
-        std::string version = OBFUSCATED("TEST_VERSION1");
-        return keto::crypto::SecureVectorUtils().copyStringToSecure(version);
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("TEST_VERSION1");
     }
     
-    static keto::crypto::SecureVector getSourceVersion() {
-        std::string version = OBFUSCATED("TEST_SOURCE_VERSION1");
-        return keto::crypto::SecureVectorUtils().copyStringToSecure(version);
+    static std::string getSourceVersion() {
+        return OBFUSCATED("TEST_SOURCE_VERSION1");
     }
 };
 
 class SourceClass2 {
 public:
-    static keto::crypto::SecureVector getHeaderVersion() {
-        std::string version = OBFUSCATED("TEST_VERSION2");
-        return keto::crypto::SecureVectorUtils().copyStringToSecure(version);
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("TEST_VERSION2");
     }
     
-    static keto::crypto::SecureVector getSourceVersion() {
-        std::string version = OBFUSCATED("TEST_SOURCE_VERSION2");
-        return keto::crypto::SecureVectorUtils().copyStringToSecure(version);
+    static std::string getSourceVersion() {
+        return OBFUSCATED("TEST_SOURCE_VERSION2");
     }
 };
 
