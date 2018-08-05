@@ -22,6 +22,9 @@ add_library( 0002_keto_test_module
              ${HEADERS}
            )
 
+add_dependencies(0002_keto_test_module keto_tools)
+
+
 KetoModuleDepencencies( 0002_keto_test_module 
                             PRIVATE keto_software_consensus
                             PRIVATE keto_transaction_common keto_server_common keto_rpc_protocol

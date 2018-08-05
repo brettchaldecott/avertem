@@ -1,5 +1,6 @@
 file(GLOB HEADERS "include/keto/keystore/*.hpp")
 
+
 SET(KEYSTORE_MODULE_SIGNATURE_METHOD "getBlockServerModuleSignature")
 SET(KEYSTORE_MODULE_SIGNATURE "this is a signature")
 SET(KEYSTORE_MODULE_KEY_METHOD "getBlockModuleKey")
@@ -22,6 +23,8 @@ add_library( 0010_keto_keystore_module
 
              ${HEADERS}
            )
+
+add_dependencies(0010_keto_keystore_module keto_tools)
 
 KetoModuleDepencencies( 0010_keto_keystore_module 
                             PRIVATE keto_software_consensus

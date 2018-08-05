@@ -1,5 +1,6 @@
 file(GLOB HEADERS "include/keto/balancer/*.hpp")
 
+
 SET(BALANCER_MODULE_SIGNATURE_METHOD "getBalancerServerModuleSignature")
 SET(BALANCER_MODULE_SIGNATURE "this is a signature")
 SET(BALANCER_MODULE_KEY_METHOD "getAccountModuleKey")
@@ -25,6 +26,8 @@ add_library( 0025_keto_balancer_module
 
              ${HEADERS}
            )
+
+add_dependencies(0025_keto_balancer_module keto_tools)
 
 KetoModuleDepencencies( 0025_keto_balancer_module 
                             PRIVATE keto_software_consensus

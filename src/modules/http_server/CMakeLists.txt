@@ -1,5 +1,6 @@
 file(GLOB HEADERS "include/keto/http/*.hpp")
 
+
 SET(HTTPD_MODULE_SIGNATURE_METHOD "getHttpServerModuleSignature")
 SET(HTTPD_MODULE_SIGNATURE "this is a signature")
 SET(HTTPD_MODULE_KEY_METHOD "getBlockModuleKey")
@@ -21,6 +22,8 @@ add_library( 0050_keto_httpd_module
 
              ${HEADERS}
            )
+
+add_dependencies(0050_keto_httpd_module keto_tools)
 
 KetoModuleDepencencies( 0050_keto_httpd_module 
                             PRIVATE keto_http_server_session

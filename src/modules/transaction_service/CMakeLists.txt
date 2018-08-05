@@ -1,5 +1,6 @@
 file(GLOB HEADERS "include/keto/transaction/*.hpp")
 
+
 SET(TRANSACTION_MODULE_SIGNATURE_METHOD "getTransactionModuleSignature")
 SET(TRANSACTION_MODULE_SIGNATURE "this is a signature")
 SET(TRANSACTION_MODULE_KEY_METHOD "getTransactionModuleKey")
@@ -22,6 +23,8 @@ add_library( 0003_keto_transaction_module
             
              ${HEADERS}
            )
+
+add_dependencies(0003_keto_transaction_module keto_tools)
 
 KetoModuleDepencencies( 0003_keto_transaction_module 
                             PRIVATE keto_software_consensus

@@ -1,5 +1,6 @@
 file(GLOB HEADERS "include/keto/rpc_client/*.hpp")
 
+
 SET(RPC_CLIENT_MODULE_SIGNATURE_METHOD "getRpcClientModuleSignature")
 SET(RPC_CLIENT_MODULE_SIGNATURE "this is a signature")
 SET(RPC_CLIENT_MODULE_KEY_METHOD "getRpcClientModuleKey")
@@ -22,6 +23,8 @@ add_library( 0060_keto_rpc_client_module
 
              ${HEADERS}
            )
+
+add_dependencies(0060_keto_rpc_client_module keto_tools)
 
 KetoModuleDepencencies( 0060_keto_rpc_client_module 
                             PRIVATE keto_software_consensus

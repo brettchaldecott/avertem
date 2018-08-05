@@ -1,5 +1,6 @@
 file(GLOB HEADERS "include/keto/account/*.hpp")
 
+
 SET(ACCOUNT_MODULE_SIGNATURE_METHOD "getAccountServerModuleSignature")
 SET(ACCOUNT_MODULE_SIGNATURE "this is a signature")
 SET(ACCOUNT_MODULE_KEY_METHOD "getAccountModuleKey")
@@ -24,6 +25,9 @@ add_library( 0015_account_module
 
              ${HEADERS}
            )
+
+add_dependencies(0015_account_module keto_tools)
+
 
 KetoModuleDepencencies( 0015_account_module 
                             PRIVATE keto_account_db keto_rocks_db keto_transaction_common 

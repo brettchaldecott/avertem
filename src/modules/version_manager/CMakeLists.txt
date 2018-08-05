@@ -1,5 +1,6 @@
 file(GLOB HEADERS "include/keto/version_manager/*.hpp")
 
+
 SET(VERSION_MANAGER_MODULE_SIGNATURE_METHOD "getTransactionModuleSignature")
 SET(VERSION_MANAGER_MODULE_SIGNATURE "this is a signature")
 SET(VERSION_MANAGER_MODULE_KEY_METHOD "getTransactionModuleKey")
@@ -21,6 +22,9 @@ add_library( 0070_keto_version_manager_module
 
              ${HEADERS}
            )
+
+add_dependencies(0070_keto_version_manager_module keto_tools)
+
 
 KetoModuleDepencencies( 0070_keto_version_manager_module 
                             PRIVATE keto_software_consensus

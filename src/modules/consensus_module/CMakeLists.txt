@@ -1,5 +1,6 @@
 file(GLOB HEADERS "include/keto/consensus_module/*.hpp")
 
+
 SET(CONSENSUS_MODULE_SIGNATURE_METHOD "getConsensusModuleSignature")
 SET(CONSENSUS_MODULE_SIGNATURE "this is a signature")
 SET(CONSENSUS_MODULE_KEY_METHOD "getConsensusModuleKey")
@@ -20,6 +21,8 @@ add_library( 0100_keto_consensus_module
 
              ${HEADERS}
            )
+
+add_dependencies(0100_keto_consensus_module keto_tools)
 
 KetoModuleDepencencies( 0100_keto_consensus_module 
                             PRIVATE keto_software_consensus

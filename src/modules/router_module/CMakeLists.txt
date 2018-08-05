@@ -24,6 +24,8 @@ add_library( 0015_keto_router_module
              ${HEADERS}
            )
 
+add_dependencies(0015_keto_router_module keto_tools)
+
 KetoModuleDepencencies( 0015_keto_router_module 
                             PRIVATE keto_software_consensus
                             PRIVATE keto_router_db keto_rocks_db

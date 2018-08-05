@@ -28,6 +28,8 @@ add_library( 0020_keto_block_module
              ${HEADERS}
            )
 
+add_dependencies(0020_keto_block_module keto_tools)
+
 KetoModuleDepencencies( 0020_keto_block_module
                             PRIVATE keto_software_consensus
                             PRIVATE keto_block_db keto_chain_common keto_rocks_db

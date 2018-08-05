@@ -24,6 +24,8 @@ add_library( keto_asn1_common
              ${HEADERS}
            )
 
+add_dependencies(keto_asn1_common keto_asn1_protocol)
+
 target_link_libraries( keto_asn1_common )
 target_include_directories( keto_asn1_common
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
