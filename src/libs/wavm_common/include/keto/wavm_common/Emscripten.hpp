@@ -21,12 +21,6 @@ namespace keto {
 
     namespace Emscripten
     {
-        static std::string getHeaderVersion() {
-            return OBFUSCATED("$Id:$");
-        };
-
-        static std::string getSourceVersion();
-
         //using namespace Runtime;
 
         struct Instance

@@ -17,6 +17,8 @@
 #include "keto/rpc_server/RpcServerModuleManager.hpp"
 #include "keto/common/MetaInfo.hpp"
 
+${0030_keto_rpc_server_module_headerList}
+
 namespace keto {
 namespace rpc_server {
 
@@ -32,6 +34,9 @@ keto::crypto::SecureVector ${RPC_SERVER_MODULE_KEY_METHOD}() {
 
 keto::software_consensus::SourceVersionMap ${RPC_SERVER_SOURCE_VERSION_METHOD_MAP}() {
     keto::software_consensus::SourceVersionMap sourceVersionMap;
+
+    ${0030_keto_rpc_server_module_headerClassList}
+    ${0030_keto_rpc_server_module_sourceClassList}
 
     return sourceVersionMap;
 }

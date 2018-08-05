@@ -17,6 +17,8 @@
 #include "keto/router/RouterModuleManager.hpp"
 #include "keto/common/MetaInfo.hpp"
 
+${0015_keto_router_module_headerList}
+
 namespace keto {
 namespace router {
 
@@ -32,6 +34,9 @@ keto::crypto::SecureVector ${ROUTER_MODULE_KEY_METHOD}() {
 
 keto::software_consensus::SourceVersionMap ${ROUTER_MODULE_SOURCE_VERSION_METHOD_MAP}() {
     keto::software_consensus::SourceVersionMap sourceVersionMap;
+
+    ${0015_keto_router_module_headerClassList}
+    ${0015_keto_router_module_sourceClassList}
 
     return sourceVersionMap;
 }

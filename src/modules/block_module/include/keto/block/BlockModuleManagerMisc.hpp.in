@@ -17,6 +17,8 @@
 #include "keto/block/BlockModuleManager.hpp"
 #include "keto/common/MetaInfo.hpp"
 
+${0020_keto_block_module_headerList}
+
 namespace keto {
 namespace block {
 
@@ -32,6 +34,9 @@ keto::crypto::SecureVector ${BLOCK_MODULE_KEY_METHOD}() {
 
 keto::software_consensus::SourceVersionMap ${BLOCK_MODULE_SOURCE_VERSION_METHOD_MAP}() {
     keto::software_consensus::SourceVersionMap sourceVersionMap;
+
+    ${0020_keto_block_module_headerClassList}
+    ${0020_keto_block_module_sourceClassList}
 
     return sourceVersionMap;
 }

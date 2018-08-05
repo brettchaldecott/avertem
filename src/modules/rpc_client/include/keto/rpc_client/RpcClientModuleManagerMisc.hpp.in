@@ -18,6 +18,8 @@
 #include "include/keto/rpc_client/RpcSessionManager.hpp"
 #include "keto/common/MetaInfo.hpp"
 
+${0060_keto_rpc_client_module_headerList}
+
 namespace keto {
 namespace rpc_client {
 
@@ -33,6 +35,9 @@ keto::crypto::SecureVector ${RPC_CLIENT_MODULE_KEY_METHOD}() {
 
 keto::software_consensus::SourceVersionMap ${RPC_CLIENT_SOURCE_VERSION_METHOD_MAP}() {
     keto::software_consensus::SourceVersionMap sourceVersionMap;
+
+    ${0060_keto_rpc_client_module_headerClassList}
+    ${0060_keto_rpc_client_module_sourceClassList}
 
     return sourceVersionMap;
 }

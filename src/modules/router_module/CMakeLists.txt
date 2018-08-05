@@ -7,9 +7,6 @@ SET(ROUTER_MODULE_SIGNATURE "this is a key")
 SET(ROUTER_MODULE_SOURCE_VERSION_METHOD_MAP "getClientSourceVersionMap")
 SET(ROUTER_MODULE_CONSENSUS_HASH_SCRIPT_METHOD "getConsensusHashScriptConfig")
 
-configure_file(include/keto/router/RouterModuleManagerMisc.hpp.in include/keto/router/RouterModuleManagerMisc.hpp)
-
-
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
 ## SORT .cpp by most likely to change / break compile
@@ -27,7 +24,7 @@ add_library( 0015_keto_router_module
              ${HEADERS}
            )
 
-target_link_libraries( 0015_keto_router_module 
+KetoModuleDepencencies( 0015_keto_router_module 
                             PRIVATE keto_software_consensus
                             PRIVATE keto_router_db keto_rocks_db
                             PRIVATE keto_server_common
@@ -36,6 +33,9 @@ target_link_libraries( 0015_keto_router_module
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
                             PRIVATE ${ROCKSDB_LIBRARY} ${ROCKSDB_EXTRA_LIBRARY}
                             PRIVATE ${OPENSSL_LIBRARIES} )
+
+configure_file(include/keto/router/RouterModuleManagerMisc.hpp.in include/keto/router/RouterModuleManagerMisc.hpp)
+
 target_include_directories( 0015_keto_router_module
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/common/include"

@@ -28,12 +28,6 @@ namespace wavm_common {
 
 class WavmUtils {
 public:
-    static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
-    };
-    
-    static std::string getSourceVersion();
-
     WavmUtils() = delete;
     WavmUtils(const WavmUtils& orig) = delete;
     virtual ~WavmUtils() = delete;

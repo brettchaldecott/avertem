@@ -7,7 +7,6 @@ SET(BALANCER_MODULE_SIGNATURE "this is a key")
 SET(BALANCER_MODULE_SOURCE_VERSION_METHOD_MAP "getClientSourceVersionMap")
 SET(BALANCER_MODULE_CONSENSUS_HASH_SCRIPT_METHOD "getConsensusHashScriptConfig")
 
-configure_file(include/keto/balancer/BalancerModuleManagerMisc.hpp.in include/keto/balancer/BalancerModuleManagerMisc.hpp)
 
 
 include_directories(${PROTOBUF_INCLUDE_DIR})
@@ -27,12 +26,15 @@ add_library( 0025_keto_balancer_module
              ${HEADERS}
            )
 
-target_link_libraries( 0025_keto_balancer_module 
+KetoModuleDepencencies( 0025_keto_balancer_module 
                             PRIVATE keto_software_consensus
                             PRIVATE keto_server_common keto_asn1_common keto_asn1_protocol
                             PRIVATE keto_proto_environment ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
                             PRIVATE ${OPENSSL_LIBRARIES} )
+
+configure_file(include/keto/balancer/BalancerModuleManagerMisc.hpp.in include/keto/balancer/BalancerModuleManagerMisc.hpp)
+
 target_include_directories( 0025_keto_balancer_module
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/common/include"

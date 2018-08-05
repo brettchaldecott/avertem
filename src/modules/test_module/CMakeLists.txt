@@ -7,8 +7,6 @@ SET(TEST_MODULE_SIGNATURE "this is a key")
 SET(TEST_SOURCE_VERSION_METHOD_MAP "getClientSourceVersionMap")
 SET(TEST_CONSENSUS_HASH_SCRIPT_METHOD "getConsensusHashScriptConfig")
 
-configure_file(include/keto/test/TestModuleManagerMisc.hpp.in include/keto/test/TestModuleManagerMisc.hpp)
-
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
 
@@ -24,13 +22,16 @@ add_library( 0002_keto_test_module
              ${HEADERS}
            )
 
-target_link_libraries( 0002_keto_test_module 
+KetoModuleDepencencies( 0002_keto_test_module 
                             PRIVATE keto_software_consensus
                             PRIVATE keto_transaction_common keto_server_common keto_rpc_protocol
                             PRIVATE keto_proto_environment ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_asn1_common keto_asn1_protocol
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
                             PRIVATE ${OPENSSL_LIBRARIES} )
+
+configure_file(include/keto/test/TestModuleManagerMisc.hpp.in include/keto/test/TestModuleManagerMisc.hpp)
+
 target_include_directories( 0002_keto_test_module
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/common/include"

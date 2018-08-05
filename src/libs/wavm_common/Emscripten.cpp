@@ -27,11 +27,7 @@ namespace keto {
         // TODO: This code is currently not very efficient for multi threading
         //using namespace IR;
         //using namespace Runtime;
-        std::string getSourceVersion() {
-            return OBFUSCATED("$Id:$");
-        }
-
-
+        
         DEFINE_INTRINSIC_MODULE(env)
         DEFINE_INTRINSIC_MODULE(asm2wasm)
         DEFINE_INTRINSIC_MODULE(global)

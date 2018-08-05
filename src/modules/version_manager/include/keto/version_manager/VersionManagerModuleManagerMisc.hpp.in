@@ -17,6 +17,9 @@
 #include "keto/version_manager/VersionManagerModuleManager.hpp"
 #include "keto/common/MetaInfo.hpp"
 
+${0070_keto_version_manager_module_headerList}
+
+
 namespace keto {
 namespace version_manager {
 
@@ -32,6 +35,9 @@ keto::crypto::SecureVector ${VERSION_MANAGER_MODULE_KEY_METHOD}() {
 
 keto::software_consensus::SourceVersionMap ${VERSION_MANAGER_MODULE_SOURCE_VERSION_METHOD_MAP}() {
     keto::software_consensus::SourceVersionMap sourceVersionMap;
+    
+    ${0070_keto_version_manager_module_headerClassList}
+    ${0070_keto_version_manager_module_sourceClassList}
 
     return sourceVersionMap;
 }

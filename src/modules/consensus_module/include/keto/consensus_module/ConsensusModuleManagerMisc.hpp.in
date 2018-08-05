@@ -17,6 +17,8 @@
 #include "keto/consensus_module/ConsensusModuleManager.hpp"
 #include "keto/common/MetaInfo.hpp"
 
+${0100_keto_consensus_module_headerList}
+
 namespace keto {
 namespace consensus_module {
 
@@ -32,6 +34,9 @@ keto::crypto::SecureVector ${CONSENSUS_MODULE_KEY_METHOD}() {
 
 keto::software_consensus::SourceVersionMap ${CONSENSUS_SOURCE_VERSION_METHOD_MAP}() {
     keto::software_consensus::SourceVersionMap sourceVersionMap;
+
+    ${0100_keto_consensus_module_headerClassList}
+    ${0100_keto_consensus_module_sourceClassList}
 
     return sourceVersionMap;
 }

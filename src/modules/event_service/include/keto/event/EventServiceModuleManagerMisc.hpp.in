@@ -17,6 +17,8 @@
 #include "keto/event/EventServiceModuleManager.hpp"
 #include "keto/common/MetaInfo.hpp"
 
+${0001_keto_event_service_module_headerList}
+
 namespace keto {
 namespace event {
 
@@ -27,11 +29,16 @@ keto::crypto::SecureVector ${EVENT_MODULE_SIGNATURE_METHOD}() {
 
 keto::crypto::SecureVector ${EVENT_MODULE_KEY_METHOD}() {
     std::string key = OBFUSCATED("${EVENT_MODULE_KEY}");
+
     return keto::crypto::SecureVectorUtils().copyStringToSecure(key);
 }
 
 keto::software_consensus::SourceVersionMap ${EVENT_MODULE_SOURCE_VERSION_METHOD_MAP}() {
     keto::software_consensus::SourceVersionMap sourceVersionMap;
+
+    ${0001_keto_event_service_module_headerClassList}
+    ${0001_keto_event_service_module_sourceClassList}
+
 
     return sourceVersionMap;
 }

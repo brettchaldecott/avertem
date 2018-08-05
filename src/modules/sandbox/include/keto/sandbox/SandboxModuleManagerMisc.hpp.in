@@ -17,6 +17,8 @@
 #include "keto/sandbox/SandboxModuleManager.hpp"
 #include "keto/common/MetaInfo.hpp"
 
+${0020_keto_sandbox_module_headerList}
+
 namespace keto {
 namespace sandbox {
 
@@ -32,7 +34,10 @@ keto::crypto::SecureVector ${SANDBOX_MODULE_KEY_METHOD}() {
 
 keto::software_consensus::SourceVersionMap ${SANDBOX_SOURCE_VERSION_METHOD_MAP}() {
     keto::software_consensus::SourceVersionMap sourceVersionMap;
-
+    
+    ${0020_keto_sandbox_module_headerClassList}
+    ${0020_keto_sandbox_module_sourceClassList}
+    
     return sourceVersionMap;
 }
 

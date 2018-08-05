@@ -17,6 +17,8 @@
 #include "keto/test/TestModuleManager.hpp"
 #include "keto/common/MetaInfo.hpp"
 
+${0002_keto_test_module_headerList}
+
 namespace keto {
 namespace test {
 
@@ -33,6 +35,9 @@ keto::crypto::SecureVector ${TEST_MODULE_KEY_METHOD}() {
 keto::software_consensus::SourceVersionMap ${TEST_SOURCE_VERSION_METHOD_MAP}() {
     keto::software_consensus::SourceVersionMap sourceVersionMap;
 
+    ${0002_keto_test_module_headerClassList}
+    ${0002_keto_test_module_sourceClassList}
+    
     return sourceVersionMap;
 }
 

@@ -7,8 +7,6 @@ SET(SANDBOX_MODULE_SIGNATURE "this is a key")
 SET(SANDBOX_SOURCE_VERSION_METHOD_MAP "getClientSourceVersionMap")
 SET(SANDBOX_CONSENSUS_HASH_SCRIPT_METHOD "getConsensusHashScriptConfig")
 
-configure_file(include/keto/sandbox/SandboxModuleManagerMisc.hpp.in include/keto/sandbox/SandboxModuleManagerMisc.hpp)
-
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
 ## SORT .cpp by most likely to change / break compile
@@ -24,7 +22,7 @@ add_library( 0020_keto_sandbox_module
              ${HEADERS}
            )
 
-target_link_libraries( 0020_keto_sandbox_module 
+KetoModuleDepencencies( 0020_keto_sandbox_module 
                             PRIVATE keto_software_consensus
                             PRIVATE keto_wavm_common keto_server_common
                             PRIVATE keto_transaction_common keto_proto_environment ${PROTOBUF_LIBRARIES}
@@ -36,6 +34,9 @@ target_link_libraries( 0020_keto_sandbox_module
                             PRIVATE ${LIBRDF_PCRE_EXTRA_LIBRARY} ${LIBRDF_LTDL_EXTRA_LIBRARY}
                             PRIVATE ${LIBRDF_GMP_EXTRA_LIBRARY}
                             PRIVATE ${OPENSSL_LIBRARIES} )
+
+configure_file(include/keto/sandbox/SandboxModuleManagerMisc.hpp.in include/keto/sandbox/SandboxModuleManagerMisc.hpp)
+
 target_include_directories( 0020_keto_sandbox_module
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/common/include"

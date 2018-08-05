@@ -17,6 +17,8 @@
 #include "keto/transaction/TransactionServiceModuleManager.hpp"
 #include "keto/common/MetaInfo.hpp"
 
+${0003_keto_transaction_module_headerList}
+
 namespace keto {
 namespace transaction {
 
@@ -32,6 +34,9 @@ keto::crypto::SecureVector ${TRANSACTION_MODULE_KEY_METHOD}() {
 
 keto::software_consensus::SourceVersionMap ${TRANSACTION_MODULE_SOURCE_VERSION_METHOD_MAP}() {
     keto::software_consensus::SourceVersionMap sourceVersionMap;
+
+    ${0003_keto_transaction_module_headerClassList}
+    ${0003_keto_transaction_module_sourceClassList}
 
     return sourceVersionMap;
 }

@@ -7,11 +7,6 @@ SET(RPC_CLIENT_MODULE_SIGNATURE "this is a key")
 SET(RPC_CLIENT_SOURCE_VERSION_METHOD_MAP "getClientSourceVersionMap")
 SET(RPC_CLIENT_CONSENSUS_HASH_SCRIPT_METHOD "getConsensusHashScriptConfig")
 
-
-
-configure_file(include/keto/rpc_client/RpcClientModuleManagerMisc.hpp.in include/keto/rpc_client/RpcClientModuleManagerMisc.hpp)
-
-
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
 ## SORT .cpp by most likely to change / break compile
@@ -28,13 +23,16 @@ add_library( 0060_keto_rpc_client_module
              ${HEADERS}
            )
 
-target_link_libraries( 0060_keto_rpc_client_module 
+KetoModuleDepencencies( 0060_keto_rpc_client_module 
                             PRIVATE keto_software_consensus
                             PRIVATE keto_transaction_common keto_server_common keto_rpc_protocol
                             PRIVATE keto_proto_environment ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_asn1_common keto_asn1_protocol
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
                             PRIVATE ${OPENSSL_LIBRARIES} )
+
+configure_file(include/keto/rpc_client/RpcClientModuleManagerMisc.hpp.in include/keto/rpc_client/RpcClientModuleManagerMisc.hpp)
+
 target_include_directories( 0060_keto_rpc_client_module
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/common/include"

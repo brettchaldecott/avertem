@@ -17,6 +17,8 @@
 #include "keto/balancer/BalancerModuleManager.hpp"
 #include "keto/common/MetaInfo.hpp"
 
+${0025_keto_balancer_module_headerList}
+
 namespace keto {
 namespace balancer {
 
@@ -32,6 +34,9 @@ keto::crypto::SecureVector ${BALANCER_MODULE_KEY_METHOD}() {
 
 keto::software_consensus::SourceVersionMap ${BALANCER_MODULE_SOURCE_VERSION_METHOD_MAP}() {
     keto::software_consensus::SourceVersionMap sourceVersionMap;
+    
+    ${0025_keto_balancer_module_headerClassList}
+    ${0025_keto_balancer_module_sourceClassList}
 
     return sourceVersionMap;
 }

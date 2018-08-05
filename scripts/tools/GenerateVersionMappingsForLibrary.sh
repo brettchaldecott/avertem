@@ -30,8 +30,8 @@ fi
 
 
 HEADER_FILES=(`find $SEARCH_PATH -name "*.hpp" | xargs grep -l getHeaderVersion | sed "s/include/#/g" | cut -f 2 -d "#" - | cut -f 2-4 -d "/" -`)
-SOURCE_CLASSES=(`find $SEARCH_PATH -name "*.hpp" | xargs grep getSourceVersion | sed "s/include/#/g" | cut -f 2 -d "#" - | cut -f 1 -d ":" - | cut -f 1 -d "." - | cut -f 2-4 -d "/" --output-delimiter='::' -`)
-HEADER_CLASSES=(`find $SEARCH_PATH -name "*.hpp" | xargs grep getHeaderVersion | sed "s/include/#/g" | cut -f 2 -d "#" - | cut -f 1 -d ":" - | cut -f 1 -d "." - | cut -f 2-4 -d "/" --output-delimiter='::' -`)
+SOURCE_CLASSES=(`find $SEARCH_PATH -name "*.hpp" | xargs grep -l getSourceVersion | sed "s/include/#/g" | cut -f 2 -d "#" - | cut -f 1 -d ":" - | cut -f 1 -d "." - | cut -f 2-4 -d "/" --output-delimiter='::' -`)
+HEADER_CLASSES=(`find $SEARCH_PATH -name "*.hpp" | xargs grep -l getHeaderVersion | sed "s/include/#/g" | cut -f 2 -d "#" - | cut -f 1 -d ":" - | cut -f 1 -d "." - | cut -f 2-4 -d "/" --output-delimiter='::' -`)
 
 if [ $HEADERS == 1 ]
 then

@@ -17,6 +17,8 @@
 #include "keto/http/HttpdModuleManager.hpp"
 #include "keto/common/MetaInfo.hpp"
 
+${0050_keto_httpd_module_headerList}
+
 namespace keto {
 namespace http {
 
@@ -32,6 +34,9 @@ keto::crypto::SecureVector ${HTTPD_MODULE_KEY_METHOD}() {
 
 keto::software_consensus::SourceVersionMap ${HTTPD_MODULE_SOURCE_VERSION_METHOD_MAP}() {
     keto::software_consensus::SourceVersionMap sourceVersionMap;
+
+    ${0050_keto_httpd_module_headerClassList}
+    ${0050_keto_httpd_module_sourceClassList}
 
     return sourceVersionMap;
 }
