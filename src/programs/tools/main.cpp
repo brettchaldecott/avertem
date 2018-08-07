@@ -52,6 +52,7 @@ boost::program_options::options_description generateOptionDescriptions() {
             ("encrypt,E", "Encode a file using a private key.")
             ("decrypt,D", "Decrypt a file using a private key.")
             ("hash,H", "Generate a has for a files contents.")
+            ("key,K", "Print encoded key.")
             ("keys,k", po::value<std::string>(),"Key information needed for the encryption")
             ("source,s", po::value<std::string>(),"Source file to encode.")
             ("output,o",po::value<std::string>(), "Output encoded file.")
@@ -62,13 +63,35 @@ boost::program_options::options_description generateOptionDescriptions() {
 
 int generateKey(std::shared_ptr<ketoEnv::Config> config,
         boost::program_options::options_description optionDescription) {
-    keto::key_tools::KeyPairCreator keyPairCreator;
-    nlohmann::json json = {
-        {keto::tools::Constants::SECRET_KEY, Botan::hex_encode(keyPairCreator.getSecret(),true)},
-        {keto::tools::Constants::ENCODED_KEY, Botan::hex_encode(keyPairCreator.getEncodedKey(),true)}
-      };
     
-    std::cout << json.dump() << std::endl;
+    if (config->getVariablesMap().count(keto::tools::Constants::KEYS)) {
+        std::ifstream ifs(config->getVariablesMap()[keto::tools::Constants::KEYS].as<std::string>());
+        nlohmann::json jsonKeys;
+        ifs >> jsonKeys;
+
+        keto::crypto::SecureVector secretKey = 
+                Botan::hex_decode_locked(jsonKeys[keto::tools::Constants::SECRET_KEY],true);
+        keto::crypto::SecureVector encodedKey = 
+                Botan::hex_decode_locked(jsonKeys[keto::tools::Constants::ENCODED_KEY],true);
+        
+        keto::key_tools::KeyPairCreator keyPairCreator(secretKey);
+        nlohmann::json json = {
+            {keto::tools::Constants::SECRET_KEY, Botan::hex_encode(keyPairCreator.getSecret(),true)},
+            {keto::tools::Constants::ENCODED_KEY, Botan::hex_encode(keyPairCreator.getEncodedKey(),true)}
+          };
+
+        std::cout << json.dump() << std::endl;
+        
+    } else {
+        
+        keto::key_tools::KeyPairCreator keyPairCreator;
+        nlohmann::json json = {
+            {keto::tools::Constants::SECRET_KEY, Botan::hex_encode(keyPairCreator.getSecret(),true)},
+            {keto::tools::Constants::ENCODED_KEY, Botan::hex_encode(keyPairCreator.getEncodedKey(),true)}
+          };
+
+        std::cout << json.dump() << std::endl;
+    }
     
     return 0;
 }
@@ -121,16 +144,13 @@ int encryptData(std::shared_ptr<ketoEnv::Config> config,
     keto::key_tools::ContentEncryptor contentEncryptor(secretKey,
             encodedKey,content);
     
-    if (!config->getVariablesMap().count(keto::tools::Constants::OUTPUT)) {
-        std::cerr << "Must specify the output file [" << 
-                keto::tools::Constants::OUTPUT << "]" << std::endl;
-        return -1;
+    if (config->getVariablesMap().count(keto::tools::Constants::OUTPUT)) {
+        std::ofstream output(config->getVariablesMap()[keto::tools::Constants::OUTPUT].as<std::string>());
+        output << Botan::hex_encode(contentEncryptor.getEncryptedContent());
+        output.close();
+    } else {
+        std::cout << Botan::hex_encode(contentEncryptor.getEncryptedContent());
     }
-    
-    std::ofstream output(config->getVariablesMap()[keto::tools::Constants::OUTPUT].as<std::string>());
-    output << Botan::hex_encode(contentEncryptor.getEncryptedContent());
-    output.close();
-    
     
     
     return 0;
@@ -210,16 +230,34 @@ int hashFile(std::shared_ptr<ketoEnv::Config> config,
         return -1;
     }
     
-    if (!config->getVariablesMap().count(keto::tools::Constants::OUTPUT)) {
-        std::cerr << "Must specify the output file [" << 
-                keto::tools::Constants::OUTPUT << "]" << std::endl;
+    if (config->getVariablesMap().count(keto::tools::Constants::OUTPUT)){
+        std::ofstream output(config->getVariablesMap()[keto::tools::Constants::OUTPUT].as<std::string>());
+        output << Botan::hex_encode(keto::crypto::HashGenerator().generateHash(content));
+        output.close();
+    } else {
+        std::cout << Botan::hex_encode(keto::crypto::HashGenerator().generateHash(content));
+    }
+    
+    return 0;
+}
+
+int printEncodedKey(std::shared_ptr<ketoEnv::Config> config,
+        boost::program_options::options_description optionDescription) {
+    
+    if (!config->getVariablesMap().count(keto::tools::Constants::KEYS)) {
+        std::cerr << "The keys json must provided [" << 
+                keto::tools::Constants::KEYS << "]" << std::endl;
         return -1;
     }
     
-    std::ofstream output(config->getVariablesMap()[keto::tools::Constants::OUTPUT].as<std::string>());
-    output << Botan::hex_encode(keto::crypto::HashGenerator().generateHash(content));
-    output.close();
+    std::ifstream ifs(config->getVariablesMap()[keto::tools::Constants::KEYS].as<std::string>());
+    nlohmann::json jsonKeys;
+    ifs >> jsonKeys;
     
+    keto::crypto::SecureVector secretKey = 
+            Botan::hex_decode_locked(jsonKeys[keto::tools::Constants::SECRET_KEY],true);
+    
+    std::cout << Botan::hex_encode(secretKey);
     return 0;
 }
 
@@ -261,6 +299,8 @@ int main(int argc, char** argv)
             return decryptData(config,optionDescription);
         } else if (config->getVariablesMap().count(keto::tools::Constants::HASH)) {
             return hashFile(config,optionDescription);
+        } else if (config->getVariablesMap().count(keto::tools::Constants::KEY)) {
+            return printEncodedKey(config,optionDescription);
         }
         KETO_LOG_INFO << "Keto Tools Executed";
     } catch (keto::common::Exception& ex) {

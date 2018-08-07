@@ -44,6 +44,18 @@ KeyPairCreator::KeyPairCreator() {
     }
 }
 
+
+KeyPairCreator::KeyPairCreator(const keto::crypto::SecureVector& secret) : secret(secret) {
+    std::shared_ptr<Botan::AutoSeeded_RNG> generator(new Botan::AutoSeeded_RNG());
+    std::shared_ptr<Botan::Private_Key> encryptionKey(
+            new Botan::RSA_PrivateKey(*generator, 2056));
+    keto::crypto::SecureVector encryptionKeyBits = Botan::PKCS8::BER_encode(*encryptionKey);
+    for (int index = 0; index < encryptionKeyBits.size(); index++) {
+        this->encodedKey.push_back(encryptionKeyBits[index] ^ this->secret[index]);
+    }
+}
+
+
 KeyPairCreator::~KeyPairCreator() {
 }
 

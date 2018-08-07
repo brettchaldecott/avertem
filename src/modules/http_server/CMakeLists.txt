@@ -35,6 +35,8 @@ KetoModuleDepencencies( 0050_keto_httpd_module
                             PRIVATE ${OPENSSL_LIBRARIES}
  )
 
+KetoModuleConsensus( 0050_keto_httpd_module ${NUMBER_OF_KEYS} http )
+
 configure_file(include/keto/http/HttpdModuleManagerMisc.hpp.in include/keto/http/HttpdModuleManagerMisc.hpp)
 
 target_include_directories( 0050_keto_httpd_module

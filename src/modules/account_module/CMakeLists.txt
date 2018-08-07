@@ -43,6 +43,8 @@ KetoModuleDepencencies( 0015_account_module
                             PRIVATE ${LIBRDF_GMP_EXTRA_LIBRARY}
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
+KetoModuleConsensus( 0015_account_module ${NUMBER_OF_KEYS} account )
+
 configure_file(include/keto/account/AccountModuleManagerMisc.hpp.in include/keto/account/AccountModuleManagerMisc.hpp)
 
 target_include_directories( 0015_account_module

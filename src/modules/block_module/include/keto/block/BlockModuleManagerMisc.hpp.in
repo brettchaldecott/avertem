@@ -22,6 +22,8 @@ ${0020_keto_block_module_headerList}
 namespace keto {
 namespace block {
 
+${0020_keto_block_module_consensus_scripts}
+
 keto::crypto::SecureVector ${BLOCK_MODULE_SIGNATURE_METHOD}() {
     std::string signature = OBFUSCATED("${BLOCK_MODULE_SIGNATURE}");
     return keto::crypto::SecureVectorUtils().copyStringToSecure(signature);
@@ -43,7 +45,9 @@ keto::software_consensus::SourceVersionMap ${BLOCK_MODULE_SOURCE_VERSION_METHOD_
 
 keto::software_consensus::ConsensusHashScriptInfoVector ${BLOCK_MODULE_CONSENSUS_HASH_SCRIPT_METHOD}() {
     keto::software_consensus::ConsensusHashScriptInfoVector consensusHashScript;
-
+    
+    ${0020_keto_block_module_consensus_mapping}
+    
     return consensusHashScript;
 }
 

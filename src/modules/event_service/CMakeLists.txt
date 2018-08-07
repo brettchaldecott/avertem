@@ -31,6 +31,8 @@ KetoModuleDepencencies( 0001_keto_event_service_module
                             PRIVATE ${ROCKSDB_LIBRARY} ${ROCKSDB_EXTRA_LIBRARY} ${ROCKSDB_SNAPPY_LIBRARY}
                             PRIVATE ${OPENSSL_LIBRARIES})
 
+KetoModuleConsensus( 0001_keto_event_service_module ${NUMBER_OF_KEYS} event )
+
 configure_file(include/keto/event/EventServiceModuleManagerMisc.hpp.in include/keto/event/EventServiceModuleManagerMisc.hpp)
 
 target_include_directories( 0001_keto_event_service_module

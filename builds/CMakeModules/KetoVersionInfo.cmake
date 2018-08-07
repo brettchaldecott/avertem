@@ -18,9 +18,9 @@ macro(KetoModuleDepencencies MODULE_NAME)
             SET(headerClassList "${headerClassList}\n${newHeaderClassList}")
         endif (${loop_var} MATCHES "keto_.*")
     ENDFOREACH( loop_var )
-    MESSAGE("The header ${headerList}")
-    MESSAGE("The source class ${sourceClassList}")
-    MESSAGE("The header class ${headerClassList}")
+    #MESSAGE("The header ${headerList}")
+    #MESSAGE("The source class ${sourceClassList}")
+    #MESSAGE("The header class ${headerClassList}")
     
     set ("${MODULE_NAME}_headerList" "${headerList}")
     #MESSAGE("The header class ${0015_account_module_headerClassList}")
@@ -29,3 +29,14 @@ macro(KetoModuleDepencencies MODULE_NAME)
     
     target_link_libraries( ${MODULE_NAME} ${ARGN} )
 endmacro(KetoModuleDepencencies)
+
+macro(KetoModuleConsensus MODULE_NAME NUMBER_OF_KEYS MODULE_NAMESPACE  )
+    MESSAGE("The consensus ${ARGN}")
+    
+    execute_process(COMMAND "${CMAKE_BINARY_DIR}/../scripts/tools/GenerateConsensusScriptInfo.sh" "${NUMBER_OF_KEYS}" "${CMAKE_CURRENT_SOURCE_DIR}/keys/" "${CMAKE_CURRENT_SOURCE_DIR}/consensus/" OUTPUT_VARIABLE consensusSource)
+    execute_process(COMMAND "${CMAKE_BINARY_DIR}/../scripts/tools/GenerateConsensusScriptMapping.sh" "${NUMBER_OF_KEYS}"  "${MODULE_NAMESPACE}" OUTPUT_VARIABLE consensusMapping)
+    
+    set ("${MODULE_NAME}_consensus_scripts" "${consensusSource}")
+    set ("${MODULE_NAME}_consensus_mapping" "${consensusMapping}")
+    
+endmacro(KetoModuleConsensus)

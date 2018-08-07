@@ -33,6 +33,8 @@ KetoModuleDepencencies( 0010_keto_keystore_module
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
+KetoModuleConsensus( 0010_keto_keystore_module ${NUMBER_OF_KEYS} keystore )
+
 configure_file(include/keto/keystore/KeystoreModuleManagerMisc.hpp.in include/keto/keystore/KeystoreModuleManagerMisc.hpp)
 
 target_include_directories( 0010_keto_keystore_module

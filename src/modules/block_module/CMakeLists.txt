@@ -39,6 +39,8 @@ KetoModuleDepencencies( 0020_keto_block_module
                             PRIVATE ${ROCKSDB_LIBRARY} ${ROCKSDB_EXTRA_LIBRARY} ${ROCKSDB_SNAPPY_LIBRARY}
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
+KetoModuleConsensus( 0020_keto_block_module ${NUMBER_OF_KEYS} block )
+
 configure_file(include/keto/block/BlockModuleManagerMisc.hpp.in include/keto/block/BlockModuleManagerMisc.hpp)
 
 target_include_directories( 0020_keto_block_module

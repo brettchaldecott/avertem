@@ -9,7 +9,6 @@ SET(BALANCER_MODULE_SOURCE_VERSION_METHOD_MAP "getClientSourceVersionMap")
 SET(BALANCER_MODULE_CONSENSUS_HASH_SCRIPT_METHOD "getConsensusHashScriptConfig")
 
 
-
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
 ## SORT .cpp by most likely to change / break compile
@@ -35,6 +34,8 @@ KetoModuleDepencencies( 0025_keto_balancer_module
                             PRIVATE keto_proto_environment ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
                             PRIVATE ${OPENSSL_LIBRARIES} )
+
+KetoModuleConsensus( 0025_keto_balancer_module ${NUMBER_OF_KEYS} balancer )
 
 configure_file(include/keto/balancer/BalancerModuleManagerMisc.hpp.in include/keto/balancer/BalancerModuleManagerMisc.hpp)
 

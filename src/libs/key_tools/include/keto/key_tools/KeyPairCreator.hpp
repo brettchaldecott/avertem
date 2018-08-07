@@ -33,6 +33,7 @@ public:
     static std::string getSourceVersion();
 
     KeyPairCreator();
+    KeyPairCreator(const keto::crypto::SecureVector& secret);
     KeyPairCreator(const KeyPairCreator& orig) = default;
     virtual ~KeyPairCreator();
     

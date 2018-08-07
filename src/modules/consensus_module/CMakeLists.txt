@@ -32,6 +32,8 @@ KetoModuleDepencencies( 0100_keto_consensus_module
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
+KetoModuleConsensus( 0100_keto_consensus_module ${NUMBER_OF_KEYS} consensus_module )
+
 configure_file(include/keto/consensus_module/ConsensusModuleManagerMisc.hpp.in include/keto/consensus_module/ConsensusModuleManagerMisc.hpp)
 
 target_include_directories( 0100_keto_consensus_module
