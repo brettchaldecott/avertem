@@ -34,6 +34,8 @@ KetoModuleDepencencies( 0070_keto_version_manager_module
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
+KetoModuleConsensus( 0070_keto_version_manager_module ${NUMBER_OF_KEYS} "version_manager" )
+
 configure_file(include/keto/version_manager/VersionManagerModuleManagerMisc.hpp.in include/keto/version_manager/VersionManagerModuleManagerMisc.hpp)
 
 target_include_directories( 0070_keto_version_manager_module

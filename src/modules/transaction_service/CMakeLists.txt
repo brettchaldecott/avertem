@@ -34,6 +34,8 @@ KetoModuleDepencencies( 0003_keto_transaction_module
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
+KetoModuleConsensus( 0003_keto_transaction_module ${NUMBER_OF_KEYS} "transaction" )
+
 configure_file(include/keto/transaction/TransactionServiceModuleManagerMisc.hpp.in include/keto/transaction/TransactionServiceModuleManagerMisc.hpp)
 
 target_include_directories( 0003_keto_transaction_module

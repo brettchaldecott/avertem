@@ -33,6 +33,8 @@ KetoModuleDepencencies( 0002_keto_test_module
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
+KetoModuleConsensus( 0002_keto_test_module ${NUMBER_OF_KEYS} "test" )
+
 configure_file(include/keto/test/TestModuleManagerMisc.hpp.in include/keto/test/TestModuleManagerMisc.hpp)
 
 target_include_directories( 0002_keto_test_module

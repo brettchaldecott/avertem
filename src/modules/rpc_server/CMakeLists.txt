@@ -36,6 +36,8 @@ KetoModuleDepencencies( 0030_keto_rpc_server_module
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
+KetoModuleConsensus( 0030_keto_rpc_server_module ${NUMBER_OF_KEYS} rpc_server )
+
 configure_file(include/keto/rpc_server/RpcServerModuleManagerMisc.hpp.in include/keto/rpc_server/RpcServerModuleManagerMisc.hpp)
 
 target_include_directories( 0030_keto_rpc_server_module

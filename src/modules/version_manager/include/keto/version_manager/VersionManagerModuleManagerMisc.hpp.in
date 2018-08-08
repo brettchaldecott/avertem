@@ -8,6 +8,8 @@
 #include <boost/dll/shared_library.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <botan/hex.h>
+
 #include "keto/common/Log.hpp"
 
 #include "keto/obfuscate/MetaString.hpp"
@@ -22,6 +24,8 @@ ${0070_keto_version_manager_module_headerList}
 
 namespace keto {
 namespace version_manager {
+
+${0070_keto_version_manager_module_consensus_scripts}
 
 keto::crypto::SecureVector ${VERSION_MANAGER_MODULE_SIGNATURE_METHOD}() {
     std::string signature = OBFUSCATED("${VERSION_MANAGER_MODULE_SIGNATURE}");
@@ -44,6 +48,8 @@ keto::software_consensus::SourceVersionMap ${VERSION_MANAGER_MODULE_SOURCE_VERSI
 
 keto::software_consensus::ConsensusHashScriptInfoVector ${VERSION_MANAGER_MODULE_CONSENSUS_HASH_SCRIPT_METHOD}() {
     keto::software_consensus::ConsensusHashScriptInfoVector consensusHashScript;
+    
+    ${0070_keto_version_manager_module_consensus_mapping}
 
     return consensusHashScript;
 }

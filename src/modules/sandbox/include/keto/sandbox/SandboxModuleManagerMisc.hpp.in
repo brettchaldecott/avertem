@@ -8,6 +8,8 @@
 #include <boost/dll/shared_library.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <botan/hex.h>
+
 #include "keto/common/Log.hpp"
 
 #include "keto/obfuscate/MetaString.hpp"
@@ -21,6 +23,8 @@ ${0020_keto_sandbox_module_headerList}
 
 namespace keto {
 namespace sandbox {
+
+${0020_keto_sandbox_module_consensus_scripts}
 
 keto::crypto::SecureVector ${SANDBOX_MODULE_SIGNATURE_METHOD}() {
     std::string signature = OBFUSCATED("${SANDBOX_MODULE_SIGNATURE}");
@@ -43,6 +47,8 @@ keto::software_consensus::SourceVersionMap ${SANDBOX_SOURCE_VERSION_METHOD_MAP}(
 
 keto::software_consensus::ConsensusHashScriptInfoVector ${SANDBOX_CONSENSUS_HASH_SCRIPT_METHOD}() {
     keto::software_consensus::ConsensusHashScriptInfoVector consensusHashScript;
+
+    ${0020_keto_sandbox_module_consensus_mapping}
 
     return consensusHashScript;
 }

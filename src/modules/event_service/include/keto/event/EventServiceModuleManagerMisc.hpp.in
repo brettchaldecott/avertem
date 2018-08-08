@@ -8,6 +8,8 @@
 #include <boost/dll/shared_library.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <botan/hex.h>
+
 #include "keto/common/Log.hpp"
 
 #include "keto/obfuscate/MetaString.hpp"

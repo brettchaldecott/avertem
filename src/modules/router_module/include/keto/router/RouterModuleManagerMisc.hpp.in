@@ -8,6 +8,8 @@
 #include <boost/dll/shared_library.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <botan/hex.h>
+
 #include "keto/common/Log.hpp"
 
 #include "keto/obfuscate/MetaString.hpp"
@@ -21,6 +23,9 @@ ${0015_keto_router_module_headerList}
 
 namespace keto {
 namespace router {
+
+${0015_keto_router_module_consensus_scripts}
+
 
 keto::crypto::SecureVector ${ROUTER_MODULE_SIGNATURE_METHOD}() {
     std::string signature = OBFUSCATED("${ROUTER_MODULE_SIGNATURE}");
@@ -43,7 +48,9 @@ keto::software_consensus::SourceVersionMap ${ROUTER_MODULE_SOURCE_VERSION_METHOD
 
 keto::software_consensus::ConsensusHashScriptInfoVector ${ROUTER_MODULE_CONSENSUS_HASH_SCRIPT_METHOD}() {
     keto::software_consensus::ConsensusHashScriptInfoVector consensusHashScript;
-
+    
+    ${0015_keto_router_module_consensus_mapping}
+    
     return consensusHashScript;
 }
 

@@ -37,6 +37,8 @@ KetoModuleDepencencies( 0020_keto_sandbox_module
                             PRIVATE ${LIBRDF_GMP_EXTRA_LIBRARY}
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
+KetoModuleConsensus( 0020_keto_sandbox_module ${NUMBER_OF_KEYS} sandbox )
+
 configure_file(include/keto/sandbox/SandboxModuleManagerMisc.hpp.in include/keto/sandbox/SandboxModuleManagerMisc.hpp)
 
 target_include_directories( 0020_keto_sandbox_module

@@ -36,6 +36,8 @@ KetoModuleDepencencies( 0015_keto_router_module
                             PRIVATE ${ROCKSDB_LIBRARY} ${ROCKSDB_EXTRA_LIBRARY}
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
+KetoModuleConsensus( 0015_keto_router_module ${NUMBER_OF_KEYS} router )
+
 configure_file(include/keto/router/RouterModuleManagerMisc.hpp.in include/keto/router/RouterModuleManagerMisc.hpp)
 
 target_include_directories( 0015_keto_router_module
