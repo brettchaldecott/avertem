@@ -10,6 +10,6 @@ SOURCE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 for sourceKey in "${sourceKeys[@]}";
 do
     filename=${sourceKey##*/}
-    echo "${SOURCE_DIR}/../../build/install/bin/keto_tools.sh -G -k ${sourceKey} > \"${outputDir}/${filename}\""
-    ${SOURCE_DIR}/../../build/install/bin/keto_tools.sh -G -k ${sourceKey} > "${outputDir}/${filename}"
+    echo "${SOURCE_DIR}/../../deps_build/build/install/bin/keto_tools.sh -G -k ${sourceKey} > \"${outputDir}/${filename}\""
+    ${SOURCE_DIR}/../../deps_build/build/install/bin/keto_tools.sh -G -k ${sourceKey} > "${outputDir}/${filename}"
 done

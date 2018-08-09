@@ -34,7 +34,7 @@ target_include_directories(keto_tools
 
 target_link_libraries( keto_tools 
         PRIVATE keto_key_tools
-        PRIVATE keto_module_manager keto_server_common keto_crypto
+        PRIVATE keto_server_common keto_crypto
         PRIVATE keto_environment keto_common
 #        PRIVATE account_history_api_plugin net_api_plugin account_history_plugin db_plugin
 #        PRIVATE chain_api_plugin producer_plugin chain_plugin wallet_api_plugin
