@@ -30,6 +30,7 @@ public:
     static constexpr const char* DECRYPT = "decrypt";
     static constexpr const char* HASH = "hash";
     static constexpr const char* KEY = "key";
+    static constexpr const char* PRIVATE = "private";
     
     // arguments
     static constexpr const char* KEYS = "keys";

@@ -19,7 +19,7 @@ do
 	codeHash=`${SOURCE_DIR}/../../deps_build/build/install/bin/keto_tools.sh -H -s "${consensusDir}/consensus_${count}.chai"`
     #codeHashBytes=(`${SOURCE_DIR}/../../deps_build/build/install/bin/keto_tools.sh -H -s "${consensusDir}/consensus_${count}.chai" | xxd -p -r | od -An -b`)
 	#echo "${SOURCE_DIR}/../../deps_build/build/install/bin/keto_tools.sh -K -k \"${keyDir}/key_${count}.json\""
-	privateKeyBytes=(`${SOURCE_DIR}/../../deps_build/build/install/bin/keto_tools.sh -K -k "${keyDir}/key_${count}.json" | xxd -p -r | od -An -b`)
+	privateKeyBytes=`${SOURCE_DIR}/../../deps_build/build/install/bin/keto_tools.sh -K -k "${keyDir}/key_${count}.json"`
 	#echo "${SOURCE_DIR}/../../deps_build/build/install/bin/keto_tools.sh -E -k \"${keyDir}/key_${count}.json\" -s \"${consensusDir}/consensus_${count}.chai\""
 	encryptedCode=`${SOURCE_DIR}/../../deps_build/build/install/bin/keto_tools.sh -E -k "${keyDir}/key_${count}.json" -s "${consensusDir}/consensus_${count}.chai"`
 	#encryptedCodeBytes=(`${SOURCE_DIR}/../../deps_build/build/install/bin/keto_tools.sh -E -k "${keyDir}/key_${count}.json" -s "${consensusDir}/consensus_${count}.chai" | xxd -p -r | od -An -b`)
@@ -30,15 +30,8 @@ do
 	}
 
 	keto::crypto::SecureVector getEncodedKey() {
-	    keto::crypto::SecureVector result;
-	"
-	for bytes in "${privateKeyBytes[@]}";
-	do
-        echo "	    result.push_back((uint8_t)${bytes});"
-	done
-
-	echo "
-		return result;
+        std::string encodedKey = \"${privateKeyBytes}\";
+        return Botan::hex_decode_locked(encodedKey);
 	}
 
 	std::vector<uint8_t> getCode() {

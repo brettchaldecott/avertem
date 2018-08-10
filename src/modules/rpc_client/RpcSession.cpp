@@ -163,7 +163,7 @@ RpcSession::on_handshake(boost::system::error_code ec)
         return fail(ec, "handshake");
 
     // Send the message
-    std::cout << "Send the consensus message" << std::endl;
+    std::cout << "Send the the hello message" << std::endl;
     ws_.async_write(
         boost::asio::buffer(
             buildMessage(keto::server_common::Constants::RPC_COMMANDS::HELLO,buildHeloMessage())),
@@ -267,9 +267,9 @@ RpcSession::on_close(boost::system::error_code ec)
     
 }
 
-std::string RpcSession::buildHeloMessage() {
-    return keto::rpc_protocol::ServerHelloProtoHelper(this->keyLoaderPtr).setAccountHash(
-            keto::server_common::ServerInfo::getInstance()->getAccountHash()).sign().operator std::string();
+std::vector<uint8_t> RpcSession::buildHeloMessage() {
+    return keto::server_common::VectorUtils().copyStringToVector(keto::rpc_protocol::ServerHelloProtoHelper(this->keyLoaderPtr).setAccountHash(
+            keto::server_common::ServerInfo::getInstance()->getAccountHash()).sign().operator std::string());
 }
 
 std::string RpcSession::buildConsensus(const keto::asn1::HashHelper& hashHelper) {
@@ -289,6 +289,14 @@ std::string RpcSession::buildConsensus(const keto::asn1::HashHelper& hashHelper)
 std::string RpcSession::buildMessage(const std::string& command, const std::string& message) {
     std::stringstream ss;
     ss << command << " " << message;
+    std::cout << command << " " << message << std::endl;
+    return ss.str();
+}
+
+std::string RpcSession::buildMessage(const std::string& command, const std::vector<uint8_t>& message) {
+    std::stringstream ss;
+    ss << command << " " << Botan::hex_encode(message);
+    std::cout << command << " " << Botan::hex_encode(message) << std::endl;
     return ss.str();
 }
 

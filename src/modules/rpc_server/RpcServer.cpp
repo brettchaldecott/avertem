@@ -115,6 +115,7 @@ public:
         boost::system::error_code ec,
         std::size_t bytes_transferred)
     {
+        std::cout << "The read method is processing" << std::endl;
         boost::ignore_unused(bytes_transferred);
 
         // This indicates that the session was closed
@@ -142,6 +143,7 @@ public:
         }
         
         if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO) == 0) {
+            std::cout << "The client said hello : " << std::endl;
             
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PEERS) == 0) {
 
