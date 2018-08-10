@@ -323,7 +323,7 @@ int main(int argc, char** argv)
             return hashFile(config,optionDescription);
         } else if (config->getVariablesMap().count(keto::tools::Constants::KEY)) {
             return printEncodedKey(config,optionDescription);
-        } else if (config->getVariablesMap().count(keto::tools::Constants::KEY)) {
+        } else if (config->getVariablesMap().count(keto::tools::Constants::PRIVATE)) {
             return printEncodedKey(config,optionDescription);
         }
         KETO_LOG_INFO << "Keto Tools Executed";

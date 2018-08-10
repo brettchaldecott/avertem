@@ -39,7 +39,8 @@ macro(KetoModuleConsensus MODULE_NAME NUMBER_OF_KEYS MODULE_NAMESPACE  )
 endmacro(KetoModuleConsensus)
 
 macro(KetoConsensusKeys NUMBER_OF_KEYS)
-
+    
+    message("${CMAKE_BINARY_DIR}/../scripts/tools/KetoConsensusKeys.sh" "${NUMBER_OF_KEYS} ${CMAKE_BINARY_DIR}/../src/resources/keys/")
     execute_process(COMMAND "${CMAKE_BINARY_DIR}/../scripts/tools/KetoConsensusKeys.sh" "${NUMBER_OF_KEYS}" "${CMAKE_BINARY_DIR}/../src/resources/keys/" OUTPUT_VARIABLE KetoConsensusKeys)
 
 endmacro(KetoConsensusKeys)
