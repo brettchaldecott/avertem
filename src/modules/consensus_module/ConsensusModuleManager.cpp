@@ -23,6 +23,7 @@
 #include "keto/consensus_module/ConsensusServices.hpp"
 #include "include/keto/consensus_module/ConsensusServices.hpp"
 #include "include/keto/consensus_module/EventRegistry.hpp"
+#include "include/keto/consensus_module/ConsensusServer.hpp"
 
 namespace keto {
 namespace consensus_module {
@@ -32,6 +33,7 @@ std::string ConsensusModuleManager::getSourceVersion() {
 }
 
 ConsensusModuleManager::ConsensusModuleManager() {
+    consensusServerPtr = std::make_shared<ConsensusServer>();
 }
 
 ConsensusModuleManager::~ConsensusModuleManager() {
@@ -55,11 +57,15 @@ void ConsensusModuleManager::start() {
     modules["ConsensusModule"] = std::make_shared<ConsensusModule>();
     ConsensusServices::init(getConsensusSeedHash(),getConsensusModuleHash());
     EventRegistry::registerEventHandlers();
+    if (consensusServerPtr->require()) {
+        consensusServerPtr->start();
+    }
     KETO_LOG_INFO << "[ConsensusModuleManager] Started the ConsensusModule";
 
 }
 
 void ConsensusModuleManager::stop() {
+    consensusServerPtr.reset();
     EventRegistry::deregisterEventHandlers();
     ConsensusServices::fin();
     modules.clear();

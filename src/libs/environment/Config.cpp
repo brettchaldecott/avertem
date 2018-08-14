@@ -68,8 +68,10 @@ Config::Config(const boost::filesystem::path& ketoHome, const std::string& file,
     std::vector<std::string> unregognisedOptions = boost::program_options::collect_unrecognized(parsedOptions.options, 
             boost::program_options::include_positional);
     for (auto& option : unregognisedOptions) {
-        localOptions.add_options()
-            (option.c_str(),option.c_str());
+        if (option.length()) {
+            localOptions.add_options()
+                (option.c_str(),option.c_str());
+        }
     }
     
     // re-parse the configuration file using the now extended options list.

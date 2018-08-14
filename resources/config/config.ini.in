@@ -26,6 +26,6 @@ genesis_config=config/genesis.json
 # default block
 default_block=true
 # rpc peer
-rpc-peer=10.67.51.202
+rpc-peer=
 # keys
 consensus-keys=${KetoConsensusKeys}

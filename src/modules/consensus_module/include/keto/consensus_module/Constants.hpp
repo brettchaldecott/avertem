@@ -33,6 +33,8 @@ public:
     // keys for server
     static constexpr const char* PRIVATE_KEY    = "server-private-key";
     static constexpr const char* PUBLIC_KEY     = "server-public-key";
+    static constexpr const char* CONSENSUS_KEY     = "consensus-keys";
+    
 };
 
 }

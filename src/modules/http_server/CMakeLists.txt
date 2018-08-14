@@ -29,7 +29,7 @@ KetoModuleDepencencies( 0050_keto_httpd_module
                             PRIVATE keto_http_server_session
                             PRIVATE keto_software_consensus
                             PRIVATE keto_transaction_common keto_server_common
-                            PRIVATE keto_proto_environment ${PROTOBUF_LIBRARIES}
+                            PRIVATE keto_key_tools keto_proto_environment ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_asn1_common keto_asn1_protocol
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
                             PRIVATE ${OPENSSL_LIBRARIES}

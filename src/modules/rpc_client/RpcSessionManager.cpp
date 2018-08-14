@@ -44,17 +44,20 @@ RpcSessionManager::RpcSessionManager()  {
     std::shared_ptr<ketoEnv::Config> config = ketoEnv::EnvironmentManager::getInstance()->getConfig();
     if (config->getVariablesMap().count(Constants::PEERS)) {
         std::cout << "Load the peers" << std::endl;
-        keto::server_common::StringVector peers = 
-                keto::server_common::StringUtils(
-                config->getVariablesMap()[Constants::PEERS].
-                as<std::string>()).tokenize(",");
-        std::cout << "Load the peers" << std::endl;
-        for (std::vector<std::string>::iterator iter = peers.begin();
-                iter != peers.end(); iter++) {
-            std::cout << "The peer is : " << (*iter) << std::endl;
-            this->sessionMap[(*iter)] = std::make_shared<RpcSession>(
-                    this->ioc,
-                    this->ctx,(*iter));
+        std::string peersString = config->getVariablesMap()[Constants::PEERS].
+                as<std::string>();
+        if (peersString.length()) {
+            keto::server_common::StringVector peers = 
+                    keto::server_common::StringUtils(
+                    peersString).tokenize(",");
+            std::cout << "Load the peers" << std::endl;
+            for (std::vector<std::string>::iterator iter = peers.begin();
+                    iter != peers.end(); iter++) {
+                std::cout << "The peer is : " << (*iter) << std::endl;
+                this->sessionMap[(*iter)] = std::make_shared<RpcSession>(
+                        this->ioc,
+                        this->ctx,(*iter));
+            }
         }
     }
     

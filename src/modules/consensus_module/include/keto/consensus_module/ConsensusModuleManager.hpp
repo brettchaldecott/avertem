@@ -23,6 +23,7 @@
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
 
 #include "keto/consensus_module/ConsensusModule.hpp"
+#include "keto/consensus_module/ConsensusServer.hpp"
 #include "keto/common/MetaInfo.hpp"
 
 
@@ -59,6 +60,7 @@ public:
     static boost::shared_ptr<ConsensusModuleManager> create_module();
     
 private:
+    ConsensusServerPtr consensusServerPtr;
     std::map<std::string,std::shared_ptr<keto::module::ModuleInterface>> modules;
     
     keto::software_consensus::ConsensusHashGeneratorPtr getConsensusSeedHash();

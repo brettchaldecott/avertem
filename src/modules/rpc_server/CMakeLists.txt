@@ -31,7 +31,7 @@ add_dependencies(0030_keto_rpc_server_module keto_tools)
 KetoModuleDepencencies( 0030_keto_rpc_server_module 
                             PRIVATE keto_software_consensus
                             PRIVATE keto_transaction_common keto_server_common
-                            PRIVATE keto_proto_environment ${PROTOBUF_LIBRARIES}
+                            PRIVATE keto_key_tools keto_proto_environment ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_asn1_common keto_asn1_protocol
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
                             PRIVATE ${OPENSSL_LIBRARIES} )

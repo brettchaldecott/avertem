@@ -18,6 +18,7 @@ add_library( 0100_keto_consensus_module
             ConsensusModule.cpp
             ConsensusServices.cpp
             EventRegistry.cpp
+            ConsensusServer.cpp
 
              ${HEADERS}
            )
@@ -27,7 +28,7 @@ add_dependencies(0100_keto_consensus_module keto_tools)
 KetoModuleDepencencies( 0100_keto_consensus_module 
                             PRIVATE keto_software_consensus
                             PRIVATE keto_transaction_common keto_server_common
-                            PRIVATE keto_proto_environment ${PROTOBUF_LIBRARIES}
+                            PRIVATE keto_key_tools keto_proto_environment ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_asn1_common keto_asn1_protocol
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
                             PRIVATE ${OPENSSL_LIBRARIES} )
