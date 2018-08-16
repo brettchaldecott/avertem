@@ -96,13 +96,13 @@ private:
     
     std::vector<uint8_t> buildHeloMessage();
     
-    std::string buildConsensus(const keto::asn1::HashHelper& hashHelper);
+    std::vector<uint8_t> buildConsensus(const keto::asn1::HashHelper& hashHelper);
     
     std::string buildMessage(const std::string& command, const std::string& message);
     std::string buildMessage(const std::string& command, const std::vector<uint8_t>& message);
     
     // response handling
-    void helloResponse(const std::string& command, const std::string& sessionKey, const std::string& initHash);
+    void helloConsensusResponse(const std::string& command, const std::string& sessionKey, const std::string& initHash);
     void closeResponse(const std::string& command, const std::string& message);
     void consensusSessionResponse(const std::string& command, const std::string& sessionKey);
     void consensusResponse(const std::string& command, const std::string& message);

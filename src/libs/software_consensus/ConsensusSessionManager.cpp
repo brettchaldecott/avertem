@@ -38,7 +38,7 @@ ConsensusSessionManager::~ConsensusSessionManager() {
 void ConsensusSessionManager::updateSessionKey(const keto::crypto::SecureVector& sessionKey) {
     for (std::string event : Constants::CONSENSUS_SESSION_ORDER) {
         try {
-            
+            std::cout << "Update the session for : " << event << std::endl;
             keto::software_consensus::ModuleSessionMessageHelper moduleSessionMessageHelper;
             moduleSessionMessageHelper.setSecret(sessionKey);
             keto::proto::ModuleSessionMessage moduleSessionMessage = 

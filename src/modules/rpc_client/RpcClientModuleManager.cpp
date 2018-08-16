@@ -63,12 +63,12 @@ void RpcClientModuleManager::start() {
 
 void RpcClientModuleManager::postStart() {
     rpcSessionManager->postStart();
-    EventRegistry::deregisterEventHandlers();
-    ConsensusService::fin();
     KETO_LOG_INFO << "[RpcClientModuleManager] Post Started the RpcClientModuleManager";
 }
 
 void RpcClientModuleManager::stop() {
+    EventRegistry::deregisterEventHandlers();
+    ConsensusService::fin();
     modules.clear();
     rpcSessionManager->stop();
     KETO_LOG_INFO << "[RpcClientModuleManager] The RpcClientModuleManager is being stopped";

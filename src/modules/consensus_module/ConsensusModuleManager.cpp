@@ -57,11 +57,15 @@ void ConsensusModuleManager::start() {
     modules["ConsensusModule"] = std::make_shared<ConsensusModule>();
     ConsensusServices::init(getConsensusSeedHash(),getConsensusModuleHash());
     EventRegistry::registerEventHandlers();
+    KETO_LOG_INFO << "[ConsensusModuleManager] Started the ConsensusModule";
+
+}
+
+void ConsensusModuleManager::postStart() {
     if (consensusServerPtr->require()) {
         consensusServerPtr->start();
     }
-    KETO_LOG_INFO << "[ConsensusModuleManager] Started the ConsensusModule";
-
+    
 }
 
 void ConsensusModuleManager::stop() {

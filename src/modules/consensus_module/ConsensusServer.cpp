@@ -76,7 +76,7 @@ void ConsensusServer::start() {
     // The io_context is required for all I/O
     this->ioc = std::make_shared<boost::asio::io_context>(THREAD_COUNT);
     
-    boost::posix_time::seconds interval(10);  // 1 second
+    boost::posix_time::seconds interval(0);  // 1 second
     this->timer = std::make_shared<boost::asio::deadline_timer>(*this->ioc.get());
     this->timer->expires_from_now(interval);
     this->timer->async_wait(&keto::consensus_module::process);

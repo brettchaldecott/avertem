@@ -31,7 +31,7 @@
 #include <vector>
 
 #include "keto/common/MetaInfo.hpp"
-
+#include "keto/crypto/Containers.hpp"
 
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 namespace beastSsl = boost::asio::ssl;               // from <boost/asio/ssl.hpp>
@@ -46,6 +46,8 @@ typedef std::shared_ptr<RpcServer> RpcServerPtr;
     
 class RpcServer {
 public:
+    friend class session;
+    
     static std::string getHeaderVersion() {
         return OBFUSCATED("$Id:$");
     };
@@ -60,6 +62,10 @@ public:
     
     void stop();
     
+    void setSecret(
+            const keto::crypto::SecureVector& secret);
+protected:
+    keto::crypto::SecureVector getSecret();
     
 private:
     boost::asio::ip::address serverIp;
@@ -68,6 +74,7 @@ private:
     std::shared_ptr<beastSsl::context> contextPtr;
     std::shared_ptr<boost::asio::io_context> ioc;
     std::vector<std::thread> threadsVector;
+    keto::crypto::SecureVector secret;
     
 };
 

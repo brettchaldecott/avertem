@@ -23,6 +23,7 @@
 
 #include "keto/common/MetaInfo.hpp"
 
+#include "keto/rpc_server/RpcServer.hpp"
 
 namespace keto {
 namespace rpc_server {
@@ -39,13 +40,15 @@ public:
     static std::string getSourceVersion();
 
     ConsensusService(
-            const keto::software_consensus::ConsensusHashGeneratorPtr& consensusHashGenerator);
+            const keto::software_consensus::ConsensusHashGeneratorPtr& consensusHashGenerator,
+            const RpcServerPtr& rpcServerPtr);
     ConsensusService(const ConsensusService& orig) = delete;
     virtual ~ConsensusService();
     
     // account service management methods
     static ConsensusServicePtr init(
-            const keto::software_consensus::ConsensusHashGeneratorPtr& consensusHashGenerator);
+            const keto::software_consensus::ConsensusHashGeneratorPtr& consensusHashGenerator,
+            const RpcServerPtr& rpcServerPtr);
     static void fin();
     static ConsensusServicePtr getInstance();
     
@@ -55,6 +58,7 @@ public:
 private:
     
     keto::software_consensus::ConsensusHashGeneratorPtr consensusHashGenerator;
+    RpcServerPtr rpcServerPtr;
 
 };
 

@@ -14,6 +14,12 @@
 #include <string>
 #include <sstream>
 
+#include <boost/beast/core.hpp>
+
+#include <botan/hex.h>
+#include <botan/base64.h>
+
+#include "keto/server_common/ServerInfo.hpp"
 #include "keto/server_common/Constants.hpp"
 #include "keto/server_common/StringUtils.hpp"
 #include "keto/rpc_server/RpcServer.hpp"
@@ -43,13 +49,16 @@ class session : public std::enable_shared_from_this<session>
     boost::asio::strand<
         boost::asio::io_context::executor_type> strand_;
     boost::beast::multi_buffer buffer_;
+    //boost::asio::const_buffer outbuffer_;
+    RpcServer* rpcServer;
 
 public:
     // Take ownership of the socket
-    session(tcp::socket socket, beastSsl::context& ctx)
+    session(tcp::socket socket, beastSsl::context& ctx, RpcServer* rpcServer)
         : socket_(std::move(socket))
         , ws_(socket_, ctx)
         , strand_(ws_.get_executor())
+        , rpcServer(rpcServer)
     {
     }
 
@@ -132,7 +141,7 @@ public:
 
         // Clear the buffer
         buffer_.consume(buffer_.size());
-
+        
         // Close the WebSocket connection
         keto::server_common::StringVector stringVector = keto::server_common::StringUtils(data).tokenize(" ");
 
@@ -141,9 +150,15 @@ public:
         if (stringVector.size() == 2) {
             payload = stringVector[1];
         }
-        
+        std::string message;
         if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO) == 0) {
             std::cout << "The client said hello : " << std::endl;
+            boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS
+                    << " " << Botan::hex_encode(this->rpcServer->getSecret()) 
+                    << " " << Botan::hex_encode(
+                    keto::server_common::ServerInfo::getInstance()->getAccountHash());
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS) == 0) {
+            std::cout << "The client said hello consensus : " << payload << std::endl;
             
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PEERS) == 0) {
 
@@ -160,8 +175,7 @@ public:
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLOSE) == 0) {
 
         }
-
-        // Echo the message
+        
         ws_.text(ws_.got_text());
         ws_.async_write(
             buffer_.data(),
@@ -172,8 +186,9 @@ public:
                     shared_from_this(),
                     std::placeholders::_1,
                     std::placeholders::_2)));
+        
     }
-
+    
     void
     on_write(
         boost::system::error_code ec,
@@ -190,6 +205,20 @@ public:
         // Do another read
         do_read();
     }
+    
+    std::string buildMessage(const std::string& command, const std::string& message) {
+        std::stringstream ss;
+        ss << command << " " << message;
+        std::cout << command << " " << message << std::endl;
+        return ss.str();
+    }
+    
+    std::string buildMessage(const std::string& command, const std::vector<uint8_t>& message) {
+        std::stringstream ss;
+        ss << command << " " << Botan::hex_encode(message);
+        std::cout << command << " " << Botan::hex_encode(message) << std::endl;
+        return ss.str();
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -200,15 +229,18 @@ class listener : public std::enable_shared_from_this<listener>
     std::shared_ptr<beastSsl::context> ctx_;
     tcp::acceptor acceptor_;
     tcp::socket socket_;
+    RpcServer* rpcServer;
 
 public:
     listener(
         std::shared_ptr<boost::asio::io_context> ioc,
         std::shared_ptr<beastSsl::context> ctx,
-        tcp::endpoint endpoint)
+        tcp::endpoint endpoint,
+        RpcServer* rpcServer)
         : ctx_(ctx)
         , acceptor_(*ioc)
         , socket_(*ioc)
+        , rpcServer(rpcServer)
     {
         boost::system::error_code ec;
 
@@ -271,7 +303,7 @@ public:
         else
         {
             // Create the session and run it
-            std::make_shared<session>(std::move(socket_), *ctx_)->run();
+            std::make_shared<session>(std::move(socket_), *ctx_, rpcServer)->run();
         }
 
         // Accept another connection
@@ -326,7 +358,8 @@ void RpcServer::start() {
     // Create and launch a listening port
     listenerPtr = std::make_shared<listener>(ioc,
         contextPtr,
-        tcp::endpoint{this->serverIp, this->serverPort});
+        tcp::endpoint{this->serverIp, this->serverPort},
+        this);
     listenerPtr->run();
     
     // Run the I/O service on the requested number of threads
@@ -354,6 +387,14 @@ void RpcServer::stop() {
 }
     
 
+void RpcServer::setSecret(
+        const keto::crypto::SecureVector& secret) {
+    this->secret = secret;
+}
+
+keto::crypto::SecureVector RpcServer::getSecret() {
+    return this->secret;
+}
 
 }
 }

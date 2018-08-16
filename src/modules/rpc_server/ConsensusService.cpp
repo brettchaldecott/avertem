@@ -35,8 +35,10 @@ std::string ConsensusService::getSourceVersion() {
 
 
 ConsensusService::ConsensusService(
-        const keto::software_consensus::ConsensusHashGeneratorPtr& consensusHashGenerator) :
-    consensusHashGenerator(consensusHashGenerator) {
+        const keto::software_consensus::ConsensusHashGeneratorPtr& consensusHashGenerator,
+        const RpcServerPtr& rpcServerPtr) :
+    consensusHashGenerator(consensusHashGenerator),
+    rpcServerPtr(rpcServerPtr) {
 }
 
 ConsensusService::~ConsensusService() {
@@ -45,8 +47,9 @@ ConsensusService::~ConsensusService() {
 
 // account service management methods
 ConsensusServicePtr ConsensusService::init(
-        const keto::software_consensus::ConsensusHashGeneratorPtr& consensusHashGenerator) {
-    return singleton = ConsensusServicePtr(new ConsensusService(consensusHashGenerator));
+        const keto::software_consensus::ConsensusHashGeneratorPtr& consensusHashGenerator,
+        const RpcServerPtr& rpcServerPtr) {
+    return singleton = ConsensusServicePtr(new ConsensusService(consensusHashGenerator,rpcServerPtr));
 }
 
 void ConsensusService::fin() {
@@ -71,6 +74,8 @@ keto::event::Event ConsensusService::setModuleSession(const keto::event::Event& 
     keto::software_consensus::ModuleSessionMessageHelper moduleSessionHelper(
         keto::server_common::fromEvent<keto::proto::ModuleSessionMessage>(event));
     this->consensusHashGenerator->setSession(moduleSessionHelper.getSecret());
+    std::cout << "Setting up the module secret : " << std::endl;
+    this->rpcServerPtr->setSecret(moduleSessionHelper.getSecret());
     return event;
 }
 

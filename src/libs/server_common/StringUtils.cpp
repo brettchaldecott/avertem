@@ -35,11 +35,11 @@ StringVector StringUtils::tokenize(const std::string& token) {
     int end = value.find(token);
     while (end != std::string::npos)
     {   
-        result.push_back(value.substr(start,end));
+        result.push_back(value.substr(start,(end - start)));
         start = end + token.length();
         end = value.find(token, start);
     }
-    result.push_back(value.substr(start,end));
+    result.push_back(value.substr(start,(end - start)));
     
     return result;
 }

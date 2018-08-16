@@ -58,7 +58,7 @@ void RpcServerModuleManager::start() {
     modules["RpcServerModuleManager"] = std::make_shared<RpcServerModule>();
     this->rpcServerPtr->start();
     RpcServerService::init();
-    ConsensusService::init(getConsensusHash());
+    ConsensusService::init(getConsensusHash(),this->rpcServerPtr);
     EventRegistry::registerEventHandlers();
     KETO_LOG_INFO << "[RpcServerModuleManager] Started the RpcServerModuleManager";
 }
