@@ -100,7 +100,7 @@ public:
     };
     
     static const char* GET_SOFTWARE_CONSENSUS_MESSAGE;
-    
+    static const char* VALIDATE_SOFTWARE_CONSENSUS_MESSAGE;
     
 private:
 

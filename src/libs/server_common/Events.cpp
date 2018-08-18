@@ -89,6 +89,8 @@ const char* Events::CONSENSUS_SESSION::CONSENSUS_QUERY    = "CONSENSUS_SESSION_C
 
 const char* Events::GET_SOFTWARE_CONSENSUS_MESSAGE
                                             = "GET_SOFTWARE_CONSENSUS_MESSAGE";
+const char* Events::VALIDATE_SOFTWARE_CONSENSUS_MESSAGE
+                                            = "VALDATE_SOFTWARE_CONSENSUS_MESSAGE";
 
 }
 }

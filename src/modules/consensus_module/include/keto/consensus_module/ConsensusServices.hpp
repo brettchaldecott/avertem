@@ -50,6 +50,7 @@ public:
     
     // the event
     keto::event::Event generateSoftwareConsensus(const keto::event::Event& event);
+    keto::event::Event validateSoftwareConsensus(const keto::event::Event& event);
     keto::event::Event generateSoftwareHash(const keto::event::Event& event);
     keto::event::Event setModuleSession(const keto::event::Event& event);
     

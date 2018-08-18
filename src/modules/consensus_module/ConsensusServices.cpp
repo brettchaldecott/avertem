@@ -28,12 +28,13 @@
 #include "keto/software_consensus/ModuleHashMessageHelper.hpp"
 #include "keto/software_consensus/ModuleConsensusHelper.hpp"
 #include "keto/software_consensus/ConsensusBuilder.hpp"
+#include "keto/software_consensus/ModuleConsensusValidationMessageHelper.hpp"
 
 #include "keto/consensus_module/ConsensusServices.hpp"
 
 #include "keto/consensus_module/Exception.hpp"
 #include "keto/consensus_module/Constants.hpp"
-#include "include/keto/consensus_module/ConsensusServices.hpp"
+#include "keto/consensus_module/ConsensusServices.hpp"
 
 namespace keto {
 namespace consensus_module {
@@ -98,6 +99,18 @@ keto::event::Event ConsensusServices::generateSoftwareConsensus(const keto::even
             buildConsensus(moduleHashMessageHelper.getHash())
             .getConsensus().operator keto::proto::ConsensusMessage();
     return keto::server_common::toEvent<keto::proto::ConsensusMessage>(result);
+}
+
+keto::event::Event ConsensusServices::validateSoftwareConsensus(const keto::event::Event& event) {
+    keto::proto::ConsensusMessage consensusMessage =
+       keto::server_common::fromEvent<keto::proto::ConsensusMessage>(event);
+    keto::software_consensus::ModuleConsensusValidationMessageHelper moduleConsensusValidationMessageHelper;
+    moduleConsensusValidationMessageHelper.setValid(
+        keto::software_consensus::ConsensusBuilder(consensusMessage).validateConsensus());
+    keto::proto::ModuleConsensusValidationMessage moduleConsensusValidationMessage =
+            (keto::proto::ModuleConsensusValidationMessage)moduleConsensusValidationMessageHelper;
+    return keto::server_common::toEvent<keto::proto::ModuleConsensusValidationMessage>(
+            moduleConsensusValidationMessage);
 }
 
 keto::event::Event ConsensusServices::generateSoftwareHash(const keto::event::Event& event) {

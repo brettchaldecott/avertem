@@ -36,6 +36,7 @@ public:
     static void deregisterEventHandlers();
     
     static keto::event::Event generateSoftwareConsensus(const keto::event::Event& event);
+    static keto::event::Event validateSoftwareConsensus(const keto::event::Event& event);
     static keto::event::Event generateSoftwareHash(const keto::event::Event& event);
     static keto::event::Event setModuleSession(const keto::event::Event& event);
     

@@ -106,6 +106,7 @@ private:
     void closeResponse(const std::string& command, const std::string& message);
     void consensusSessionResponse(const std::string& command, const std::string& sessionKey);
     void consensusResponse(const std::string& command, const std::string& message);
+    void serverRequest(const std::string& command, const std::string& message);
     
 };
 

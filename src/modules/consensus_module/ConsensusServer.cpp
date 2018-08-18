@@ -93,7 +93,6 @@ void ConsensusServer::start() {
 
 
 void ConsensusServer::process() {
-    std::cout << "The process is saying high" << std::endl;
     std::chrono::system_clock::time_point currentTime = std::chrono::system_clock::now();
     std::chrono::hours diff(
              std::chrono::duration_cast<std::chrono::hours>(currentTime-this->time_point));
@@ -102,7 +101,6 @@ void ConsensusServer::process() {
         if (this->currentPos >= this->sessionKeys.size()) {
             this->currentPos = 0;
         }
-        std::cout << "The session keys : " << this->sessionKeys[this->currentPos] << std::endl;
         keto::crypto::SecureVector initVector = Botan::hex_decode_locked(
                 this->sessionKeys[this->currentPos],true);
         keto::software_consensus::ConsensusSessionManager().updateSessionKey(initVector);

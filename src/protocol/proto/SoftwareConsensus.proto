@@ -28,5 +28,9 @@ message ModuleSessionMessage {
     bytes secret = 2;
 }
 
+message ModuleConsensusValidationMessage {
+    uint32 version = 1;
+    bool valid = 2;
+}
 
 

@@ -43,7 +43,7 @@ const char* Constants::ACCOUNT_ACTIONS::CREDIT     = "credit";
 
 
 const char* Constants::RPC_COMMANDS::HELLO = "HELLO";
-const char* Constants::RPC_COMMANDS::HELLO_CONSENSUS = "HELLOCONSENSUS";
+const char* Constants::RPC_COMMANDS::HELLO_CONSENSUS = "HELLO_CONSENSUS";
 const char* Constants::RPC_COMMANDS::PEERS = "PEERS";
 const char* Constants::RPC_COMMANDS::TRANSACTION = "TRANSACTION";
 const char* Constants::RPC_COMMANDS::CONSENSUS_SESSION = "CONSENSUS_SESSION";
@@ -52,6 +52,8 @@ const char* Constants::RPC_COMMANDS::ROUTE = "ROUTE";
 const char* Constants::RPC_COMMANDS::ROUTE_UPDATE = "ROUTE_UPDATE";
 const char* Constants::RPC_COMMANDS::SERVICES = "SERVICES";
 const char* Constants::RPC_COMMANDS::CLOSE = "CLOSE";
+const char* Constants::RPC_COMMANDS::GO_AWAY = "GO_AWAY";
+const char* Constants::RPC_COMMANDS::ACCEPTED = "ACCEPTED";
 
 }
 }

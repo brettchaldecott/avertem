@@ -233,6 +233,13 @@ RpcSession::on_read(
     if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS) == 0) {
         helloConsensusResponse(command,stringVector[1],stringVector[2]);
         return;
+    } if (command.compare(keto::server_common::Constants::RPC_COMMANDS::GO_AWAY) == 0) {
+        closeResponse(keto::server_common::Constants::RPC_COMMANDS::CLOSE,stringVector[1]);
+        return;
+    } if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ACCEPTED) == 0) {
+        serverRequest(keto::server_common::Constants::RPC_COMMANDS::PEERS,
+                keto::server_common::Constants::RPC_COMMANDS::PEERS);
+        return;
     } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PEERS) == 0) {
         
     } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
@@ -362,6 +369,19 @@ void RpcSession::consensusResponse(const std::string& command, const std::string
     
     boost::beast::ostream(buffer_) << 
             buildMessage(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS,buildConsensus(hashHelper));
+    ws_.async_write(
+        buffer_.data(),
+        std::bind(
+            &RpcSession::on_write,
+            shared_from_this(),
+            std::placeholders::_1,
+            std::placeholders::_2));
+}
+
+void RpcSession::serverRequest(const std::string& command, const std::string& message) {
+    
+    boost::beast::ostream(buffer_) << 
+            command << " " << message;
     ws_.async_write(
         buffer_.data(),
         std::bind(

@@ -126,7 +126,9 @@ bool HashHelper::empty() {
 }
 
 void HashHelper::copyHashToVector(const Hash_t& hash,keto::crypto::SecureVector& vector) {
+    //std::cout << "Copy the data from the hash [" << hash.size << "]" << std::endl;
     for (int index = 0; index < hash.size; index++) {
+        //std::cout << "Copy the character [" << (int)hash.buf[index] << "]" << std::endl;
         vector.push_back(hash.buf[index]);
     }
 }

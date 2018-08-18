@@ -38,10 +38,13 @@ public:
     ConsensusBuilder(
             const ConsensusHashGeneratorPtr consensusHashGeneratorPtr,
             const std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr);
+    ConsensusBuilder(
+        const keto::proto::ConsensusMessage& consensusMessage);
     ConsensusBuilder(const ConsensusBuilder& orig) = delete;
     virtual ~ConsensusBuilder();
     
     ConsensusBuilder& buildConsensus(const keto::asn1::HashHelper& previousHash);
+    bool validateConsensus();
     ConsensusMessageHelper getConsensus();
 private:
     ConsensusMessageHelper consensusMessageHelper;

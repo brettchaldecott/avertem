@@ -37,6 +37,9 @@ void EventRegistry::registerEventHandlers() {
             keto::server_common::Events::GET_SOFTWARE_CONSENSUS_MESSAGE,
             &keto::consensus_module::EventRegistry::generateSoftwareConsensus);
     keto::server_common::registerEventHandler (
+            keto::server_common::Events::VALIDATE_SOFTWARE_CONSENSUS_MESSAGE,
+            &keto::consensus_module::EventRegistry::validateSoftwareConsensus);
+    keto::server_common::registerEventHandler (
             keto::server_common::Events::CONSENSUS::CONSENSUS_QUERY,
             &keto::consensus_module::EventRegistry::generateSoftwareHash);
     keto::server_common::registerEventHandler (
@@ -48,6 +51,8 @@ void EventRegistry::deregisterEventHandlers() {
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::GET_SOFTWARE_CONSENSUS_MESSAGE);
     keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::VALIDATE_SOFTWARE_CONSENSUS_MESSAGE);
+    keto::server_common::deregisterEventHandler (
             keto::server_common::Events::CONSENSUS::CONSENSUS_QUERY);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION::CONSENSUS_QUERY);
@@ -55,6 +60,10 @@ void EventRegistry::deregisterEventHandlers() {
 
 keto::event::Event EventRegistry::generateSoftwareConsensus(const keto::event::Event& event) {
     return ConsensusServices::getInstance()->generateSoftwareConsensus(event);
+}
+
+keto::event::Event EventRegistry::validateSoftwareConsensus(const keto::event::Event& event) {
+    return ConsensusServices::getInstance()->validateSoftwareConsensus(event);
 }
 
 keto::event::Event EventRegistry::generateSoftwareHash(const keto::event::Event& event) {

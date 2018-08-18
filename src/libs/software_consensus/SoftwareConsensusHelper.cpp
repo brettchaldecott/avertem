@@ -42,7 +42,7 @@ SoftwareConsensusHelper::SoftwareConsensusHelper(const SoftwareConsensus_t& orig
 SoftwareConsensusHelper::SoftwareConsensusHelper(const std::string& orig) {
     softwareConsensus = 
             keto::asn1::DeserializationHelper<SoftwareConsensus_t>(
-            (const uint8_t*)orig.data(),orig.size(),&asn_DEF_SoftwareConsensus).operator SoftwareConsensus_t*();
+            (const uint8_t*)orig.data(),orig.size(),&asn_DEF_SoftwareConsensus).takePtr();
 }
 
 SoftwareConsensusHelper::SoftwareConsensusHelper(const SoftwareConsensusHelper& orig) {
@@ -83,6 +83,10 @@ SoftwareConsensusHelper& SoftwareConsensusHelper::setSeed(
     return *this;
 }
 
+keto::asn1::HashHelper SoftwareConsensusHelper::getSeed() {
+    return keto::asn1::HashHelper(softwareConsensus->seed);
+}
+
 SoftwareConsensusHelper& SoftwareConsensusHelper::addSystemHash(
         const keto::asn1::HashHelper& hashHelper) {
     Hash_t hash = hashHelper.operator Hash_t();
@@ -91,6 +95,16 @@ SoftwareConsensusHelper& SoftwareConsensusHelper::addSystemHash(
         BOOST_THROW_EXCEPTION(keto::software_consensus::FailedToAddSystemHashException());
     }
     return *this;
+}
+
+
+std::vector<keto::asn1::HashHelper> SoftwareConsensusHelper::getSystemHashes() {
+    std::vector<keto::asn1::HashHelper> systemHashes;
+    for (int index = 0; index < this->softwareConsensus->systemHashs.list.count; index++) {
+        systemHashes.push_back(keto::asn1::HashHelper(
+                *this->softwareConsensus->systemHashs.list.array[index]));
+    }
+    return systemHashes;
 }
 
 

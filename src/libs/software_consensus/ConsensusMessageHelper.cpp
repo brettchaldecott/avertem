@@ -41,6 +41,12 @@ ConsensusMessageHelper::ConsensusMessageHelper(
     }
 }
 
+ConsensusMessageHelper::ConsensusMessageHelper(
+            const keto::proto::ConsensusMessage& consensusMessage) 
+    : consensusMessage(consensusMessage) {
+    
+}
+
 ConsensusMessageHelper::~ConsensusMessageHelper() {
 }
 
@@ -74,6 +80,13 @@ ConsensusMessageHelper& ConsensusMessageHelper::setMsg(
     this->consensusMessage.set_msg(bytes.data(),bytes.size());
     return *this;
 }
+
+
+keto::software_consensus::SoftwareConsensusHelper ConsensusMessageHelper::getMsg() {
+    return keto::software_consensus::SoftwareConsensusHelper(
+            this->consensusMessage.msg());
+}
+
 
 /*ConsensusMessageHelper& ConsensusMessageHelper::addSystemHash(
         const keto::asn1::HashHelper& hashHelper) {

@@ -14,10 +14,14 @@
 #include <string>
 #include <sstream>
 
+#include "SoftwareConsensus.pb.h"
+#include "HandShake.pb.h"
+
 #include <boost/beast/core.hpp>
 
 #include <botan/hex.h>
 #include <botan/base64.h>
+#include <google/protobuf/message_lite.h>
 
 #include "keto/server_common/ServerInfo.hpp"
 #include "keto/server_common/Constants.hpp"
@@ -26,6 +30,12 @@
 #include "keto/rpc_server/Constants.hpp"
 #include "keto/ssl/ServerCertificate.hpp"
 #include "keto/environment/EnvironmentManager.hpp"
+
+#include "keto/server_common/VectorUtils.hpp"
+#include "keto/server_common/EventServiceHelpers.hpp"
+#include "keto/server_common/Events.hpp"
+
+#include "keto/software_consensus/ModuleConsensusValidationMessageHelper.hpp"
 
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 namespace beastSsl = boost::asio::ssl;               // from <boost/asio/ssl.hpp>
@@ -160,8 +170,28 @@ public:
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS) == 0) {
             std::cout << "The client said hello consensus : " << payload << std::endl;
             
+            keto::proto::ConsensusMessage consensusMessage;
+            std::string binString = keto::server_common::VectorUtils().copyVectorToString(
+                Botan::hex_decode(payload,true));
+            consensusMessage.ParseFromString(binString);
+            keto::proto::ModuleConsensusValidationMessage moduleConsensusValidationMessage =
+            keto::server_common::fromEvent<keto::proto::ModuleConsensusValidationMessage>(
+                    keto::server_common::processEvent(
+                    keto::server_common::toEvent<keto::proto::ConsensusMessage>(
+                    keto::server_common::Events::VALIDATE_SOFTWARE_CONSENSUS_MESSAGE,consensusMessage)));
+            keto::software_consensus::ModuleConsensusValidationMessageHelper moduleConsensusValidationMessageHelper(
+                    moduleConsensusValidationMessage);
+            if (moduleConsensusValidationMessageHelper.isValid()) {
+                boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::ACCEPTED
+                    << " " << keto::server_common::Constants::RPC_COMMANDS::ACCEPTED;
+            } else {
+                boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::GO_AWAY 
+                    << " " << keto::server_common::Constants::RPC_COMMANDS::GO_AWAY;
+            }
+            
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PEERS) == 0) {
-
+            std::cout << "Close the peers" << std::endl;
+            
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
 
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS) == 0) {
@@ -173,7 +203,7 @@ public:
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::SERVICES) == 0) {
 
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLOSE) == 0) {
-
+            std::cout << "Close the connection" << std::endl;
         }
         
         ws_.text(ws_.got_text());

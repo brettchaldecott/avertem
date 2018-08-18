@@ -52,7 +52,9 @@ public:
     keto::asn1::HashHelper getAccount() const;
     SoftwareConsensusHelper& setAccount(const keto::asn1::HashHelper& hashHelper);
     SoftwareConsensusHelper& setSeed(const keto::asn1::HashHelper& hashHelper);
+    keto::asn1::HashHelper getSeed();
     SoftwareConsensusHelper& addSystemHash(const keto::asn1::HashHelper& hashHelper);
+    std::vector<keto::asn1::HashHelper> getSystemHashes();
     
     SoftwareConsensusHelper& generateMerkelRoot();
     SoftwareConsensusHelper& sign(

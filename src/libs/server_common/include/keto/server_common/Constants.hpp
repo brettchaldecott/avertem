@@ -72,6 +72,8 @@ public:
         static const char* ROUTE_UPDATE;
         static const char* SERVICES;
         static const char* CLOSE;
+        static const char* GO_AWAY;
+        static const char* ACCEPTED;
     };
     
 private:
