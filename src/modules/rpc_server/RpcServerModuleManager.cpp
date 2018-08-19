@@ -24,7 +24,9 @@
 #include "keto/rpc_server/RpcServerService.hpp"
 #include "keto/rpc_server/ConsensusService.hpp"
 #include "keto/common/MetaInfo.hpp"
-#include "include/keto/rpc_server/RpcServerService.hpp"
+#include "keto/rpc_server/RpcServerService.hpp"
+#include "keto/rpc_server/RpcServerSession.hpp"
+#include "include/keto/rpc_server/RpcServerSession.hpp"
 
 namespace keto {
 namespace rpc_server {
@@ -56,6 +58,7 @@ const std::string RpcServerModuleManager::getVersion() const {
 // lifecycle methods
 void RpcServerModuleManager::start() {
     modules["RpcServerModuleManager"] = std::make_shared<RpcServerModule>();
+    RpcServerSession::init();
     this->rpcServerPtr->start();
     RpcServerService::init();
     ConsensusService::init(getConsensusHash(),this->rpcServerPtr);
@@ -68,6 +71,7 @@ void RpcServerModuleManager::stop() {
     ConsensusService::fin();
     RpcServerService::fin();
     this->rpcServerPtr->stop();
+    RpcServerSession::fin();
     modules.clear();
     KETO_LOG_INFO << "[RpcServerModuleManager] The RpcServerModuleManager is being stopped";
 

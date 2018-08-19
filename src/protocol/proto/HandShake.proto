@@ -61,34 +61,22 @@ message ServerHelo {
     bytes signature = 3;
 }
 
-message ServerReponse {
-    HelloResponse response = 1;
-    bytes session_secret = 2;
-    bytes session_key = 3;
+message PeerRequest {
+    // the versions
+    uint32 version = 1;
+    // the list of accounts
+    repeated bytes account_hash = 2;
 }
 
-message ServerAcceptance {
-    HelloResponse response = 1;
-}
-
-// this message is called to refresh the current session
-// on the client it should result in an updated server confirmation
-message ServerRefresh {
-    HelloResponse response = 1;
-    bytes session_seed = 2;
-    bytes session_key = 3;
-}
-
-// this message is sent when a server is shutting down and all peers need to
-// be made away of it.
-message ServerGoAway {
-    HelloResponse response = 1;
-}
 
 // this response lists a bunch of peers
 message PeerResponse {
-    repeated string peers = 1;
+    // the versions
+    uint32 version = 1;
+    // the list of peers
+    repeated string peers = 2;
 }
+
 
 /**
  * The server to server hand shake

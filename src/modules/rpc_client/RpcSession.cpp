@@ -165,7 +165,6 @@ RpcSession::on_handshake(boost::system::error_code ec)
         return fail(ec, "handshake");
 
     // Send the message
-    std::cout << "Send the the hello message" << std::endl;
     boost::beast::ostream(buffer_) << 
             buildMessage(keto::server_common::Constants::RPC_COMMANDS::HELLO,buildHeloMessage());
     ws_.async_write(
@@ -241,6 +240,7 @@ RpcSession::on_read(
                 keto::server_common::Constants::RPC_COMMANDS::PEERS);
         return;
     } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PEERS) == 0) {
+        std::cout << "Handle the peers" << std::endl;
         
     } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
         

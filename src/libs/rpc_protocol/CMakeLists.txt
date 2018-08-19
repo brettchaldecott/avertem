@@ -7,6 +7,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 add_library( keto_rpc_protocol
             
               ServerHelloProtoHelper.cpp
+              PeerRequestHelper.cpp
+              PeerResponseHelper.cpp
 
              ${HEADERS}
            )

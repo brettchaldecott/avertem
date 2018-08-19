@@ -28,6 +28,10 @@
 #include "keto/server_common/StringUtils.hpp"
 #include "keto/rpc_server/RpcServer.hpp"
 #include "keto/rpc_server/Constants.hpp"
+#include "keto/rpc_server/RpcServerSession.hpp"
+#include "keto/rpc_protocol/ServerHelloProtoHelper.hpp"
+#include "keto/rpc_protocol/PeerRequestHelper.hpp"
+#include "keto/rpc_protocol/PeerResponseHelper.hpp"
 #include "keto/ssl/ServerCertificate.hpp"
 #include "keto/environment/EnvironmentManager.hpp"
 
@@ -35,7 +39,9 @@
 #include "keto/server_common/EventServiceHelpers.hpp"
 #include "keto/server_common/Events.hpp"
 
+
 #include "keto/software_consensus/ModuleConsensusValidationMessageHelper.hpp"
+#include "keto/rpc_server/RpcServerSession.hpp"
 
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 namespace beastSsl = boost::asio::ssl;               // from <boost/asio/ssl.hpp>
@@ -61,6 +67,7 @@ class session : public std::enable_shared_from_this<session>
     boost::beast::multi_buffer buffer_;
     //boost::asio::const_buffer outbuffer_;
     RpcServer* rpcServer;
+    std::shared_ptr<keto::rpc_protocol::ServerHelloProtoHelper> serverHelloProtoHelperPtr;
 
 public:
     // Take ownership of the socket
@@ -162,36 +169,11 @@ public:
         }
         std::string message;
         if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO) == 0) {
-            std::cout << "The client said hello : " << std::endl;
-            boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS
-                    << " " << Botan::hex_encode(this->rpcServer->getSecret()) 
-                    << " " << Botan::hex_encode(
-                    keto::server_common::ServerInfo::getInstance()->getAccountHash());
+            handleHello(command, payload);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS) == 0) {
-            std::cout << "The client said hello consensus : " << payload << std::endl;
-            
-            keto::proto::ConsensusMessage consensusMessage;
-            std::string binString = keto::server_common::VectorUtils().copyVectorToString(
-                Botan::hex_decode(payload,true));
-            consensusMessage.ParseFromString(binString);
-            keto::proto::ModuleConsensusValidationMessage moduleConsensusValidationMessage =
-            keto::server_common::fromEvent<keto::proto::ModuleConsensusValidationMessage>(
-                    keto::server_common::processEvent(
-                    keto::server_common::toEvent<keto::proto::ConsensusMessage>(
-                    keto::server_common::Events::VALIDATE_SOFTWARE_CONSENSUS_MESSAGE,consensusMessage)));
-            keto::software_consensus::ModuleConsensusValidationMessageHelper moduleConsensusValidationMessageHelper(
-                    moduleConsensusValidationMessage);
-            if (moduleConsensusValidationMessageHelper.isValid()) {
-                boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::ACCEPTED
-                    << " " << keto::server_common::Constants::RPC_COMMANDS::ACCEPTED;
-            } else {
-                boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::GO_AWAY 
-                    << " " << keto::server_common::Constants::RPC_COMMANDS::GO_AWAY;
-            }
-            
+            handleHelloConsensus(command, payload);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PEERS) == 0) {
-            std::cout << "Close the peers" << std::endl;
-            
+            handlePeer(command,payload);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
 
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS) == 0) {
@@ -248,6 +230,61 @@ public:
         ss << command << " " << Botan::hex_encode(message);
         std::cout << command << " " << Botan::hex_encode(message) << std::endl;
         return ss.str();
+    }
+    
+    void handleHello(const std::string& command, const std::string& payload) {
+        std::string bytes = keto::server_common::VectorUtils().copyVectorToString(
+                Botan::hex_decode(payload));
+        this->serverHelloProtoHelperPtr = 
+                std::shared_ptr<keto::rpc_protocol::ServerHelloProtoHelper>(
+                new keto::rpc_protocol::ServerHelloProtoHelper(bytes));
+        boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS
+                << " " << Botan::hex_encode(this->rpcServer->getSecret()) 
+                << " " << Botan::hex_encode(
+                keto::server_common::ServerInfo::getInstance()->getAccountHash());
+    }
+    
+    void handleHelloConsensus(const std::string& command, const std::string& payload) {
+        keto::proto::ConsensusMessage consensusMessage;
+        std::string binString = keto::server_common::VectorUtils().copyVectorToString(
+            Botan::hex_decode(payload,true));
+        consensusMessage.ParseFromString(binString);
+        keto::proto::ModuleConsensusValidationMessage moduleConsensusValidationMessage =
+        keto::server_common::fromEvent<keto::proto::ModuleConsensusValidationMessage>(
+                keto::server_common::processEvent(
+                keto::server_common::toEvent<keto::proto::ConsensusMessage>(
+                keto::server_common::Events::VALIDATE_SOFTWARE_CONSENSUS_MESSAGE,consensusMessage)));
+        keto::software_consensus::ModuleConsensusValidationMessageHelper moduleConsensusValidationMessageHelper(
+                moduleConsensusValidationMessage);
+        if (moduleConsensusValidationMessageHelper.isValid()) {
+            boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::ACCEPTED
+                << " " << keto::server_common::Constants::RPC_COMMANDS::ACCEPTED;
+        } else {
+            boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::GO_AWAY 
+                << " " << keto::server_common::Constants::RPC_COMMANDS::GO_AWAY;
+        }
+    }
+    
+    void handlePeer(const std::string& command, const std::string& payload) {
+        std::vector<std::string> urls;
+        keto::rpc_protocol::PeerResponseHelper peerResponseHelper;
+        if (payload == keto::server_common::Constants::RPC_COMMANDS::PEERS) {
+            std::stringstream str;
+            str << this->socket_.remote_endpoint().address().to_string() << ":" << Constants::DEFAULT_PORT_NUMBER;
+            RpcServerSession::getInstance()->addPeer(
+                this->serverHelloProtoHelperPtr->getAccountHash(),str.str());
+            peerResponseHelper.addPeers(
+                    RpcServerSession::getInstance()->getPeers(this->serverHelloProtoHelperPtr->getAccountHash()));
+            
+        } else {
+            
+            // deserialize the object
+        }
+        std::string result;
+        peerResponseHelper.operator keto::proto::PeerResponse().SerializePartialToString(&result);
+        boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::PEERS 
+                << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
+        
     }
 };
 
