@@ -34,6 +34,8 @@ public:
     static constexpr const char* IP_ADDRESS = "rpc-server-ip-address";
     static constexpr const char* DEFAULT_IP = "0.0.0.0";
     
+    static constexpr const char* EXTERNAL_IP_ADDRESS = "rpc-server-external-ip-address";
+    
     static constexpr const char* PORT_NUMBER = "rpc-server-port-number";
     static constexpr const unsigned short DEFAULT_PORT_NUMBER = 28003;
     

@@ -13,6 +13,8 @@
 
 #include <algorithm>
 
+#include <botan/hex.h>
+
 #include "keto/asn1/SignatureHelper.hpp"
 #include "keto/crypto/SignatureGenerator.hpp"
 
@@ -47,6 +49,11 @@ std::vector<uint8_t> ServerHelloProtoHelper::getAccountHash() {
     std::string stringHash = serverHelo.account_hash();
     std::copy(stringHash.begin(), stringHash.end(), std::back_inserter(accountHash));
     return accountHash;
+}
+
+std::string ServerHelloProtoHelper::getAccountHashStr() {
+    std::string stringHash = serverHelo.account_hash();
+    return Botan::hex_encode((uint8_t*)stringHash.data(),stringHash.size(),true);
 }
 
 ServerHelloProtoHelper& ServerHelloProtoHelper::sign() {

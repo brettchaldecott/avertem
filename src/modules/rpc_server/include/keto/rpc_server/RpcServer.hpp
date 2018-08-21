@@ -66,9 +66,12 @@ public:
             const keto::crypto::SecureVector& secret);
 protected:
     keto::crypto::SecureVector getSecret();
+    void setExternalIp(
+            const boost::asio::ip::address& ipAddress);
     
 private:
     boost::asio::ip::address serverIp;
+    boost::asio::ip::address externalIp;
     unsigned short serverPort;
     int threads;
     std::shared_ptr<beastSsl::context> contextPtr;

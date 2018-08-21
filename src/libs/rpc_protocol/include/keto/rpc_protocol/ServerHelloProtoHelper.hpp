@@ -41,6 +41,7 @@ public:
     
     ServerHelloProtoHelper& setAccountHash(const std::vector<uint8_t> accountHash);
     std::vector<uint8_t> getAccountHash();
+    std::string getAccountHashStr();
     ServerHelloProtoHelper& sign();
     
     operator std::string();

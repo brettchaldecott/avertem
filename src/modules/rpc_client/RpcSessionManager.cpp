@@ -27,11 +27,13 @@ namespace rpc_client {
 
 namespace ketoEnv = keto::environment;
 
+static RpcSessionManagerPtr singleton;
+
 std::string RpcSessionManager::getSourceVersion() {
     return OBFUSCATED("$Id:$");
 }
 
-RpcSessionManager::RpcSessionManager()  {
+RpcSessionManager::RpcSessionManager() : peered(false) {
     
     this->ioc = std::make_shared<boost::asio::io_context>();
     
@@ -56,7 +58,7 @@ RpcSessionManager::RpcSessionManager()  {
                 std::cout << "The peer is : " << (*iter) << std::endl;
                 this->sessionMap[(*iter)] = std::make_shared<RpcSession>(
                         this->ioc,
-                        this->ctx,(*iter));
+                        this->ctx,this->peered,(*iter));
             }
         }
     }
@@ -70,6 +72,17 @@ RpcSessionManager::RpcSessionManager()  {
 RpcSessionManager::~RpcSessionManager() {
 }
 
+void RpcSessionManager::setPeers(const std::vector<std::string>& peers) {
+    this->peered = true;
+    for (std::vector<std::string>::const_iterator iter = peers.begin();
+            iter != peers.end(); iter++) {
+        std::cout << "Add the new entry : " << (*iter) << std::endl;
+        this->sessionMap[(*iter)] = std::make_shared<RpcSession>(
+                this->ioc,
+                this->ctx,this->peered,(*iter));
+        this->sessionMap[(*iter)]->run();
+    }
+}
 
 std::vector<std::string> RpcSessionManager::listPeers() {
     std::vector<std::string> keys;
@@ -80,6 +93,19 @@ std::vector<std::string> RpcSessionManager::listPeers() {
         [](const std::map<std::string,std::shared_ptr<keto::rpc_client::RpcSession>>::value_type 
             &pair){return pair.first;});
     return keys;
+}
+
+
+RpcSessionManagerPtr RpcSessionManager::init() {
+    return singleton = std::shared_ptr<RpcSessionManager>(new RpcSessionManager());
+}
+
+void RpcSessionManager::fin() {
+    singleton.reset();
+}
+
+RpcSessionManagerPtr RpcSessionManager::getInstance() {
+    return singleton;
 }
 
 

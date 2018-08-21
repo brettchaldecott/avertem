@@ -29,6 +29,8 @@ typedef std::shared_ptr<RpcSessionManager> RpcSessionManagerPtr;
 
 class RpcSessionManager {
 public:
+    friend class RpcSession;
+    
     static std::string getHeaderVersion() {
         return OBFUSCATED("$Id:$");
     };
@@ -39,11 +41,20 @@ public:
     RpcSessionManager(const RpcSessionManager& orig) = delete;
     virtual ~RpcSessionManager();
     
+    // account service management methods
+    static RpcSessionManagerPtr init();
+    static void fin();
+    static RpcSessionManagerPtr getInstance();
+    
+    // the list of peers
     std::vector<std::string> listPeers();
     
     void start();
     void postStart();
     void stop();
+protected:
+    void setPeers(const std::vector<std::string>& peers);
+    
     
 private:
     std::map<std::string,RpcSessionPtr> sessionMap;
@@ -54,6 +65,7 @@ private:
     // the thread information
     int threads;
     std::vector<std::thread> threadsVector;
+    bool peered;
     
 };
 

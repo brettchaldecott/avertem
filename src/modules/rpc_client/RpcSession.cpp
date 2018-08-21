@@ -35,10 +35,12 @@
 #include "keto/server_common/EventServiceHelpers.hpp"
 
 #include "keto/rpc_client/RpcSession.hpp"
+#include "keto/rpc_client/RpcSessionManager.hpp"
 #include "keto/rpc_client/Constants.hpp"
 #include "keto/rpc_client/Exception.hpp"
 
 #include "keto/rpc_protocol/ServerHelloProtoHelper.hpp"
+#include "keto/rpc_protocol/PeerResponseHelper.hpp"
 
 #include "keto/software_consensus/ConsensusBuilder.hpp"
 #include "keto/software_consensus/ConsensusSessionManager.hpp"
@@ -60,10 +62,13 @@ std::string RpcSession::getSourceVersion() {
 }
 
 RpcSession::RpcSession(
-    std::shared_ptr<boost::asio::io_context> ioc, 
-    std::shared_ptr<boostSsl::context> ctx, const std::string& host) :
+        std::shared_ptr<boost::asio::io_context> ioc, 
+        std::shared_ptr<boostSsl::context> ctx, 
+        bool peered,
+        const std::string& host) :
         resolver(*ioc),
         ws_(*ioc, *ctx),
+        peered(peered),
         host(host) {
     if (host.find(":") != std::string::npos) {
         std::vector<std::string> results;
@@ -204,21 +209,13 @@ RpcSession::on_read(
     boost::system::error_code ec,
     std::size_t bytes_transferred)
 {
-    std::cout << "Bytes read : " << bytes_transferred << std::endl;
-    if (ws_.is_message_done()) {
-        std::cout << "The message is done" << std::endl;
-    } else {
-        std::cout << "The message is not done" << std::endl;
-    }
     boost::ignore_unused(bytes_transferred);
-    std::cout << "Check for an error message" << std::endl;
     if(ec)
         return fail(ec, "read");
     
     std::stringstream ss;
     ss << boost::beast::buffers(buffer_.data());
     std::string data = ss.str();
-    std::cout << "The buffer is : " << data << std::endl;
     
     // Clear the buffer
     buffer_.consume(buffer_.size());
@@ -236,12 +233,13 @@ RpcSession::on_read(
         closeResponse(keto::server_common::Constants::RPC_COMMANDS::CLOSE,stringVector[1]);
         return;
     } if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ACCEPTED) == 0) {
-        serverRequest(keto::server_common::Constants::RPC_COMMANDS::PEERS,
-                keto::server_common::Constants::RPC_COMMANDS::PEERS);
-        return;
+        if (!peered) {
+            serverRequest(keto::server_common::Constants::RPC_COMMANDS::PEERS,
+                    keto::server_common::Constants::RPC_COMMANDS::PEERS);
+            return;
+        }
     } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PEERS) == 0) {
-        std::cout << "Handle the peers" << std::endl;
-        
+        peerResponse(command, stringVector[1]);
     } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
         
     } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS_SESSION) == 0) {
@@ -262,7 +260,6 @@ RpcSession::on_read(
     }
     
     // Read a message into our buffer
-    std::cout << "Read in more data" << std::endl;
     ws_.async_read(
         buffer_,
         std::bind(
@@ -278,14 +275,12 @@ RpcSession::on_close(boost::system::error_code ec)
 {
     if(ec)
         return fail(ec, "close");
-    std::cout << "Close things off " << std::endl;
     // If we get here then the connection is closed gracefully
 
     // The buffers() function helps print a ConstBufferSequence
     std::stringstream ss;
     ss << boost::beast::buffers(buffer_.data());
     std::string data = ss.str();
-    std::cout << "The buffer is : " << data << std::endl;
     
 }
 
@@ -311,14 +306,12 @@ std::vector<uint8_t> RpcSession::buildConsensus(const keto::asn1::HashHelper& ha
 std::string RpcSession::buildMessage(const std::string& command, const std::string& message) {
     std::stringstream ss;
     ss << command << " " << message;
-    std::cout << command << " " << message << std::endl;
     return ss.str();
 }
 
 std::string RpcSession::buildMessage(const std::string& command, const std::vector<uint8_t>& message) {
     std::stringstream ss;
     ss << command << " " << Botan::hex_encode(message);
-    std::cout << command << " " << Botan::hex_encode(message) << std::endl;
     return ss.str();
 }
 
@@ -391,7 +384,21 @@ void RpcSession::serverRequest(const std::string& command, const std::string& me
             std::placeholders::_2));
 }
 
-
+void RpcSession::peerResponse(const std::string& command, const std::string& message) {
+    std::string response = keto::server_common::VectorUtils().copyVectorToString(
+        Botan::hex_decode(message,true));
+    keto::rpc_protocol::PeerResponseHelper peerResponseHelper(response);
+    
+    RpcSessionManager::getInstance()->setPeers(peerResponseHelper.getPeers());
+    
+    // Read a message into our buffer
+    ws_.async_close(websocket::close_code::normal,
+            std::bind(
+                &RpcSession::on_close,
+                shared_from_this(),
+                std::placeholders::_1));
+    
+}
 
 }
 }

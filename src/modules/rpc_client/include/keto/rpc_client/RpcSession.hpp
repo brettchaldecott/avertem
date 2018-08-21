@@ -57,6 +57,7 @@ public:
     RpcSession(
             std::shared_ptr<boost::asio::io_context> ioc, 
             std::shared_ptr<boostSsl::context> ctx,
+            bool peered,
             const std::string& host);
     RpcSession(const RpcSession& orig) = delete;
     virtual ~RpcSession();
@@ -90,6 +91,7 @@ private:
     tcp::resolver resolver;
     websocket::stream<boostSsl::stream<tcp::socket>> ws_;
     boost::beast::multi_buffer buffer_;
+    bool peered;
     std::string host;
     std::string port;
     std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr;
@@ -107,6 +109,7 @@ private:
     void consensusSessionResponse(const std::string& command, const std::string& sessionKey);
     void consensusResponse(const std::string& command, const std::string& message);
     void serverRequest(const std::string& command, const std::string& message);
+    void peerResponse(const std::string& command, const std::string& message);
     
 };
 

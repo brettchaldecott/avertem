@@ -11,6 +11,7 @@
  * Created on August 18, 2018, 1:05 PM
  */
 
+#include <iostream>
 #include <condition_variable>
 
 #include "keto/rpc_server/RpcServerSession.hpp"
@@ -49,7 +50,9 @@ std::vector<std::string> RpcServerSession::getPeers(
         const std::vector<uint8_t> account) {
     std::vector<std::string> result;
     for (auto const &entry : this->accountPeerCache) {
+        std::cout << "The entry [" << entry.second << "]" << std::endl;
         if (entry.first != account) {
+            std::cout << "The entry [" << entry.second << "] is getting added" << std::endl;
             result.push_back(entry.second);
         }
     }

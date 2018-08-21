@@ -23,6 +23,7 @@
 #include <botan/base64.h>
 #include <google/protobuf/message_lite.h>
 
+#include "keto/common/Log.hpp"
 #include "keto/server_common/ServerInfo.hpp"
 #include "keto/server_common/Constants.hpp"
 #include "keto/server_common/StringUtils.hpp"
@@ -124,7 +125,6 @@ public:
     do_read()
     {
         // Read a message into our buffer
-        std::cout << "Wait for data to be sent" << std::endl;
         ws_.async_read(
             buffer_,
             boost::asio::bind_executor(
@@ -141,7 +141,6 @@ public:
         boost::system::error_code ec,
         std::size_t bytes_transferred)
     {
-        std::cout << "The read method is processing" << std::endl;
         boost::ignore_unused(bytes_transferred);
 
         // This indicates that the session was closed
@@ -150,12 +149,10 @@ public:
 
         if(ec)
             fail(ec, "read");
-        std::cout << "Read the data in:" << std::endl;
         std::stringstream ss;
         ss << boost::beast::buffers(buffer_.data());
         std::string data = ss.str();
-        std::cout << "The buffer is : " << data << std::endl;
-
+        
         // Clear the buffer
         buffer_.consume(buffer_.size());
         
@@ -170,9 +167,11 @@ public:
         std::string message;
         if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO) == 0) {
             handleHello(command, payload);
+            KETO_LOG_INFO << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " Said hello";
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS) == 0) {
             handleHelloConsensus(command, payload);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PEERS) == 0) {
+            KETO_LOG_INFO << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " requested peers";
             handlePeer(command,payload);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
 
@@ -185,7 +184,7 @@ public:
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::SERVICES) == 0) {
 
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLOSE) == 0) {
-            std::cout << "Close the connection" << std::endl;
+            // implement
         }
         
         ws_.text(ws_.got_text());
@@ -221,14 +220,12 @@ public:
     std::string buildMessage(const std::string& command, const std::string& message) {
         std::stringstream ss;
         ss << command << " " << message;
-        std::cout << command << " " << message << std::endl;
         return ss.str();
     }
     
     std::string buildMessage(const std::string& command, const std::vector<uint8_t>& message) {
         std::stringstream ss;
         ss << command << " " << Botan::hex_encode(message);
-        std::cout << command << " " << Botan::hex_encode(message) << std::endl;
         return ss.str();
     }
     
@@ -259,13 +256,17 @@ public:
         if (moduleConsensusValidationMessageHelper.isValid()) {
             boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::ACCEPTED
                 << " " << keto::server_common::Constants::RPC_COMMANDS::ACCEPTED;
+            KETO_LOG_INFO << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " was accepted";
         } else {
             boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::GO_AWAY 
                 << " " << keto::server_common::Constants::RPC_COMMANDS::GO_AWAY;
+            KETO_LOG_INFO << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " was rejected from network";
         }
     }
     
     void handlePeer(const std::string& command, const std::string& payload) {
+        // first check if the external ip address has been added
+        this->rpcServer->setExternalIp(this->socket_.local_endpoint().address());
         std::vector<std::string> urls;
         keto::rpc_protocol::PeerResponseHelper peerResponseHelper;
         if (payload == keto::server_common::Constants::RPC_COMMANDS::PEERS) {
@@ -273,8 +274,8 @@ public:
             str << this->socket_.remote_endpoint().address().to_string() << ":" << Constants::DEFAULT_PORT_NUMBER;
             RpcServerSession::getInstance()->addPeer(
                 this->serverHelloProtoHelperPtr->getAccountHash(),str.str());
-            peerResponseHelper.addPeers(
-                    RpcServerSession::getInstance()->getPeers(this->serverHelloProtoHelperPtr->getAccountHash()));
+            std::vector<std::string> peers = RpcServerSession::getInstance()->getPeers(this->serverHelloProtoHelperPtr->getAccountHash());
+            peerResponseHelper.addPeers(peers);
             
         } else {
             
@@ -396,6 +397,8 @@ RpcServer::RpcServer() {
                 config->getVariablesMap()[Constants::IP_ADDRESS].as<std::string>());
     }
     
+    
+    
     serverPort = Constants::DEFAULT_PORT_NUMBER;
     if (config->getVariablesMap().count(Constants::PORT_NUMBER)) {
         serverPort = static_cast<unsigned short>(
@@ -413,12 +416,19 @@ RpcServer::~RpcServer() {
 }
 
 void RpcServer::start() {
+    // setup the beginnings of the peer cache of the external ip address has been supplied
+    std::shared_ptr<ketoEnv::Config> config = ketoEnv::EnvironmentManager::getInstance()->getConfig();
+    if (config->getVariablesMap().count(Constants::EXTERNAL_IP_ADDRESS)) {
+        this->setExternalIp(boost::asio::ip::make_address(
+                config->getVariablesMap()[Constants::EXTERNAL_IP_ADDRESS].as<std::string>()));
+    }
+    
     // The io_context is required for all I/O
     this->ioc = std::make_shared<boost::asio::io_context>(this->threads);
 
     // The SSL context is required, and holds certificates
     this->contextPtr = std::make_shared<beastSsl::context>(beastSsl::context::sslv23);
-
+    
     // This holds the self-signed certificate used by the server
     load_server_certificate(*(this->contextPtr));
     
@@ -458,6 +468,20 @@ void RpcServer::setSecret(
         const keto::crypto::SecureVector& secret) {
     this->secret = secret;
 }
+
+
+void RpcServer::setExternalIp(
+        const boost::asio::ip::address& ipAddress) {
+    if (this->externalIp.is_unspecified()) {
+        this->externalIp = ipAddress;
+        std::stringstream sstream;
+        sstream << this->externalIp.to_string() << ":" << this->serverPort;
+        RpcServerSession::getInstance()->addPeer(
+                keto::server_common::ServerInfo::getInstance()->getAccountHash(),
+                sstream.str());
+    }
+}
+
 
 keto::crypto::SecureVector RpcServer::getSecret() {
     return this->secret;

@@ -38,6 +38,7 @@ public:
     
     PeerResponseHelper();
     PeerResponseHelper(const keto::proto::PeerResponse& response);
+    PeerResponseHelper(const std::string& response);
     PeerResponseHelper(const PeerResponseHelper& orig) = default;
     virtual ~PeerResponseHelper();
     

@@ -12,6 +12,7 @@
  */
 
 #include "keto/rpc_protocol/PeerResponseHelper.hpp"
+#include "include/keto/rpc_protocol/PeerResponseHelper.hpp"
 
 namespace keto {
 namespace rpc_protocol {
@@ -29,6 +30,10 @@ PeerResponseHelper::PeerResponseHelper(const keto::proto::PeerResponse& response
     response(response) {
 }
 
+PeerResponseHelper::PeerResponseHelper(const std::string& response) {
+    this->response.ParseFromString(response);
+}
+
 PeerResponseHelper::~PeerResponseHelper() {
 }
 
@@ -39,6 +44,7 @@ PeerResponseHelper& PeerResponseHelper::addPeer(const std::string& url) {
 
 PeerResponseHelper& PeerResponseHelper::addPeers(const std::vector<std::string>& urls) {
     for(std::string url : urls) {
+        std::cout << "The list of url : " << url << std::endl;
         response.add_peers(url);
     }
     return *this;
