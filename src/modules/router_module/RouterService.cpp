@@ -29,7 +29,7 @@
 #include "Protocol.pb.h"
 #include "Account.pb.h"
 #include "Route.pb.h"
-#include "include/keto/router/RouterRegistry.hpp"
+#include "keto/router/RouterRegistry.hpp"
 
 #include "keto/transaction_common/MessageWrapperProtoHelper.hpp"
 #include "keto/transaction_common/TransactionProtoHelper.hpp"
@@ -37,6 +37,9 @@
 
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
+#include "keto/router_utils/AccountRoutingStoreHelper.hpp"
+#include "keto/router/PeerCache.hpp"
+#include "include/keto/router/PeerCache.hpp"
 
 
 namespace keto {
@@ -108,14 +111,23 @@ keto::event::Event RouterService::routeMessage(const keto::event::Event& event) 
     
     
     keto::proto::AccountRoutingStore accountRouting;
-    if (keto::router_db::RouterStore::getInstance()->getAccountRouting(
+    while (keto::router_db::RouterStore::getInstance()->getAccountRouting(
             accountHash,accountRouting)) {
+        keto::router_utils::AccountRoutingStoreHelper accountRoutingStoreHelper(
+                accountRouting);
+        if (PeerCache::getInstance()->contains(accountRoutingStoreHelper.getManagementAccountHashBytes())) {
+            this->routeToRpcClient(messageWrapper,
+                    PeerCache::getInstance()->getPeer(
+                    accountRoutingStoreHelper.getManagementAccountHashBytes()));
+            
+            // route
+            keto::proto::MessageWrapperResponse response;
+            response.set_success(true);
+            response.set_result("routed");
+            return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
+        }
         
-        // route
-        keto::proto::MessageWrapperResponse response;
-        response.set_success(true);
-        response.set_result("routed");
-        return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
+        
     }
     
     
@@ -123,6 +135,16 @@ keto::event::Event RouterService::routeMessage(const keto::event::Event& event) 
     response.set_success(true);
     response.set_result("to peer");
     return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
+}
+
+keto::event::Event RouterService::registerRpcPeer(const keto::event::Event& event) {
+    keto::router_utils::RpcPeerHelper  rpcPeerHelper(
+            keto::server_common::fromEvent<keto::proto::RpcPeer>(event));
+    
+    PeerCache::getInstance()->addPeer(rpcPeerHelper);
+    keto::router_db::RouterStore::getInstance()->pushAccountRouting(rpcPeerHelper.getPushAccount());
+    
+    return event;
 }
 
 keto::event::Event RouterService::updateStateRouteMessage(const keto::event::Event& event) {
@@ -266,6 +288,16 @@ void RouterService::routeToAccount(keto::proto::MessageWrapper&  messageWrapper)
             }
         }
     }
+}
+
+
+void RouterService::routeToRpcClient(keto::proto::MessageWrapper&  messageWrapper,
+        keto::router_utils::RpcPeerHelper& rpcPeerHelper) {
+    
+}
+
+void RouterService::routeToRpcPeer(keto::proto::MessageWrapper&  messageWrapper) {
+    
 }
 
 }

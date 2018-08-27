@@ -19,7 +19,7 @@
 
 #include "keto/crypto/SecureVectorUtils.hpp"
 #include "keto/rocks_db/SliceHelper.hpp"
-
+#include "keto/router_utils/AccountRoutingStoreHelper.hpp"
 
 namespace keto {
 namespace router_db {
@@ -82,6 +82,29 @@ void RouterStore::setAccountRouting(
         accountHash));
     keto::rocks_db::SliceHelper value(routing.SerializePartialAsString());
     routerTransaction->Put(accountHashHelper,value);
+}
+
+
+void RouterStore::pushAccountRouting(
+            const keto::proto::PushAccount& pushAccount) {
+    keto::router_utils::PushAccountHelper pushAccountHelper(pushAccount);
+    pushAccountRouting(pushAccountHelper);
+}
+
+
+void RouterStore::pushAccountRouting(
+            keto::router_utils::PushAccountHelper& pushAccountHelper) {
+    RouterResourcePtr resource = routerResourceManagerPtr->getResource();
+    rocksdb::Transaction* routerTransaction = resource->getTransaction(Constants::ROUTER_INDEX);
+    keto::rocks_db::SliceHelper accountHashHelper(pushAccountHelper.getAccountHashBytes());
+    keto::router_utils::AccountRoutingStoreHelper accountRoutingStoreHelper;
+    accountRoutingStoreHelper.setManagementAccountHash(pushAccountHelper.getManagementAccountHashBytes());
+    keto::rocks_db::SliceHelper value(accountRoutingStoreHelper.toString());
+    routerTransaction->Put(accountHashHelper,value);
+    for (keto::router_utils::PushAccountHelper entry : pushAccountHelper.getChildren()) {
+        pushAccountRouting(entry);
+    }
+    
 }
 
 }

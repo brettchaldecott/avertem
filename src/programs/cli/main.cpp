@@ -304,6 +304,8 @@ int main(int argc, char** argv)
         }
         
         if (config->getVariablesMap().count(ketoEnv::Constants::KETO_HELP)) {
+            std::cout << "Example:" << std::endl;
+            std::cout << "\t./keto_cli.sh -T -a test -p 3D89018355E055923478E8E816D82A26A8AA10A2AE5B497847084AB7F54B9238 -s D594F22DC389E38B3DE7FA5630DBD9DCA16DA8A77097516FD37F9E25C6BE24D2 --target D594F22DC389E38B3DE7FA5630DBD9DCA16DA8A77097516FD37F9E25C6BE24D2 -V 100" << std::endl;
             std::cout <<  optionDescription << std::endl;
             return 0;
         }

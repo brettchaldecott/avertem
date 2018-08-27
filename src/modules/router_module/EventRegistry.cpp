@@ -42,7 +42,11 @@ keto::event::Event EventRegistry::routeMessage(const keto::event::Event& event) 
 keto::event::Event EventRegistry::updateStateRouteMessage(const keto::event::Event& event) {
     return RouterService::getInstance()->updateStateRouteMessage(event);
 }
-    
+
+
+keto::event::Event EventRegistry::registerRpcPeer(const keto::event::Event& event) {
+    return RouterService::getInstance()->registerRpcPeer(event);
+}
 
 keto::event::Event EventRegistry::registerService(const keto::event::Event& event) {
     return RouterService::getInstance()->registerService(event);
@@ -68,6 +72,9 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::REGISTER_SERVICE_MESSAGE,
             &keto::router::EventRegistry::registerService);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::REGISTER_RPC_PEER,
+            &keto::router::EventRegistry::registerRpcPeer);
     keto::server_common::registerEventHandler (
             keto::server_common::Events::CONSENSUS::ROUTER,
             &keto::router::EventRegistry::generateSoftwareHash);

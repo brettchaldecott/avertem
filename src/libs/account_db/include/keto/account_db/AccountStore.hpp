@@ -24,6 +24,8 @@
 #include "keto/account_db/AccountGraphStoreManager.hpp"
 #include "keto/transaction_common/TransactionMessageHelper.hpp"
 #include "keto/account_db/AccountRDFStatementBuilder.hpp"
+#include "keto/router_utils/RpcPeerHelper.hpp"
+#include "keto/router_utils/PushAccountHelper.hpp"
 #include "keto/obfuscate/MetaString.hpp"
 
 namespace keto {
@@ -54,6 +56,8 @@ public:
     void getContract(
         const keto::proto::AccountInfo& accountInfo,
         keto::proto::ContractMessage& contractMessage);
+    void getNodeAccountRouting(const keto::asn1::HashHelper& accountHash,
+            keto::router_utils::RpcPeerHelper& rpcPeerHelper);
     
 private:
     std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr;
@@ -71,6 +75,9 @@ private:
     void setAccountInfo(const keto::asn1::HashHelper& accountHash,
             keto::proto::AccountInfo& accountInfo);
     
+    void buildNodeAccountRouting(const std::string& accountHash,
+            const std::vector<keto::proto::AccountInfo>& accountInfoVector,
+            keto::router_utils::PushAccountHelper& pushAccountHelper);
 };
 
 

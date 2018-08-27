@@ -110,6 +110,8 @@ private:
     void consensusResponse(const std::string& command, const std::string& message);
     void serverRequest(const std::string& command, const std::string& message);
     void peerResponse(const std::string& command, const std::string& message);
+    void registerResponse(const std::string& command, const std::string& message);
+    void handleRegisterRequest(const std::string& command, const std::string& message);
     
 };
 

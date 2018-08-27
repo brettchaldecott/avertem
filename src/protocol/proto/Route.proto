@@ -17,18 +17,27 @@ message PushServiceList {
 message PushAccount {
     // the session key of the source with its immediate peer
     // this is 
-    bytes managment_account_hash = 1;
+    uint32 version = 1;
     bytes account_hash = 2;
+    bytes management_account_hash = 3;
+    repeated PushAccount child_accounts = 4;
 }
 
 // push the account list managed by this slave to the master.
 message PushAccountList {
     // the list of accounts managed by the down stream peer
-    bytes managment_account_hash = 1;
+    bytes management_account_hash = 1;
     repeated PushAccount accounts = 2;
 }
 
 message AccountRoutingStore {
     uint32 version = 1;
     bytes management_account_hash = 2;
+}
+
+message RpcPeer {
+    uint32 version = 1;
+    bytes account_hash = 2;
+    bool server = 3;
+    PushAccount accountInfo = 4;
 }

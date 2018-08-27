@@ -16,6 +16,7 @@
 
 #include "SoftwareConsensus.pb.h"
 #include "HandShake.pb.h"
+#include "Route.pb.h"
 
 #include <boost/beast/core.hpp>
 
@@ -40,6 +41,10 @@
 #include "keto/server_common/EventServiceHelpers.hpp"
 #include "keto/server_common/Events.hpp"
 
+#include "keto/router_utils/RpcPeerHelper.hpp"
+
+#include "keto/transaction/Transaction.hpp"
+#include "keto/server_common/TransactionHelper.hpp"
 
 #include "keto/software_consensus/ModuleConsensusValidationMessageHelper.hpp"
 #include "keto/rpc_server/RpcServerSession.hpp"
@@ -165,26 +170,45 @@ public:
             payload = stringVector[1];
         }
         std::string message;
-        if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO) == 0) {
-            handleHello(command, payload);
-            KETO_LOG_INFO << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " Said hello";
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS) == 0) {
-            handleHelloConsensus(command, payload);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PEERS) == 0) {
-            KETO_LOG_INFO << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " requested peers";
-            handlePeer(command,payload);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
+        
+        try {
+            keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
+        
+            if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO) == 0) {
+                handleHello(command, payload);
+                KETO_LOG_INFO << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " Said hello";
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS) == 0) {
+                handleHelloConsensus(command, payload);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PEERS) == 0) {
+                KETO_LOG_INFO << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " requested peers";
+                handlePeer(command,payload);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REGISTER) == 0) {
+                KETO_LOG_INFO << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " register";
+                handleRegister(keto::server_common::Constants::RPC_COMMANDS::REGISTER, payload);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
 
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS) == 0) {
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS) == 0) {
 
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ROUTE) == 0) {
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ROUTE) == 0) {
 
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ROUTE_UPDATE) == 0) {
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ROUTE_UPDATE) == 0) {
 
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::SERVICES) == 0) {
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::SERVICES) == 0) {
 
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLOSE) == 0) {
-            // implement
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLOSE) == 0) {
+                // implement
+            }
+            
+            transactionPtr->commit();
+        } catch (keto::common::Exception& ex) {
+            KETO_LOG_ERROR << "Cause: " << boost::diagnostic_information(ex,true);
+        } catch (boost::exception& ex) {
+            KETO_LOG_ERROR << "Failed to process because : " << boost::diagnostic_information(ex,true);
+        } catch (std::exception& ex) {
+            KETO_LOG_ERROR << "Failed process the request : " << ex.what();
+            
+        } catch (...) {
+            KETO_LOG_ERROR << "Failed to process : ";
         }
         
         ws_.text(ws_.got_text());
@@ -286,6 +310,23 @@ public:
         boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::PEERS 
                 << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
         
+    }
+    
+    void handleRegister(const std::string& command, const std::string& payload) {
+    
+        std::string rpcVector = keto::server_common::VectorUtils().copyVectorToString(
+                Botan::hex_decode(payload));
+        keto::router_utils::RpcPeerHelper rpcPeerHelper(rpcVector);
+        
+        keto::proto::RpcPeer rpcPeer = (keto::proto::RpcPeer)rpcPeerHelper;
+        rpcPeer = keto::server_common::fromEvent<keto::proto::RpcPeer>(
+                    keto::server_common::processEvent(
+                    keto::server_common::toEvent<keto::proto::RpcPeer>(
+                    keto::server_common::Events::REGISTER_RPC_PEER,rpcPeer)));
+        
+        boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::REGISTER
+                << " " << Botan::hex_encode(
+                keto::server_common::ServerInfo::getInstance()->getAccountHash());
     }
 };
 

@@ -32,6 +32,7 @@ public:
     virtual ~EventRegistry();
     
     static keto::event::Event registerService(const keto::event::Event& event);
+    static keto::event::Event registerRpcPeer(const keto::event::Event& event);
     static keto::event::Event routeMessage(const keto::event::Event& event);
     static keto::event::Event updateStateRouteMessage(const keto::event::Event& event);
     

@@ -38,9 +38,11 @@ public:
     static const char* UPDATE_STATUS_ROUTE_MESSSAGE;
     static const char* ROUTE_MESSAGE;
     static const char* REGISTER_SERVICE_MESSAGE;
+    static const char* REGISTER_RPC_PEER;
     
     // account events
     static const char* CHECK_ACCOUNT_MESSAGE;
+    static const char* GET_NODE_ACCOUNT_ROUTING;
     static const char* APPLY_ACCOUNT_TRANSACTION_MESSAGE;
     
     // balancer

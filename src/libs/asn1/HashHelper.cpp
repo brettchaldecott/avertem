@@ -12,6 +12,10 @@
  */
 
 #include <stdlib.h>
+#include <vector>
+#include <sstream>
+#include <iterator>
+
 
 #include <botan/hex.h>
 #include <botan/base64.h>
@@ -96,6 +100,14 @@ HashHelper& HashHelper::operator =(const keto::crypto::SecureVector& hash) {
 
 HashHelper::operator keto::crypto::SecureVector() const {
     return this->hash;
+}
+
+HashHelper::operator std::string() const {
+    
+    std::stringstream ss; 
+    std::copy(this->hash.begin(), this->hash.end(),
+         std::ostream_iterator<uint8_t>(ss));
+    return ss.str();
 }
 
 

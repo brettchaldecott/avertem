@@ -1,28 +1,20 @@
-file(GLOB HEADERS "include/keto/account_db/*.hpp")
+file(GLOB HEADERS "include/keto/router_utils/*.hpp")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
 ## SORT .cpp by most likely to change / break compile
-add_library( keto_account_db
+add_library( keto_router_utils
             
-            Constants.cpp
-            AccountStore.cpp
-            AccountResource.cpp
-            AccountResourceManager.cpp
-            AccountGraphStore.cpp
-            AccountGraphStoreManager.cpp
-            AccountGraphSession.cpp
-            AccountRDFStatement.cpp
-            AccountRDFStatementBuilder.cpp
-            AccountSystemOntologyTypes.cpp
+            AccountRoutingStoreHelper.cpp
+            PushAccountHelper.cpp
+            RpcPeerHelper.cpp
 
-            ${HEADERS}
+             ${HEADERS}
            )
 
-target_link_libraries( keto_account_db
-                        keto_router_utils )
-target_include_directories( keto_account_db
+target_link_libraries( keto_router_utils)
+target_include_directories( keto_router_utils
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../common/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../crypto/include"
@@ -31,20 +23,16 @@ target_include_directories( keto_account_db
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../transaction_manager_api/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../server_common/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../module_manager/include"
-                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../transaction_common/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../asn1/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../rocks_db/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../obfuscate/include"
-                            PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/proto/"
-                            PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/asn1/"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/libs/common/include/" 
+                            PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/proto/"
+                            PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/asn1/" 
                             PUBLIC "${PROTO_HDRS}"
                             ${Boost_INCLUDE_DIRS}
                             ${BOTAN_INCLUDE_DIR}
                             ${ROCKSDB_INCLUDE_DIR}
-                            ${LIBRDF_INCLUDE_DIR}
-                            ${LIBRDF_RAPTOR_INCLUDE_DIR}
-                            ${LIBRDF_RASQAL_INCLUDE_DIR}
                             )
 
 #if(MSVC)
@@ -52,10 +40,10 @@ target_include_directories( keto_account_db
 #endif(MSVC)
 
 INSTALL( TARGETS
-   keto_account_db
+   keto_router_utils
 
    RUNTIME DESTINATION bin
    LIBRARY DESTINATION lib
    ARCHIVE DESTINATION lib
 )
-INSTALL( FILES ${HEADERS} DESTINATION "include/keto/account_db" )
+INSTALL( FILES ${HEADERS} DESTINATION "include/keto/router_utils" )

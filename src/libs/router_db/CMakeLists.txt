@@ -14,7 +14,8 @@ add_library( keto_router_db
              ${HEADERS}
            )
 
-target_link_libraries( keto_router_db)
+target_link_libraries( keto_router_db 
+                        keto_router_utils)
 target_include_directories( keto_router_db
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../common/include"

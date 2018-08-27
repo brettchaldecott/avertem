@@ -15,12 +15,15 @@
 #include <string>
 #include <sstream>
 
+
 #include <botan/hex.h>
 #include <botan/base64.h>
 
 #include <boost/beast/core.hpp>
 
 #include <boost/algorithm/string.hpp>
+
+#include "Route.pb.h"
 
 #include "keto/common/Log.hpp"
 
@@ -46,6 +49,11 @@
 #include "keto/software_consensus/ConsensusSessionManager.hpp"
 #include "keto/software_consensus/ModuleConsensusHelper.hpp"
 #include "keto/software_consensus/ModuleHashMessageHelper.hpp"
+
+#include "keto/router_utils/RpcPeerHelper.hpp"
+
+#include "keto/transaction/Transaction.hpp"
+#include "keto/server_common/TransactionHelper.hpp"
 
 namespace keto {
 namespace rpc_client {
@@ -225,38 +233,62 @@ RpcSession::on_read(
     std::string command = stringVector[0];
     
     
-    // Close the WebSocket connection
-    if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS) == 0) {
-        helloConsensusResponse(command,stringVector[1],stringVector[2]);
-        return;
-    } if (command.compare(keto::server_common::Constants::RPC_COMMANDS::GO_AWAY) == 0) {
-        closeResponse(keto::server_common::Constants::RPC_COMMANDS::CLOSE,stringVector[1]);
-        return;
-    } if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ACCEPTED) == 0) {
-        if (!peered) {
-            serverRequest(keto::server_common::Constants::RPC_COMMANDS::PEERS,
-                    keto::server_common::Constants::RPC_COMMANDS::PEERS);
+    try {
+        keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
+        
+        // Close the WebSocket connection
+        if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS) == 0) {
+            helloConsensusResponse(command,stringVector[1],stringVector[2]);
+            transactionPtr->commit();
+            return;
+        } if (command.compare(keto::server_common::Constants::RPC_COMMANDS::GO_AWAY) == 0) {
+            closeResponse(keto::server_common::Constants::RPC_COMMANDS::CLOSE,stringVector[1]);
+            return;
+        } if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ACCEPTED) == 0) {
+            if (!peered) {
+                serverRequest(keto::server_common::Constants::RPC_COMMANDS::PEERS,
+                        keto::server_common::Constants::RPC_COMMANDS::PEERS);
+                transactionPtr->commit();
+                return;
+            } else {
+                handleRegisterRequest(command, stringVector[1]);
+                transactionPtr->commit();
+                return;
+            }
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PEERS) == 0) {
+            peerResponse(command, stringVector[1]);
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REGISTER) == 0) {
+            registerResponse(command, stringVector[1]);
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
+
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS_SESSION) == 0) {
+            consensusSessionResponse(command,stringVector[1]);
+            transactionPtr->commit();
+            return;
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS) == 0) {
+            consensusResponse(command,stringVector[1]);
+            transactionPtr->commit();
+            return;
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ROUTE) == 0) {
+
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ROUTE_UPDATE) == 0) {
+
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::SERVICES) == 0) {
+
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLOSE) == 0) {
+            closeResponse(command,stringVector[1]);
+            transactionPtr->commit();
             return;
         }
-    } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PEERS) == 0) {
-        peerResponse(command, stringVector[1]);
-    } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
-        
-    } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS_SESSION) == 0) {
-        consensusSessionResponse(command,stringVector[1]);
-        return;
-    } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS) == 0) {
-        consensusResponse(command,stringVector[1]);
-        return;
-    } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ROUTE) == 0) {
-        
-    } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ROUTE_UPDATE) == 0) {
-        
-    } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::SERVICES) == 0) {
-        
-    } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLOSE) == 0) {
-        closeResponse(command,stringVector[1]);
-        return;
+        transactionPtr->commit();
+    } catch (keto::common::Exception& ex) {
+        KETO_LOG_ERROR << "Cause: " << boost::diagnostic_information(ex,true);
+    } catch (boost::exception& ex) {
+        KETO_LOG_ERROR << "Failed to process because : " << boost::diagnostic_information(ex,true);
+    } catch (std::exception& ex) {
+        KETO_LOG_ERROR << "Failed process the request : " << ex.what();
+    } catch (...) {
+        KETO_LOG_ERROR << "Failed to process : ";
     }
     
     // Read a message into our buffer
@@ -385,6 +417,8 @@ void RpcSession::serverRequest(const std::string& command, const std::string& me
 }
 
 void RpcSession::peerResponse(const std::string& command, const std::string& message) {
+    keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
+    
     std::string response = keto::server_common::VectorUtils().copyVectorToString(
         Botan::hex_decode(message,true));
     keto::rpc_protocol::PeerResponseHelper peerResponseHelper(response);
@@ -397,6 +431,46 @@ void RpcSession::peerResponse(const std::string& command, const std::string& mes
                 &RpcSession::on_close,
                 shared_from_this(),
                 std::placeholders::_1));
+    
+}
+
+void RpcSession::handleRegisterRequest(const std::string& command, const std::string& message) {
+    keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
+    
+    keto::proto::RpcPeer rpcPeer;
+    rpcPeer = keto::server_common::fromEvent<keto::proto::RpcPeer>(
+                keto::server_common::processEvent(
+                keto::server_common::toEvent<keto::proto::RpcPeer>(
+                keto::server_common::Events::GET_NODE_ACCOUNT_ROUTING,rpcPeer)));
+    std::string rpcValue;
+    rpcPeer.SerializePartialToString(&rpcValue);
+    std::vector<uint8_t> rpcAccountBytes =  keto::server_common::VectorUtils().copyStringToVector(
+            rpcValue);
+    
+    boost::beast::ostream(buffer_) << 
+            buildMessage(keto::server_common::Constants::RPC_COMMANDS::REGISTER,
+            rpcAccountBytes);
+    ws_.async_write(
+        buffer_.data(),
+        std::bind(
+            &RpcSession::on_write,
+            shared_from_this(),
+            std::placeholders::_1,
+            std::placeholders::_2));
+}
+
+void RpcSession::registerResponse(const std::string& command, const std::string& message) {
+    keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
+    
+    keto::router_utils::RpcPeerHelper rpcPeerHelper;
+    rpcPeerHelper.setAccountHash(Botan::hex_decode(message));
+    
+    keto::proto::RpcPeer rpcPeer = (keto::proto::RpcPeer)rpcPeerHelper;
+    rpcPeer = keto::server_common::fromEvent<keto::proto::RpcPeer>(
+                keto::server_common::processEvent(
+                keto::server_common::toEvent<keto::proto::RpcPeer>(
+                keto::server_common::Events::REGISTER_RPC_PEER,rpcPeer)));
+    
     
 }
 

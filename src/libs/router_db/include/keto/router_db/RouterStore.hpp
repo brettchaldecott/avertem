@@ -25,6 +25,9 @@
 #include "keto/router_db/RouterResourceManager.hpp"
 #include "keto/obfuscate/MetaString.hpp"
 
+#include "keto/router_utils/PushAccountHelper.hpp"
+
+
 namespace keto {
 namespace router_db {
 
@@ -54,10 +57,15 @@ public:
             const keto::asn1::HashHelper& helper,
             const keto::proto::AccountRoutingStore& routing);
     
+    void pushAccountRouting(
+            const keto::proto::PushAccount& pushAccount);
+    
 private:
     std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr;
     RouterResourceManagerPtr routerResourceManagerPtr;
-
+    
+    void pushAccountRouting(
+            keto::router_utils::PushAccountHelper& pushAccountHelper);
 };
 
 

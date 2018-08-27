@@ -65,6 +65,7 @@ public:
         static const char* HELLO;
         static const char* HELLO_CONSENSUS;
         static const char* PEERS;
+        static const char* REGISTER;
         static const char* TRANSACTION;
         static const char* CONSENSUS_SESSION;
         static const char* CONSENSUS;

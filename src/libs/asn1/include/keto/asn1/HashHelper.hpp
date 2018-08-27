@@ -50,7 +50,8 @@ public:
     
     HashHelper& operator =(const keto::crypto::SecureVector& hash);
     operator keto::crypto::SecureVector() const;
-    
+    operator std::string() const;
+     
     HashHelper& setHash(const std::string& hash,keto::common::StringEncoding stringEncoding);
     std::string getHash(keto::common::StringEncoding stringEncoding) const;
     
