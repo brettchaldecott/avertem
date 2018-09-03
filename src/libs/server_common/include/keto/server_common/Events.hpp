@@ -45,6 +45,12 @@ public:
     static const char* GET_NODE_ACCOUNT_ROUTING;
     static const char* APPLY_ACCOUNT_TRANSACTION_MESSAGE;
     
+    // rpc client route transaction
+    static const char* RPC_CLIENT_TRANSACTION;
+    
+    // rpc server route transaction
+    static const char* RPC_SERVER_TRANSACTION;
+    
     // balancer
     static const char* BALANCER_MESSAGE;
     

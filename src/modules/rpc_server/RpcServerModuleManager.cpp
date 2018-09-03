@@ -36,7 +36,6 @@ std::string RpcServerModuleManager::getSourceVersion() {
 }
 
 RpcServerModuleManager::RpcServerModuleManager() {
-    this->rpcServerPtr = std::make_shared<RpcServer>();
 }
 
 RpcServerModuleManager::~RpcServerModuleManager() {
@@ -58,10 +57,11 @@ const std::string RpcServerModuleManager::getVersion() const {
 // lifecycle methods
 void RpcServerModuleManager::start() {
     modules["RpcServerModuleManager"] = std::make_shared<RpcServerModule>();
+    RpcServer::init();
     RpcServerSession::init();
-    this->rpcServerPtr->start();
+    RpcServer::getInstance()->start();
     RpcServerService::init();
-    ConsensusService::init(getConsensusHash(),this->rpcServerPtr);
+    ConsensusService::init(getConsensusHash(),RpcServer::getInstance());
     EventRegistry::registerEventHandlers();
     KETO_LOG_INFO << "[RpcServerModuleManager] Started the RpcServerModuleManager";
 }
@@ -70,8 +70,9 @@ void RpcServerModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
     ConsensusService::fin();
     RpcServerService::fin();
-    this->rpcServerPtr->stop();
+    RpcServer::getInstance()->stop();
     RpcServerSession::fin();
+    RpcServer::fin();
     modules.clear();
     KETO_LOG_INFO << "[RpcServerModuleManager] The RpcServerModuleManager is being stopped";
 

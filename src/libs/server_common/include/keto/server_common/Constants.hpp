@@ -67,6 +67,7 @@ public:
         static const char* PEERS;
         static const char* REGISTER;
         static const char* TRANSACTION;
+        static const char* TRANSACTION_PROCESSED;
         static const char* CONSENSUS_SESSION;
         static const char* CONSENSUS;
         static const char* ROUTE;

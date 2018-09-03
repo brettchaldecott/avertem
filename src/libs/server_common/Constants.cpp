@@ -47,6 +47,7 @@ const char* Constants::RPC_COMMANDS::HELLO_CONSENSUS = "HELLO_CONSENSUS";
 const char* Constants::RPC_COMMANDS::PEERS = "PEERS";
 const char* Constants::RPC_COMMANDS::REGISTER = "REGISTER";
 const char* Constants::RPC_COMMANDS::TRANSACTION = "TRANSACTION";
+const char* Constants::RPC_COMMANDS::TRANSACTION_PROCESSED = "TRANSACTION_PROCESSED";
 const char* Constants::RPC_COMMANDS::CONSENSUS_SESSION = "CONSENSUS_SESSION";
 const char* Constants::RPC_COMMANDS::CONSENSUS = "CONSENSUS";
 const char* Constants::RPC_COMMANDS::ROUTE = "ROUTE";

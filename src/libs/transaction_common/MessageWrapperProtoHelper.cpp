@@ -36,6 +36,10 @@ MessageWrapperProtoHelper::MessageWrapperProtoHelper() {
 MessageWrapperProtoHelper::MessageWrapperProtoHelper(const keto::proto::MessageWrapper& wrapper) : wrapper(wrapper) {
 }
 
+MessageWrapperProtoHelper::MessageWrapperProtoHelper(const std::string& str) {
+    wrapper.ParseFromString(str);
+}
+
 MessageWrapperProtoHelper::MessageWrapperProtoHelper(const keto::proto::Transaction& transaction) {
     wrapper.set_version(1);
     wrapper.set_message_operation(keto::proto::MessageOperation::MESSAGE_INIT);
@@ -64,9 +68,22 @@ MessageWrapperProtoHelper::MessageWrapperProtoHelper(const TransactionProtoHelpe
 MessageWrapperProtoHelper::~MessageWrapperProtoHelper() {
 }
 
+MessageWrapperProtoHelper& MessageWrapperProtoHelper::setAccountHash(const keto::asn1::HashHelper accountHash) {
+    wrapper.set_account_hash(accountHash);
+    return *this;
+}
+
+keto::asn1::HashHelper MessageWrapperProtoHelper::getAccountHash() {
+    return keto::asn1::HashHelper(wrapper.account_hash());
+}
+
 MessageWrapperProtoHelper& MessageWrapperProtoHelper::setSessionHash(const keto::asn1::HashHelper sessionHash) {
-    std::vector<uint8_t> accountVectorHash = keto::crypto::SecureVectorUtils().copyFromSecure(sessionHash);
-    wrapper.set_session_hash(accountVectorHash.data(),accountVectorHash.size());
+    wrapper.set_session_hash(sessionHash);
+    return *this;
+}
+
+MessageWrapperProtoHelper& MessageWrapperProtoHelper::setSessionHash(const std::string& sessionHash) {
+    wrapper.set_session_hash(sessionHash);
     return *this;
 }
 

@@ -58,7 +58,6 @@ public:
 
 private:
     std::map<std::string,std::shared_ptr<keto::module::ModuleInterface>> modules;
-    RpcServerPtr rpcServerPtr;
     
     keto::software_consensus::ConsensusHashGeneratorPtr getConsensusHash();
 };

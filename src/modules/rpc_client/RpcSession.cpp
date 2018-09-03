@@ -221,6 +221,8 @@ RpcSession::on_read(
     if(ec)
         return fail(ec, "read");
     
+    std::lock_guard<std::mutex> guard(this->classMutex);
+    
     std::stringstream ss;
     ss << boost::beast::buffers(buffer_.data());
     std::string data = ss.str();
@@ -260,7 +262,9 @@ RpcSession::on_read(
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REGISTER) == 0) {
             registerResponse(command, stringVector[1]);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
-
+            
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED) == 0) {
+            
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS_SESSION) == 0) {
             consensusSessionResponse(command,stringVector[1]);
             transactionPtr->commit();
@@ -314,6 +318,9 @@ RpcSession::on_close(boost::system::error_code ec)
     ss << boost::beast::buffers(buffer_.data());
     std::string data = ss.str();
     
+    if (this->peered && !this->accountHash.empty()) {
+        RpcSessionManager::getInstance()->removeAccountSessionMapping(this->accountHash);
+    }
 }
 
 std::vector<uint8_t> RpcSession::buildHeloMessage() {
@@ -465,6 +472,10 @@ void RpcSession::registerResponse(const std::string& command, const std::string&
     keto::router_utils::RpcPeerHelper rpcPeerHelper;
     rpcPeerHelper.setAccountHash(Botan::hex_decode(message));
     
+    this->accountHash = rpcPeerHelper.getAccountHash();
+    RpcSessionManager::getInstance()->setAccountSessionMapping(rpcPeerHelper.getAccountHashString(),
+            shared_from_this());
+    
     keto::proto::RpcPeer rpcPeer = (keto::proto::RpcPeer)rpcPeerHelper;
     rpcPeer = keto::server_common::fromEvent<keto::proto::RpcPeer>(
                 keto::server_common::processEvent(
@@ -472,6 +483,38 @@ void RpcSession::registerResponse(const std::string& command, const std::string&
                 keto::server_common::Events::REGISTER_RPC_PEER,rpcPeer)));
     
     
+}
+
+void RpcSession::routeTransaction(keto::proto::MessageWrapper&  messageWrapper) {
+    std::lock_guard<std::mutex> guard(this->classMutex);
+    std::string messageWrapperStr;
+    messageWrapper.SerializeToString(&messageWrapperStr);
+    boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::TRANSACTION
+            << " " << Botan::hex_encode((uint8_t*)messageWrapperStr.data(),messageWrapperStr.size(),true);
+
+    ws_.text(ws_.got_text());
+    ws_.async_write(
+        buffer_.data(),
+            std::bind(
+                &RpcSession::on_outBoundWrite,
+                shared_from_this(),
+                std::placeholders::_1,
+                std::placeholders::_2));
+}
+    
+void
+RpcSession::on_outBoundWrite(
+    boost::system::error_code ec,
+    std::size_t bytes_transferred)
+{
+    boost::ignore_unused(bytes_transferred);
+
+    if(ec)
+        return fail(ec, "write");
+
+    // Clear the buffer
+    buffer_.consume(buffer_.size());
+
 }
 
 }

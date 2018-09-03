@@ -76,6 +76,9 @@ bool BlockChainStore::requireGenesis() {
     if (rocksdb::Status::OK() != childTransaction->Get(readOptions,keyHelper,&value)) {
         return true;
     }
+    if (value.empty()) {
+        return true;
+    }
     // init the block and header 
     this->getBlockCount();
     this->getParentHash();

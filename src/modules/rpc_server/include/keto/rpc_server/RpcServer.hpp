@@ -33,6 +33,9 @@
 #include "keto/common/MetaInfo.hpp"
 #include "keto/crypto/Containers.hpp"
 
+#include "keto/event/Event.hpp"
+
+
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 namespace beastSsl = boost::asio::ssl;               // from <boost/asio/ssl.hpp>
 namespace websocket = boost::beast::websocket;  // from <boost/beast/websocket.hpp>
@@ -58,12 +61,18 @@ public:
     RpcServer(const RpcServer& orig) = delete;
     virtual ~RpcServer();
     
+    // account service management methods
+    static RpcServerPtr init();
+    static void fin();
+    static RpcServerPtr getInstance();
+    
+    
     void start();
-    
     void stop();
-    
     void setSecret(
             const keto::crypto::SecureVector& secret);
+    
+    keto::event::Event routeTransaction(const keto::event::Event& event);
 protected:
     keto::crypto::SecureVector getSecret();
     void setExternalIp(

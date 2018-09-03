@@ -37,12 +37,16 @@ public:
 
     MessageWrapperProtoHelper();
     MessageWrapperProtoHelper(const keto::proto::MessageWrapper& wrapper);
+    MessageWrapperProtoHelper(const std::string& str);
     MessageWrapperProtoHelper(const keto::proto::Transaction& transaction);
     MessageWrapperProtoHelper(const TransactionProtoHelper& transaction);
     MessageWrapperProtoHelper(const TransactionProtoHelperPtr& transaction);
     MessageWrapperProtoHelper(const MessageWrapperProtoHelper& orig) = default;
     virtual ~MessageWrapperProtoHelper();
     
+    MessageWrapperProtoHelper& setAccountHash(const keto::asn1::HashHelper accountHash);
+    keto::asn1::HashHelper getAccountHash();
+    MessageWrapperProtoHelper& setSessionHash(const std::string& sessionHash);
     MessageWrapperProtoHelper& setSessionHash(const keto::asn1::HashHelper sessionHash);
     MessageWrapperProtoHelper& setOperation(const keto::proto::MessageOperation operation);
     MessageWrapperProtoHelper& setMessageWrapper(const keto::proto::MessageWrapper& wrapper);

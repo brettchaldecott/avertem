@@ -21,6 +21,8 @@
 
 #include "keto/common/MetaInfo.hpp"
 
+#include "keto/event/Event.hpp"
+
 namespace keto {
 namespace rpc_client {
 
@@ -52,12 +54,20 @@ public:
     void start();
     void postStart();
     void stop();
+    
+    keto::event::Event routeTransaction(const keto::event::Event& event);
+    
+    
+    
 protected:
     void setPeers(const std::vector<std::string>& peers);
-    
-    
+    void setAccountSessionMapping(const std::string& account,
+            const RpcSessionPtr& rpcSessionPtr);
+    void removeAccountSessionMapping(const std::string& account);
 private:
+    std::mutex classMutex;
     std::map<std::string,RpcSessionPtr> sessionMap;
+    std::map<std::string,RpcSessionPtr> accountSessionMap;
     // The io_context is required for all I/O
     std::shared_ptr<boost::asio::io_context> ioc;
     // The SSL context is required, and holds certificates
@@ -67,6 +77,10 @@ private:
     std::vector<std::thread> threadsVector;
     bool peered;
     
+    
+    bool hasAccountSessionMapping(const std::string& account);
+    RpcSessionPtr getAccountSessionMapping(const std::string& account);
+    RpcSessionPtr getDefaultPeer();
 };
 
 

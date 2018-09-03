@@ -14,8 +14,15 @@
 #include <iostream>
 #include <vector>
 
+#include <botan/hex.h>
+
 #include "BlockChain.pb.h"
 
+#include "Protocol.pb.h"
+#include "Account.pb.h"
+#include "Route.pb.h"
+
+#include "keto/common/Log.hpp"
 #include "keto/router/RouterService.hpp"
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
@@ -24,11 +31,6 @@
 #include "keto/server_common/Constants.hpp"
 #include "keto/crypto/SecureVectorUtils.hpp"
 #include "keto/router/RouterService.hpp"
-
-
-#include "Protocol.pb.h"
-#include "Account.pb.h"
-#include "Route.pb.h"
 #include "keto/router/RouterRegistry.hpp"
 
 #include "keto/transaction_common/MessageWrapperProtoHelper.hpp"
@@ -39,7 +41,6 @@
 #include "keto/server_common/EventServiceHelpers.hpp"
 #include "keto/router_utils/AccountRoutingStoreHelper.hpp"
 #include "keto/router/PeerCache.hpp"
-#include "include/keto/router/PeerCache.hpp"
 
 
 namespace keto {
@@ -130,6 +131,7 @@ keto::event::Event RouterService::routeMessage(const keto::event::Event& event) 
         
     }
     
+    this->routeToRpcPeer(messageWrapper);
     
     keto::proto::MessageWrapperResponse response;
     response.set_success(true);
@@ -294,10 +296,33 @@ void RouterService::routeToAccount(keto::proto::MessageWrapper&  messageWrapper)
 void RouterService::routeToRpcClient(keto::proto::MessageWrapper&  messageWrapper,
         keto::router_utils::RpcPeerHelper& rpcPeerHelper) {
     
+    if (!rpcPeerHelper.isServer()) {
+        messageWrapper.set_account_hash(rpcPeerHelper.getAccountHashString());
+
+        try {
+            keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
+                            keto::server_common::Events::RPC_SERVER_TRANSACTION,messageWrapper));
+        } catch (...) {
+            // must place in a queue here
+            KETO_LOG_INFO << "[RouterService] " << 
+                    Botan::hex_encode((uint8_t*)rpcPeerHelper.getAccountHashString().data(),
+                    rpcPeerHelper.getAccountHashString().size(),true)
+                    << " Failed to dispatch to the server must add to a queue here";
+        }
+    } else {
+        // route to a peer
+        routeToRpcPeer(messageWrapper);
+    }
 }
 
 void RouterService::routeToRpcPeer(keto::proto::MessageWrapper&  messageWrapper) {
-    
+    try {
+        keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
+                        keto::server_common::Events::RPC_CLIENT_TRANSACTION,messageWrapper));
+    } catch (...) {
+        // must place in a queue here
+        KETO_LOG_INFO << "[RouterService] Failed to dispatch to an approriate peer";
+    }
 }
 
 }

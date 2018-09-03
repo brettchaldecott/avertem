@@ -48,6 +48,7 @@ public:
     RpcPeerHelper& setAccountHash(
             const std::vector<uint8_t>& accountHash);
     std::vector<uint8_t> getAccountHashBytes();
+    std::string getAccountHashString();
     
     RpcPeerHelper& setServer(
             const bool& server);

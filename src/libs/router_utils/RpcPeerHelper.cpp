@@ -65,6 +65,11 @@ std::vector<uint8_t> RpcPeerHelper::getAccountHashBytes() {
     return hash;
 }
 
+
+std::string RpcPeerHelper::getAccountHashString() {
+    return this->rpcPeer.account_hash();
+}
+
 RpcPeerHelper& RpcPeerHelper::setServer(
         const bool& server) {
     this->rpcPeer.set_server(server);

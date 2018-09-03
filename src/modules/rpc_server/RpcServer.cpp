@@ -13,10 +13,13 @@
 
 #include <string>
 #include <sstream>
+#include <map>
 
 #include "SoftwareConsensus.pb.h"
 #include "HandShake.pb.h"
 #include "Route.pb.h"
+#include "BlockChain.pb.h"
+#include "Protocol.pb.h"
 
 #include <boost/beast/core.hpp>
 
@@ -44,10 +47,12 @@
 #include "keto/router_utils/RpcPeerHelper.hpp"
 
 #include "keto/transaction/Transaction.hpp"
+#include "keto/transaction_common/MessageWrapperProtoHelper.hpp"
 #include "keto/server_common/TransactionHelper.hpp"
 
 #include "keto/software_consensus/ModuleConsensusValidationMessageHelper.hpp"
 #include "keto/rpc_server/RpcServerSession.hpp"
+#include "keto/rpc_server/Exception.hpp"
 
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 namespace beastSsl = boost::asio::ssl;               // from <boost/asio/ssl.hpp>
@@ -56,6 +61,8 @@ namespace websocket = boost::beast::websocket;  // from <boost/beast/websocket.h
 namespace keto {
 namespace rpc_server {
 
+static RpcServerPtr singleton;
+
 // Report a failure
 void
 fail(boost::system::error_code ec, char const* what)
@@ -63,9 +70,71 @@ fail(boost::system::error_code ec, char const* what)
     std::cerr << what << ": " << ec.message() << "\n";
 }
 
+class session;
+typedef std::shared_ptr<session> sessionPtr;
+
+class AccountSessionCache;
+typedef std::shared_ptr<AccountSessionCache> AccountSessionCachePtr;
+
+static AccountSessionCachePtr accountSessionSingleton;
+
+class AccountSessionCache {
+private:
+    std::mutex classMutex;
+    std::map<std::string,sessionPtr> accountSessionMap;
+
+public:
+    AccountSessionCache() {
+        
+    }
+    
+    AccountSessionCache(const AccountSessionCache& orig) = delete;
+    
+    ~AccountSessionCache() {
+        
+    }
+    
+    static AccountSessionCachePtr init() {
+        return accountSessionSingleton = std::shared_ptr<AccountSessionCache>();
+    }
+    static void fin() {
+        accountSessionSingleton.reset();
+    }
+    static AccountSessionCachePtr getInstance() {
+        return accountSessionSingleton;
+    }
+    
+    void addAccount(const std::string& account, 
+            const sessionPtr sessionRef) {
+        std::lock_guard<std::mutex> guard(this->classMutex);
+        this->accountSessionMap[account] = sessionRef;
+    }
+    
+    void removeAccount(const std::string& account) {
+        std::lock_guard<std::mutex> guard(this->classMutex);
+        this->accountSessionMap.erase(account);
+    }
+    
+    bool hasSession(const std::string& account) {
+        std::lock_guard<std::mutex> guard(this->classMutex);
+        if (this->accountSessionMap.count(account)) {
+            return true;
+        }
+        return false;
+    }
+    
+    sessionPtr getSession(const std::string& account) {
+        std::lock_guard<std::mutex> guard(this->classMutex);
+        return this->accountSessionMap[account];
+    }
+    
+};
+
 // Echoes back all received WebSocket messages
 class session : public std::enable_shared_from_this<session>
 {
+private:
+    std::mutex classMutex;
     tcp::socket socket_;
     websocket::stream<beastSsl::stream<tcp::socket&>> ws_;
     boost::asio::strand<
@@ -149,11 +218,21 @@ public:
         boost::ignore_unused(bytes_transferred);
 
         // This indicates that the session was closed
-        if(ec == websocket::error::closed)
+        if(ec == websocket::error::closed) {
+            if (serverHelloProtoHelperPtr) {
+                AccountSessionCache::getInstance()->removeAccount(
+                    keto::server_common::VectorUtils().copyVectorToString(    
+                    serverHelloProtoHelperPtr->getAccountHash()));
+            }
             return;
-
+        }
+        // lock the mutex for processing to prevent confict with an
+        // out bound thread.
+        std::lock_guard<std::mutex> guard(this->classMutex);
         if(ec)
             fail(ec, "read");
+        
+        
         std::stringstream ss;
         ss << boost::beast::buffers(buffer_.data());
         std::string data = ss.str();
@@ -186,7 +265,10 @@ public:
                 KETO_LOG_INFO << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " register";
                 handleRegister(keto::server_common::Constants::RPC_COMMANDS::REGISTER, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
-
+                KETO_LOG_INFO << "[RpcServer] handle a transaction";
+                handleTransaction(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION, payload);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED) == 0) {
+                handleTransactionProcessed(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS) == 0) {
 
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ROUTE) == 0) {
@@ -197,6 +279,10 @@ public:
 
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLOSE) == 0) {
                 // implement
+                AccountSessionCache::getInstance()->removeAccount(
+                    keto::server_common::VectorUtils().copyVectorToString(    
+                        serverHelloProtoHelperPtr->getAccountHash()));
+                return;
             }
             
             transactionPtr->commit();
@@ -222,6 +308,41 @@ public:
                     std::placeholders::_1,
                     std::placeholders::_2)));
         
+    }
+    
+    void
+    routeTransaction(keto::proto::MessageWrapper&  messageWrapper) {
+        std::lock_guard<std::mutex> guard(this->classMutex);
+        std::string messageWrapperStr;
+        messageWrapper.SerializeToString(&messageWrapperStr);
+        boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::TRANSACTION
+                << " " << Botan::hex_encode((uint8_t*)messageWrapperStr.data(),messageWrapperStr.size(),true);
+        
+        ws_.text(ws_.got_text());
+        ws_.async_write(
+            buffer_.data(),
+            boost::asio::bind_executor(
+                strand_,
+                std::bind(
+                    &session::on_outBoundWrite,
+                    shared_from_this(),
+                    std::placeholders::_1,
+                    std::placeholders::_2)));
+    }
+    
+    void
+    on_outBoundWrite(
+        boost::system::error_code ec,
+        std::size_t bytes_transferred)
+    {
+        boost::ignore_unused(bytes_transferred);
+
+        if(ec)
+            return fail(ec, "write");
+
+        // Clear the buffer
+        buffer_.consume(buffer_.size());
+
     }
     
     void
@@ -313,7 +434,13 @@ public:
     }
     
     void handleRegister(const std::string& command, const std::string& payload) {
-    
+        
+        // add this session for call backs
+        AccountSessionCache::getInstance()->addAccount(
+            keto::server_common::VectorUtils().copyVectorToString(    
+            serverHelloProtoHelperPtr->getAccountHash()),
+                shared_from_this());
+        
         std::string rpcVector = keto::server_common::VectorUtils().copyVectorToString(
                 Botan::hex_decode(payload));
         keto::router_utils::RpcPeerHelper rpcPeerHelper(rpcVector);
@@ -327,6 +454,41 @@ public:
         boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::REGISTER
                 << " " << Botan::hex_encode(
                 keto::server_common::ServerInfo::getInstance()->getAccountHash());
+    }
+    
+    
+    void handleTransaction(const std::string& command, const std::string& payload) {
+        
+        keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper(
+            keto::server_common::VectorUtils().copyVectorToString(
+                Botan::hex_decode(payload)));
+        messageWrapperProtoHelper.setSessionHash(
+                keto::server_common::VectorUtils().copyVectorToString(    
+                    serverHelloProtoHelperPtr->getAccountHash()));
+        
+        keto::proto::MessageWrapper messageWrapper = messageWrapperProtoHelper;
+        keto::proto::MessageWrapperResponse messageWrapperResponse = 
+                keto::server_common::fromEvent<keto::proto::MessageWrapperResponse>(
+                keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
+                keto::server_common::Events::ROUTE_MESSAGE,messageWrapper)));
+        
+        std::string result;
+        messageWrapperResponse.SerializeToString(&result);
+        boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED
+                << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
+    }
+    
+    void handleTransactionProcessed(const std::string& command, const std::string& payload) {
+        
+        keto::proto::MessageWrapperResponse messageWrapperResponse;
+        messageWrapperResponse.ParseFromString(
+            keto::server_common::VectorUtils().copyVectorToString(
+                Botan::hex_decode(payload)));
+        
+        KETO_LOG_INFO << "[RpcServer] transaction processed by peer [" << 
+                this->serverHelloProtoHelperPtr->getAccountHashStr() << "] : " 
+                << messageWrapperResponse.result();
+        
     }
 };
 
@@ -456,7 +618,22 @@ RpcServer::RpcServer() {
 RpcServer::~RpcServer() {
 }
 
+RpcServerPtr RpcServer::init() {
+    return singleton = std::shared_ptr<RpcServer>(new RpcServer());
+}
+
+void RpcServer::fin() {
+    singleton.reset();
+}
+
+RpcServerPtr RpcServer::getInstance() {
+    return singleton;
+}
+
 void RpcServer::start() {
+    
+    AccountSessionCache::init();
+    
     // setup the beginnings of the peer cache of the external ip address has been supplied
     std::shared_ptr<ketoEnv::Config> config = ketoEnv::EnvironmentManager::getInstance()->getConfig();
     if (config->getVariablesMap().count(Constants::EXTERNAL_IP_ADDRESS)) {
@@ -498,6 +675,8 @@ void RpcServer::stop() {
             iter != this->threadsVector.end(); iter++) {
         iter->join();
     }
+    
+    AccountSessionCache::fin();
 
     listenerPtr.reset();
     
@@ -526,6 +705,32 @@ void RpcServer::setExternalIp(
 
 keto::crypto::SecureVector RpcServer::getSecret() {
     return this->secret;
+}
+
+keto::event::Event RpcServer::routeTransaction(const keto::event::Event& event) {
+    keto::proto::MessageWrapper messageWrapper =
+            keto::server_common::fromEvent<keto::proto::MessageWrapper>(event);
+    keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper(messageWrapper);
+    
+    if (!AccountSessionCache::getInstance()->hasSession(
+            messageWrapper.account_hash())) {
+        std::stringstream ss;
+        ss << "Account [" << 
+                messageWrapperProtoHelper.getAccountHash().getHash(keto::common::StringEncoding::HEX) 
+                << "] is not bound as a peer.";
+        BOOST_THROW_EXCEPTION(ClientNotAvailableException(
+                ss.str()));
+    }
+    AccountSessionCache::getInstance()->getSession(
+            messageWrapper.account_hash())->routeTransaction(messageWrapper);
+    keto::proto::MessageWrapperResponse response;
+    response.set_success(true);
+    
+    std::stringstream ss;
+    ss << "Routed to the peer [" << 
+            messageWrapperProtoHelper.getAccountHash().getHash(keto::common::StringEncoding::HEX) << "]";
+    response.set_result(ss.str());
+    return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
 }
 
 }

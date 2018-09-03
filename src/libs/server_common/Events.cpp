@@ -36,6 +36,12 @@ const char* Events::CHECK_ACCOUNT_MESSAGE = "CHECK_ACCOUNT_MESSAGE";
 const char* Events::GET_NODE_ACCOUNT_ROUTING = "GET_NODE_ACCOUNT_ROUTING";
 const char* Events::APPLY_ACCOUNT_TRANSACTION_MESSAGE = "APPLY_ACCOUNT_TRANSACTION_MESSAGE";
 
+// rpc client route transaction
+const char* Events::RPC_CLIENT_TRANSACTION = "RPC_CLIENT_TRANSACTION";
+
+// rpc server route transaction
+const char* Events::RPC_SERVER_TRANSACTION = "RPC_SERVER_TRANSACTION";
+
 // balancer
 const char* Events::BALANCER_MESSAGE    = "BALANCER_MESSAGE";
 

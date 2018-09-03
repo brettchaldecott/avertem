@@ -22,6 +22,12 @@
 
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
 
+#include "keto/transaction/Transaction.hpp"
+#include "keto/transaction_common/MessageWrapperProtoHelper.hpp"
+
+#include "keto/server_common/Events.hpp"
+#include "keto/server_common/EventServiceHelpers.hpp"
+
 namespace keto {
 namespace rpc_client {
 
@@ -95,6 +101,28 @@ std::vector<std::string> RpcSessionManager::listPeers() {
     return keys;
 }
 
+void RpcSessionManager::setAccountSessionMapping(const std::string& account,
+            const RpcSessionPtr& rpcSessionPtr) {
+    std::lock_guard<std::mutex> guard(this->classMutex);
+    this->accountSessionMap[account] = rpcSessionPtr;
+}
+
+bool RpcSessionManager::hasAccountSessionMapping(const std::string& account) {
+    std::lock_guard<std::mutex> guard(this->classMutex);
+    if (this->accountSessionMap.count(account)) {
+        return true;
+    }
+    return false;
+}
+
+RpcSessionPtr RpcSessionManager::getAccountSessionMapping(const std::string& account) {
+    std::lock_guard<std::mutex> guard(this->classMutex);
+    return this->accountSessionMap[account];
+}
+
+RpcSessionPtr RpcSessionManager::getDefaultPeer() {
+    return this->sessionMap.begin()->second;
+}
 
 RpcSessionManagerPtr RpcSessionManager::init() {
     return singleton = std::shared_ptr<RpcSessionManager>(new RpcSessionManager());
@@ -145,6 +173,34 @@ void RpcSessionManager::stop() {
     this->threadsVector.clear();
     
     this->sessionMap.clear();
+}
+
+
+keto::event::Event RpcSessionManager::routeTransaction(const keto::event::Event& event) {
+    
+    keto::proto::MessageWrapper messageWrapper =
+            keto::server_common::fromEvent<keto::proto::MessageWrapper>(event);
+    keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper(messageWrapper);
+    
+    // check if there is a peer matching the target account hash this would be pure luck
+    if (this->hasAccountSessionMapping(
+            messageWrapper.account_hash())) {
+        
+        this->getAccountSessionMapping(
+                messageWrapper.account_hash())->routeTransaction(messageWrapper);
+        
+    } else {
+        // route to the default account which is the first peer in the list
+        getDefaultPeer()->routeTransaction(messageWrapper);
+    }
+    
+    keto::proto::MessageWrapperResponse response;
+    response.set_success(true);
+    std::stringstream ss;
+    ss << "Routed to the server peer [" << 
+            messageWrapperProtoHelper.getAccountHash().getHash(keto::common::StringEncoding::HEX) << "]";
+    response.set_result(ss.str());
+    return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
 }
 
 }

@@ -26,6 +26,13 @@
 #include <iostream>
 #include <string>
 
+#include "Route.pb.h"
+#include "BlockChain.pb.h"
+#include "Protocol.pb.h"
+
+#include "keto/event/Event.hpp"
+
+
 #include "keto/rpc_client/Constants.hpp"
 #include "keto/crypto/KeyLoader.hpp"
 
@@ -87,7 +94,18 @@ public:
     
     void
     on_close(boost::system::error_code ec);
+    
+    
+    void
+    routeTransaction(keto::proto::MessageWrapper&  messageWrapper);
+    
+    void
+    on_outBoundWrite(
+        boost::system::error_code ec,
+        std::size_t bytes_transferred);
+    
 private:
+    std::mutex classMutex;
     tcp::resolver resolver;
     websocket::stream<boostSsl::stream<tcp::socket>> ws_;
     boost::beast::multi_buffer buffer_;
@@ -95,6 +113,7 @@ private:
     std::string host;
     std::string port;
     std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr;
+    std::string accountHash;
     
     std::vector<uint8_t> buildHeloMessage();
     

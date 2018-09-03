@@ -36,6 +36,7 @@ public:
     
     static keto::event::Event generateSoftwareHash(const keto::event::Event& event);
     static keto::event::Event setModuleSession(const keto::event::Event& event);
+    static keto::event::Event routeTransaction(const keto::event::Event& event);
     
 private:
     EventRegistry();
