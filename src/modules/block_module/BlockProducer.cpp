@@ -57,7 +57,9 @@ std::string BlockProducer::getSourceVersion() {
     return OBFUSCATED("$Id:$");
 }
 
-BlockProducer::BlockProducer() : currentState(State::inited) {
+BlockProducer::BlockProducer() : 
+        enabled(false),
+        currentState(State::inited) {
     std::shared_ptr<keto::environment::Config> config = 
             keto::environment::EnvironmentManager::getInstance()->getConfig();
     if (!config->getVariablesMap().count(Constants::PRIVATE_KEY)) {
@@ -72,6 +74,12 @@ BlockProducer::BlockProducer() : currentState(State::inited) {
             config->getVariablesMap()[Constants::PUBLIC_KEY].as<std::string>();
     keyLoaderPtr = std::make_shared<keto::crypto::KeyLoader>(privateKeyPath,
             publicKeyPath);
+    
+    if (config->getVariablesMap().count(Constants::BLOCK_PRODUCER_ENABLED)) {
+        this->enabled = 
+                config->getVariablesMap()[Constants::BLOCK_PRODUCER_ENABLED].as<std::string>().compare(
+                Constants::BLOCK_PRODUCER_ENABLED_TRUE) == 0;
+    }
 }
 
 BlockProducer::~BlockProducer() {
@@ -79,18 +87,22 @@ BlockProducer::~BlockProducer() {
 
 BlockProducerPtr BlockProducer::init() {
     singleton = std::make_shared<BlockProducer>();
+    if (singleton->isEnabled()) {
     producerThreadPtr = std::shared_ptr<std::thread>(new std::thread(
         []
         {
             singleton->run();
         }));
+    }
     return singleton;
 }
 
 void BlockProducer::fin() {
-    singleton->terminate();
-    producerThreadPtr->join();
-    producerThreadPtr.reset();
+    if (singleton->isEnabled()) {
+        singleton->terminate();
+        producerThreadPtr->join();
+        producerThreadPtr.reset();
+    }
     singleton.reset();
 }
 
@@ -116,6 +128,10 @@ void BlockProducer::addTransaction(keto::proto::Transaction transaction) {
         BOOST_THROW_EXCEPTION(keto::block::BlockProducerTerminatedException());
     }
     this->transactions.push_back(transaction);
+}
+
+bool BlockProducer::isEnabled() {
+    return enabled;
 }
 
 BlockProducer::State BlockProducer::checkState() {

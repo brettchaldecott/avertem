@@ -73,12 +73,14 @@ bool BlockChainStore::requireGenesis() {
     rocksdb::Transaction* childTransaction = resource->getTransaction(Constants::CHILD_INDEX);
     rocksdb::ReadOptions readOptions;
     std::string value;
-    if (rocksdb::Status::OK() != childTransaction->Get(readOptions,keyHelper,&value)) {
+    auto status = childTransaction->Get(readOptions,keyHelper,&value);
+    if (rocksdb::Status::OK() != status || rocksdb::Status::NotFound() == status) {
         return true;
     }
     if (value.empty()) {
         return true;
     }
+    //std::cout << "The value is [" << value << "]" << std::endl;
     // init the block and header 
     this->getBlockCount();
     this->getParentHash();

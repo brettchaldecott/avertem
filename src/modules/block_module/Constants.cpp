@@ -26,5 +26,10 @@ const char* Constants::GENESIS_CONFIG = "genesis_config";
 const char* Constants::PRIVATE_KEY    = "server-private-key";
 const char* Constants::PUBLIC_KEY     = "server-public-key";
 
+const char* Constants::BLOCK_PRODUCER_ENABLED
+                                      = "block_producer_enabled";
+const char* Constants::BLOCK_PRODUCER_ENABLED_TRUE
+                                      = "true";
+
 }
 }

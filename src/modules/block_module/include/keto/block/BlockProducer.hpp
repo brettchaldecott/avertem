@@ -65,7 +65,10 @@ public:
     
     void addTransaction(keto::proto::Transaction transaction);
     
+    bool isEnabled();
+    
 private:
+    bool enabled;
     State currentState;
     std::condition_variable stateCondition;
     std::mutex classMutex;

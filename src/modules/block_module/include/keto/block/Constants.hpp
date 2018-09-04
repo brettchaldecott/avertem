@@ -11,8 +11,8 @@
  * Created on March 8, 2018, 8:09 AM
  */
 
-#ifndef CONSTANTS_HPP
-#define CONSTANTS_HPP
+#ifndef BLOCK_MODULE_CONSTANTS_HPP
+#define BLOCK_MODULE_CONSTANTS_HPP
 
 #include "keto/common/MetaInfo.hpp"
 
@@ -34,6 +34,10 @@ public:
     // keys for server
     static const char* PRIVATE_KEY;
     static const char* PUBLIC_KEY;
+    
+    // block producer
+    static const char* BLOCK_PRODUCER_ENABLED;
+    static const char* BLOCK_PRODUCER_ENABLED_TRUE;
 };
 
 

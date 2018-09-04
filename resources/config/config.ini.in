@@ -25,6 +25,8 @@ routes=data/routes
 genesis_config=config/genesis.json
 # default block
 default_block=true
+# block producer
+block_producer_enabled=true
 # rpc peer
 rpc-peer=
 # keys
