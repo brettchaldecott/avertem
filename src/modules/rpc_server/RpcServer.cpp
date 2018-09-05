@@ -95,7 +95,8 @@ public:
     }
     
     static AccountSessionCachePtr init() {
-        return accountSessionSingleton = std::shared_ptr<AccountSessionCache>();
+        return accountSessionSingleton = std::shared_ptr<AccountSessionCache>(
+                new AccountSessionCache());
     }
     static void fin() {
         accountSessionSingleton.reset();
@@ -106,18 +107,18 @@ public:
     
     void addAccount(const std::string& account, 
             const sessionPtr sessionRef) {
-        std::lock_guard<std::mutex> guard(this->classMutex);
-        this->accountSessionMap[account] = sessionRef;
+        std::lock_guard<std::mutex> guard(classMutex);
+        accountSessionMap[account] = sessionRef;
     }
     
     void removeAccount(const std::string& account) {
-        std::lock_guard<std::mutex> guard(this->classMutex);
-        this->accountSessionMap.erase(account);
+        std::lock_guard<std::mutex> guard(classMutex);
+        accountSessionMap.erase(account);
     }
     
     bool hasSession(const std::string& account) {
-        std::lock_guard<std::mutex> guard(this->classMutex);
-        if (this->accountSessionMap.count(account)) {
+        std::lock_guard<std::mutex> guard(classMutex);
+        if (accountSessionMap.count(account)) {
             return true;
         }
         return false;
@@ -152,6 +153,9 @@ public:
         , strand_(ws_.get_executor())
         , rpcServer(rpcServer)
     {
+    }
+        
+    ~session() {
     }
 
     // Start the asynchronous operation
@@ -220,15 +224,16 @@ public:
         // This indicates that the session was closed
         if(ec == websocket::error::closed) {
             if (serverHelloProtoHelperPtr) {
-                AccountSessionCache::getInstance()->removeAccount(
-                    keto::server_common::VectorUtils().copyVectorToString(    
-                    serverHelloProtoHelperPtr->getAccountHash()));
+                std::string accountHash = keto::server_common::VectorUtils().copyVectorToString(    
+                    serverHelloProtoHelperPtr->getAccountHash());
+                if (AccountSessionCache::getInstance()->hasSession(accountHash)) {
+                    AccountSessionCache::getInstance()->removeAccount(accountHash);
+                }
             }
             return;
         }
         // lock the mutex for processing to prevent confict with an
         // out bound thread.
-        std::lock_guard<std::mutex> guard(this->classMutex);
         if(ec)
             fail(ec, "read");
         
@@ -251,8 +256,9 @@ public:
         std::string message;
         
         try {
+            std::lock_guard<std::mutex> guard(this->classMutex);
             keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
-        
+            std::cout << "Process the command : " << command << std::endl;
             if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO) == 0) {
                 handleHello(command, payload);
                 KETO_LOG_INFO << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " Said hello";
@@ -307,6 +313,7 @@ public:
                     shared_from_this(),
                     std::placeholders::_1,
                     std::placeholders::_2)));
+        std::cout << "The command is ending : " << command << std::endl;
         
     }
     
@@ -436,21 +443,26 @@ public:
     void handleRegister(const std::string& command, const std::string& payload) {
         
         // add this session for call backs
+        std::cout << "Add the account." << std::endl;
         AccountSessionCache::getInstance()->addAccount(
             keto::server_common::VectorUtils().copyVectorToString(    
             serverHelloProtoHelperPtr->getAccountHash()),
                 shared_from_this());
         
+        std::cout << "Copy vector to string." << std::endl;
         std::string rpcVector = keto::server_common::VectorUtils().copyVectorToString(
                 Botan::hex_decode(payload));
         keto::router_utils::RpcPeerHelper rpcPeerHelper(rpcVector);
         
         keto::proto::RpcPeer rpcPeer = (keto::proto::RpcPeer)rpcPeerHelper;
+        
+        std::cout << "Register RPC peer." << std::endl;
         rpcPeer = keto::server_common::fromEvent<keto::proto::RpcPeer>(
                     keto::server_common::processEvent(
                     keto::server_common::toEvent<keto::proto::RpcPeer>(
                     keto::server_common::Events::REGISTER_RPC_PEER,rpcPeer)));
         
+        std::cout << "Write the buffer for the response" << std::endl;
         boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::REGISTER
                 << " " << Botan::hex_encode(
                 keto::server_common::ServerInfo::getInstance()->getAccountHash());
@@ -619,11 +631,13 @@ RpcServer::~RpcServer() {
 }
 
 RpcServerPtr RpcServer::init() {
+    AccountSessionCache::init();
     return singleton = std::shared_ptr<RpcServer>(new RpcServer());
 }
 
 void RpcServer::fin() {
     singleton.reset();
+    AccountSessionCache::fin();
 }
 
 RpcServerPtr RpcServer::getInstance() {
@@ -632,7 +646,6 @@ RpcServerPtr RpcServer::getInstance() {
 
 void RpcServer::start() {
     
-    AccountSessionCache::init();
     
     // setup the beginnings of the peer cache of the external ip address has been supplied
     std::shared_ptr<ketoEnv::Config> config = ketoEnv::EnvironmentManager::getInstance()->getConfig();
@@ -676,8 +689,6 @@ void RpcServer::stop() {
         iter->join();
     }
     
-    AccountSessionCache::fin();
-
     listenerPtr.reset();
     
     this->threadsVector.clear();

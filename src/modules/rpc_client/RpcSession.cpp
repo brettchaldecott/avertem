@@ -424,8 +424,6 @@ void RpcSession::serverRequest(const std::string& command, const std::string& me
 }
 
 void RpcSession::peerResponse(const std::string& command, const std::string& message) {
-    keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
-    
     std::string response = keto::server_common::VectorUtils().copyVectorToString(
         Botan::hex_decode(message,true));
     keto::rpc_protocol::PeerResponseHelper peerResponseHelper(response);
@@ -442,8 +440,6 @@ void RpcSession::peerResponse(const std::string& command, const std::string& mes
 }
 
 void RpcSession::handleRegisterRequest(const std::string& command, const std::string& message) {
-    keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
-    
     keto::proto::RpcPeer rpcPeer;
     rpcPeer = keto::server_common::fromEvent<keto::proto::RpcPeer>(
                 keto::server_common::processEvent(
@@ -467,8 +463,6 @@ void RpcSession::handleRegisterRequest(const std::string& command, const std::st
 }
 
 void RpcSession::registerResponse(const std::string& command, const std::string& message) {
-    keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
-    
     keto::router_utils::RpcPeerHelper rpcPeerHelper;
     rpcPeerHelper.setAccountHash(Botan::hex_decode(message));
     
@@ -488,10 +482,11 @@ void RpcSession::registerResponse(const std::string& command, const std::string&
 void RpcSession::routeTransaction(keto::proto::MessageWrapper&  messageWrapper) {
     std::lock_guard<std::mutex> guard(this->classMutex);
     std::string messageWrapperStr;
+    std::cout << "Route transaction to a peer" << std::endl;
     messageWrapper.SerializeToString(&messageWrapperStr);
     boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::TRANSACTION
             << " " << Botan::hex_encode((uint8_t*)messageWrapperStr.data(),messageWrapperStr.size(),true);
-
+    
     ws_.text(ws_.got_text());
     ws_.async_write(
         buffer_.data(),
@@ -507,14 +502,16 @@ RpcSession::on_outBoundWrite(
     boost::system::error_code ec,
     std::size_t bytes_transferred)
 {
+    std::cout << "Bytes have been written" << std::endl;
     boost::ignore_unused(bytes_transferred);
 
     if(ec)
         return fail(ec, "write");
 
     // Clear the buffer
+    std::cout << "Consume the bytes from the buffer" << std::endl;
     buffer_.consume(buffer_.size());
-
+    
 }
 
 }
