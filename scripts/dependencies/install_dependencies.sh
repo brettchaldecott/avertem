@@ -176,7 +176,7 @@ if [ $ARCH == "ubuntu" ]; then
     cd ${HOME}/opt
     git clone https://github.com/ChaiScript/ChaiScript.git
     cd ${HOME}/opt/ChaiScript
-    git checkout -b v6.1.0
+    git checkout v6.1.0
 
     cd ${HOME}
 
