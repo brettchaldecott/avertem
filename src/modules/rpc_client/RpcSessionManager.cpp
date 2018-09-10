@@ -28,6 +28,9 @@
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
 
+
+#include "keto/rpc_client/Exception.hpp"
+
 namespace keto {
 namespace rpc_client {
 
@@ -191,7 +194,16 @@ keto::event::Event RpcSessionManager::routeTransaction(const keto::event::Event&
         
     } else {
         // route to the default account which is the first peer in the list
-        getDefaultPeer()->routeTransaction(messageWrapper);
+        if (getDefaultPeer()) {
+            getDefaultPeer()->routeTransaction(messageWrapper);
+        } else {
+            std::stringstream ss;
+            ss << "No default route for [" << 
+                messageWrapperProtoHelper.getAccountHash().getHash(keto::common::StringEncoding::HEX) << "]";
+            BOOST_THROW_EXCEPTION(keto::rpc_client::NoDefaultRouteAvailableException(
+                    ss.str()));
+        }
+        
     }
     
     keto::proto::MessageWrapperResponse response;

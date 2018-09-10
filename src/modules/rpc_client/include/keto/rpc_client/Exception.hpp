@@ -28,6 +28,7 @@ KETO_DECLARE_EXCEPTION( RpcClientException, "Block exception." );
 KETO_DECLARE_DERIVED_EXCEPTION (RpcClientException, PublicKeyNotConfiguredException , "The public key was not found.");
 KETO_DECLARE_DERIVED_EXCEPTION (RpcClientException, PrivateKeyNotConfiguredException , "The private key was not found.");
 KETO_DECLARE_DERIVED_EXCEPTION (RpcClientException, ServerNotAvailableException , "The server is not available to route to.");
+KETO_DECLARE_DERIVED_EXCEPTION (RpcClientException, NoDefaultRouteAvailableException , "No default server is registered.");
     
 }
 }
