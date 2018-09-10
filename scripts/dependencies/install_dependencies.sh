@@ -12,7 +12,8 @@ if [ $ARCH == "ubuntu" ]; then
                          libgflags-dev libsnappy-dev \
                          zlib1g-dev liblz4-dev libzstd-dev \
                          bison libbison-dev flex libfl-dev \
-                         gtk-doc-tools libxml2-dev libdb-dev
+                         gtk-doc-tools libxml2-dev libdb-dev \
+                         libpcre3 libpcre3-dev
     OPENSSL_ROOT_DIR=/usr/local/opt/openssl
     OPENSSL_LIBRARIES=/usr/local/opt/openssl/lib
 
@@ -176,7 +177,7 @@ if [ $ARCH == "ubuntu" ]; then
     cd ${HOME}/opt
     git clone https://github.com/ChaiScript/ChaiScript.git
     cd ${HOME}/opt/ChaiScript
-    git checkout -b v6.1.0
+    git checkout v6.1.0
 
     cd ${HOME}
 

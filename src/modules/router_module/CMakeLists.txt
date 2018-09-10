@@ -34,7 +34,7 @@ KetoModuleDepencencies( 0015_keto_router_module
                             PRIVATE keto_key_tools keto_proto_environment ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_asn1_common keto_asn1_protocol
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
-                            PRIVATE ${ROCKSDB_LIBRARY} ${ROCKSDB_EXTRA_LIBRARY}
+                            PRIVATE ${ROCKSDB_LIBRARY} ${ROCKSDB_EXTRA_LIBRARY} ${ROCKSDB_SNAPPY_LIBRARY}
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
 KetoModuleConsensus( 0015_keto_router_module ${NUMBER_OF_KEYS} router )
