@@ -63,6 +63,14 @@ ServerInfo::ServerInfo() {
             config->getVariablesMap()[keto::server_common::Constants::ACCOUNT_HASH].as<std::string>();
     
     this->accountHash = Botan::hex_decode(accountHash,true);
+    
+    this->feeAccountHash = this->accountHash;
+    if (config->getVariablesMap().count(keto::server_common::Constants::FEE_ACCOUNT_HASH)) {
+        accountHash = 
+            config->getVariablesMap()[keto::server_common::Constants::FEE_ACCOUNT_HASH].as<std::string>();
+    
+        this->feeAccountHash = Botan::hex_decode(accountHash,true);
+    } 
 }
 
 ServerInfo::~ServerInfo() {
@@ -79,7 +87,11 @@ std::shared_ptr<ServerInfo> ServerInfo::getInstance() {
 std::vector<uint8_t> ServerInfo::getAccountHash() {
     return this->accountHash;
 }
-    
+
+std::vector<uint8_t> ServerInfo::getFeeAccountHash() {
+    return this->feeAccountHash;
+}
+
 boost::filesystem::path ServerInfo::getPublicKeyPath() {
     return this->publicKeyPath;
 }

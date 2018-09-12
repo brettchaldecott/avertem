@@ -39,6 +39,7 @@
 
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
+#include "keto/server_common/ServerInfo.hpp"
 #include "keto/router_utils/AccountRoutingStoreHelper.hpp"
 #include "keto/router/PeerCache.hpp"
 
@@ -79,6 +80,8 @@ keto::event::Event RouterService::routeMessage(const keto::event::Event& event) 
             keto::server_common::fromEvent<keto::proto::MessageWrapper>(event);
     
     keto::asn1::HashHelper accountHash(messageWrapper.account_hash());
+    std::cout << "Attempt to route the account hash : " 
+            << accountHash.getHash(keto::common::StringEncoding::HEX) << std::endl;
     // look to see if the message account is for this server
     if (keto::crypto::SecureVectorUtils().copyFromSecure(
             accountHash.operator keto::crypto::SecureVector()) == keto::server_common::ServerInfo::getInstance()->getAccountHash()) {
@@ -165,6 +168,10 @@ keto::event::Event RouterService::updateStateRouteMessage(const keto::event::Eve
             transactionProtoHelper->getTransactionMessageHelper();
     if (transactionMessageHelper->incrementStatus() == Status_processing) {
         transactionMessageHelper->incrementStatus();
+    } else if (transactionMessageHelper->incrementStatus() == Status_fee) {
+        keto::asn1::HashHelper hashHelper(keto::crypto::SecureVectorUtils().copyToSecure(
+            keto::server_common::ServerInfo::getInstance()->getFeeAccountHash()));
+        transactionMessageHelper->setFeeAccount(hashHelper);
     }
     
     transactionProtoHelper->setTransaction(transactionMessageHelper);

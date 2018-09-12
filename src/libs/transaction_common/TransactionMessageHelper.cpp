@@ -198,7 +198,8 @@ keto::asn1::HashHelper TransactionMessageHelper::getCurrentAccount() {
         return getSourceAccount();
     } else if (getStatus() == Status_credit || getStatus() == Status_complete) {
         return getTargetAccount();
-    } else if (getStatus() == Status_fee) {      
+    } else if (getStatus() == Status_fee) {
+        std::cout << "Get the fee account : " << std::endl;
         return getFeeAccount();
     }
     std::stringstream ss;

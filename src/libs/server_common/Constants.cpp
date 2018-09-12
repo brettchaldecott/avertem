@@ -24,6 +24,7 @@ std::string Constants::getSourceVersion() {
 
 const char* Constants::PUBLIC_KEY_DIR = "public-key-dir";
 const char* Constants::ACCOUNT_HASH = "account-hash";
+const char* Constants::FEE_ACCOUNT_HASH = "fee-account-hash";
 
 // keys for server
 const char* Constants::PRIVATE_KEY    = "server-private-key";

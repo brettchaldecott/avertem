@@ -24,6 +24,11 @@
 #include <boost/algorithm/string.hpp>
 
 #include "Route.pb.h"
+#include "SoftwareConsensus.pb.h"
+#include "HandShake.pb.h"
+#include "BlockChain.pb.h"
+#include "Protocol.pb.h"
+
 
 #include "keto/common/Log.hpp"
 
@@ -54,6 +59,7 @@
 
 #include "keto/transaction/Transaction.hpp"
 #include "keto/server_common/TransactionHelper.hpp"
+#include "keto/transaction_common/MessageWrapperProtoHelper.hpp"
 
 namespace keto {
 namespace rpc_client {
@@ -76,6 +82,7 @@ RpcSession::RpcSession(
         const std::string& host) :
         resolver(*ioc),
         ws_(*ioc, *ctx),
+        strand_(ws_.get_executor()),
         peered(peered),
         host(host) {
     if (host.find(":") != std::string::npos) {
@@ -164,7 +171,9 @@ RpcSession::on_ssl_handshake(boost::system::error_code ec)
         return fail(ec, "ssl_handshake");
 
     // Perform the websocket handshake
-    ws_.async_handshake(host, "/",
+    ws_.async_handshake(
+        host, 
+        "/",
         std::bind(
             &RpcSession::on_handshake,
             shared_from_this(),
@@ -182,11 +191,13 @@ RpcSession::on_handshake(boost::system::error_code ec)
             buildMessage(keto::server_common::Constants::RPC_COMMANDS::HELLO,buildHeloMessage());
     ws_.async_write(
         buffer_.data(),
-        std::bind(
-            &RpcSession::on_write,
-            shared_from_this(),
-            std::placeholders::_1,
-            std::placeholders::_2));
+        boost::asio::bind_executor(
+            strand_,
+            std::bind(
+                &RpcSession::on_write,
+                shared_from_this(),
+                std::placeholders::_1,
+                std::placeholders::_2)));
 }
 
 
@@ -205,11 +216,13 @@ RpcSession::on_write(
     // Read a message into our buffer
     ws_.async_read(
         buffer_,
-        std::bind(
-            &RpcSession::on_read,
-            shared_from_this(),
-            std::placeholders::_1,
-            std::placeholders::_2));
+        boost::asio::bind_executor(
+            strand_,
+            std::bind(
+                &RpcSession::on_read,
+                shared_from_this(),
+                std::placeholders::_1,
+                std::placeholders::_2)));
 }
 
 void
@@ -220,21 +233,18 @@ RpcSession::on_read(
     boost::ignore_unused(bytes_transferred);
     if(ec)
         return fail(ec, "read");
-    
-    std::lock_guard<std::mutex> guard(this->classMutex);
-    
+        
+    // parse the input
     std::stringstream ss;
     ss << boost::beast::buffers(buffer_.data());
     std::string data = ss.str();
-    
-    // Clear the buffer
-    buffer_.consume(buffer_.size());
-    
     keto::server_common::StringVector stringVector = keto::server_common::StringUtils(data).tokenize(" ");
-    
     std::string command = stringVector[0];
     
     
+    // Clear the buffer
+    buffer_.consume(buffer_.size());
+
     try {
         keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
         
@@ -262,9 +272,11 @@ RpcSession::on_read(
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REGISTER) == 0) {
             registerResponse(command, stringVector[1]);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
-            
+            KETO_LOG_INFO << "[RpcSession] handle a transaction";
+            handleTransaction(command,stringVector[1]);
+            KETO_LOG_INFO << "[RpcSession] Transaction processed";
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED) == 0) {
-            
+            KETO_LOG_INFO << "The transaction has been processed : " << stringVector[1];
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS_SESSION) == 0) {
             consensusSessionResponse(command,stringVector[1]);
             transactionPtr->commit();
@@ -296,13 +308,16 @@ RpcSession::on_read(
     }
     
     // Read a message into our buffer
+    std::cout << "Handle the read response : " << command << std::endl;
     ws_.async_read(
         buffer_,
-        std::bind(
-            &RpcSession::on_read,
-            shared_from_this(),
-            std::placeholders::_1,
-            std::placeholders::_2));
+        boost::asio::bind_executor(
+            strand_,
+            std::bind(
+                &RpcSession::on_read,
+                shared_from_this(),
+                std::placeholders::_1,
+                std::placeholders::_2)));
 
 }
 
@@ -358,11 +373,14 @@ void RpcSession::closeResponse(const std::string& command, const std::string& me
     
     KETO_LOG_ERROR << "Server closing connection because [" << message << "]";
     
-    ws_.async_close(websocket::close_code::normal,
+    ws_.async_close(
+        websocket::close_code::normal,
+        boost::asio::bind_executor(
+            strand_,
             std::bind(
                 &RpcSession::on_close,
                 shared_from_this(),
-                std::placeholders::_1));
+                std::placeholders::_1)));
 }
 
 void RpcSession::helloConsensusResponse(const std::string& command, const std::string& sessionKey, const std::string& initHash) {
@@ -374,11 +392,13 @@ void RpcSession::helloConsensusResponse(const std::string& command, const std::s
             buildMessage(keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS,buildConsensus(initHashHelper));
     ws_.async_write(
         buffer_.data(),
-        std::bind(
-            &RpcSession::on_write,
-            shared_from_this(),
-            std::placeholders::_1,
-            std::placeholders::_2));
+        boost::asio::bind_executor(
+            strand_,
+            std::bind(
+                &RpcSession::on_write,
+                shared_from_this(),
+                std::placeholders::_1,
+                std::placeholders::_2)));
 }
 
 void RpcSession::consensusSessionResponse(const std::string& command, const std::string& sessionKey) {
@@ -389,11 +409,13 @@ void RpcSession::consensusSessionResponse(const std::string& command, const std:
             buildMessage(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS_SESSION,"OK");
     ws_.async_write(
         buffer_.data(),
-        std::bind(
-            &RpcSession::on_write,
-            shared_from_this(),
-            std::placeholders::_1,
-            std::placeholders::_2));
+        boost::asio::bind_executor(
+            strand_,
+            std::bind(
+                &RpcSession::on_write,
+                shared_from_this(),
+                std::placeholders::_1,
+                std::placeholders::_2)));
 }
 
 void RpcSession::consensusResponse(const std::string& command, const std::string& message) {
@@ -403,11 +425,13 @@ void RpcSession::consensusResponse(const std::string& command, const std::string
             buildMessage(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS,buildConsensus(hashHelper));
     ws_.async_write(
         buffer_.data(),
-        std::bind(
-            &RpcSession::on_write,
-            shared_from_this(),
-            std::placeholders::_1,
-            std::placeholders::_2));
+        boost::asio::bind_executor(
+            strand_,
+            std::bind(
+                &RpcSession::on_write,
+                shared_from_this(),
+                std::placeholders::_1,
+                std::placeholders::_2)));
 }
 
 void RpcSession::serverRequest(const std::string& command, const std::string& message) {
@@ -416,11 +440,13 @@ void RpcSession::serverRequest(const std::string& command, const std::string& me
             command << " " << message;
     ws_.async_write(
         buffer_.data(),
-        std::bind(
-            &RpcSession::on_write,
-            shared_from_this(),
-            std::placeholders::_1,
-            std::placeholders::_2));
+        boost::asio::bind_executor(
+            strand_,
+            std::bind(
+                &RpcSession::on_write,
+                shared_from_this(),
+                std::placeholders::_1,
+                std::placeholders::_2)));
 }
 
 void RpcSession::peerResponse(const std::string& command, const std::string& message) {
@@ -431,11 +457,14 @@ void RpcSession::peerResponse(const std::string& command, const std::string& mes
     RpcSessionManager::getInstance()->setPeers(peerResponseHelper.getPeers());
     
     // Read a message into our buffer
-    ws_.async_close(websocket::close_code::normal,
+    ws_.async_close(
+        websocket::close_code::normal,
+        boost::asio::bind_executor(
+            strand_,
             std::bind(
                 &RpcSession::on_close,
                 shared_from_this(),
-                std::placeholders::_1));
+                std::placeholders::_1)));
     
 }
 
@@ -455,12 +484,44 @@ void RpcSession::handleRegisterRequest(const std::string& command, const std::st
             rpcAccountBytes);
     ws_.async_write(
         buffer_.data(),
-        std::bind(
-            &RpcSession::on_write,
-            shared_from_this(),
-            std::placeholders::_1,
-            std::placeholders::_2));
+        boost::asio::bind_executor(
+            strand_,
+            std::bind(
+                &RpcSession::on_write,
+                shared_from_this(),
+                std::placeholders::_1,
+                std::placeholders::_2)));
 }
+
+void RpcSession::handleTransaction(const std::string& command, const std::string& message) {
+    keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper(
+        keto::server_common::VectorUtils().copyVectorToString(
+            Botan::hex_decode(message)));
+    messageWrapperProtoHelper.setSessionHash(
+            keto::server_common::VectorUtils().copyVectorToString(    
+                keto::server_common::ServerInfo::getInstance()->getAccountHash()));
+
+    keto::proto::MessageWrapper messageWrapper = messageWrapperProtoHelper;
+    keto::proto::MessageWrapperResponse messageWrapperResponse = 
+            keto::server_common::fromEvent<keto::proto::MessageWrapperResponse>(
+            keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
+            keto::server_common::Events::ROUTE_MESSAGE,messageWrapper)));
+
+    std::string result = messageWrapperResponse.SerializeAsString();
+    boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED
+            << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
+    
+    ws_.async_write(
+        buffer_.data(),
+        boost::asio::bind_executor(
+            strand_,
+            std::bind(
+                &RpcSession::on_write,
+                shared_from_this(),
+                std::placeholders::_1,
+                std::placeholders::_2)));
+}
+
 
 void RpcSession::registerResponse(const std::string& command, const std::string& message) {
     keto::router_utils::RpcPeerHelper rpcPeerHelper;
@@ -480,39 +541,41 @@ void RpcSession::registerResponse(const std::string& command, const std::string&
 }
 
 void RpcSession::routeTransaction(keto::proto::MessageWrapper&  messageWrapper) {
-    std::lock_guard<std::mutex> guard(this->classMutex);
-    std::string messageWrapperStr;
-    std::cout << "Route transaction to a peer" << std::endl;
-    messageWrapper.SerializeToString(&messageWrapperStr);
-    boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::TRANSACTION
-            << " " << Botan::hex_encode((uint8_t*)messageWrapperStr.data(),messageWrapperStr.size(),true);
+    std::string messageWrapperStr = messageWrapper.SerializeAsString();
+    std::vector<uint8_t> messageBytes =  keto::server_common::VectorUtils().copyStringToVector(
+            messageWrapperStr);
     
-    ws_.text(ws_.got_text());
+    MultiBufferPtr multiBufferPtr(new boost::beast::multi_buffer());
+    boost::beast::ostream(*multiBufferPtr) << buildMessage(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION,
+            messageBytes);
+    
     ws_.async_write(
-        buffer_.data(),
+        multiBufferPtr->data(),
+        boost::asio::bind_executor(
+            strand_,
             std::bind(
                 &RpcSession::on_outBoundWrite,
                 shared_from_this(),
                 std::placeholders::_1,
-                std::placeholders::_2));
+                std::placeholders::_2,
+                multiBufferPtr)));
 }
     
 void
 RpcSession::on_outBoundWrite(
     boost::system::error_code ec,
-    std::size_t bytes_transferred)
+    std::size_t bytes_transferred,
+    MultiBufferPtr multiBufferPtr)
 {
-    std::cout << "Bytes have been written" << std::endl;
     boost::ignore_unused(bytes_transferred);
 
     if(ec)
         return fail(ec, "write");
 
     // Clear the buffer
-    std::cout << "Consume the bytes from the buffer" << std::endl;
-    buffer_.consume(buffer_.size());
-    
+    multiBufferPtr->consume(multiBufferPtr->size());
 }
+
 
 }
 }

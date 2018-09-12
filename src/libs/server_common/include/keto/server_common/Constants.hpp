@@ -34,6 +34,7 @@ public:
     
     static const char* PUBLIC_KEY_DIR;
     static const char* ACCOUNT_HASH;
+    static const char* FEE_ACCOUNT_HASH;
     
     // keys for server
     static const char* PRIVATE_KEY;

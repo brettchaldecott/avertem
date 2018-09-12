@@ -124,7 +124,10 @@ RpcSessionPtr RpcSessionManager::getAccountSessionMapping(const std::string& acc
 }
 
 RpcSessionPtr RpcSessionManager::getDefaultPeer() {
-    return this->sessionMap.begin()->second;
+    if (this->sessionMap.size()) {
+        return this->sessionMap.begin()->second;
+    }
+    return RpcSessionPtr();
 }
 
 RpcSessionManagerPtr RpcSessionManager::init() {
@@ -185,18 +188,26 @@ keto::event::Event RpcSessionManager::routeTransaction(const keto::event::Event&
             keto::server_common::fromEvent<keto::proto::MessageWrapper>(event);
     keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper(messageWrapper);
     
+    std::cout << "Check if routing to a parent is possible : " <<
+            messageWrapperProtoHelper.getAccountHash().getHash(keto::common::StringEncoding::HEX)<< std::endl;
     // check if there is a peer matching the target account hash this would be pure luck
     if (this->hasAccountSessionMapping(
             messageWrapper.account_hash())) {
-        
+        std::cout << "The parent was found " << 
+                messageWrapperProtoHelper.getAccountHash().getHash(keto::common::StringEncoding::HEX)
+                << std::endl;
         this->getAccountSessionMapping(
                 messageWrapper.account_hash())->routeTransaction(messageWrapper);
         
     } else {
         // route to the default account which is the first peer in the list
+        std::cout << "Get the default peer and route" << std::endl;
         if (getDefaultPeer()) {
+            std::cout << "Route to the default peer" << std::endl;
             getDefaultPeer()->routeTransaction(messageWrapper);
         } else {
+            std::cout << "No default peer exists throw an exception" << std::endl;
+            
             std::stringstream ss;
             ss << "No default route for [" << 
                 messageWrapperProtoHelper.getAccountHash().getHash(keto::common::StringEncoding::HEX) << "]";
@@ -206,12 +217,16 @@ keto::event::Event RpcSessionManager::routeTransaction(const keto::event::Event&
         
     }
     
+    std::cout << "Process successfully" << std::endl;
+    
     keto::proto::MessageWrapperResponse response;
     response.set_success(true);
     std::stringstream ss;
     ss << "Routed to the server peer [" << 
             messageWrapperProtoHelper.getAccountHash().getHash(keto::common::StringEncoding::HEX) << "]";
     response.set_result(ss.str());
+    std::cout << "Return the result of the routing" << std::endl;
+    
     return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
 }
 

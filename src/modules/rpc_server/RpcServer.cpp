@@ -131,17 +131,17 @@ public:
     
 };
 
+typedef std::shared_ptr<boost::beast::multi_buffer> MultiBufferPtr;
+
 // Echoes back all received WebSocket messages
 class session : public std::enable_shared_from_this<session>
 {
 private:
-    std::mutex classMutex;
     tcp::socket socket_;
     websocket::stream<beastSsl::stream<tcp::socket&>> ws_;
     boost::asio::strand<
         boost::asio::io_context::executor_type> strand_;
     boost::beast::multi_buffer buffer_;
-    //boost::asio::const_buffer outbuffer_;
     RpcServer* rpcServer;
     std::shared_ptr<keto::rpc_protocol::ServerHelloProtoHelper> serverHelloProtoHelperPtr;
 
@@ -222,7 +222,7 @@ public:
         boost::ignore_unused(bytes_transferred);
 
         // This indicates that the session was closed
-        if(ec == websocket::error::closed) {
+        if(ec == websocket::error::closed || !ws_.is_open()) {
             if (serverHelloProtoHelperPtr) {
                 std::string accountHash = keto::server_common::VectorUtils().copyVectorToString(    
                     serverHelloProtoHelperPtr->getAccountHash());
@@ -232,22 +232,21 @@ public:
             }
             return;
         }
-        // lock the mutex for processing to prevent confict with an
-        // out bound thread.
-        if(ec)
+        if(ec) {
             fail(ec, "read");
+        }
+            
         
         
         std::stringstream ss;
         ss << boost::beast::buffers(buffer_.data());
         std::string data = ss.str();
+        keto::server_common::StringVector stringVector = keto::server_common::StringUtils(data).tokenize(" ");
+
         
         // Clear the buffer
         buffer_.consume(buffer_.size());
         
-        // Close the WebSocket connection
-        keto::server_common::StringVector stringVector = keto::server_common::StringUtils(data).tokenize(" ");
-
         std::string command = stringVector[0];
         std::string payload;
         if (stringVector.size() == 2) {
@@ -256,9 +255,7 @@ public:
         std::string message;
         
         try {
-            std::lock_guard<std::mutex> guard(this->classMutex);
             keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
-            std::cout << "Process the command : " << command << std::endl;
             if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO) == 0) {
                 handleHello(command, payload);
                 KETO_LOG_INFO << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " Said hello";
@@ -273,6 +270,7 @@ public:
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
                 KETO_LOG_INFO << "[RpcServer] handle a transaction";
                 handleTransaction(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION, payload);
+                KETO_LOG_INFO << "[RpcServer] Transaction processing complete";
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED) == 0) {
                 handleTransactionProcessed(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS) == 0) {
@@ -313,16 +311,15 @@ public:
                     shared_from_this(),
                     std::placeholders::_1,
                     std::placeholders::_2)));
-        std::cout << "The command is ending : " << command << std::endl;
         
     }
     
     void
     routeTransaction(keto::proto::MessageWrapper&  messageWrapper) {
-        std::lock_guard<std::mutex> guard(this->classMutex);
         std::string messageWrapperStr;
         messageWrapper.SerializeToString(&messageWrapperStr);
-        boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::TRANSACTION
+        MultiBufferPtr multiBufferPtr(new boost::beast::multi_buffer());
+        boost::beast::ostream(*multiBufferPtr) << keto::server_common::Constants::RPC_COMMANDS::TRANSACTION
                 << " " << Botan::hex_encode((uint8_t*)messageWrapperStr.data(),messageWrapperStr.size(),true);
         
         ws_.text(ws_.got_text());
@@ -334,21 +331,31 @@ public:
                     &session::on_outBoundWrite,
                     shared_from_this(),
                     std::placeholders::_1,
-                    std::placeholders::_2)));
+                    std::placeholders::_2,
+                    multiBufferPtr)));
     }
     
     void
     on_outBoundWrite(
         boost::system::error_code ec,
-        std::size_t bytes_transferred)
+        std::size_t bytes_transferred,
+        MultiBufferPtr multiBufferPtr)
     {
         boost::ignore_unused(bytes_transferred);
 
-        if(ec)
+        if(ec) {
+            if (serverHelloProtoHelperPtr) {
+                std::string accountHash = keto::server_common::VectorUtils().copyVectorToString(    
+                    serverHelloProtoHelperPtr->getAccountHash());
+                if (AccountSessionCache::getInstance()->hasSession(accountHash)) {
+                    AccountSessionCache::getInstance()->removeAccount(accountHash);
+                }
+            }
             return fail(ec, "write");
+        }
 
         // Clear the buffer
-        buffer_.consume(buffer_.size());
+        multiBufferPtr->consume(multiBufferPtr->size());
 
     }
     
@@ -361,7 +368,7 @@ public:
 
         if(ec)
             return fail(ec, "write");
-
+        
         // Clear the buffer
         buffer_.consume(buffer_.size());
 
@@ -443,26 +450,22 @@ public:
     void handleRegister(const std::string& command, const std::string& payload) {
         
         // add this session for call backs
-        std::cout << "Add the account." << std::endl;
         AccountSessionCache::getInstance()->addAccount(
             keto::server_common::VectorUtils().copyVectorToString(    
             serverHelloProtoHelperPtr->getAccountHash()),
                 shared_from_this());
         
-        std::cout << "Copy vector to string." << std::endl;
         std::string rpcVector = keto::server_common::VectorUtils().copyVectorToString(
                 Botan::hex_decode(payload));
         keto::router_utils::RpcPeerHelper rpcPeerHelper(rpcVector);
         
         keto::proto::RpcPeer rpcPeer = (keto::proto::RpcPeer)rpcPeerHelper;
         
-        std::cout << "Register RPC peer." << std::endl;
         rpcPeer = keto::server_common::fromEvent<keto::proto::RpcPeer>(
                     keto::server_common::processEvent(
                     keto::server_common::toEvent<keto::proto::RpcPeer>(
                     keto::server_common::Events::REGISTER_RPC_PEER,rpcPeer)));
         
-        std::cout << "Write the buffer for the response" << std::endl;
         boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::REGISTER
                 << " " << Botan::hex_encode(
                 keto::server_common::ServerInfo::getInstance()->getAccountHash());
@@ -484,8 +487,7 @@ public:
                 keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
                 keto::server_common::Events::ROUTE_MESSAGE,messageWrapper)));
         
-        std::string result;
-        messageWrapperResponse.SerializeToString(&result);
+        std::string result = messageWrapperResponse.SerializeAsString();
         boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED
                 << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
     }

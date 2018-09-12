@@ -19,6 +19,8 @@
 #include <boost/beast/websocket.hpp>
 #include <boost/beast/websocket/ssl.hpp>
 #include <boost/asio/connect.hpp>
+#include <boost/asio/bind_executor.hpp>
+#include <boost/asio/strand.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ssl/stream.hpp>
 #include <cstdlib>
@@ -52,6 +54,8 @@ namespace rpc_client {
 class RpcSession;
 
 typedef std::shared_ptr<RpcSession> RpcSessionPtr;
+
+typedef std::shared_ptr<boost::beast::multi_buffer> MultiBufferPtr;
 
 class RpcSession : public std::enable_shared_from_this<RpcSession> {
 public:
@@ -102,12 +106,14 @@ public:
     void
     on_outBoundWrite(
         boost::system::error_code ec,
-        std::size_t bytes_transferred);
+        std::size_t bytes_transferred,
+        MultiBufferPtr multiBufferPtr);
     
 private:
-    std::mutex classMutex;
     tcp::resolver resolver;
     websocket::stream<boostSsl::stream<tcp::socket>> ws_;
+    boost::asio::strand<
+        boost::asio::io_context::executor_type> strand_;
     boost::beast::multi_buffer buffer_;
     bool peered;
     std::string host;
@@ -131,6 +137,7 @@ private:
     void peerResponse(const std::string& command, const std::string& message);
     void registerResponse(const std::string& command, const std::string& message);
     void handleRegisterRequest(const std::string& command, const std::string& message);
+    void handleTransaction(const std::string& command, const std::string& message);
     
 };
 

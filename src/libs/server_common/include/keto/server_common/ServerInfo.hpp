@@ -46,6 +46,13 @@ public:
     std::vector<uint8_t> getAccountHash();
     
     /**
+     * This method returns the fee account hash
+     * 
+     * @return The hash bytes
+     */
+    std::vector<uint8_t> getFeeAccountHash();
+    
+    /**
      * This method returns the public key directory path. This contains all the
      * public keys registered with the keto server.
      * 
@@ -55,6 +62,7 @@ public:
     
 private:
     std::vector<uint8_t> accountHash;
+    std::vector<uint8_t> feeAccountHash;
     boost::filesystem::path publicKeyPath;
     
     ServerInfo();
