@@ -21,7 +21,7 @@ add_library( keto_server_common
 
 target_link_libraries( keto_server_common )
 
-add_dependencies(keto_server_common keto_asn1_protocol)
+add_dependencies(keto_server_common keto_asn1_protocol keto_proto_environment)
 
 target_include_directories( keto_server_common
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
