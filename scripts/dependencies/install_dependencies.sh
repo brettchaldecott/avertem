@@ -154,7 +154,7 @@ if [ $ARCH == "ubuntu" ]; then
     cd build
     cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=${HOME}/opt/wasm \
         -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=WebAssembly -DCMAKE_BUILD_TYPE=Release ../
-    make -j4 install
+    make ${BUILD_FORKS} install
     rm -rf ${TEMP_DIR}/wasm-compiler
     WASM_LLVM_CONFIG=${HOME}/opt/wasm/bin/llvm-config
     WASM_LLVM=${HOME}/opt/wasm/
@@ -176,8 +176,7 @@ if [ $ARCH == "ubuntu" ]; then
     # install beast
     cd ${HOME}/opt
     git clone https://github.com/ChaiScript/ChaiScript.git
-    cd ${HOME}/opt/ChaiScript
-    git checkout v6.1.0
+    cd ${HOME}/opt/ChaiScript && git checkout v6.1.0
 
     cd ${HOME}
 
@@ -223,7 +222,7 @@ if [ $ARCH == "darwin" ]; then
     mkdir build
     cd build
     sudo cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr/local/wasm -DLLVM_TARGETS_TO_BUILD= -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=WebAssembly -DCMAKE_BUILD_TYPE=Release ../
-    sudo make -j4 install
+    sudo make ${BUILD_FORKS} install
     sudo rm -rf ${TEMP_DIR}/wasm-compiler
     WASM_LLVM_CONFIG=/usr/local/wasm/bin/llvm-config
 
