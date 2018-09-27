@@ -13,6 +13,12 @@ SOURCE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 KETO_HOME=${SOURCE_DIR%%/bin}
 export KETO_HOME
 
+# upgrade
+AUTO_UPGRADE=`cat ${KETO_HOME}/config/auto_upgrade`
+if [ "${AUTO_UPGRADE}" -eq "1"] ; then
+    ${KETO_HOME}/upgrade/ubuntu.sh
+fi
+
 # execute ketod
 ${KETO_HOME}/bin/ketod $@
 
