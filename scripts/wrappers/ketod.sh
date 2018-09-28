@@ -15,7 +15,7 @@ export KETO_HOME
 
 # upgrade
 AUTO_UPGRADE=`cat ${KETO_HOME}/config/auto_upgrade`
-if [ "${AUTO_UPGRADE}" -eq "1" ] ; then
+if [ "${AUTO_UPGRADE}" == "1" ] ; then
     ${KETO_HOME}/upgrade/ubuntu.sh
 fi
 
