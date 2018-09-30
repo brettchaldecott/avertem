@@ -6,7 +6,7 @@
 
 /* 
  * File:   VersionManagerModuleManager.cpp
- * Author: ubuntu
+ * Author: brett chaldecott
  * 
  * Created on January 20, 2018, 5:03 PM
  */
@@ -22,6 +22,7 @@
 #include "keto/version_manager/VersionManagerModuleManagerMisc.hpp"
 #include "keto/version_manager/ConsensusService.hpp"
 #include "keto/version_manager/EventRegistry.hpp"
+#include "keto/version_manager/VersionProcessor.hpp"
 
 namespace keto {
 namespace version_manager {
@@ -52,6 +53,7 @@ const std::string VersionManagerModuleManager::getVersion() const {
 // lifecycle methods
 void VersionManagerModuleManager::start() {
     modules["VersionManagerModule"] = std::make_shared<VersionManagerModule>();
+    VersionProcessor::init();
     ConsensusService::init(getConsensusHash());
     EventRegistry::registerEventHandlers();
     KETO_LOG_INFO << "[VersionManagerModuleManager] Started the VersionManagerModuleManager";
@@ -60,6 +62,7 @@ void VersionManagerModuleManager::start() {
 void VersionManagerModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
     ConsensusService::fin();
+    VersionProcessor::fin();
     modules.clear();
     KETO_LOG_INFO << "[VersionManagerModuleManager] The VersionManagerModuleManager is being stopped";
 

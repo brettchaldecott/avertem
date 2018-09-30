@@ -31,3 +31,6 @@ block_producer_enabled=true
 rpc-peer=
 # keys
 consensus-keys=${KetoConsensusKeys}
+# version
+check_script=upgrade/ubuntu.sh
+auto_update=false

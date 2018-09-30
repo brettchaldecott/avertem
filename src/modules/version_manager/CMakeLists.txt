@@ -19,7 +19,9 @@ add_library( 0070_keto_version_manager_module
             VersionManagerModule.cpp
             ConsensusService.cpp
             EventRegistry.cpp
-
+            VersionProcessor.cpp
+            Constants.cpp
+            
              ${HEADERS}
            )
 
