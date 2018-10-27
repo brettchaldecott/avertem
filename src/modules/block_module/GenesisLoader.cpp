@@ -184,7 +184,7 @@ void GenesisLoader::load() {
             keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::Transaction>(
             keto::server_common::Events::APPLY_ACCOUNT_TRANSACTION_MESSAGE,transactionProtoHelper)));
         
-        blockBuilderPtr->addTransactionMessage(*transactionProtoHelper.getTransactionMessageHelper());
+        blockBuilderPtr->addTransactionMessage(transactionProtoHelper.getTransactionMessageHelper());
     }
     
     keto::block_db::SignedBlockBuilderPtr signedBlockBuilderPtr(new keto::block_db::SignedBlockBuilder(

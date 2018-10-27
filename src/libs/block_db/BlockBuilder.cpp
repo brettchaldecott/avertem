@@ -19,7 +19,9 @@
 #include "keto/block_db/MerkleUtils.hpp"
 #include "keto/block_db/SignedChangeSetBuilder.hpp"
 #include "keto/block_db/MerkleUtils.hpp"
-#include "include/keto/block_db/BlockBuilder.hpp"
+#include "keto/block_db/BlockBuilder.hpp"
+#include "keto/asn1/CloneHelper.hpp"
+
 
 namespace keto {
 namespace block_db {
@@ -54,8 +56,11 @@ BlockBuilder::~BlockBuilder() {
 }
 
 BlockBuilder& BlockBuilder::addTransactionMessage(
-        const TransactionMessage* transaction) {
-    if (0 != ASN_SEQUENCE_ADD(&this->block->transactions,(TransactionWrapper*)&transaction->transaction)) {
+        const keto::transaction_common::TransactionMessageHelperPtr transaction) {
+    if (0 != ASN_SEQUENCE_ADD(&this->block->transactions,
+            keto::asn1::clone<TransactionWrapper_t>(
+            transaction->getTransactionWrapper()->operator TransactionWrapper_t*(),
+            &asn_DEF_TransactionWrapper))) {
         BOOST_THROW_EXCEPTION(keto::block_db::FailedToAddTheTransactionException());
     }
     return (*this);

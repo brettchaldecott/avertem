@@ -25,8 +25,10 @@
 
 #include "keto/asn1/TimeHelper.hpp"
 #include "keto/asn1/HashHelper.hpp"
+#include "keto/transaction_common/TransactionMessageHelper.hpp"
 
 #include "keto/obfuscate/MetaString.hpp"
+
 
 
 namespace keto {
@@ -49,7 +51,7 @@ public:
     
     
     BlockBuilder& addTransactionMessage(
-            const TransactionMessage* transaction);
+            const keto::transaction_common::TransactionMessageHelperPtr transaction);
     
     operator Block_t*();
     operator Block_t&();
