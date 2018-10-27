@@ -13,7 +13,7 @@ namespace keto {
 namespace environment {
 
 std::string Env::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 Env::Env() {

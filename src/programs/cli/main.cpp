@@ -185,10 +185,12 @@ int generateTransaction(std::shared_ptr<ketoEnv::Config> config,
     signedTransBuild->sign();
     
     keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr(
-        new keto::transaction_common::TransactionMessageHelper(
-        *signedTransBuild,keto::asn1::HashHelper(sourceAccount,
-        keto::common::HEX),keto::asn1::HashHelper(targetAccount,
-        keto::common::HEX)));
+    new keto::transaction_common::TransactionMessageHelper(
+        keto::transaction_common::TransactionWrapperHelperPtr(
+        new keto::transaction_common::TransactionWrapperHelper(
+            *signedTransBuild,keto::asn1::HashHelper(sourceAccount,
+            keto::common::HEX),keto::asn1::HashHelper(targetAccount,
+            keto::common::HEX)))));
     
     // The io_context is required for all I/O
     boost::asio::io_context ioc;

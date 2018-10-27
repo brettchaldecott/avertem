@@ -21,7 +21,7 @@ namespace keystore {
 static std::shared_ptr<KeyStoreService> singleton;
 
 std::string KeyStoreService::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 KeyStoreService::KeyStoreService() : 

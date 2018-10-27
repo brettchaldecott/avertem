@@ -34,7 +34,7 @@ typedef std::shared_ptr<VersionProcessor> VersionProcessorPtr;
 class VersionProcessor {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
     
     static std::string getSourceVersion();

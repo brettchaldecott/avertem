@@ -37,7 +37,7 @@ namespace account_db {
 static std::shared_ptr<AccountStore> singleton;
 
 std::string AccountStore::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 AccountStore::AccountStore() {
@@ -92,12 +92,14 @@ void AccountStore::applyTransaction(
     keto::proto::AccountInfo accountInfo;
     AccountRDFStatementBuilderPtr accountRDFStatementBuilder;
     keto::asn1::HashHelper accountHash;
-    if ((transactionMessageHelper->getStatus() == Status_debit) || (transactionMessageHelper->getStatus() == Status_init)) {
-        accountHash = transactionMessageHelper->getSourceAccount();
-    } else if (transactionMessageHelper->getStatus() == Status_fee) {
-        accountHash = transactionMessageHelper->getFeeAccount();
-    } else if ((transactionMessageHelper->getStatus() == Status_credit) || (transactionMessageHelper->getStatus() == Status_complete)) {
-        accountHash = transactionMessageHelper->getTargetAccount();
+    keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelperPtr = 
+        transactionMessageHelper->getTransactionWrapper();
+    if ((transactionWrapperHelperPtr->getStatus() == Status_debit) || (transactionWrapperHelperPtr->getStatus() == Status_init)) {
+        accountHash = transactionWrapperHelperPtr->getSourceAccount();
+    } else if (transactionWrapperHelperPtr->getStatus() == Status_fee) {
+        accountHash = transactionWrapperHelperPtr->getFeeAccount();
+    } else if ((transactionWrapperHelperPtr->getStatus() == Status_credit) || (transactionWrapperHelperPtr->getStatus() == Status_complete)) {
+        accountHash = transactionWrapperHelperPtr->getTargetAccount();
     }
     
     if (!getAccountInfo(accountHash,accountInfo)) {

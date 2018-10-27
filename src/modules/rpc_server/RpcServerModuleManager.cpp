@@ -32,7 +32,7 @@ namespace keto {
 namespace rpc_server {
 
 std::string RpcServerModuleManager::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 RpcServerModuleManager::RpcServerModuleManager() {

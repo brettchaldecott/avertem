@@ -17,7 +17,7 @@ namespace keto {
 namespace asn1 {
     
 std::string TimeHelper::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 TimeHelper::TimeHelper() {

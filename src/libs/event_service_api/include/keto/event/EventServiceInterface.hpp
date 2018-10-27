@@ -32,7 +32,7 @@ typedef Event (*handler)(const Event&);
 class EventServiceInterface {
 public:
     inline static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id: $");
+        return OBFUSCATED("$Id$");
     };
     
     static constexpr const char* KETO_EVENT_SERVICE_MODULE = "event_service";

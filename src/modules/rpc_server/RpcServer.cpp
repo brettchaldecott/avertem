@@ -601,7 +601,7 @@ std::shared_ptr<listener> listenerPtr;
 namespace ketoEnv = keto::environment;
 
 std::string RpcServer::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 RpcServer::RpcServer() {

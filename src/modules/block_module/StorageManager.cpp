@@ -25,7 +25,7 @@ namespace block {
 static std::shared_ptr<StorageManager> singleton;
 
 std::string StorageManager::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 StorageManager::StorageManager() {

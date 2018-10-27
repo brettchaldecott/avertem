@@ -41,7 +41,7 @@ typedef std::shared_ptr<WavmSession> WavmSessionPtr;
 class WavmSession {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
     
     static std::string getSourceVersion();

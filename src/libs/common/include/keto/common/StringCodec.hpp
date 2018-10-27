@@ -23,7 +23,7 @@ namespace common {
 class StringCodec {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
 };
 enum StringEncoding {

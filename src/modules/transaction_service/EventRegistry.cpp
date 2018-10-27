@@ -23,7 +23,7 @@ namespace keto {
 namespace transaction {
 
 std::string EventRegistry::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 

@@ -50,7 +50,7 @@ namespace router {
 static std::shared_ptr<RouterService> singleton;
 
 std::string RouterService::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 RouterService::RouterService() {
@@ -166,12 +166,14 @@ keto::event::Event RouterService::updateStateRouteMessage(const keto::event::Eve
             
     keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelper =
             transactionProtoHelper->getTransactionMessageHelper();
-    if (transactionMessageHelper->incrementStatus() == Status_processing) {
-        transactionMessageHelper->incrementStatus();
-    } else if (transactionMessageHelper->incrementStatus() == Status_fee) {
+    keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelperPtr = 
+            transactionMessageHelper->getTransactionWrapper();
+    if (transactionWrapperHelperPtr->incrementStatus() == Status_processing) {
+        transactionWrapperHelperPtr->incrementStatus();
+    } else if (transactionWrapperHelperPtr->incrementStatus() == Status_fee) {
         keto::asn1::HashHelper hashHelper(keto::crypto::SecureVectorUtils().copyToSecure(
             keto::server_common::ServerInfo::getInstance()->getFeeAccountHash()));
-        transactionMessageHelper->setFeeAccount(hashHelper);
+        transactionWrapperHelperPtr->setFeeAccount(hashHelper);
     }
     
     transactionProtoHelper->setTransaction(transactionMessageHelper);

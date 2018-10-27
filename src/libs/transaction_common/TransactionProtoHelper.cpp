@@ -19,13 +19,14 @@
 #include "keto/crypto/SecureVectorUtils.hpp"
 
 #include "include/keto/transaction_common/TransactionProtoHelper.hpp"
+#include "include/keto/transaction_common/TransactionMessageHelper.hpp"
 
 
 namespace keto {
 namespace transaction_common {
 
 std::string TransactionProtoHelper::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 TransactionProtoHelper::TransactionProtoHelper() {
@@ -37,30 +38,32 @@ TransactionProtoHelper::TransactionProtoHelper(const keto::proto::Transaction& t
 
 TransactionProtoHelper::TransactionProtoHelper(
         const TransactionMessageHelperPtr& transactionMessageHelper) {
-    keto::asn1::HashHelper hashHelper = transactionMessageHelper->getHash();
+    TransactionWrapperHelperPtr transactionWrapperHelperPtr = 
+            transactionMessageHelper->getTransactionWrapper();
+    keto::asn1::HashHelper hashHelper = transactionWrapperHelperPtr->getHash();
     transaction.set_transaction_hash(
         hashHelper.operator keto::crypto::SecureVector().data(),
         hashHelper.operator keto::crypto::SecureVector().size());
-    keto::asn1::SignatureHelper signatureHelper = transactionMessageHelper->getSignature();
+    keto::asn1::SignatureHelper signatureHelper = transactionWrapperHelperPtr->getSignature();
     transaction.set_transaction_signature(
         signatureHelper.operator std::vector<uint8_t>().data(),
         signatureHelper.operator std::vector<uint8_t>().size());
-    hashHelper = transactionMessageHelper->getCurrentAccount();
+    hashHelper = transactionWrapperHelperPtr->getCurrentAccount();
     transaction.set_active_account(
         hashHelper.operator keto::crypto::SecureVector().data(),
         hashHelper.operator keto::crypto::SecureVector().size());
     
-    if (transactionMessageHelper->getStatus() == Status_init) {
+    if (transactionWrapperHelperPtr->getStatus() == Status_init) {
         transaction.set_status(keto::proto::TransactionStatus::INIT);
-    } else if (transactionMessageHelper->getStatus() == Status_debit) {
+    } else if (transactionWrapperHelperPtr->getStatus() == Status_debit) {
         transaction.set_status(keto::proto::TransactionStatus::DEBIT);
-    } else if (transactionMessageHelper->getStatus() == Status_processing) {
+    } else if (transactionWrapperHelperPtr->getStatus() == Status_processing) {
         transaction.set_status(keto::proto::TransactionStatus::PROCESS);
-    } else if (transactionMessageHelper->getStatus() == Status_fee) {
+    } else if (transactionWrapperHelperPtr->getStatus() == Status_fee) {
         transaction.set_status(keto::proto::TransactionStatus::FEE);
-    } else if (transactionMessageHelper->getStatus() == Status_credit) {
+    } else if (transactionWrapperHelperPtr->getStatus() == Status_credit) {
         transaction.set_status(keto::proto::TransactionStatus::CREDIT);
-    } else if (transactionMessageHelper->getStatus() == Status_complete) {
+    } else if (transactionWrapperHelperPtr->getStatus() == Status_complete) {
         transaction.set_status(keto::proto::TransactionStatus::COMPLETE);
     }
     
@@ -76,32 +79,35 @@ TransactionProtoHelper::~TransactionProtoHelper() {
 
 TransactionProtoHelper& TransactionProtoHelper::setTransaction(
     const TransactionMessageHelperPtr& transactionMessageHelper) {
-    
-    keto::asn1::HashHelper hashHelper = transactionMessageHelper->getHash();
+    TransactionWrapperHelperPtr transactionWrapperHelperPtr = 
+            transactionMessageHelper->getTransactionWrapper();
+    keto::asn1::HashHelper hashHelper = transactionWrapperHelperPtr->getHash();
     transaction.set_transaction_hash(
         hashHelper.operator keto::crypto::SecureVector().data(),
         hashHelper.operator keto::crypto::SecureVector().size());
-    keto::asn1::SignatureHelper signatureHelper = transactionMessageHelper->getSignature();
+    keto::asn1::SignatureHelper signatureHelper = transactionWrapperHelperPtr->getSignature();
     transaction.set_transaction_signature(
         signatureHelper.operator std::vector<uint8_t>().data(),
         signatureHelper.operator std::vector<uint8_t>().size());
-    hashHelper = transactionMessageHelper->getCurrentAccount();
+    hashHelper = transactionWrapperHelperPtr->getCurrentAccount();
     transaction.set_active_account(
         hashHelper.operator keto::crypto::SecureVector().data(),
         hashHelper.operator keto::crypto::SecureVector().size());
     
     
-    if (transactionMessageHelper->getStatus() == Status_init) {
+    if (transactionWrapperHelperPtr->getStatus() == Status_init) {
         transaction.set_status(keto::proto::TransactionStatus::INIT);
-    } else if (transactionMessageHelper->getStatus() == Status_debit) {
+    } else if (transactionWrapperHelperPtr->getStatus() == Status_debit) {
         transaction.set_status(keto::proto::TransactionStatus::DEBIT);
-    } else if (transactionMessageHelper->getStatus() == Status_processing) {
+    } else if (transactionWrapperHelperPtr->getStatus() == Status_processing) {
         transaction.set_status(keto::proto::TransactionStatus::PROCESS);
-    } else if (transactionMessageHelper->getStatus() == Status_fee) {
+    } else if (transactionWrapperHelperPtr->getStatus() == Status_nested) {
+        transaction.set_status(keto::proto::TransactionStatus::NESTED);
+    } else if (transactionWrapperHelperPtr->getStatus() == Status_fee) {
         transaction.set_status(keto::proto::TransactionStatus::FEE);
-    } else if (transactionMessageHelper->getStatus() == Status_credit) {
+    } else if (transactionWrapperHelperPtr->getStatus() == Status_credit) {
         transaction.set_status(keto::proto::TransactionStatus::CREDIT);
-    } else if (transactionMessageHelper->getStatus() == Status_complete) {
+    } else if (transactionWrapperHelperPtr->getStatus() == Status_complete) {
         transaction.set_status(keto::proto::TransactionStatus::COMPLETE);
     }
     

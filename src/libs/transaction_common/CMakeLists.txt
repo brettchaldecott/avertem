@@ -9,6 +9,7 @@ add_library( keto_transaction_common
             TransactionTraceBuilder.cpp
             ChangeSetBuilder.cpp
             SignedChangeSetBuilder.cpp
+            TransactionWrapperHelper.cpp
             TransactionMessageHelper.cpp
             TransactionProtoHelper.cpp
             SignedTransactionHelper.cpp

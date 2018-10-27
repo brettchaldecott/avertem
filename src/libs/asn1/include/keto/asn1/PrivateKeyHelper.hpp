@@ -31,7 +31,7 @@ namespace asn1 {
 class PrivateKeyHelper {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
     static std::string getSourceVersion();
 

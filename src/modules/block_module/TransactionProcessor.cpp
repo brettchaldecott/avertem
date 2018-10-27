@@ -33,7 +33,7 @@ namespace block {
 static TransactionProcessorPtr singleton;
 
 std::string TransactionProcessor::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 TransactionProcessor::TransactionProcessor() {
@@ -79,11 +79,14 @@ keto::proto::Transaction TransactionProcessor::processTransaction(keto::proto::T
     
     
     std::cout << "Before looping through the actions" << std::endl; 
-    if (transactionProtoHelper.getTransactionMessageHelper() && 
-            transactionProtoHelper.getTransactionMessageHelper()->getSignedTransaction() &&
-            transactionProtoHelper.getTransactionMessageHelper()->getSignedTransaction()->getTransaction()) {
+    keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr = 
+            transactionProtoHelper.getTransactionMessageHelper();
+    keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelperPtr = 
+            transactionMessageHelperPtr->getTransactionWrapper();
+    if (transactionWrapperHelperPtr->getSignedTransaction() &&
+            transactionWrapperHelperPtr->getSignedTransaction()->getTransaction()) {
         std::vector<keto::transaction_common::ActionHelperPtr> actions = 
-            transactionProtoHelper.getTransactionMessageHelper()->getSignedTransaction()->getTransaction()->getActions();    
+            transactionWrapperHelperPtr->getSignedTransaction()->getTransaction()->getActions();    
         for (keto::transaction_common::ActionHelperPtr action : actions) {
             std::cout << "The action is contract : " << action->getContract().getHash(keto::common::HEX) << std::endl;
         }

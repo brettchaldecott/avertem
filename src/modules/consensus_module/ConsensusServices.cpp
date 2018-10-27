@@ -42,7 +42,7 @@ namespace consensus_module {
 static ConsensusServicesPtr singleton;
 
 std::string ConsensusServices::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 ConsensusServices::ConsensusServices(

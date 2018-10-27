@@ -32,7 +32,7 @@ namespace keto {
     namespace environment {
         
 std::string LogManager::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
     
 LogManager::LogManager(

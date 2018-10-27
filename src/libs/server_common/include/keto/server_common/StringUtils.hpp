@@ -26,7 +26,7 @@ typedef std::vector<std::string> StringVector;
 class StringUtils {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
     static std::string getSourceVersion();
 

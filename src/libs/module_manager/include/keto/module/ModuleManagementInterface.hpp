@@ -28,7 +28,7 @@ namespace module {
 class ModuleManagementInterface {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
 
     friend class ModuleManager;

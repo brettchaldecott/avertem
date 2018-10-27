@@ -24,7 +24,7 @@ namespace crypto {
 class Constants {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
     
     

@@ -17,7 +17,7 @@ namespace keto {
 namespace software_consensus {
 
 std::string ConsensusHashScriptInfo::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
     
 ConsensusHashScriptInfo::ConsensusHashScriptInfo(

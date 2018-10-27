@@ -20,7 +20,7 @@ namespace keto {
 namespace server_common {
 
 std::string StringUtils::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 StringUtils::StringUtils(const std::string& value) : value(value) {

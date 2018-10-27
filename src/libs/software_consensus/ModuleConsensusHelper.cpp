@@ -23,7 +23,7 @@ namespace software_consensus {
 
 
 std::string ModuleConsensusHelper::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
     

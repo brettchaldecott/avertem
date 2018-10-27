@@ -27,7 +27,7 @@ namespace router_db {
 static std::shared_ptr<RouterStore> singleton;
 
 std::string RouterStore::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 RouterStore::RouterStore() {

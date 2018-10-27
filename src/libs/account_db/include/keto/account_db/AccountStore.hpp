@@ -22,6 +22,7 @@
 #include "keto/rocks_db/DBManager.hpp"
 #include "keto/account_db/AccountResourceManager.hpp"
 #include "keto/account_db/AccountGraphStoreManager.hpp"
+#include "keto/transaction_common/TransactionWrapperHelper.hpp"
 #include "keto/transaction_common/TransactionMessageHelper.hpp"
 #include "keto/account_db/AccountRDFStatementBuilder.hpp"
 #include "keto/router_utils/RpcPeerHelper.hpp"
@@ -35,7 +36,7 @@ namespace account_db {
 class AccountStore {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
     static std::string getSourceVersion();
     

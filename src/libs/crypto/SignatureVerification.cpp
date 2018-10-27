@@ -20,7 +20,7 @@ namespace keto {
 namespace crypto {
 
 std::string SignatureVerification::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
     
 SignatureVerification::SignatureVerification(std::shared_ptr<Botan::Public_Key> publicKey,

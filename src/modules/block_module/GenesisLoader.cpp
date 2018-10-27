@@ -65,7 +65,7 @@ namespace keto {
 namespace block {
     
 std::string GenesisLoader::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 GenesisLoader::GenesisLoader(const GenesisReader& reader) : reader(reader) {
@@ -156,22 +156,26 @@ void GenesisLoader::load() {
                 privateKeyHelper);
         KETO_LOG_INFO << "Sign transaction" << std::endl;
         signedTransBuild->setTransaction(transactionPtr).sign();
-        keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelper(
-            new keto::transaction_common::TransactionMessageHelper(signedTransBuild->operator SignedTransaction*()));
-        transactionMessageHelper->setStatus(Status_complete).setSourceAccount(sourceAccount).setTargetAccount(sourceAccount);
+        keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelper(
+            new keto::transaction_common::TransactionWrapperHelper(signedTransBuild->operator SignedTransaction*()));
+        transactionWrapperHelper->setStatus(Status_complete).setSourceAccount(sourceAccount).setTargetAccount(sourceAccount);
         
         
         // create a change set set
         keto::transaction_common::ChangeSetBuilderPtr changeSetBuilder(
             new keto::transaction_common::ChangeSetBuilder(
-                transactionMessageHelper->getHash(),
+                transactionWrapperHelper->getHash(),
                 sourceAccount));
         changeSetBuilder->addChange(anyModel).setStatus(Status_complete);
         keto::transaction_common::SignedChangeSetBuilderPtr signedChangeSetBuilder(new
             keto::transaction_common::SignedChangeSetBuilder(*changeSetBuilder,*keyLoaderPtr));
         signedChangeSetBuilder->sign();
         
-        transactionMessageHelper->addChangeSet(*signedChangeSetBuilder);
+        transactionWrapperHelper->addChangeSet(*signedChangeSetBuilder);
+        
+        keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelper(
+            new keto::transaction_common::TransactionMessageHelper(transactionWrapperHelper));
+        
         
         keto::transaction_common::TransactionProtoHelper transactionProtoHelper(
                 transactionMessageHelper);

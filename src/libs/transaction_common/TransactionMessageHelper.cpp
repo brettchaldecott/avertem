@@ -18,12 +18,13 @@
 #include "keto/transaction_common/Exception.hpp"
 #include "keto/asn1/SerializationHelper.hpp"
 #include "keto/asn1/DeserializationHelper.hpp"
+#include "keto/asn1/CloneHelper.hpp"
 
 namespace keto {
 namespace transaction_common {
 
 std::string TransactionMessageHelper::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
     
 TransactionMessageHelper::TransactionMessageHelper() {
@@ -32,36 +33,16 @@ TransactionMessageHelper::TransactionMessageHelper() {
 }
 
 
-TransactionMessageHelper::TransactionMessageHelper(SignedTransaction_t* signedTransaction) {
+TransactionMessageHelper::TransactionMessageHelper(const TransactionWrapperHelperPtr& transactionWrapper) {
     this->transactionMessage = (TransactionMessage_t*)calloc(1, sizeof *transactionMessage);
     this->transactionMessage->version = keto::common::MetaInfo::PROTOCOL_VERSION;
-    this->transactionMessage->signedTransaction = *signedTransaction;
-    this->transactionMessage->transactionHash = keto::asn1::HashHelper(
-            signedTransaction->transactionHash);
-    this->transactionMessage->signature = keto::asn1::SignatureHelper(
-            signedTransaction->signature);
-    this->transactionMessage->sourceAccount = keto::asn1::HashHelper(
-            signedTransaction->transaction.sourceAccount);
-    this->transactionMessage->targetAccount = keto::asn1::HashHelper(
-            signedTransaction->transaction.targetAccount);
+    this->transactionMessage->transaction = *transactionWrapper->operator TransactionWrapper_t*();
 }
 
-
-TransactionMessageHelper::TransactionMessageHelper(SignedTransaction_t* signedTransaction,
-        const keto::asn1::HashHelper& sourceAccount, 
-        const keto::asn1::HashHelper& targetAccount) {
+TransactionMessageHelper::TransactionMessageHelper(TransactionWrapper_t* transactionWrapper) {
     this->transactionMessage = (TransactionMessage_t*)calloc(1, sizeof *transactionMessage);
     this->transactionMessage->version = keto::common::MetaInfo::PROTOCOL_VERSION;
-    this->transactionMessage->signedTransaction = *signedTransaction;
-    this->transactionMessage->sourceAccount = sourceAccount;
-    this->transactionMessage->targetAccount = targetAccount;
-    this->transactionMessage->transactionHash = keto::asn1::HashHelper(
-            signedTransaction->transactionHash);
-    this->transactionMessage->signature = keto::asn1::SignatureHelper(
-            signedTransaction->signature);
-    this->transactionMessage->sourceAccount = sourceAccount;
-    this->transactionMessage->targetAccount = targetAccount;
-    
+    this->transactionMessage->transaction = *transactionWrapper;
 }
 
 
@@ -75,6 +56,13 @@ TransactionMessageHelper::TransactionMessageHelper(const std::string& transactio
             transactionMessage.size(),&asn_DEF_TransactionMessage).takePtr();
 }
 
+TransactionMessageHelper::TransactionMessageHelper(const TransactionMessageHelper& orig) {
+    this->transactionMessage = keto::asn1::clone<TransactionMessage_t>(orig.transactionMessage,&asn_DEF_TransactionMessage);
+    this->encrypt = orig.encrypt;
+    this->nestedTransactions = orig.nestedTransactions;
+}
+
+
 TransactionMessageHelper::~TransactionMessageHelper() {
     if (transactionMessage) {
         ASN_STRUCT_FREE(asn_DEF_TransactionMessage, transactionMessage);
@@ -82,57 +70,47 @@ TransactionMessageHelper::~TransactionMessageHelper() {
     }
 }
 
-
-TransactionMessageHelper& TransactionMessageHelper::setSignedTransaction(
-    SignedTransaction_t* signedTransaction) {
-    this->transactionMessage->signedTransaction = *signedTransaction;
-    this->transactionMessage->transactionHash = keto::asn1::HashHelper(
-            signedTransaction->transactionHash);
-    this->transactionMessage->signature = keto::asn1::SignatureHelper(
-            signedTransaction->signature);
-    
-    return (*this);
+TransactionMessageHelper& TransactionMessageHelper::setTransactionWrapper(
+        TransactionWrapper_t* transactionWrapper) {
+    this->transactionMessage->transaction = *transactionWrapper;
+    return *this;
 }
 
-TransactionMessageHelper& TransactionMessageHelper::setSourceAccount(
-    const keto::asn1::HashHelper& sourceAccount) {
-    this->transactionMessage->sourceAccount = sourceAccount;
-    return (*this);
+TransactionMessageHelper& TransactionMessageHelper::setTransactionWrapper(const TransactionWrapperHelperPtr& transactionWrapper) {
+    this->transactionMessage->transaction = *(transactionWrapper->operator TransactionWrapper_t*());
+    return *this;
 }
 
-TransactionMessageHelper& TransactionMessageHelper::setTargetAccount(
-    const keto::asn1::HashHelper& targetAccount) {
-    this->transactionMessage->targetAccount = targetAccount;
-    return (*this);
+TransactionWrapperHelperPtr TransactionMessageHelper::getTransactionWrapper() {
+    return TransactionWrapperHelperPtr(
+            new TransactionWrapperHelper(&this->transactionMessage->transaction,false));
 }
 
-TransactionMessageHelper& TransactionMessageHelper::setFeeAccount(
-    const keto::asn1::HashHelper& feeAccount) {
-    this->transactionMessage->feeAccount = feeAccount;
-    return (*this);
+TransactionMessageHelper& TransactionMessageHelper::setEncrypted(bool encrypted) {
+    this->encrypt = encrypted;
+    return *this;
 }
 
-TransactionMessageHelper& TransactionMessageHelper::setStatus(const Status& status) {
-    this->transactionMessage->currentStatus = status;
-    return (*this);
+TransactionMessageHelper& TransactionMessageHelper::addNestedTransaction(TransactionMessage_t* nestedTransaction) {
+    this->nestedTransactions.push_back(TransactionMessageHelperPtr(
+            new TransactionMessageHelper(nestedTransaction)));
+    return *this;
 }
 
-TransactionMessageHelper& TransactionMessageHelper::addTransactionTrace(
-    TransactionTrace_t* transactionTrace) {
-    if (0!= ASN_SEQUENCE_ADD(&this->transactionMessage->transactionTrace,transactionTrace)) {
-        BOOST_THROW_EXCEPTION(keto::transaction_common::TransactionTraceSequenceAddFailedException());
-    }
-    return (*this);
+
+TransactionMessageHelper& TransactionMessageHelper::addNestedTransaction(
+        const TransactionMessageHelperPtr& nestedTransaction) {
+    this->nestedTransactions.push_back(nestedTransaction);
+    return *this;
+}
+TransactionMessageHelper& TransactionMessageHelper::addNestedTransaction(
+        const TransactionMessageHelper& nestedTransaction) {
+    this->nestedTransactions.push_back(TransactionMessageHelperPtr(
+            new TransactionMessageHelper(nestedTransaction)));
+    return *this;
 }
 
-TransactionMessageHelper& TransactionMessageHelper::addChangeSet(
-    SignedChangeSet_t* signedChangeSet) {
-    
-    if (0!= ASN_SEQUENCE_ADD(&this->transactionMessage->changeSet,signedChangeSet)) {
-        BOOST_THROW_EXCEPTION(keto::transaction_common::SignedChangeSetSequenceAddFailedException());
-    }
-    return (*this);
-}
+
 
 TransactionMessageHelper& TransactionMessageHelper::operator =(const std::string& transactionMessage) {
     this->transactionMessage = 
@@ -151,12 +129,6 @@ TransactionMessageHelper::operator TransactionMessage_t*() {
     return result;
 }
 
-TransactionMessageHelper::operator std::vector<uint8_t>() {
-    return keto::asn1::SerializationHelper<TransactionMessage>(this->transactionMessage,
-        &asn_DEF_TransactionMessage).operator std::vector<uint8_t>&();
-}
-    
-
 TransactionMessageHelper::operator ANY_t*() {
     ANY_t* anyPtr = ANY_new_fromType(&asn_DEF_TransactionMessage, this->transactionMessage);
     if (!anyPtr) {
@@ -165,68 +137,94 @@ TransactionMessageHelper::operator ANY_t*() {
     return anyPtr;
 }
 
-keto::asn1::HashHelper TransactionMessageHelper::getSourceAccount() {
-    return this->transactionMessage->sourceAccount;
+TransactionMessageHelper::operator std::vector<uint8_t>() {
+    return keto::asn1::SerializationHelper<TransactionMessage>(this->transactionMessage,
+        &asn_DEF_TransactionMessage).operator std::vector<uint8_t>&();
 }
-
-
-keto::asn1::HashHelper TransactionMessageHelper::getTargetAccount() {
-    return this->transactionMessage->targetAccount;
-}
-
-keto::asn1::HashHelper TransactionMessageHelper::getFeeAccount() {
-    return this->transactionMessage->feeAccount;
-}
-
-keto::asn1::HashHelper TransactionMessageHelper::getHash() {
-    return this->transactionMessage->transactionHash;
-}
-
-keto::asn1::SignatureHelper TransactionMessageHelper::getSignature() {
-    return this->transactionMessage->signature;
-}
-
-Status TransactionMessageHelper::getStatus() {
-    return (Status)this->transactionMessage->currentStatus;
-}
-
-
-keto::asn1::HashHelper TransactionMessageHelper::getCurrentAccount() {
-    if ((getStatus() == Status_init) ||
-        (getStatus() == Status_debit ) ||
-        (getStatus() == Status_processing)){
-        return getSourceAccount();
-    } else if (getStatus() == Status_credit || getStatus() == Status_complete) {
-        return getTargetAccount();
-    } else if (getStatus() == Status_fee) {
-        std::cout << "Get the fee account : " << std::endl;
-        return getFeeAccount();
+    
+TransactionMessage_t* TransactionMessageHelper::getMessage(TransactionEncryptionHandler& 
+        transactionEncryptionHandler) {
+    TransactionMessage_t* transactionMessage = 
+            keto::asn1::clone<TransactionMessage_t>(this->transactionMessage,&asn_DEF_TransactionMessage);
+    for (TransactionMessageHelperPtr transactionMessageHelperPtr : nestedTransactions) {
+        transactionMessageHelperPtr->getMessage(transactionEncryptionHandler,transactionMessage);
     }
-    std::stringstream ss;
-    ss << "Unrecognised status [" << getStatus() << "]";
-    BOOST_THROW_EXCEPTION(keto::transaction_common::UnrecognisedTransactionStatusException(
-                        ss.str()));
+    return transactionMessage;
 }
 
-
-Status TransactionMessageHelper::incrementStatus() {
-    if ((this->transactionMessage->currentStatus == Status_init) ||
-        (this->transactionMessage->currentStatus == Status_debit)){
-        this->transactionMessage->currentStatus = Status_processing;
-    } else if (this->transactionMessage->currentStatus == Status_processing) {
-        this->transactionMessage->currentStatus = Status_credit;
-    } else if (this->transactionMessage->currentStatus == Status_credit) {
-        this->transactionMessage->currentStatus = Status_fee;
-    } else if (this->transactionMessage->currentStatus == Status_fee) {      
-        this->transactionMessage->currentStatus = Status_complete;
+TransactionMessageHelperPtr TransactionMessageHelper::decryptMessage(TransactionEncryptionHandler& 
+        transactionEncryptionHandler, TransactionMessage_t* transactionMessage) {
+    TransactionMessageHelperPtr transactionMessageHelperPtr(new TransactionMessageHelper());
+    transactionMessageHelperPtr->setTransactionWrapper(keto::asn1::clone<TransactionWrapper_t>(
+            &transactionMessage->transaction,&asn_DEF_TransactionWrapper));
+    
+    for (int index = 0; index < transactionMessage->nestedTransactions.list.count; index++) {
+        TransactionMessage__nestedTransactions__Member* nestedTransaction =
+            transactionMessage->nestedTransactions.list.array[index];    
+        decryptMessage(transactionEncryptionHandler,transactionMessageHelperPtr,nestedTransaction);
     }
-    return (Status)this->transactionMessage->currentStatus;
+    return transactionMessageHelperPtr;
 }
 
-SignedTransactionHelperPtr TransactionMessageHelper::getSignedTransaction() {
-    return SignedTransactionHelperPtr(
-            new SignedTransactionHelper(&this->transactionMessage->signedTransaction));
+bool TransactionMessageHelper::isEncrypted() {
+    return this->encrypt;
 }
+
+
+void TransactionMessageHelper::getMessage(TransactionEncryptionHandler& 
+            transactionEncryptionHandler,TransactionMessage_t* transactionMessage) {
+    TransactionMessage_t* _transactionMessage = 
+            keto::asn1::clone<TransactionMessage_t>(this->transactionMessage,&asn_DEF_TransactionMessage);
+    for (TransactionMessageHelperPtr transactionMessageHelperPtr : nestedTransactions) {
+        transactionMessageHelperPtr->getMessage(transactionEncryptionHandler,_transactionMessage);
+    }
+    
+    TransactionMessage__nestedTransactions__Member* nestedTransaction =
+            (TransactionMessage__nestedTransactions__Member*)calloc(1, sizeof *nestedTransaction);
+    
+    if (this->isEncrypted()) {
+        nestedTransaction->present = TransactionMessage__nestedTransactions__Member_PR_encryptedSideTransaction;
+        nestedTransaction->choice.encryptedSideTransaction = *transactionEncryptionHandler.encrypt(*_transactionMessage);
+        ASN_STRUCT_FREE(asn_DEF_TransactionMessage, _transactionMessage);
+    } else {
+        nestedTransaction->present = TransactionMessage__nestedTransactions__Member_PR_sideTransaction;
+        nestedTransaction->choice.sideTransaction = _transactionMessage;
+    }
+    
+    ASN_SEQUENCE_ADD(&transactionMessage->nestedTransactions,nestedTransaction);
+}
+
+
+void TransactionMessageHelper::decryptMessage(TransactionEncryptionHandler& 
+        transactionEncryptionHandler, TransactionMessageHelperPtr transactionMessageHelperPtr, 
+        TransactionMessage__nestedTransactions__Member* nestedTransaction) {
+    TransactionMessage_t* transactionMessage = NULL;
+    bool encrypted = false;
+    if (nestedTransaction->present == TransactionMessage__nestedTransactions__Member_PR_NOTHING) {
+        return;
+    } else if (nestedTransaction->present == TransactionMessage__nestedTransactions__Member_PR_sideTransaction) {
+        transactionMessage = 
+                keto::asn1::clone<TransactionMessage_t>(nestedTransaction->choice.sideTransaction,&asn_DEF_TransactionMessage);
+    } else if (nestedTransaction->present == TransactionMessage__nestedTransactions__Member_PR_encryptedSideTransaction) {
+        transactionMessage = 
+                transactionEncryptionHandler.decrypt(nestedTransaction->choice.encryptedSideTransaction);
+        encrypted = true;
+    }
+    
+    TransactionMessageHelperPtr transactionMessageHelperPtr_(new TransactionMessageHelper(
+            transactionMessage));
+    transactionMessageHelperPtr_->setEncrypted(encrypted);
+    
+    for (int index = 0; index < transactionMessage->nestedTransactions.list.count; index++) {
+        TransactionMessage__nestedTransactions__Member* nestedTransaction =
+            transactionMessage->nestedTransactions.list.array[index];    
+        decryptMessage(transactionEncryptionHandler, transactionMessageHelperPtr_, 
+                nestedTransaction);
+    }
+    
+    transactionMessageHelperPtr->addNestedTransaction(transactionMessageHelperPtr_);
+}
+
 
 }
 }

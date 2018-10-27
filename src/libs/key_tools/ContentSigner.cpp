@@ -19,7 +19,7 @@ namespace keto {
 namespace key_tools {
     
 std::string ContentSigner::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 ContentSigner::ContentSigner(const keto::crypto::SecureVector& secret, const keto::crypto::SecureVector& encodedKey,

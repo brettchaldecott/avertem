@@ -1,5 +1,5 @@
 NestedTransactionModule DEFINITIONS AUTOMATIC TAGS ::= BEGIN
-    IMPORTS Number, EncyptedData
+    IMPORTS Number, EncryptedData, Hash
         FROM BasicModule
         SignedTransaction, Transaction
         FROM TransactionModule;
@@ -12,7 +12,11 @@ TransactionData ::= CHOICE {
 
 NestedTransaction ::= SEQUENCE {
     version         Version,
-    transaction     TransactionData
+    transaction     TransactionData,
+    -- the hash of the transaction when encrypted
+    -- this is here to validate that the onion encryption is being
+    -- decrypted correctly through the various layers.
+    hash            SEQUENCE OF Hash
 }
 
 

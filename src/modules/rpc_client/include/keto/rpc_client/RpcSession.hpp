@@ -60,7 +60,7 @@ typedef std::shared_ptr<boost::beast::multi_buffer> MultiBufferPtr;
 class RpcSession : public std::enable_shared_from_this<RpcSession> {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
     
     static std::string getSourceVersion();

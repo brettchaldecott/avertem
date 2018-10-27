@@ -17,7 +17,7 @@ namespace keto {
 namespace asn1 {
 
 std::string TestEntityHelper::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 TestEntityHelper::TestEntityHelper(const TestEntity& testEntity) : 

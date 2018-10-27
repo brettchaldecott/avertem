@@ -35,7 +35,7 @@ namespace keto {
 namespace session {
 
 std::string HttpSession::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 HttpSession::HttpSession(

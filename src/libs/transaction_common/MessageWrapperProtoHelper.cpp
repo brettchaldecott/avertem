@@ -23,7 +23,7 @@ namespace keto {
 namespace transaction_common {
 
 std::string MessageWrapperProtoHelper::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 MessageWrapperProtoHelper::MessageWrapperProtoHelper() {
@@ -104,7 +104,8 @@ MessageWrapperProtoHelper& MessageWrapperProtoHelper::setTransaction(const keto:
 }
 
 MessageWrapperProtoHelper& MessageWrapperProtoHelper::setTransaction(TransactionProtoHelper& transaction) {
-    keto::asn1::HashHelper accountHash = transaction.getTransactionMessageHelper()->getCurrentAccount();
+    keto::asn1::HashHelper accountHash = 
+            transaction.getTransactionMessageHelper()->getTransactionWrapper()->getCurrentAccount();
     std::vector<uint8_t> accountVectorHash = keto::crypto::SecureVectorUtils().copyFromSecure(accountHash);
     wrapper.set_account_hash(accountVectorHash.data(),accountVectorHash.size());
     google::protobuf::Any* any = new google::protobuf::Any();

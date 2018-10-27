@@ -20,7 +20,7 @@ namespace keto {
 namespace server_common {
 
 std::string URLUtils::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
     
 int hex_decode_char(const char ch)

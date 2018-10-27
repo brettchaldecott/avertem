@@ -17,7 +17,7 @@ namespace keto {
 namespace transaction_common {
 
 std::string ActionHelper::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 ActionHelper::ActionHelper(Action_t* action) : action(action) {

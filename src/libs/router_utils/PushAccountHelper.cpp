@@ -19,7 +19,7 @@ namespace keto {
 namespace router_utils {
 
 std::string PushAccountHelper::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 PushAccountHelper::PushAccountHelper() {

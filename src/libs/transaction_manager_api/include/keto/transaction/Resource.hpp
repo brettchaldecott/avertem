@@ -23,7 +23,7 @@ namespace transaction {
 class Resource {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
 
     virtual void commit() = 0;

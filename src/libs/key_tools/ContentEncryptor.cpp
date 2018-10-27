@@ -32,7 +32,7 @@ namespace keto {
 namespace key_tools {
 
 std::string ContentEncryptor::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
     
 ContentEncryptor::ContentEncryptor(const keto::crypto::SecureVector& secret, const keto::crypto::SecureVector& encodedKey,

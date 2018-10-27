@@ -20,6 +20,7 @@
 #include "BlockChain.pb.h"
 #include "TransactionMessage.h"
 
+#include "keto/transaction_common/TransactionWrapperHelper.hpp"
 #include "keto/transaction_common/TransactionMessageHelper.hpp"
 
 #include "keto/obfuscate/MetaString.hpp"
@@ -33,7 +34,7 @@ typedef std::shared_ptr<TransactionProtoHelper> TransactionProtoHelperPtr;
 class TransactionProtoHelper {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
     
     static std::string getSourceVersion();

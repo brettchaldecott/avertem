@@ -17,7 +17,7 @@ namespace keto {
 namespace server_common {
 
 std::string Events::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 

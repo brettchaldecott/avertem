@@ -26,7 +26,7 @@ namespace keto {
 namespace block_db {
 
 std::string SignedBlockBuilder::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 SignedBlockBuilder::SignedBlockBuilder() {

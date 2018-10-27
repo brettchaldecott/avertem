@@ -20,7 +20,7 @@ namespace keto {
 namespace crypto {
 
 std::string SecureVectorUtils::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
     
 SecureVectorUtils::SecureVectorUtils() {

@@ -23,7 +23,7 @@ namespace balancer {
 static TransactionCachePtr singleton;
 
 std::string TransactionCache::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 TransactionCache::TransactionCache() {

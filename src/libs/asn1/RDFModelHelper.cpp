@@ -24,7 +24,7 @@ namespace keto {
 namespace asn1 {
 
 std::string RDFModelHelper::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
     
 RDFModelHelper::RDFModelHelper() {

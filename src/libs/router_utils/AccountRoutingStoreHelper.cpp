@@ -19,7 +19,7 @@ namespace keto {
 namespace router_utils {
     
 std::string AccountRoutingStoreHelper::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 AccountRoutingStoreHelper::AccountRoutingStoreHelper() {

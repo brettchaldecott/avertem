@@ -23,7 +23,7 @@ namespace keto {
 namespace asn1 {
     
 std::string SignatureHelper::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
     
 SignatureHelper::SignatureHelper() {

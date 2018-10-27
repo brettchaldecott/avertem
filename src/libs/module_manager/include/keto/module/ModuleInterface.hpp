@@ -23,7 +23,7 @@ namespace module {
 class ModuleInterface {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
     
     // meta methods

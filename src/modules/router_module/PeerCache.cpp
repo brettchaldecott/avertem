@@ -22,7 +22,7 @@ namespace router {
 static PeerCachePtr singleton;
     
 std::string PeerCache::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 PeerCache::PeerCache() {

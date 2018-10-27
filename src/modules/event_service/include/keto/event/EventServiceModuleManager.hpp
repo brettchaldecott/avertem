@@ -29,7 +29,7 @@ namespace event {
 class EventServiceModuleManager : public keto::module::ModuleManagementInterface  {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
     
     static std::string getSourceVersion();

@@ -6,17 +6,19 @@ Hash            ::= OCTET STRING (SIZE(1..64))
 Key             ::= OCTET STRING (SIZE(1..256))
 Signature       ::= OCTET STRING
 BerEncoding     ::= OCTET STRING
-EncyptedData    ::= OCTET STRING
+EncryptedData   ::= OCTET STRING
 BinaryData      ::= OCTET STRING
 
 Status ::= ENUMERATED {
     init    (0),
     debit   (1),
     processing   (2),
-    wating   (3),
+    waiting   (3),
     fee     (4),
     credit  (5),
-    complete (6)
+    complete (6),
+    nested      (7)
+    
 }
 
 

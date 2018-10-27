@@ -1,5 +1,5 @@
 TransactionModule DEFINITIONS AUTOMATIC TAGS ::= BEGIN
-    IMPORTS Number, Hash, Version, Key, Signature, Status
+    IMPORTS Number, Hash, Version, Key, Signature, Status, EncryptedData
         FROM BasicModule
         Account 
         FROM AccountModule
@@ -32,8 +32,7 @@ TransactionTrace ::= SEQUENCE {
     signature       Signature
 }
 
-
-TransactionMessage ::= SEQUENCE {
+TransactionWrapper ::= SEQUENCE {
     version             Version,
     -- transaction header information
     sourceAccount       Hash,
@@ -47,6 +46,27 @@ TransactionMessage ::= SEQUENCE {
     -- status and changeset
     currentStatus       Status,
     changeSet           SEQUENCE OF SignedChangeSet
+}
+
+EncryptedDataWrapper ::= SEQUENCE {
+    version         Version,
+    transaction     EncryptedData,
+    -- the hash of the transaction when encrypted
+    -- this is here to validate that the onion encryption is being
+    -- decrypted correctly through the various layers.
+    hash            SEQUENCE OF Hash
+}
+
+
+TransactionMessage ::= SEQUENCE {
+    version             Version,
+    -- transaction header information
+    transaction         TransactionWrapper,
+    nestedTransactions   SEQUENCE OF CHOICE {
+        sideTransaction  TransactionMessage,
+        -- the data that is encrypted this will be an encrypted transaction message
+        encryptedSideTransaction    EncryptedDataWrapper
+    }
 }
 
 

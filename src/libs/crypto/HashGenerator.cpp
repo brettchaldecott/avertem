@@ -20,7 +20,7 @@ namespace keto {
 namespace crypto {
 
 std::string HashGenerator::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 HashGenerator::HashGenerator() : 

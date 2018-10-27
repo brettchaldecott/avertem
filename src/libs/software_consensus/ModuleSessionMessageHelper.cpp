@@ -23,7 +23,7 @@ namespace keto {
 namespace software_consensus {
 
 std::string ModuleSessionMessageHelper::getSourceVersion() {
-    return OBFUSCATED("$Id: cd6f953fdc6d6011f27667fc3267cb9f0e6fa962 $");
+    return OBFUSCATED("$Id$");
 }
 
 ModuleSessionMessageHelper::ModuleSessionMessageHelper() {

@@ -32,7 +32,7 @@ namespace keto {
 namespace block_db {
     
 std::string BlockChainStore::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 static std::shared_ptr<BlockChainStore> singleton;

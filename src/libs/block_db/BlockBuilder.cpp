@@ -25,7 +25,7 @@ namespace keto {
 namespace block_db {
 
 std::string BlockBuilder::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
     
@@ -55,7 +55,7 @@ BlockBuilder::~BlockBuilder() {
 
 BlockBuilder& BlockBuilder::addTransactionMessage(
         const TransactionMessage* transaction) {
-    if (0 != ASN_SEQUENCE_ADD(&this->block->transactions,(TransactionMessage*)transaction)) {
+    if (0 != ASN_SEQUENCE_ADD(&this->block->transactions,(TransactionWrapper*)&transaction->transaction)) {
         BOOST_THROW_EXCEPTION(keto::block_db::FailedToAddTheTransactionException());
     }
     return (*this);

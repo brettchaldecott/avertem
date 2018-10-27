@@ -20,7 +20,7 @@ namespace keto {
 namespace server_common {
 
 std::string TransactionHelper::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
     
 keto::transaction::TransactionPtr createTransaction() {

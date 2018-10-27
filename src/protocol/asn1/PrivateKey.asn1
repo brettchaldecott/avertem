@@ -1,11 +1,11 @@
 PrivateKeyModule DEFINITIONS AUTOMATIC TAGS ::= BEGIN
-    IMPORTS Version, BerEncoding
+    IMPORTS Version, BerEncoding, EncryptedData
         FROM BasicModule;
 
 PrivateKey ::= SEQUENCE {
     version         Version,
     -- the encrypted private key value
-    key             EncyptedData
+    key             EncryptedData
 }
 
 

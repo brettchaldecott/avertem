@@ -54,7 +54,7 @@ static BlockProducerPtr singleton;
 static std::shared_ptr<std::thread> producerThreadPtr; 
 
 std::string BlockProducer::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 BlockProducer::BlockProducer() : 

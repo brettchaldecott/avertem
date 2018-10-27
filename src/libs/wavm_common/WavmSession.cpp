@@ -27,6 +27,7 @@
 #include "keto/environment/EnvironmentManager.hpp"
 #include "keto/environment/Config.hpp"
 
+#include "keto/transaction_common/TransactionWrapperHelper.hpp"
 #include "keto/transaction_common/TransactionMessageHelper.hpp"
 #include "keto/transaction_common/ChangeSetBuilder.hpp"
 #include "keto/transaction_common/SignedChangeSetBuilder.hpp"
@@ -36,7 +37,7 @@ namespace keto {
 namespace wavm_common {
 
 std::string WavmSession::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
     
 WavmSession::WavmSession(const keto::proto::SandboxCommandMessage& sandboxCommandMessage,
@@ -59,15 +60,15 @@ std::string WavmSession::getAccount() {
 }
 
 std::string WavmSession::getTransaction() {
-    return transactionMessageHelperPtr->getSignedTransaction()->getHash().getHash(keto::common::StringEncoding::HEX);
+    return transactionMessageHelperPtr->getTransactionWrapper()->getSignedTransaction()->getHash().getHash(keto::common::StringEncoding::HEX);
 }
 
 Status WavmSession::getStatus() {
-    return transactionMessageHelperPtr->getStatus();
+    return transactionMessageHelperPtr->getTransactionWrapper()->getStatus();
 }
 
 keto::asn1::NumberHelper WavmSession::getTransactionValue() {
-    return transactionMessageHelperPtr->getSignedTransaction()->getTransaction()->getValue();
+    return transactionMessageHelperPtr->getTransactionWrapper()->getSignedTransaction()->getTransaction()->getValue();
 }
 
 keto::asn1::NumberHelper WavmSession::getTransactionFee() {
@@ -182,15 +183,17 @@ void WavmSession::setResponseBooleanValue(const std::string& subject, const std:
 keto::proto::SandboxCommandMessage WavmSession::getSandboxCommandMessage() {
     // create a change and add it to the transaction
     keto::asn1::AnyHelper anyModel(this->modelHelper);
+    keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelperPtr =
+            transactionMessageHelperPtr->getTransactionWrapper();
     keto::transaction_common::ChangeSetBuilderPtr changeSetBuilder(
         new keto::transaction_common::ChangeSetBuilder(
-            transactionMessageHelperPtr->getSignedTransaction()->getHash(),
+            transactionWrapperHelperPtr->getSignedTransaction()->getHash(),
             this->getCurrentAccountHash()));
-    changeSetBuilder->addChange(anyModel).setStatus(transactionMessageHelperPtr->getStatus());
+    changeSetBuilder->addChange(anyModel).setStatus(transactionWrapperHelperPtr->getStatus());
     keto::transaction_common::SignedChangeSetBuilderPtr signedChangeSetBuilder(new
         keto::transaction_common::SignedChangeSetBuilder(*changeSetBuilder,*keyLoaderPtr));
     signedChangeSetBuilder->sign();
-    transactionMessageHelperPtr->addChangeSet(*signedChangeSetBuilder);
+    transactionWrapperHelperPtr->addChangeSet(*signedChangeSetBuilder);
     
     // set the the transaction
     keto::transaction_common::TransactionProtoHelper transactionProtoHelper(
@@ -319,7 +322,7 @@ void WavmSession::addDateTimeModelEntry(const std::string& subjectUrl, const std
 
 
 keto::asn1::HashHelper WavmSession::getCurrentAccountHash() {
-    return transactionMessageHelperPtr->getCurrentAccount();
+    return transactionMessageHelperPtr->getTransactionWrapper()->getCurrentAccount();
 }
 
 }

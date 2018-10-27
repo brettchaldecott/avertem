@@ -20,7 +20,7 @@ namespace keto {
 namespace rpc_protocol {
 
 std::string PeerRequestHelper::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 

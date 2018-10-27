@@ -28,7 +28,7 @@ namespace key_tools {
 class ContentDecryptor {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
     static std::string getSourceVersion();
 

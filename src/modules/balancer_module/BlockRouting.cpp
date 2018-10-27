@@ -31,7 +31,7 @@ namespace balancer {
 static BlockRoutingPtr singleton;
 
 std::string BlockRouting::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 BlockRouting::BlockRouting() {

@@ -31,7 +31,7 @@ typedef std::shared_ptr<BlockRouting> BlockRoutingPtr;
 class BlockRouting {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
     
     static std::string getSourceVersion();

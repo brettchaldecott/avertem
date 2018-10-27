@@ -29,7 +29,7 @@ namespace server_common {
 class EventUtils {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
 };
 

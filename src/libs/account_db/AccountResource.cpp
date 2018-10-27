@@ -19,7 +19,7 @@ namespace keto {
 namespace account_db {
 
 std::string AccountResource::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 AccountResource::AccountResource(std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr,

@@ -28,7 +28,7 @@ static WavmSessionManagerPtr singleton;
 thread_local WavmSessionPtr WavmSessionManager::wavmSessionPtr;
 
 std::string WavmSessionManager::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 WavmSessionManager::WavmSessionManager() {

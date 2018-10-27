@@ -21,7 +21,7 @@ namespace keto {
 namespace transaction_common {
     
 std::string TransactionTraceBuilder::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 TransactionTraceBuilder::TransactionTraceBuilder(

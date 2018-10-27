@@ -23,7 +23,7 @@ namespace key_tools {
 class Constants {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
 
     static constexpr const char* ENCRYPTION_PADDING = "EME1(SHA-256)";

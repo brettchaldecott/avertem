@@ -23,7 +23,7 @@ namespace keto {
 namespace asn1 {
 
 std::string BerEncodingHelper::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 BerEncodingHelper::BerEncodingHelper() {

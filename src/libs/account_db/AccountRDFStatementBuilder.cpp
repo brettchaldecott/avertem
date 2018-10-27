@@ -19,35 +19,38 @@
 #include "include/keto/account_db/AccountRDFStatementBuilder.hpp"
 #include "keto/account_db/Exception.hpp"
 #include "keto/common/MetaInfo.hpp"
-#include "include/keto/account_db/AccountSystemOntologyTypes.hpp"
+#include "keto/account_db/AccountSystemOntologyTypes.hpp"
+#include "keto/transaction_common/TransactionWrapperHelper.hpp"
 #include "keto/crypto/SecureVectorUtils.hpp"
 
 namespace keto {
 namespace account_db {
 
 std::string AccountRDFStatementBuilder::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
     
 AccountRDFStatementBuilder::AccountRDFStatementBuilder(
     const keto::transaction_common::TransactionMessageHelperPtr& transactionMessageHelper,
     bool existingAccount) :
     transactionMessageHelper(transactionMessageHelper) {
+    keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelperPtr = transactionMessageHelper->getTransactionWrapper();
+    
     this->accountInfo.set_version(keto::common::MetaInfo::PROTOCOL_VERSION);
     
     keto::asn1::HashHelper accountHash;
-    if ((transactionMessageHelper->getStatus() == Status_debit) || (transactionMessageHelper->getStatus() == Status_init)) {
-        accountHash = transactionMessageHelper->getSourceAccount();
-    } else if (transactionMessageHelper->getStatus() == Status_fee) {
-        accountHash = transactionMessageHelper->getFeeAccount();
-    } else if ((transactionMessageHelper->getStatus() == Status_credit) || (transactionMessageHelper->getStatus() == Status_complete)) {
-        accountHash = transactionMessageHelper->getTargetAccount();
+    if ((transactionWrapperHelperPtr->getStatus() == Status_debit) || (transactionWrapperHelperPtr->getStatus() == Status_init)) {
+        accountHash = transactionWrapperHelperPtr->getSourceAccount();
+    } else if (transactionWrapperHelperPtr->getStatus() == Status_fee) {
+        accountHash = transactionWrapperHelperPtr->getFeeAccount();
+    } else if ((transactionWrapperHelperPtr->getStatus() == Status_credit) || (transactionWrapperHelperPtr->getStatus() == Status_complete)) {
+        accountHash = transactionWrapperHelperPtr->getTargetAccount();
     }
     
     for (int count = 0; count < 
-            transactionMessageHelper->operator TransactionMessage_t&().changeSet.list.count; count++) {
+            transactionWrapperHelperPtr->operator TransactionWrapper_t&().changeSet.list.count; count++) {
         SignedChangeSet* signedChangeSet =
-                transactionMessageHelper->operator TransactionMessage_t&().changeSet.list.array[count];
+                transactionWrapperHelperPtr->operator TransactionWrapper_t&().changeSet.list.array[count];
         for (int index = 0 ; index < signedChangeSet->changeSet.changes.list.count; index++) {
             AccountRDFStatementPtr accountRDFStatement(new AccountRDFStatement(
                 signedChangeSet->changeSet.changes.list.array[index]));

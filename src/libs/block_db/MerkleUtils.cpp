@@ -22,7 +22,7 @@ namespace keto {
 namespace block_db {
     
 std::string MerkleUtils::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 
@@ -33,10 +33,10 @@ MerkleUtils::MerkleUtils(const Block_t* block) {
     
     // add the transaction hashes
     for (int index = 0; index < block->transactions.list.count; index++) {
-        TransactionMessage* transactionMessage = block->transactions.list.array[index];
-        hashs.push_back(keto::asn1::HashHelper(transactionMessage->transactionHash));
-        for (int changeIndex = 0; changeIndex < transactionMessage->changeSet.list.count; changeIndex++) {
-            hashs.push_back(keto::asn1::HashHelper(transactionMessage->changeSet.list.array[changeIndex]->changeSetHash));
+        TransactionWrapper* transactionWrapper = block->transactions.list.array[index];
+        hashs.push_back(keto::asn1::HashHelper(transactionWrapper->transactionHash));
+        for (int changeIndex = 0; changeIndex < transactionWrapper->changeSet.list.count; changeIndex++) {
+            hashs.push_back(keto::asn1::HashHelper(transactionWrapper->changeSet.list.array[changeIndex]->changeSetHash));
         }
     }
     if (!hashs.size()) {

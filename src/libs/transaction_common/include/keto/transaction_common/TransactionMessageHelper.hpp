@@ -21,6 +21,7 @@
 #include "Transaction.h"
 #include "SignedTransaction.h"
 #include "SignedChangeSet.h"
+#include "TransactionWrapper.h"
 #include "TransactionMessage.h"
 #include "TransactionTrace.h"
 
@@ -28,6 +29,8 @@
 #include "keto/asn1/SignatureHelper.hpp"
 
 #include "keto/transaction_common/SignedTransactionHelper.hpp"
+#include "keto/transaction_common/TransactionWrapperHelper.hpp"
+#include "keto/transaction_common/TransactionEncryptionHandler.hpp"
 
 #include "keto/obfuscate/MetaString.hpp"
 
@@ -40,28 +43,27 @@ typedef std::shared_ptr<TransactionMessageHelper> TransactionMessageHelperPtr;
 class TransactionMessageHelper {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
     
     static std::string getSourceVersion();
     
     TransactionMessageHelper();
-    TransactionMessageHelper(SignedTransaction_t* signedTransaction);
-    TransactionMessageHelper(SignedTransaction_t* signedTransaction,
-            const keto::asn1::HashHelper& sourceAccount, 
-            const keto::asn1::HashHelper& targetAccount);
+    TransactionMessageHelper(const TransactionWrapperHelperPtr& transactionWrapper);
+    TransactionMessageHelper(TransactionWrapper_t* transactionWrapper);
     TransactionMessageHelper(TransactionMessage_t* transactionMessage);
     TransactionMessageHelper(const std::string& transactionMessage);
-    TransactionMessageHelper(const TransactionMessageHelper& orig) = delete;
+    TransactionMessageHelper(const TransactionMessageHelper& orig);
     virtual ~TransactionMessageHelper();
     
-    TransactionMessageHelper& setSignedTransaction(SignedTransaction_t* signedTransaction);
-    TransactionMessageHelper& setSourceAccount(const keto::asn1::HashHelper& sourceAccount);
-    TransactionMessageHelper& setTargetAccount(const keto::asn1::HashHelper& targetAccount);
-    TransactionMessageHelper& setFeeAccount(const keto::asn1::HashHelper& feeAccount);
-    TransactionMessageHelper& setStatus(const Status& status);
-    TransactionMessageHelper& addTransactionTrace(TransactionTrace_t* transactionTrace);
-    TransactionMessageHelper& addChangeSet(SignedChangeSet_t* signedChangeSet);
+    TransactionMessageHelper& setEncrypted(bool encrypted);
+    TransactionMessageHelper& setTransactionWrapper(TransactionWrapper_t* transactionWrapper);
+    TransactionMessageHelper& setTransactionWrapper(const TransactionWrapperHelperPtr& transactionWrapper);
+    TransactionWrapperHelperPtr getTransactionWrapper();
+    TransactionMessageHelper& addNestedTransaction(TransactionMessage_t* nestedTransaction);
+    TransactionMessageHelper& addNestedTransaction(const TransactionMessageHelperPtr& nestedTransaction);
+    TransactionMessageHelper& addNestedTransaction(const TransactionMessageHelper& nestedTransaction);
+    
     
     TransactionMessageHelper& operator =(const std::string& transactionMessage);
     operator TransactionMessage_t&();
@@ -70,18 +72,27 @@ public:
     
     operator std::vector<uint8_t>();
     
-    keto::asn1::HashHelper getSourceAccount();
-    keto::asn1::HashHelper getTargetAccount();
-    keto::asn1::HashHelper getFeeAccount();
-    keto::asn1::HashHelper getCurrentAccount();
-    keto::asn1::HashHelper getHash();
-    keto::asn1::SignatureHelper getSignature();
-    Status getStatus();
-    Status incrementStatus();
-    SignedTransactionHelperPtr getSignedTransaction();
+    TransactionMessage_t* getMessage(TransactionEncryptionHandler& 
+            transactionEncryptionHandler);
+    
+    static TransactionMessageHelperPtr decryptMessage(TransactionEncryptionHandler& 
+            transactionEncryptionHandler, TransactionMessage_t* transactionMessage);
+    
+    bool isEncrypted();
+    
     
 private:
+    bool encrypt;
     TransactionMessage_t* transactionMessage;
+    std::vector<TransactionMessageHelperPtr> nestedTransactions;
+    
+    
+    void getMessage(TransactionEncryptionHandler& 
+            transactionEncryptionHandler,TransactionMessage_t* transactionMessage);
+    
+    static void decryptMessage(TransactionEncryptionHandler& 
+        transactionEncryptionHandler, TransactionMessageHelperPtr transactionMessageHelperPtr, 
+        TransactionMessage__nestedTransactions__Member* transactionMessage);
 };
 
 
