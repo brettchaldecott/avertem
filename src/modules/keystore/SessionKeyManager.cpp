@@ -50,13 +50,15 @@ keto::event::Event SessionKeyManager::requestKey(const keto::event::Event& event
     std::lock_guard<std::mutex> guard(mutex);
     if (!this->sessionKeys.count(sessionHash)) {
         Botan::RSA_PrivateKey privateKey(*rng.get(), 2048);
+        Botan::RSA_PublicKey publicKey(privateKey);
         this->sessionKeys[sessionHash] = Botan::PKCS8::BER_encode( privateKey );
+        this->sessionPublicKeys[sessionHash] = publicKey.public_key_bits();
     }
     
     keto::proto::SessionKeyResponse response;
     response.set_session_hash(request.session_hash());
     response.set_session_key(keto::server_common::VectorUtils().copyVectorToString(
-            keto::crypto::SecureVectorUtils().copyFromSecure(this->sessionKeys[sessionHash])));
+            this->sessionPublicKeys[sessionHash]));
     return keto::server_common::toEvent<keto::proto::SessionKeyResponse>(response);
 }
 
@@ -67,6 +69,9 @@ keto::event::Event SessionKeyManager::removeKey(const keto::event::Event& event)
     std::lock_guard<std::mutex> guard(mutex);
     if (this->sessionKeys.count(sessionHash)) {
         this->sessionKeys.erase(sessionHash);
+    }
+    if (this->sessionPublicKeys.count(sessionHash)) {
+        this->sessionPublicKeys.erase(sessionHash);
     }
     keto::proto::SessionKeyExpireResponse response;
     response.set_session_hash(request.session_hash());

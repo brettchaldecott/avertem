@@ -6,12 +6,14 @@ include_directories(${PROTOBUF_INCLUDE_DIR})
 add_library( keto_http_client_session
             
             HttpSession.cpp
+            HttpSessionTransactionEncryptor.cpp
             
             
              ${HEADERS}
            )
 
 target_link_libraries( keto_http_client_session 
+                        PRIVATE keto_transaction_common keto_server_common keto_environment 
                         PRIVATE keto_proto_environment ${PROTOBUF_LIBRARIES}  )
 target_include_directories( keto_http_client_session
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"

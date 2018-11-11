@@ -52,6 +52,7 @@ private:
     std::unique_ptr<Botan::RandomNumberGenerator> rng;
     std::mutex mutex;
     std::map<std::vector<uint8_t>,keto::crypto::SecureVector> sessionKeys;
+    std::map<std::vector<uint8_t>,std::vector<uint8_t>> sessionPublicKeys;
 
 };
 
