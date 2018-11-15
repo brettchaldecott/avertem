@@ -22,6 +22,8 @@
 #include "keto/ssl/RootCertificate.hpp"
 #include "keto/cli/Constants.hpp"
 #include "keto/session/HttpSession.hpp"
+#include "keto/session/HttpSessionTransactionEncryptor.hpp"
+
 
 #include "keto/chain_common/TransactionBuilder.hpp"
 #include "keto/chain_common/SignedTransactionBuilder.hpp"

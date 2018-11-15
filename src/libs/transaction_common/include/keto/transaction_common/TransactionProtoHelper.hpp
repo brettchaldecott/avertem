@@ -20,6 +20,8 @@
 #include "BlockChain.pb.h"
 #include "TransactionMessage.h"
 
+#include "keto/transaction_common/TransactionEncryptionHandler.hpp"
+
 #include "keto/transaction_common/TransactionWrapperHelper.hpp"
 #include "keto/transaction_common/TransactionMessageHelper.hpp"
 
@@ -42,6 +44,8 @@ public:
     TransactionProtoHelper();
     TransactionProtoHelper(const keto::proto::Transaction& transaction);
     TransactionProtoHelper(const TransactionMessageHelperPtr& transactionMessageHelper);
+    TransactionProtoHelper(const TransactionMessageHelperPtr& transactionMessageHelper,
+            keto::transaction_common::TransactionEncryptionHandler& transactionEncryptionHandler);
     TransactionProtoHelper(const TransactionProtoHelper& orig) = default;
     virtual ~TransactionProtoHelper();
     

@@ -6,6 +6,9 @@
 # Created on Jan 12, 2018, 5:44:49 PM
 #
 
+# initialize the environment
+export LC_ALL=en_US.UTF-8
+
 # Get the current source directory
 SOURCE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 

@@ -141,6 +141,18 @@ TransactionMessageHelper::operator std::vector<uint8_t>() {
     return keto::asn1::SerializationHelper<TransactionMessage>(this->transactionMessage,
         &asn_DEF_TransactionMessage).operator std::vector<uint8_t>&();
 }
+
+std::vector<uint8_t> TransactionMessageHelper::serializeTransaction(TransactionEncryptionHandler& 
+            transactionEncryptionHandler) {
+    TransactionMessage_t* transactionMessage = getMessage(transactionEncryptionHandler);
+    
+    std::vector<uint8_t> bytes = keto::asn1::SerializationHelper<TransactionMessage>(transactionMessage,
+        &asn_DEF_TransactionMessage).operator std::vector<uint8_t>&();
+    
+    ASN_STRUCT_FREE(asn_DEF_TransactionMessage, transactionMessage);
+    
+    return bytes;
+}
     
 TransactionMessage_t* TransactionMessageHelper::getMessage(TransactionEncryptionHandler& 
         transactionEncryptionHandler) {

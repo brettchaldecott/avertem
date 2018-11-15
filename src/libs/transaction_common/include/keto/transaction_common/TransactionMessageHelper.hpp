@@ -72,6 +72,9 @@ public:
     
     operator std::vector<uint8_t>();
     
+    std::vector<uint8_t> serializeTransaction(TransactionEncryptionHandler& 
+            transactionEncryptionHandler);
+    
     TransactionMessage_t* getMessage(TransactionEncryptionHandler& 
             transactionEncryptionHandler);
     

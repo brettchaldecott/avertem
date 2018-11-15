@@ -30,6 +30,8 @@
 #include "keto/session/Exception.hpp"
 #include "keto/transaction_common/TransactionProtoHelper.hpp"
 
+#include "keto/session/HttpSessionTransactionEncryptor.hpp"
+
 
 namespace keto {
 namespace session {
@@ -108,8 +110,15 @@ std::string HttpSession::getSessionId() {
 
 std::string HttpSession::makeRequest(
     keto::transaction_common::TransactionMessageHelperPtr& request) {
+    
+    keto::session::HttpSessionTransactionEncryptor httpSessionTransactionEncryption(
+            keto::crypto::KeyLoaderPtr(new keto::crypto::KeyLoader(this->keyLoader)),
+            keto::server_common::VectorUtils().copyStringToVector(
+            this->clientResponse.session_hash()));
+    
     keto::transaction_common::TransactionProtoHelper 
         transactionProtoHelper(request);
+    
     
     boost::beast::http::response<boost::beast::http::string_body> response = 
         this->makeRequest(this->createProtobufRequest(
