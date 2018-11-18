@@ -37,7 +37,7 @@ KetoModuleDepencencies( 0020_keto_block_module
                             PRIVATE keto_transaction_common keto_proto_environment 
                             PRIVATE keto_asn1_protocol ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
-                            PRIVATE ${ROCKSDB_LIBRARY} ${ROCKSDB_EXTRA_LIBRARY} ${ROCKSDB_SNAPPY_LIBRARY}
+                            PRIVATE ${ROCKSDB_LIBRARY}
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
 KetoModuleConsensus( 0020_keto_block_module ${NUMBER_OF_KEYS} block )

@@ -20,6 +20,7 @@ add_library( 0010_keto_keystore_module
             KeyStoreService.cpp
             SessionKeyManager.cpp
             ConsensusService.cpp
+            TransactionEncryptionService.cpp
 
              ${HEADERS}
            )
@@ -30,7 +31,7 @@ KetoModuleDepencencies( 0010_keto_keystore_module
                             PRIVATE keto_software_consensus
                             PRIVATE keto_server_common keto_asn1_common keto_asn1_protocol
                             PRIVATE keto_key_tools keto_proto_environment ${PROTOBUF_LIBRARIES}
-                            PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
+                            PRIVATE keto_crypto keto_store_utils ${BOTAN_LIBRARIES} 
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
 KetoModuleConsensus( 0010_keto_keystore_module ${NUMBER_OF_KEYS} keystore )
@@ -45,6 +46,7 @@ target_include_directories( 0010_keto_keystore_module
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/module_manager/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/event_service_api/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/server_common/include"
+                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/key_store_utils/include"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/libs/common/include/"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/proto/"
                             PUBLIC "${PROTO_HDRS}"

@@ -1,4 +1,5 @@
 add_subdirectory( asn1 )
+add_subdirectory( key_store_utils )
 add_subdirectory( chain_common )
 add_subdirectory( common )
 add_subdirectory( chain )

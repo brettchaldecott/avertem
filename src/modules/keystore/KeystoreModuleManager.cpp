@@ -24,6 +24,7 @@
 #include "keto/keystore/EventRegistry.hpp"
 #include "include/keto/keystore/EventRegistry.hpp"
 #include "include/keto/keystore/ConsensusService.hpp"
+#include "include/keto/keystore/TransactionEncryptionService.hpp"
 
 namespace keto {
 namespace keystore {
@@ -57,12 +58,14 @@ void KeystoreModuleManager::start() {
     KeyStoreService::init();
     modules["KeystoreModule"] = std::make_shared<KeystoreModule>();
     ConsensusService::init(this->getConsensusHash());
+    TransactionEncryptionService::init();
     EventRegistry::registerEventHandlers();
     KETO_LOG_INFO << "[KeystoreModuleManager] Started the KeystoreModuleManager";
 }
 
 void KeystoreModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
+    TransactionEncryptionService::fin();
     ConsensusService::fin();
     modules.clear();
     KeyStoreService::fin();

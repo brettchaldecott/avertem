@@ -22,6 +22,7 @@
 #include "keto/server_common/EventServiceHelpers.hpp"
 #include "keto/keystore/EventRegistry.hpp"
 #include "keto/keystore/ConsensusService.hpp"
+#include "keto/keystore/TransactionEncryptionService.hpp"
 
 
 namespace keto {
@@ -57,6 +58,17 @@ keto::event::Event EventRegistry::setModuleSession(const keto::event::Event& eve
     return ConsensusService::getInstance()->setModuleSession(event);
 }
 
+keto::event::Event EventRegistry::reencryptTransaction(const keto::event::Event& event) {
+    return TransactionEncryptionService::getInstance()->reencryptTransaction(event);
+}
+
+keto::event::Event EventRegistry::encryptTransaction(const keto::event::Event& event) {
+    return TransactionEncryptionService::getInstance()->encryptTransaction(event);
+}
+
+keto::event::Event EventRegistry::decryptTransaction(const keto::event::Event& event) {
+    return TransactionEncryptionService::getInstance()->decryptTransaction(event);
+}
 
 
 void EventRegistry::registerEventHandlers() {
@@ -66,6 +78,16 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler(
             keto::server_common::Events::REMOVE_SESSION_KEY,
             &EventRegistry::removeSessionKey);
+    
+    keto::server_common::registerEventHandler(
+            keto::key_store_utils::Events::TRANSACTION::REENCRYPT_TRANSACTION,
+            &EventRegistry::reencryptTransaction);
+    keto::server_common::registerEventHandler(
+            keto::key_store_utils::Events::TRANSACTION::ENCRYPT_TRANSACTION,
+            &EventRegistry::encryptTransaction);
+    keto::server_common::registerEventHandler(
+            keto::key_store_utils::Events::TRANSACTION::DECRYPT_TRANSACTION,
+            &EventRegistry::deregisterEventHandlers);
     
     keto::server_common::registerEventHandler(
             keto::server_common::Events::CONSENSUS::KEYSTORE,
@@ -81,6 +103,14 @@ void EventRegistry::deregisterEventHandlers() {
             keto::server_common::Events::CONSENSUS::KEYSTORE);
     keto::server_common::deregisterEventHandler(
             keto::server_common::Events::CONSENSUS_SESSION::KEYSTORE);
+    
+    keto::server_common::deregisterEventHandler(
+            keto::key_store_utils::Events::TRANSACTION::REENCRYPT_TRANSACTION);
+    keto::server_common::deregisterEventHandler(
+            keto::key_store_utils::Events::TRANSACTION::ENCRYPT_TRANSACTION);
+    keto::server_common::deregisterEventHandler(
+            keto::key_store_utils::Events::TRANSACTION::DECRYPT_TRANSACTION);
+    
     keto::server_common::deregisterEventHandler(keto::server_common::Events::REMOVE_SESSION_KEY);
     keto::server_common::deregisterEventHandler(keto::server_common::Events::REQUEST_SESSION_KEY);
 }

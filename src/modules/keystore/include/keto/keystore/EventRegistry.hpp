@@ -16,7 +16,7 @@
 
 #include "keto/event/Event.hpp"
 #include "keto/common/MetaInfo.hpp"
-
+#include "keto/key_store_utils/Events.hpp"
 
 namespace keto {
 namespace keystore {
@@ -38,7 +38,10 @@ public:
     
     static keto::event::Event generateSoftwareHash(const keto::event::Event& event);
     static keto::event::Event setModuleSession(const keto::event::Event& event);
-
+    
+    static keto::event::Event reencryptTransaction(const keto::event::Event& event);
+    static keto::event::Event encryptTransaction(const keto::event::Event& event);
+    static keto::event::Event decryptTransaction(const keto::event::Event& event);
     
     static void registerEventHandlers();
     static void deregisterEventHandlers();
