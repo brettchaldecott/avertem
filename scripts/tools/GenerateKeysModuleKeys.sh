@@ -6,6 +6,9 @@ outputDir=$2
 sourceKeys=(`find $sourceDir -name "*.json"`)
 SOURCE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+if [ ! -f "${SOURCE_DIR}/../../deps_build/build/install/bin/keto_tools.sh" ] ; then
+        exit 0
+fi
 
 for sourceKey in "${sourceKeys[@]}";
 do

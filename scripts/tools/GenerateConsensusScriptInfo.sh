@@ -12,17 +12,23 @@ consensusDir=$3
 
 SOURCE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+DEPS_BUILD=deps_build
+
+if [ ! -f "${SOURCE_DIR}/../../${DEPS_BUILD}/build/install/bin/keto_tools.sh" ]; then
+	exit 0
+fi
+
 for (( count=1; count<=${number}; count++ ))
 do
 	
-	#echo "${SOURCE_DIR}/../../deps_build/build/install/bin/keto_tools.sh -H -s \"${consensusDir}/consensus_${count}.chai\""
-	codeHash=`${SOURCE_DIR}/../../deps_build/build/install/bin/keto_tools.sh -H -s "${consensusDir}/consensus_${count}.chai"`
-    #codeHashBytes=(`${SOURCE_DIR}/../../deps_build/build/install/bin/keto_tools.sh -H -s "${consensusDir}/consensus_${count}.chai" | xxd -p -r | od -An -b`)
-	#echo "${SOURCE_DIR}/../../deps_build/build/install/bin/keto_tools.sh -K -k \"${keyDir}/key_${count}.json\""
-	privateKeyBytes=`${SOURCE_DIR}/../../deps_build/build/install/bin/keto_tools.sh -K -k "${keyDir}/key_${count}.json"`
-	#echo "${SOURCE_DIR}/../../deps_build/build/install/bin/keto_tools.sh -E -k \"${keyDir}/key_${count}.json\" -s \"${consensusDir}/consensus_${count}.chai\""
-	encryptedCode=`${SOURCE_DIR}/../../deps_build/build/install/bin/keto_tools.sh -E -k "${keyDir}/key_${count}.json" -s "${consensusDir}/consensus_${count}.chai"`
-	#encryptedCodeBytes=(`${SOURCE_DIR}/../../deps_build/build/install/bin/keto_tools.sh -E -k "${keyDir}/key_${count}.json" -s "${consensusDir}/consensus_${count}.chai" | xxd -p -r | od -An -b`)
+	#echo "${SOURCE_DIR}/../../${DEPS_BUILD}/build/install/bin/keto_tools.sh -H -s \"${consensusDir}/consensus_${count}.chai\""
+	codeHash=`${SOURCE_DIR}/../../${DEPS_BUILD}/build/install/bin/keto_tools.sh -H -s "${consensusDir}/consensus_${count}.chai"`
+    #codeHashBytes=(`${SOURCE_DIR}/../../${DEPS_BUILD}/build/install/bin/keto_tools.sh -H -s "${consensusDir}/consensus_${count}.chai" | xxd -p -r | od -An -b`)
+	#echo "${SOURCE_DIR}/../../${DEPS_BUILD}/build/install/bin/keto_tools.sh -K -k \"${keyDir}/key_${count}.json\""
+	privateKeyBytes=`${SOURCE_DIR}/../../${DEPS_BUILD}/build/install/bin/keto_tools.sh -K -k "${keyDir}/key_${count}.json"`
+	#echo "${SOURCE_DIR}/../../${DEPS_BUILD}/build/install/bin/keto_tools.sh -E -k \"${keyDir}/key_${count}.json\" -s \"${consensusDir}/consensus_${count}.chai\""
+	encryptedCode=`${SOURCE_DIR}/../../${DEPS_BUILD}/build/install/bin/keto_tools.sh -E -k "${keyDir}/key_${count}.json" -s "${consensusDir}/consensus_${count}.chai"`
+	#encryptedCodeBytes=(`${SOURCE_DIR}/../../${DEPS_BUILD}/build/install/bin/keto_tools.sh -E -k "${keyDir}/key_${count}.json" -s "${consensusDir}/consensus_${count}.chai" | xxd -p -r | od -An -b`)
     echo "namespace consensus_code_${count} {
 	keto::crypto::SecureVector getHash() {
         std::string hash = OBFUSCATED(\"${codeHash}\");
