@@ -31,7 +31,7 @@ KetoModuleDepencencies( 0010_keto_keystore_module
                             PRIVATE keto_software_consensus
                             PRIVATE keto_server_common keto_asn1_common keto_asn1_protocol
                             PRIVATE keto_key_tools keto_proto_environment ${PROTOBUF_LIBRARIES}
-                            PRIVATE keto_crypto keto_store_utils ${BOTAN_LIBRARIES} 
+                            PRIVATE keto_crypto key_store_utils ${BOTAN_LIBRARIES} 
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
 KetoModuleConsensus( 0010_keto_keystore_module ${NUMBER_OF_KEYS} keystore )

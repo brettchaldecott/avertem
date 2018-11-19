@@ -20,7 +20,7 @@ namespace keystore {
 static TransactionEncryptionServicePtr singleton;
     
 std::string TransactionEncryptionService::getSourceVersion() {
-    return return OBFUSCATED("$Id$");
+    return OBFUSCATED("$Id$");
 }
 
 TransactionEncryptionService::TransactionEncryptionService() {

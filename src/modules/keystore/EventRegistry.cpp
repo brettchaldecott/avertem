@@ -87,7 +87,7 @@ void EventRegistry::registerEventHandlers() {
             &EventRegistry::encryptTransaction);
     keto::server_common::registerEventHandler(
             keto::key_store_utils::Events::TRANSACTION::DECRYPT_TRANSACTION,
-            &EventRegistry::deregisterEventHandlers);
+            &EventRegistry::decryptTransaction);
     
     keto::server_common::registerEventHandler(
             keto::server_common::Events::CONSENSUS::KEYSTORE,
