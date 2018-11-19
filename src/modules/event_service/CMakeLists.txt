@@ -28,7 +28,7 @@ KetoModuleDepencencies( 0001_keto_event_service_module
                             PRIVATE keto_server_common keto_asn1_common keto_asn1_protocol
                             PRIVATE keto_key_tools keto_proto_environment ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
-                            PRIVATE ${ROCKSDB_LIBRARY}
+                            PRIVATE ${ROCKSDB_LIBRARIES}
                             PRIVATE ${OPENSSL_LIBRARIES})
 
 KetoModuleConsensus( 0001_keto_event_service_module ${NUMBER_OF_KEYS} event )
