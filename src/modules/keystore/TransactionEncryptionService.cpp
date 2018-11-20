@@ -12,6 +12,9 @@
  */
 
 #include "keto/keystore/TransactionEncryptionService.hpp"
+#include "keto/transaction_common/TransactionProtoHelper.hpp"
+#include "keto/server_common/EventUtils.hpp"
+
 
 
 namespace keto {
@@ -20,7 +23,7 @@ namespace keystore {
 static TransactionEncryptionServicePtr singleton;
     
 std::string TransactionEncryptionService::getSourceVersion() {
-    return OBFUSCATED("$Id$");
+    return OBFUSCATED("$Id:$");
 }
 
 TransactionEncryptionService::TransactionEncryptionService() {
@@ -46,6 +49,10 @@ TransactionEncryptionServicePtr TransactionEncryptionService::getInstance() {
 
 
 keto::event::Event TransactionEncryptionService::reencryptTransaction(const keto::event::Event& event) {
+    keto::transaction_common::TransactionProtoHelper transactionHelper(
+        keto::server_common::fromEvent<keto::proto::Transaction>(event));
+    
+    
     
     return event;
 }
