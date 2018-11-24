@@ -23,7 +23,7 @@ namespace keto {
 namespace test {
 
 std::string EventRegistry::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 

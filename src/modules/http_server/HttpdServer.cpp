@@ -541,7 +541,7 @@ std::shared_ptr<listener> listenerPtr;
 namespace ketoEnv = keto::environment;
 
 std::string HttpdServer::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 

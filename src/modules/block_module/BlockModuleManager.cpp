@@ -36,7 +36,7 @@ namespace keto {
 namespace block {
     
 std::string BlockModuleManager::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 BlockModuleManager::BlockModuleManager() {

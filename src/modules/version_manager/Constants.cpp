@@ -17,7 +17,7 @@ namespace keto {
 namespace version_manager {
 
 std::string Constants::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 const char* Constants::CHECK_SCRIPT = "check_script";

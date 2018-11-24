@@ -29,7 +29,7 @@ typedef std::vector<uint8_t> AccountHashVector;
 class BlockService {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
     
     static std::string getSourceVersion();

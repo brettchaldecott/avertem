@@ -40,7 +40,7 @@ typedef std::shared_ptr<AccountRDFStatementBuilder> AccountRDFStatementBuilderPt
 class AccountRDFStatementBuilder {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
     static std::string getSourceVersion();
     

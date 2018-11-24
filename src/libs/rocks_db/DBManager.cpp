@@ -27,7 +27,7 @@ namespace keto {
 namespace rocks_db {
 
 std::string DBManager::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
     
 DBManager::DBManager(const std::vector<std::string>& databases) {

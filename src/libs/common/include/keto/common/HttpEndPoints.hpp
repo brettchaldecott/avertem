@@ -23,7 +23,7 @@ class HttpEndPoints {
 public:
     
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
 
     HttpEndPoints() = delete;

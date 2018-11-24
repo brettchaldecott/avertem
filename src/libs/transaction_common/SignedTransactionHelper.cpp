@@ -18,7 +18,7 @@ namespace keto {
 namespace transaction_common {
 
 std::string SignedTransactionHelper::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
     
 SignedTransactionHelper::SignedTransactionHelper(SignedTransaction_t* signedTransaction) :

@@ -22,7 +22,7 @@ namespace keto {
 namespace block_db {
     
 std::string MerkleUtils::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 

@@ -30,7 +30,7 @@ namespace keto {
 namespace test {
 
 std::string TestModuleManager::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
     

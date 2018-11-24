@@ -72,7 +72,7 @@ fail(boost::system::error_code ec, char const* what)
 }
 
 std::string RpcSession::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 RpcSession::RpcSession(

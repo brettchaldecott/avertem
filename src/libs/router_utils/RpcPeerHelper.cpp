@@ -19,7 +19,7 @@ namespace keto {
 namespace router_utils {
 
 std::string RpcPeerHelper::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 RpcPeerHelper::RpcPeerHelper() {

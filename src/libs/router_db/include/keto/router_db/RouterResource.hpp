@@ -36,7 +36,7 @@ typedef std::shared_ptr<RouterResource> RouterResourcePtr;
 class RouterResource {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
     static std::string getSourceVersion();
 

@@ -36,7 +36,7 @@ namespace keto{
 namespace server_session {
 
 std::string HttpSparqlManager::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
     
 HttpSparqlManager::HttpSparqlManager(std::shared_ptr<HttpSessionManager>& httpSessionManagerPtr) : 

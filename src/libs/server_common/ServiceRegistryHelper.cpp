@@ -26,7 +26,7 @@ namespace keto {
 namespace server_common {
 
 std::string ServiceRegistryHelper::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 void registerService(const std::string& service) {

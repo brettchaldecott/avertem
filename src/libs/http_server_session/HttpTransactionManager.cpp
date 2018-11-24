@@ -37,7 +37,7 @@ namespace keto {
 namespace server_session {
 
 std::string HttpTransactionManager::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 HttpTransactionManager::HttpTransactionManager(

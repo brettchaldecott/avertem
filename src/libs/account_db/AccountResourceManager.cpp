@@ -20,7 +20,7 @@ namespace account_db {
 thread_local AccountResourcePtr AccountResourceManager::accountResourcePtr;
 
 std::string AccountResourceManager::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 AccountResourceManager::AccountResourceManager(

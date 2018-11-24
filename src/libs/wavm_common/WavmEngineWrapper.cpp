@@ -144,7 +144,7 @@ struct RootResolver : Resolver
 };
 
 std::string WavmEngineWrapper::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 WavmEngineWrapper::WavmEngineWrapper(const std::string& wast) : wast(wast) {

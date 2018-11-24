@@ -23,7 +23,7 @@ namespace keto {
 namespace balancer {
 
 std::string EventRegistry::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 EventRegistry::EventRegistry() {

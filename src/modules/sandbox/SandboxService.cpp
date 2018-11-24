@@ -42,7 +42,7 @@ namespace sandbox {
 static SandboxServicePtr singleton;
 
 std::string SandboxService::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 SandboxService::SandboxService() {

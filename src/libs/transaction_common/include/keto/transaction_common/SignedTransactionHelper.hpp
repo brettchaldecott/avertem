@@ -35,7 +35,7 @@ typedef std::shared_ptr<SignedTransactionHelper> SignedTransactionHelperPtr;
 class SignedTransactionHelper {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
     
     static std::string getSourceVersion();

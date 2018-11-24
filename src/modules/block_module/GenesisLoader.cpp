@@ -65,7 +65,7 @@ namespace keto {
 namespace block {
     
 std::string GenesisLoader::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 GenesisLoader::GenesisLoader(const GenesisReader& reader) : reader(reader) {

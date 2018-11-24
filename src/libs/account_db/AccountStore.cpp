@@ -37,7 +37,7 @@ namespace account_db {
 static std::shared_ptr<AccountStore> singleton;
 
 std::string AccountStore::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 AccountStore::AccountStore() {

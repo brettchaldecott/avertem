@@ -31,7 +31,7 @@ namespace event {
 static ConsensusServicePtr singleton;
 
 std::string ConsensusService::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 

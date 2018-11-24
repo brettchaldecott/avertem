@@ -24,7 +24,7 @@ namespace wavm_common {
 static WavmEngineManagerPtr singleton;
 
 std::string WavmEngineManager::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 WavmEngineManager::WavmEngineManager() {

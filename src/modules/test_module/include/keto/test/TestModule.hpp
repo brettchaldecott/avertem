@@ -26,7 +26,7 @@ namespace test {
 class TestModule : public keto::module::ModuleInterface {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
     
     static std::string getSourceVersion();

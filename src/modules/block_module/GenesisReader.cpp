@@ -24,7 +24,7 @@ namespace keto {
 namespace block {
 
 std::string GenesisReader::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 GenesisReader::GenesisReader(const boost::filesystem::path& path) {

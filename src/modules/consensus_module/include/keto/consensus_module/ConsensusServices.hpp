@@ -33,7 +33,7 @@ typedef std::shared_ptr<ConsensusServices> ConsensusServicesPtr;
 class ConsensusServices {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
     
     static std::string getSourceVersion();

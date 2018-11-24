@@ -27,7 +27,7 @@ namespace version_manager {
 class VersionManagerModule : public keto::module::ModuleInterface {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
     
     static std::string getSourceVersion();

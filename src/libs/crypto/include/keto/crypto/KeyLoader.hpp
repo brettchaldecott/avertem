@@ -37,7 +37,7 @@ typedef std::shared_ptr<KeyLoader> KeyLoaderPtr;
 class KeyLoader {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
     static std::string getSourceVersion();
     

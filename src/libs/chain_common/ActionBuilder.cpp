@@ -20,7 +20,7 @@ namespace keto {
 namespace chain_common {
 
 std::string ActionBuilder::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 

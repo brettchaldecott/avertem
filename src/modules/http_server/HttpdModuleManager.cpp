@@ -29,7 +29,7 @@ namespace keto {
 namespace http {
 
 std::string HttpdModuleManager::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 

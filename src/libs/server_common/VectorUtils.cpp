@@ -21,7 +21,7 @@ namespace keto {
 namespace server_common {
 
 std::string VectorUtils::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
     
 VectorUtils::VectorUtils() {

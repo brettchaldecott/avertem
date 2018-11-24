@@ -25,7 +25,7 @@ namespace keto {
 namespace account_utils {
 
 std::string AccountGenerator::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 

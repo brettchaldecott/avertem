@@ -26,7 +26,7 @@ namespace asn1 {
 class AnyInterface {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
     
     virtual void* getPtr() = 0;

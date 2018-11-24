@@ -23,7 +23,7 @@ namespace rpc_server {
 class Constants {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
     
     Constants() = delete;

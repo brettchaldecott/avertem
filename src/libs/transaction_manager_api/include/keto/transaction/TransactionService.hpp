@@ -26,7 +26,7 @@ namespace transaction {
 class TransactionService {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
 
     static constexpr const char* KETO_TRANSACTION_MANAGER = "transaction_manager";

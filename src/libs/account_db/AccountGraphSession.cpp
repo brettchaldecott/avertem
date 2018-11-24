@@ -28,7 +28,7 @@ namespace account_db {
 // TODO: Implement a custom Berkely DB loader to support full transactions
 // at present transaction rollback is not supported.
 std::string AccountGraphSession::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
     
     

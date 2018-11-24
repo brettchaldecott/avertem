@@ -18,7 +18,7 @@ namespace keto {
 namespace block_db {
 
 std::string BlockResourceManager::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
     
 thread_local BlockResourcePtr BlockResourceManager::blockResourcePtr;

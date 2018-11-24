@@ -12,7 +12,7 @@ namespace keto {
 namespace router_db {
 
 std::string Constants::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
     

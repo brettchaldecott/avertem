@@ -30,7 +30,7 @@ namespace keto {
 namespace event {
 
 std::string EventServiceModuleManager::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 EventServiceModuleManager::EventServiceModuleManager() {

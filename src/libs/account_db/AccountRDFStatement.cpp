@@ -24,7 +24,7 @@ namespace keto {
 namespace account_db {
 
 std::string AccountRDFStatement::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
     
 AccountRDFStatement::AccountRDFStatement(ChangeData* changeData) {

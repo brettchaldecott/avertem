@@ -18,7 +18,7 @@ namespace keto{
 namespace sandbox {
     
 std::string SandboxModule::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 

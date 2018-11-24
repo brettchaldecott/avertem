@@ -21,7 +21,7 @@ namespace keto {
 namespace module {
 
 std::string ModuleWrapper::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 ModuleWrapper::ModuleWrapper(boost::filesystem::path sourcePath,

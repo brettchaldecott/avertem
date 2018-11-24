@@ -22,7 +22,7 @@ namespace keto {
 namespace rocks_db {
 
 std::string DBConnector::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 

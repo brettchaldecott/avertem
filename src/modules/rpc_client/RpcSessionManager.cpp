@@ -39,7 +39,7 @@ namespace ketoEnv = keto::environment;
 static RpcSessionManagerPtr singleton;
 
 std::string RpcSessionManager::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 RpcSessionManager::RpcSessionManager() : peered(false) {

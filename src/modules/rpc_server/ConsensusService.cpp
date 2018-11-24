@@ -30,7 +30,7 @@ namespace rpc_server {
 static ConsensusServicePtr singleton;
 
 std::string ConsensusService::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 

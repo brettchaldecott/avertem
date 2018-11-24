@@ -25,7 +25,7 @@ namespace keto {
 namespace block_db {
 
 std::string SignedChangeSetBuilder::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 SignedChangeSetBuilder::SignedChangeSetBuilder() {

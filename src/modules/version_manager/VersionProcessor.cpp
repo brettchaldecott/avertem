@@ -33,7 +33,7 @@ static std::shared_ptr<std::thread> versionThreadPtr;
 
 
 std::string VersionProcessor::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
     

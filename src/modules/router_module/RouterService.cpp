@@ -50,7 +50,7 @@ namespace router {
 static std::shared_ptr<RouterService> singleton;
 
 std::string RouterService::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 RouterService::RouterService() {

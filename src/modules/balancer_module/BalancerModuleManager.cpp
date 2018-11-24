@@ -34,7 +34,7 @@ namespace keto {
 namespace balancer {
 
 std::string BalancerModuleManager::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 BalancerModuleManager::BalancerModuleManager() {

@@ -28,7 +28,7 @@ namespace keto {
 namespace key_tools {
 
 std::string KeyPairCreator::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
     
 KeyPairCreator::KeyPairCreator() {

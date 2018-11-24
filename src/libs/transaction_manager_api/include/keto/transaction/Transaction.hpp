@@ -27,7 +27,7 @@ typedef std::shared_ptr<Transaction> TransactionPtr;
 class Transaction {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
 
     virtual void commit() = 0;

@@ -12,7 +12,7 @@ namespace keto {
 namespace account_db {
 
 std::string Constants::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
     
 const char* Constants::ACCOUNTS_MAPPING = "accounts_mapping";

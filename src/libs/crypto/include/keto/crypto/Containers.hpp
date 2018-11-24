@@ -25,7 +25,7 @@ namespace crypto {
 class Containers {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
 
 };

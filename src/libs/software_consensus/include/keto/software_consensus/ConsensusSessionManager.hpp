@@ -24,7 +24,7 @@ namespace software_consensus {
 class ConsensusSessionManager {
 public:
     static std::string getHeaderVersion() {
-        return OBFUSCATED("$Id:$");
+        return OBFUSCATED("$Id$");
     };
     static std::string getSourceVersion();
     

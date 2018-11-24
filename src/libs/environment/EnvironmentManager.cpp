@@ -21,7 +21,7 @@ namespace environment {
 static std::shared_ptr<EnvironmentManager> singleton;
 
 std::string EnvironmentManager::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 EnvironmentManager::EnvironmentManager(const std::string& config,

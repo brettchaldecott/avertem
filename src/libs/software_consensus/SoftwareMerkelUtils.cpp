@@ -22,7 +22,7 @@ namespace software_consensus {
 
 
 std::string SoftwareMerkelUtils::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
     
 SoftwareMerkelUtils::SoftwareMerkelUtils() {

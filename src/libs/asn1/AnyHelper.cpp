@@ -21,7 +21,7 @@ namespace keto {
 namespace asn1 {
 
 std::string AnyHelper::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
     
 AnyHelper::AnyHelper(AnyInterface* anyInterface) : 

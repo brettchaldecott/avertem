@@ -27,7 +27,7 @@ namespace keto {
 namespace account_db {
     
 std::string AccountGraphStore::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 AccountGraphStore::AccountGraphStore(const std::string& dbName) : dbName(dbName) {

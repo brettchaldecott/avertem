@@ -29,7 +29,7 @@ namespace keto {
 namespace crypto {
 
 std::string KeyLoader::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
     

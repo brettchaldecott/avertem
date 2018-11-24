@@ -18,7 +18,7 @@ namespace keto {
 namespace server_common {
 
 std::string Constants::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 
