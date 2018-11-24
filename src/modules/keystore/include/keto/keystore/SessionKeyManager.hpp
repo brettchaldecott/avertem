@@ -31,7 +31,9 @@
 
 namespace keto {
 namespace keystore {
-
+    
+class SessionKeyManager;
+typedef std::shared_ptr<SessionKeyManager> SessionKeyManagerPtr;
 
 class SessionKeyManager {
 public:
@@ -47,6 +49,9 @@ public:
     
     keto::event::Event requestKey(const keto::event::Event& event);
     keto::event::Event removeKey(const keto::event::Event& event);
+    
+    bool isSessionKeyValid(const std::vector<uint8_t>& sessionkey);
+    keto::crypto::SecureVector getPrivateKey(const std::vector<uint8_t>& sessionkey);
     
 private:
     std::unique_ptr<Botan::RandomNumberGenerator> rng;

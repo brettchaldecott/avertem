@@ -16,7 +16,7 @@ add_library( keto_http_server_session
              ${HEADERS}
            )
 
-target_link_libraries( keto_http_server_session)
+target_link_libraries( keto_http_server_session key_store_utils)
 target_include_directories( keto_http_server_session
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../obfuscate/include"

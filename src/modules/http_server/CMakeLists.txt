@@ -27,7 +27,7 @@ add_dependencies(0050_keto_httpd_module keto_tools)
 
 KetoModuleDepencencies( 0050_keto_httpd_module 
                             PRIVATE keto_http_server_session
-                            PRIVATE keto_software_consensus
+                            PRIVATE keto_software_consensus key_store_utils
                             PRIVATE keto_transaction_common keto_server_common
                             PRIVATE keto_key_tools keto_proto_environment ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_asn1_common keto_asn1_protocol
@@ -48,6 +48,7 @@ target_include_directories( 0050_keto_httpd_module
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/event_service_api/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/transaction_manager_api/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/http_server_session/include"
+                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/ssl/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/ssl/include"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/libs/common/include/"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/proto/"

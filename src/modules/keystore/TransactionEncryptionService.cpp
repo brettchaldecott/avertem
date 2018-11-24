@@ -11,9 +11,14 @@
  * Created on 15 November 2018, 8:51 PM
  */
 
+#include "keto/crypto/SecureVectorUtils.hpp"
 #include "keto/keystore/TransactionEncryptionService.hpp"
 #include "keto/transaction_common/TransactionProtoHelper.hpp"
+#include "keto/transaction_common/MessageWrapperProtoHelper.hpp"
 #include "keto/server_common/EventUtils.hpp"
+#include "keto/keystore/KeyStoreService.hpp"
+#include "keto/keystore/Exception.hpp"
+#include "keto/keystore/KeyStoreReEncryptTransactionMessageHelper.hpp"
 
 
 
@@ -23,7 +28,7 @@ namespace keystore {
 static TransactionEncryptionServicePtr singleton;
     
 std::string TransactionEncryptionService::getSourceVersion() {
-    return OBFUSCATED("$Id:$");
+    return OBFUSCATED("$Id$");
 }
 
 TransactionEncryptionService::TransactionEncryptionService() {
@@ -49,8 +54,24 @@ TransactionEncryptionServicePtr TransactionEncryptionService::getInstance() {
 
 
 keto::event::Event TransactionEncryptionService::reencryptTransaction(const keto::event::Event& event) {
-    keto::transaction_common::TransactionProtoHelper transactionHelper(
-        keto::server_common::fromEvent<keto::proto::Transaction>(event));
+    keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper(
+        keto::server_common::fromEvent<keto::proto::MessageWrapper>(event));
+    
+    keto::asn1::HashHelper sessionHash = messageWrapperProtoHelper.getSessionHash();
+    SessionKeyManagerPtr sessionKeyManagerPtr = KeyStoreService::getInstance()->getSessionKeyManager();
+    if (!sessionKeyManagerPtr->isSessionKeyValid(sessionHash)) {
+        BOOST_THROW_EXCEPTION(keto::keystore::InvalidSessionKeyException(
+                    "The sessionkey is invalid."));
+    }
+    
+    // retrieve the private key
+    std::cout << "The decrptor has been called" << std::endl;
+    KeyStoreReEncryptTransactionMessageHelper decryptor(
+            sessionKeyManagerPtr->getPrivateKey(sessionHash));
+    
+    
+    keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr =
+            messageWrapperProtoHelper.getTransaction()->getTransactionMessageHelper()->decryptMessage(decryptor);
     
     
     

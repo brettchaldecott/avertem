@@ -46,7 +46,7 @@ std::shared_ptr<KeyStoreService> KeyStoreService::getInstance() {
     return singleton;
 }
 
-std::shared_ptr<SessionKeyManager> KeyStoreService::getSessionKeyManager() {
+SessionKeyManagerPtr KeyStoreService::getSessionKeyManager() {
     return this->sessionKeyManager;
 }
 

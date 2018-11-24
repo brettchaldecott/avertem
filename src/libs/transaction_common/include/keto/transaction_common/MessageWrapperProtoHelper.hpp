@@ -47,6 +47,7 @@ public:
     MessageWrapperProtoHelper& setAccountHash(const keto::asn1::HashHelper accountHash);
     keto::asn1::HashHelper getAccountHash();
     MessageWrapperProtoHelper& setSessionHash(const std::string& sessionHash);
+    keto::asn1::HashHelper getSessionHash();
     MessageWrapperProtoHelper& setSessionHash(const keto::asn1::HashHelper sessionHash);
     MessageWrapperProtoHelper& setOperation(const keto::proto::MessageOperation operation);
     MessageWrapperProtoHelper& setMessageWrapper(const keto::proto::MessageWrapper& wrapper);

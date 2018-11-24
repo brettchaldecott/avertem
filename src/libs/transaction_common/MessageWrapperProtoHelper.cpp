@@ -86,6 +86,10 @@ MessageWrapperProtoHelper& MessageWrapperProtoHelper::setSessionHash(const std::
     wrapper.set_session_hash(sessionHash);
     return *this;
 }
+    
+keto::asn1::HashHelper MessageWrapperProtoHelper::getSessionHash() {
+    return keto::asn1::HashHelper(wrapper.session_hash());
+}
 
 MessageWrapperProtoHelper& MessageWrapperProtoHelper::setOperation(const keto::proto::MessageOperation operation) {
     this->wrapper.set_message_operation(operation);

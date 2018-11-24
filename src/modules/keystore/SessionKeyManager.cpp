@@ -27,7 +27,7 @@
 #include "keto/server_common/VectorUtils.hpp"
 #include "keto/server_common/EventUtils.hpp"
 #include "keto/crypto/SecureVectorUtils.hpp"
-#include "include/keto/keystore/SessionKeyManager.hpp"
+#include "keto/keystore/SessionKeyManager.hpp"
 
 namespace keto {
 namespace keystore {
@@ -77,6 +77,14 @@ keto::event::Event SessionKeyManager::removeKey(const keto::event::Event& event)
     response.set_session_hash(request.session_hash());
     response.set_success(true);
     return keto::server_common::toEvent<keto::proto::SessionKeyExpireResponse>(response);
+}
+
+bool SessionKeyManager::isSessionKeyValid(const std::vector<uint8_t>& sessionkey) {
+    return sessionKeys.count(sessionkey) != 0;
+    
+}
+keto::crypto::SecureVector SessionKeyManager::getPrivateKey(const std::vector<uint8_t>& sessionkey) {
+    return sessionKeys.at(sessionkey);
 }
 
     

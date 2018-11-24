@@ -18,6 +18,7 @@
 
 #include "Hash.h"
 #include "keto/common/StringCodec.hpp"
+
 #include "keto/crypto/Containers.hpp"
 
 #include "keto/obfuscate/MetaString.hpp"
@@ -50,6 +51,7 @@ public:
     
     HashHelper& operator =(const keto::crypto::SecureVector& hash);
     operator keto::crypto::SecureVector() const;
+    operator std::vector<uint8_t>() const;
     operator std::string() const;
      
     HashHelper& setHash(const std::string& hash,keto::common::StringEncoding stringEncoding);

@@ -78,8 +78,8 @@ public:
     TransactionMessage_t* getMessage(TransactionEncryptionHandler& 
             transactionEncryptionHandler);
     
-    static TransactionMessageHelperPtr decryptMessage(TransactionEncryptionHandler& 
-            transactionEncryptionHandler, TransactionMessage_t* transactionMessage);
+    TransactionMessageHelperPtr decryptMessage(TransactionEncryptionHandler&
+            transactionEncryptionHandler);
     
     bool isEncrypted();
     
@@ -93,7 +93,7 @@ private:
     void getMessage(TransactionEncryptionHandler& 
             transactionEncryptionHandler,TransactionMessage_t* transactionMessage);
     
-    static void decryptMessage(TransactionEncryptionHandler& 
+    void decryptMessage(TransactionEncryptionHandler&
         transactionEncryptionHandler, TransactionMessageHelperPtr transactionMessageHelperPtr, 
         TransactionMessage__nestedTransactions__Member* transactionMessage);
 };

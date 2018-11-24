@@ -22,6 +22,7 @@
 
 #include "keto/asn1/HashHelper.hpp"
 #include "keto/asn1/Exception.hpp"
+#include "keto/crypto/SecureVectorUtils.hpp"
 
 namespace keto {
 namespace asn1 {
@@ -102,6 +103,10 @@ HashHelper::operator keto::crypto::SecureVector() const {
     return this->hash;
 }
 
+HashHelper::operator std::vector<uint8_t>() const {
+    return keto::crypto::SecureVectorUtils().copyFromSecure(this->hash);
+}
+    
 HashHelper::operator std::string() const {
     
     std::stringstream ss; 

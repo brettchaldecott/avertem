@@ -165,14 +165,14 @@ TransactionMessage_t* TransactionMessageHelper::getMessage(TransactionEncryption
 }
 
 TransactionMessageHelperPtr TransactionMessageHelper::decryptMessage(TransactionEncryptionHandler& 
-        transactionEncryptionHandler, TransactionMessage_t* transactionMessage) {
+        transactionEncryptionHandler) {
     TransactionMessageHelperPtr transactionMessageHelperPtr(new TransactionMessageHelper());
     transactionMessageHelperPtr->setTransactionWrapper(keto::asn1::clone<TransactionWrapper_t>(
-            &transactionMessage->transaction,&asn_DEF_TransactionWrapper));
+            &this->transactionMessage->transaction,&asn_DEF_TransactionWrapper));
     
-    for (int index = 0; index < transactionMessage->nestedTransactions.list.count; index++) {
+    for (int index = 0; index < this->transactionMessage->nestedTransactions.list.count; index++) {
         TransactionMessage__nestedTransactions__Member* nestedTransaction =
-            transactionMessage->nestedTransactions.list.array[index];    
+            this->transactionMessage->nestedTransactions.list.array[index];
         decryptMessage(transactionEncryptionHandler,transactionMessageHelperPtr,nestedTransaction);
     }
     return transactionMessageHelperPtr;
@@ -207,7 +207,7 @@ void TransactionMessageHelper::getMessage(TransactionEncryptionHandler&
 }
 
 
-void TransactionMessageHelper::decryptMessage(TransactionEncryptionHandler& 
+void TransactionMessageHelper::decryptMessage(TransactionEncryptionHandler&
         transactionEncryptionHandler, TransactionMessageHelperPtr transactionMessageHelperPtr, 
         TransactionMessage__nestedTransactions__Member* nestedTransaction) {
     TransactionMessage_t* transactionMessage = NULL;

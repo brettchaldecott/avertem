@@ -43,10 +43,10 @@ public:
      * 
      * @return The reference to the session key manager.
      */
-    std::shared_ptr<SessionKeyManager> getSessionKeyManager();
+    SessionKeyManagerPtr getSessionKeyManager();
     
 private:
-    std::shared_ptr<SessionKeyManager> sessionKeyManager;
+    SessionKeyManagerPtr sessionKeyManager;
     
     KeyStoreService();
     
