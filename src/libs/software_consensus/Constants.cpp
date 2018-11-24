@@ -53,7 +53,7 @@ const std::vector<std::string> Constants::CONSENSUS_SESSION_ORDER = {
 //const keto::obfuscate::MetaString Constants::CPP_FILE_VERSION = DEF_OBFUSCATED("$Id$");
 
     std::string Constants::getSourceVersion() {
-        return OBFUSCATED("$Id$");
+        return OBFUSCATED("$Id: ab909bdb9dcd12f337f51edd6e4965c65656f142 $");
     }
 
 }
