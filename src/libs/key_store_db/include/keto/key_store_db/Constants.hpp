@@ -19,18 +19,38 @@
 
 #include "keto/obfuscate/MetaString.hpp"
 
+namespace keto {
+namespace key_store_db {
 
 class Constants {
 public:
     Constants() = delete;
     Constants(const Constants& orig) = delete;
     virtual ~Constants() = delete;
-    
-    
-    
+
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id$");
+    };
+    static std::string getSourceVersion();
+
+    // string constants
+    static const char* KEY_STORE;
+
+    static const std::vector<std::string> DB_LIST;
+
+    // encryption padding
+    static constexpr const char* ENCRYPTION_PADDING = "EME1(SHA-256)";
+
+
+
 private:
 
 };
+
+
+}
+}
+
 
 #endif /* CONSTANTS_HPP */
 

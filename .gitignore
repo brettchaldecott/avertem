@@ -33,6 +33,7 @@
 
 # ignore the build directory
 build/
+ide_build/
 nbproject/
 .anjuta/
 .anjuta_sym_db.db

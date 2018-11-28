@@ -22,18 +22,19 @@ add_library( 0010_keto_keystore_module
             ConsensusService.cpp
             TransactionEncryptionService.cpp
             KeyStoreReEncryptTransactionMessageHelper.cpp
+            KeyStoreStorageManager.cpp
 
-
-             ${HEADERS}
-           )
+             ${HEADERS})
 
 add_dependencies(0010_keto_keystore_module keto_tools)
 
 KetoModuleDepencencies( 0010_keto_keystore_module 
-                            PRIVATE keto_software_consensus
+                            PRIVATE keto_software_consensus keto_key_store_db
                             PRIVATE keto_transaction_common keto_server_common keto_asn1_common keto_asn1_protocol
-                            PRIVATE keto_key_tools keto_proto_environment ${PROTOBUF_LIBRARIES}
-                            PRIVATE keto_crypto key_store_utils ${BOTAN_LIBRARIES} 
+                            PRIVATE keto_key_tools keto_proto_environment keto_rocks_db ${PROTOBUF_LIBRARIES}
+                            PRIVATE keto_crypto key_store_utils
+                            PRIVATE ${ROCKSDB_LIBRARIES}
+                            PRIVATE ${BOTAN_LIBRARIES}
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
 KetoModuleConsensus( 0010_keto_keystore_module ${NUMBER_OF_KEYS} keystore )

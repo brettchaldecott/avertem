@@ -11,14 +11,22 @@
  * Created on 24 November 2018, 7:18 AM
  */
 
-#include "Constants.hpp"
+#include "keto/key_store_db/Constants.hpp"
 
-Constants::Constants() {
+
+namespace keto {
+namespace key_store_db {
+
+std::string Constants::getSourceVersion() {
+    return OBFUSCATED("$Id$");
 }
 
-Constants::Constants(const Constants& orig) {
-}
+// string constants
+const char* Constants::KEY_STORE = "key_store";
 
-Constants::~Constants() {
-}
+const std::vector<std::string> Constants::DB_LIST = {KEY_STORE};
 
+
+
+}
+}

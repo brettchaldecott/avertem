@@ -1,4 +1,4 @@
-file(GLOB HEADERS "include/keto/account_db/*.hpp")
+file(GLOB HEADERS "include/keto/key_store_db/*.hpp")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 include_directories(${PROTOBUF_INCLUDE_DIR})
@@ -6,13 +6,16 @@ include_directories(${PROTOBUF_INCLUDE_DIR})
 ## SORT .cpp by most likely to change / break compile
 add_library( keto_key_store_db
             
+            Constants.cpp
+            KeyStoreDB.cpp
+            KeyStoreResourceManager.cpp
+            KeyStoreResource.cpp
 
-            ${HEADERS}
-           )
+        ${HEADERS})
 
 target_link_libraries( keto_key_store_db
                         key_store_utils )
-target_include_directories( keto_account_db
+target_include_directories( keto_key_store_db
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../common/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../crypto/include"
@@ -42,10 +45,10 @@ target_include_directories( keto_account_db
 #endif(MSVC)
 
 INSTALL( TARGETS
-   keto_account_db
+   keto_key_store_db
 
    RUNTIME DESTINATION bin
    LIBRARY DESTINATION lib
    ARCHIVE DESTINATION lib
 )
-INSTALL( FILES ${HEADERS} DESTINATION "include/keto/account_db" )
+INSTALL( FILES ${HEADERS} DESTINATION "include/keto/key_store_db" )
