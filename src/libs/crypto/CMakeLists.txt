@@ -11,9 +11,9 @@ add_library( keto_crypto
             KeyLoader.cpp
             SecureVectorUtils.cpp
             SessionHashGenerator.cpp
+            KeyBuilder.cpp
 
-             ${HEADERS}
-           )
+        ${HEADERS})
 
 target_link_libraries( keto_crypto )
 target_include_directories( keto_crypto

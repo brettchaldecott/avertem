@@ -22,6 +22,10 @@ KETO_DECLARE_EXCEPTION( KeyStoreModuleException, "General key store exception." 
 
 // the keto module derived exception
 KETO_DECLARE_DERIVED_EXCEPTION (KeyStoreModuleException, InvalidSessionKeyException , "Invalid session key.");
+KETO_DECLARE_DERIVED_EXCEPTION (KeyStoreModuleException, PrivateKeyNotConfiguredException , "Private key has not been configured.");
+KETO_DECLARE_DERIVED_EXCEPTION (KeyStoreModuleException, PublicKeyNotConfiguredException , "Public key has not been configured.");
+
+
 
 }
 }

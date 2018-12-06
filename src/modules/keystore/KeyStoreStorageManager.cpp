@@ -3,7 +3,14 @@
 //
 
 #include "keto/keystore/KeyStoreStorageManager.hpp"
+#include "keto/keystore/Constants.hpp"
+#include "keto/keystore/Exception.hpp"
 #include "keto/key_store_db/KeyStoreDB.hpp"
+#include "keto/environment/Config.hpp"
+#include "keto/environment/EnvironmentManager.hpp"
+#include "keto/crypto/KeyBuilder.hpp"
+
+
 
 namespace keto {
 namespace keystore {
@@ -14,8 +21,32 @@ std::string KeyStoreStorageManager::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
-KeyStoreStorageManager::KeyStoreStorageManager() {
+KeyStoreStorageManager::KeyStoreStorageManager() : master(false) {
+    std::shared_ptr<keto::environment::Config> config =
+            keto::environment::EnvironmentManager::getInstance()->getConfig();
+    if (config->getVariablesMap().count(Constants::IS_MASTER)) {
+        if (config->getVariablesMap()[Constants::IS_MASTER].as<std::string>().compare(Constants::IS_MASTER_TRUE)) {
+            this->master = true;
+        }
+    }
 
+    // load the key information
+    if (!config->getVariablesMap().count(Constants::PRIVATE_KEY)) {
+        BOOST_THROW_EXCEPTION(keto::keystore::PrivateKeyNotConfiguredException());
+    }
+    std::string privateKeyPath =
+            config->getVariablesMap()[Constants::PRIVATE_KEY].as<std::string>();
+
+    if (!config->getVariablesMap().count(Constants::PUBLIC_KEY)) {
+        BOOST_THROW_EXCEPTION(keto::keystore::PublicKeyNotConfiguredException());
+    }
+    std::string publicKeyPath =
+            config->getVariablesMap()[Constants::PUBLIC_KEY].as<std::string>();
+
+    keyLoaderPtr = std::make_shared<keto::crypto::KeyLoader>(privateKeyPath,
+                                                             publicKeyPath);
+
+    this->keyStoreDBPtr = keto::key_store_db::KeyStoreDB::getInstance();
 }
 
 
@@ -38,6 +69,41 @@ KeyStoreStorageManagerPtr KeyStoreStorageManager::getInstance() {
     return singleton;
 }
 
+
+void KeyStoreStorageManager::initStore() {
+    if (this->master) {
+        keto::crypto::KeyBuilder keyBuilder;
+        keyBuilder.addPrivateKey(this->keyLoaderPtr->getPrivateKey()).
+            addPublicKey(this->keyLoaderPtr->getPublicKey()).addPrivateKey(this->keyLoaderPtr->getPrivateKey());
+        this->setDerivedKey(keyBuilder.getPrivateKey());
+        unlockStore();
+    }
+}
+
+
+void KeyStoreStorageManager::unlockStore() {
+
+    keto::key_store_db::OnionKeys onionKeys;
+    onionKeys.push_back(this->keyLoaderPtr->getPrivateKey());
+    onionKeys.push_back(this->derivedKey);
+    std::string value;
+    if (!this->keyStoreDBPtr->getValue(Constants::KEY_STORE_DB::KEY_STORE_MASTER_ENTRY,onionKeys,value)) {
+        this->masterKeyStoreEntry = KeyStoreEntryPtr(new KeyStoreEntry());
+        this->keyStoreDBPtr->setValue(Constants::KEY_STORE_DB::KEY_STORE_MASTER_ENTRY,this->masterKeyStoreEntry->getJson(),onionKeys);
+    } else {
+        this->masterKeyStoreEntry = KeyStoreEntryPtr(new KeyStoreEntry(value));
+    }
+}
+
+
+void KeyStoreStorageManager::setDerivedKey(std::shared_ptr<Botan::Private_Key> derivedKey) {
+    this->derivedKey = derivedKey;
+}
+
+
+bool KeyStoreStorageManager::isMaster() const {
+    return master;
+}
 
 
 }

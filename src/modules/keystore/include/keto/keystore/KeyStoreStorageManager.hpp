@@ -11,7 +11,9 @@
 
 #include "keto/key_store_db/KeyStoreDB.hpp"
 
+#include "keto/crypto/KeyLoader.hpp"
 #include "keto/common/MetaInfo.hpp"
+#include "keto/keystore/KeyStoreEntry.hpp"
 
 
 namespace keto {
@@ -37,10 +39,36 @@ public:
     static void fin();
     static KeyStoreStorageManagerPtr getInstance();
 
+    /**
+     * Init the store
+     */
+    void initStore();
+    /**
+     * Unlock store
+     */
+    void unlockStore();
+
+    /**
+     * This method sets the derived key needed unlock the store.
+     *
+     * @param derivedKey
+     */
+    void setDerivedKey(std::shared_ptr<Botan::Private_Key> derivedKey);
 
 
+    /**
+     * This method returns the master reference.
+     *
+     * @return TRUE if this is the master
+     */
+    bool isMaster() const;
 
 private:
+    keto::key_store_db::KeyStoreDBPtr keyStoreDBPtr;
+    bool master;
+    std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr;
+    std::shared_ptr<Botan::Private_Key> derivedKey;
+    KeyStoreEntryPtr masterKeyStoreEntry;
 
 };
 

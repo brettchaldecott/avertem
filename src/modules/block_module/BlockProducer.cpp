@@ -68,7 +68,7 @@ BlockProducer::BlockProducer() :
     std::string privateKeyPath = 
             config->getVariablesMap()[Constants::PRIVATE_KEY].as<std::string>();
     if (!config->getVariablesMap().count(Constants::PUBLIC_KEY)) {
-        BOOST_THROW_EXCEPTION(keto::block::PrivateKeyNotConfiguredException());
+        BOOST_THROW_EXCEPTION(keto::block::PublicKeyNotConfiguredException());
     }
     std::string publicKeyPath = 
             config->getVariablesMap()[Constants::PUBLIC_KEY].as<std::string>();

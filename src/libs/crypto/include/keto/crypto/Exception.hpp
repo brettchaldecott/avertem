@@ -29,7 +29,7 @@ KETO_DECLARE_DERIVED_EXCEPTION (CyptoCommonException, PrivateKeyNotConfiguredExc
 KETO_DECLARE_DERIVED_EXCEPTION (CyptoCommonException, PublicKeyNotConfiguredException , "Key loader has no public key configured to load.");
 KETO_DECLARE_DERIVED_EXCEPTION (CyptoCommonException, InvalidKeyPathException , "The specified key path is invalid.");
 KETO_DECLARE_DERIVED_EXCEPTION (CyptoCommonException, KeyLoaderNotInitializedException , "The key loader has not been initialized.");
-
+KETO_DECLARE_DERIVED_EXCEPTION (CyptoCommonException, InsufficiateKeyDataException , "Insufficiate Key data was provided.");
     
 }
 }

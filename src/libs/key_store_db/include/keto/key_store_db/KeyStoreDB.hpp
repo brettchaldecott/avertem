@@ -9,6 +9,12 @@
 #include <string>
 #include <vector>
 
+#include <botan/pkcs8.h>
+#include <botan/x509_key.h>
+#include <botan/pubkey.h>
+#include <botan/rng.h>
+#include <botan/auto_rng.h>
+
 #include "keto/obfuscate/MetaString.hpp"
 #include "keto/crypto/Containers.hpp"
 #include "keto/rocks_db/DBManager.hpp"
@@ -20,7 +26,8 @@ namespace key_store_db {
 
 class KeyStoreDB;
 typedef std::shared_ptr<KeyStoreDB> KeyStoreDBPtr;
-typedef std::vector<keto::crypto::SecureVector> OnionKeys;
+typedef std::shared_ptr<Botan::Private_Key> PrivateKeyPtr;
+typedef std::vector<PrivateKeyPtr> OnionKeys;
 
 class KeyStoreDB {
 public:
@@ -38,8 +45,11 @@ public:
     static KeyStoreDBPtr getInstance();
 
     void setValue(const keto::crypto::SecureVector& key, const keto::crypto::SecureVector& value, const OnionKeys& onionKeys);
-    keto::crypto::SecureVector getValue(const keto::crypto::SecureVector& key, const OnionKeys& onionKeys);
-
+    void setValue(const std::string& key, const keto::crypto::SecureVector& value, const OnionKeys& onionKeys);
+    void setValue(const std::string& key, const std::string& value, const OnionKeys& onionKeys);
+    bool getValue(const keto::crypto::SecureVector& key, const OnionKeys& onionKeys, keto::crypto::SecureVector& bytes);
+    bool getValue(const std::string& key, const OnionKeys& onionKeys, keto::crypto::SecureVector& bytes);
+    bool getValue(const std::string& key, const OnionKeys& onionKeys, std::string& value);
 
 
 private:

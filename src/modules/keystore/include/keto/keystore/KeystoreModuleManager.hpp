@@ -20,6 +20,7 @@
 
 #include "keto/module/ModuleManagementInterface.hpp"
 #include "keto/keystore/KeystoreModule.hpp"
+#include "keto/keystore/KeyStoreEntry.hpp"
 
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
 #include "keto/common/MetaInfo.hpp"
@@ -48,6 +49,7 @@ public:
     // lifecycle methods
     virtual void start();
     virtual void stop();
+    virtual void postStart();
     
     virtual const std::vector<std::string> listModules();
     virtual const std::shared_ptr<keto::module::ModuleInterface> getModule(const std::string& name);
@@ -56,8 +58,7 @@ public:
 
 private:
     std::map<std::string,std::shared_ptr<keto::module::ModuleInterface>> modules;
-    
-    
+
     keto::software_consensus::ConsensusHashGeneratorPtr getConsensusHash();
 };
 

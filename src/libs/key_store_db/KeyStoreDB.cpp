@@ -62,10 +62,7 @@ void KeyStoreDB::setValue(const keto::crypto::SecureVector& key, const keto::cry
     keto::crypto::SecureVector bytes = value;
     std::vector<uint8_t> encryptedBytes;
     std::unique_ptr<Botan::RandomNumberGenerator> rng(new Botan::AutoSeeded_RNG);
-    for (keto::crypto::SecureVector privateKeyVector : onionKeys) {
-        Botan::DataSource_Memory memoryDatasource(privateKeyVector);
-        std::shared_ptr<Botan::Private_Key> privateKey =
-                Botan::PKCS8::load_key(memoryDatasource);
+    for (PrivateKeyPtr privateKey : onionKeys) {
         Botan::PK_Encryptor_EME enc(*privateKey,*rng.get(), Constants::ENCRYPTION_PADDING);
         encryptedBytes = enc.encrypt(bytes,*rng.get());
         bytes = keto::crypto::SecureVectorUtils().copyToSecure(encryptedBytes);
@@ -77,29 +74,46 @@ void KeyStoreDB::setValue(const keto::crypto::SecureVector& key, const keto::cry
 }
 
 
-keto::crypto::SecureVector KeyStoreDB::getValue(const keto::crypto::SecureVector& key, const OnionKeys& onionKeys) {
+void KeyStoreDB::setValue(const std::string& key, const keto::crypto::SecureVector& value, const OnionKeys& onionKeys) {
+    return setValue(keto::crypto::SecureVectorUtils().copyStringToSecure(key),value,onionKeys);
+}
+
+void KeyStoreDB::setValue(const std::string& key, const std::string& value, const OnionKeys& onionKeys) {
+    return setValue(keto::crypto::SecureVectorUtils().copyStringToSecure(key),keto::crypto::SecureVectorUtils().copyStringToSecure(value),onionKeys);
+}
+
+bool KeyStoreDB::getValue(const keto::crypto::SecureVector& key, const OnionKeys& onionKeys, keto::crypto::SecureVector& bytes) {
     rocksdb::Transaction* keyStoreTransaction = keyStoreResourceManagerPtr->getResource()->getTransaction();
     keto::rocks_db::SliceHelper keyValue(keto::crypto::SecureVectorUtils().copyFromSecure(
             key));
     rocksdb::ReadOptions readOptions;
     std::string encrytedValues;
-    keyStoreTransaction->Get(readOptions,keyValue,&encrytedValues);
-    keto::crypto::SecureVector bytes = keto::crypto::SecureVectorUtils().copyStringToSecure(encrytedValues);
+    if (rocksdb::Status::OK() != keyStoreTransaction->Get(readOptions,keyValue,&encrytedValues)) {
+        return false;
+    }
+
+    bytes = keto::crypto::SecureVectorUtils().copyStringToSecure(encrytedValues);
 
     std::unique_ptr<Botan::RandomNumberGenerator> rng(new Botan::AutoSeeded_RNG);
-    for (keto::crypto::SecureVector privateKeyVector : onionKeys) {
-        Botan::DataSource_Memory memoryDatasource(privateKeyVector);
-        std::shared_ptr<Botan::Private_Key> privateKey =
-                Botan::PKCS8::load_key(memoryDatasource);
+    for (PrivateKeyPtr privateKey : onionKeys) {
         Botan::PK_Decryptor_EME dec(*privateKey,*rng.get(), Constants::ENCRYPTION_PADDING);
-
-
         bytes = dec.decrypt(bytes);
     }
 
-    return bytes;
+    return true;
 }
 
+
+bool KeyStoreDB::getValue(const std::string& key, const OnionKeys& onionKeys, keto::crypto::SecureVector& bytes) {
+    return getValue(keto::crypto::SecureVectorUtils().copyStringToSecure(key),onionKeys,bytes);
+}
+
+bool KeyStoreDB::getValue(const std::string& key, const OnionKeys& onionKeys, std::string& value) {
+    keto::crypto::SecureVector bytes;
+    bool result = getValue(keto::crypto::SecureVectorUtils().copyStringToSecure(key),onionKeys,bytes);
+    value = keto::crypto::SecureVectorUtils().copySecureToString(bytes);
+    return result;
+}
 
 }
 }

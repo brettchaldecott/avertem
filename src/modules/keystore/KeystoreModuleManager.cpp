@@ -75,6 +75,12 @@ void KeystoreModuleManager::stop() {
     KETO_LOG_INFO << "[KeystoreModuleManager] The KeystoreModuleManager is being stopped";
 }
 
+void KeystoreModuleManager::postStart() {
+    KeyStoreStorageManager::getInstance()->initStore();
+    KETO_LOG_INFO << "[KeystoreModuleManager] The keystore post start";
+}
+
+
 const std::vector<std::string> KeystoreModuleManager::listModules() {
     std::vector<std::string> keys;
     std::transform(

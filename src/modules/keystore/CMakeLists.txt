@@ -23,8 +23,10 @@ add_library( 0010_keto_keystore_module
             TransactionEncryptionService.cpp
             KeyStoreReEncryptTransactionMessageHelper.cpp
             KeyStoreStorageManager.cpp
+            include/keto/keystore/Constants.hpp
+            KeyStoreEntry.cpp
 
-             ${HEADERS})
+             ${HEADERS} )
 
 add_dependencies(0010_keto_keystore_module keto_tools)
 
@@ -56,6 +58,7 @@ target_include_directories( 0010_keto_keystore_module
 
                             ${Boost_INCLUDE_DIRS}
                             ${BOTAN_INCLUDE_DIR}
+                            ${JSON_INCLUDE_DIR}
                             )
 
 #if(MSVC)
