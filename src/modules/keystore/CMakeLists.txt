@@ -26,7 +26,7 @@ add_library( 0010_keto_keystore_module
             include/keto/keystore/Constants.hpp
             KeyStoreEntry.cpp
 
-             ${HEADERS} )
+             ${HEADERS} Constants.cpp)
 
 add_dependencies(0010_keto_keystore_module keto_tools)
 

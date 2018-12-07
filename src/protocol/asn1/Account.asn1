@@ -1,7 +1,7 @@
 AccountModule DEFINITIONS AUTOMATIC TAGS ::= BEGIN
     IMPORTS Version, Hash, Key, Number
         FROM BasicModule
-        Roll
+        Role
         FROM SecurityModule
         PrivateKey
         FROM PrivateKeyModule;
@@ -22,7 +22,7 @@ Account ::= SEQUENCE {
     publicKey               Key,
     accountType             AccountType,
     accountInfo             SEQUENCE OF ANY,
-    roll                    SEQUENCE OF Hash,
+    role                    SEQUENCE OF Hash,
     permissions             SEQUENCE OF Hash
 }
 

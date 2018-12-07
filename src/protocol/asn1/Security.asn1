@@ -2,7 +2,7 @@ SecurityModule DEFINITIONS AUTOMATIC TAGS ::= BEGIN
     IMPORTS Version, Hash
         FROM BasicModule;
 
-Roll ::= SEQUENCE {
+Role ::= SEQUENCE {
     version         Version,
     id              Hash,
     name            UTF8String
