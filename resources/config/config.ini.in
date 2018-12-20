@@ -36,3 +36,5 @@ consensus-keys=${KetoConsensusKeys}
 # version
 check_script=upgrade/ubuntu.sh
 auto_update=false
+# master
+is_master=true

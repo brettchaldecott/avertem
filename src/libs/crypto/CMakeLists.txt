@@ -13,7 +13,7 @@ add_library( keto_crypto
             SessionHashGenerator.cpp
             KeyBuilder.cpp
 
-        ${HEADERS})
+        ${HEADERS} CipherBuilder.cpp include/keto/crypto/CipherBuilder.hpp)
 
 target_link_libraries( keto_crypto )
 target_include_directories( keto_crypto

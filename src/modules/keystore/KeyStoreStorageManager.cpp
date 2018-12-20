@@ -46,7 +46,11 @@ KeyStoreStorageManager::KeyStoreStorageManager() : master(false) {
     keyLoaderPtr = std::make_shared<keto::crypto::KeyLoader>(privateKeyPath,
                                                              publicKeyPath);
 
+    keto::key_store_db::KeyStoreDB::init(this->keyLoaderPtr->getPrivateKey());
     this->keyStoreDBPtr = keto::key_store_db::KeyStoreDB::getInstance();
+
+
+
 }
 
 
@@ -56,7 +60,6 @@ KeyStoreStorageManager::~KeyStoreStorageManager() {
 
 
 KeyStoreStorageManagerPtr KeyStoreStorageManager::init() {
-    keto::key_store_db::KeyStoreDB::init();
     return singleton = KeyStoreStorageManagerPtr(new KeyStoreStorageManager());
 }
 
@@ -71,10 +74,10 @@ KeyStoreStorageManagerPtr KeyStoreStorageManager::getInstance() {
 
 
 void KeyStoreStorageManager::initStore() {
-    if (this->master) {
+    if (this->isMaster()) {
         keto::crypto::KeyBuilder keyBuilder;
-        keyBuilder.addPrivateKey(this->keyLoaderPtr->getPrivateKey()).
-            addPublicKey(this->keyLoaderPtr->getPublicKey()).addPrivateKey(this->keyLoaderPtr->getPrivateKey());
+        keyBuilder.addPrivateKey(this->keyLoaderPtr->getPrivateKey())
+                .addPrivateKey(this->keyLoaderPtr->getPrivateKey()).addPublicKey(this->keyLoaderPtr->getPublicKey());
         this->setDerivedKey(keyBuilder.getPrivateKey());
         unlockStore();
     }

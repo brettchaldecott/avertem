@@ -9,8 +9,8 @@ namespace keto {
 namespace keystore {
 
 
-const char* Constants::PRIVATE_KEY = "PRIVATE_KEY";
-const char* Constants::PUBLIC_KEY = "PUBLIC_KEY";
+const char* Constants::PRIVATE_KEY = "server-private-key";
+const char* Constants::PUBLIC_KEY = "server-public-key";
 
 
 }

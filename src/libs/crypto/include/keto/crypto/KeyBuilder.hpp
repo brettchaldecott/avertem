@@ -47,8 +47,6 @@ public:
 private:
     std::shared_ptr<Botan::Private_Key> privateKeyPtr;
     BigIntVector privateKeys;
-
-
 };
 
 

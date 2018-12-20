@@ -40,7 +40,7 @@ public:
     KeyStoreDB(const KeyStoreDB& origin) = delete;
     virtual ~KeyStoreDB();
 
-    static KeyStoreDBPtr init();
+    static KeyStoreDBPtr init(const PrivateKeyPtr& baseKey);
     static void fin();
     static KeyStoreDBPtr getInstance();
 
@@ -53,10 +53,11 @@ public:
 
 
 private:
+    PrivateKeyPtr baseKey;
     std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr;
     KeyStoreResourceManagerPtr keyStoreResourceManagerPtr;
 
-    KeyStoreDB();
+    KeyStoreDB(const PrivateKeyPtr& baseKey);
 
 
 

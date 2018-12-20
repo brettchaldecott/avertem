@@ -76,7 +76,9 @@ void KeystoreModuleManager::stop() {
 }
 
 void KeystoreModuleManager::postStart() {
+    keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
     KeyStoreStorageManager::getInstance()->initStore();
+    transactionPtr->commit();
     KETO_LOG_INFO << "[KeystoreModuleManager] The keystore post start";
 }
 

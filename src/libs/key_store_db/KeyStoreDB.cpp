@@ -9,12 +9,18 @@
 #include <botan/pubkey.h>
 #include <botan/rng.h>
 #include <botan/auto_rng.h>
+#include <botan/ecies.h>
+#include <botan/filter.h>
+#include <botan/filters.h>
+#include <botan/dlies.h>
+#include <botan/hex.h>
 
 
 #include "keto/crypto/SecureVectorUtils.hpp"
 #include "keto/rocks_db/SliceHelper.hpp"
 #include "keto/key_store_db/KeyStoreDB.hpp"
 #include "keto/key_store_db/Constants.hpp"
+#include "keto/crypto/CipherBuilder.hpp"
 
 
 namespace keto {
@@ -27,19 +33,21 @@ std::string KeyStoreDB::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
-KeyStoreDB::KeyStoreDB() {
+KeyStoreDB::KeyStoreDB(const PrivateKeyPtr& baseKey) : baseKey(baseKey) {
     dbManagerPtr = std::shared_ptr<keto::rocks_db::DBManager>(
             new keto::rocks_db::DBManager(Constants::DB_LIST));
     keyStoreResourceManagerPtr =  KeyStoreResourceManagerPtr(
             new KeyStoreResourceManager(dbManagerPtr));
+
+
 }
 
 KeyStoreDB::~KeyStoreDB() {
 
 }
 
-KeyStoreDBPtr KeyStoreDB::init() {
-    return singleton = KeyStoreDBPtr(new KeyStoreDB());
+KeyStoreDBPtr KeyStoreDB::init(const PrivateKeyPtr& baseKey) {
+    return singleton = KeyStoreDBPtr(new KeyStoreDB(baseKey));
 }
 
 void KeyStoreDB::fin() {
@@ -58,18 +66,19 @@ void KeyStoreDB::setValue(const keto::crypto::SecureVector& key, const keto::cry
             key));
     rocksdb::ReadOptions readOptions;
 
-
     keto::crypto::SecureVector bytes = value;
-    std::vector<uint8_t> encryptedBytes;
-    std::unique_ptr<Botan::RandomNumberGenerator> rng(new Botan::AutoSeeded_RNG);
+    keto::crypto::CipherBuilder cipherBuilder(this->baseKey);
+    std::shared_ptr<Botan::AutoSeeded_RNG> generator(new Botan::AutoSeeded_RNG());
+
     for (PrivateKeyPtr privateKey : onionKeys) {
-        Botan::PK_Encryptor_EME enc(*privateKey,*rng.get(), Constants::ENCRYPTION_PADDING);
-        encryptedBytes = enc.encrypt(bytes,*rng.get());
-        bytes = keto::crypto::SecureVectorUtils().copyToSecure(encryptedBytes);
+        std::unique_ptr<Botan::StreamCipher> cipher(Botan::StreamCipher::create("ChaCha(20)"));
+        Botan::SymmetricKey vector = cipherBuilder.derive(32,privateKey);
+        cipher->set_key(vector);
+        cipher->set_iv(NULL,0);
+        cipher->encrypt(bytes);
     }
 
-
-    keto::rocks_db::SliceHelper valueHelper(encryptedBytes);
+    keto::rocks_db::SliceHelper valueHelper(keto::crypto::SecureVectorUtils().copyFromSecure(bytes));
     keyStoreTransaction->Put(keyValue,valueHelper);
 }
 
@@ -88,18 +97,24 @@ bool KeyStoreDB::getValue(const keto::crypto::SecureVector& key, const OnionKeys
             key));
     rocksdb::ReadOptions readOptions;
     std::string encrytedValues;
-    if (rocksdb::Status::OK() != keyStoreTransaction->Get(readOptions,keyValue,&encrytedValues)) {
+    auto status = keyStoreTransaction->Get(readOptions,keyValue,&encrytedValues);
+    if (rocksdb::Status::OK() != status && rocksdb::Status::NotFound() == status) {
         return false;
     }
-
     bytes = keto::crypto::SecureVectorUtils().copyStringToSecure(encrytedValues);
 
     std::unique_ptr<Botan::RandomNumberGenerator> rng(new Botan::AutoSeeded_RNG);
-    for (PrivateKeyPtr privateKey : onionKeys) {
-        Botan::PK_Decryptor_EME dec(*privateKey,*rng.get(), Constants::ENCRYPTION_PADDING);
-        bytes = dec.decrypt(bytes);
-    }
+    keto::crypto::CipherBuilder cipherBuilder(this->baseKey);
+    OnionKeys reversedKeys = onionKeys;
+    std::reverse(reversedKeys.begin(), reversedKeys.end());
+    for (PrivateKeyPtr privateKey : reversedKeys) {
+        std::unique_ptr<Botan::StreamCipher> cipher(Botan::StreamCipher::create("ChaCha(20)"));
 
+        Botan::SymmetricKey vector = cipherBuilder.derive(32,privateKey);
+        cipher->set_key(vector);
+        cipher->set_iv(NULL,0);
+        cipher->decrypt(bytes);
+    }
     return true;
 }
 

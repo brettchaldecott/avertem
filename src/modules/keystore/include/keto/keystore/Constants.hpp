@@ -21,7 +21,7 @@ public:
     };
     
     static constexpr const char* ENCRYPTION_PADDING = "EME1(SHA-256)";
-    static constexpr const char* IS_MASTER = "IS_MASTER";
+    static constexpr const char* IS_MASTER = "is_master";
     static constexpr const char* IS_MASTER_TRUE = "TRUE";
     static const char* PRIVATE_KEY;
     static const char* PUBLIC_KEY;

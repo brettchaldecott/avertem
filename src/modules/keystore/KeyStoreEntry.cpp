@@ -7,6 +7,11 @@
 
 #include "keto/crypto/Containers.hpp"
 #include <botan/hex.h>
+#include <botan/pkcs8.h>
+#include <botan/data_src.h>
+#include <botan/pubkey.h>
+#include <botan/x509_key.h>
+
 
 
 namespace keto {
@@ -21,19 +26,18 @@ KeyStoreEntry::KeyStoreEntry() {
 }
 
 KeyStoreEntry::KeyStoreEntry(const std::string& jsonString) {
+
     nlohmann::json jsonKeys = nlohmann::json::parse(jsonString);
 
     keto::crypto::SecureVector privateKeyBits =
             Botan::hex_decode_locked(jsonKeys[Constants::PRIVATE_KEY],true);
-    keto::crypto::SecureVector publicKeyBits =
-            Botan::hex_decode_locked(jsonKeys[Constants::PUBLIC_KEY],true);
+    std::vector<uint8_t> publicKeyBits =
+            Botan::hex_decode(jsonKeys[Constants::PUBLIC_KEY],true);
 
     Botan::DataSource_Memory memoryPrivateKeyDatasource(privateKeyBits);
     this->privateKey =
             Botan::PKCS8::load_key(memoryPrivateKeyDatasource);
-    Botan::DataSource_Memory memoryPublicKeyDatasource(publicKeyBits);
-    this->publicKey =
-            Botan::PKCS8::load_key(memoryPublicKeyDatasource);
+    this->publicKey = std::shared_ptr<Botan::Public_Key>(Botan::X509::load_key(publicKeyBits));
 }
 
 KeyStoreEntry::~KeyStoreEntry() {
@@ -50,7 +54,7 @@ std::shared_ptr<Botan::Public_Key> KeyStoreEntry::getPublicKey() {
 
 std::string KeyStoreEntry::getJson() {
     keto::crypto::SecureVector privateKeyBits = Botan::PKCS8::BER_encode(*this->privateKey);
-    std::vector<uint8_t> publicKeyBits = this->publicKey->public_key_bits();;
+    std::vector<uint8_t> publicKeyBits = Botan::X509::BER_encode(*this->publicKey);
     nlohmann::json json = {
             {Constants::PRIVATE_KEY, Botan::hex_encode(privateKeyBits,true)},
             {Constants::PUBLIC_KEY, Botan::hex_encode(publicKeyBits,true)}
