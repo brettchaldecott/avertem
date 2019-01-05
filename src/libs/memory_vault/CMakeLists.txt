@@ -1,23 +1,23 @@
-file(GLOB HEADERS "include/keto/rpc_protocol/*.hpp")
+file(GLOB HEADERS "include/keto/memory_vault/*.hpp")
 
 include_directories(${PROTOBUF_INCLUDE_DIR})
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 ## SORT .cpp by most likely to change / break compile
-add_library( keto_rpc_protocol
-            
-            ServerHelloProtoHelper.cpp
-            PeerRequestHelper.cpp
-            PeerResponseHelper.cpp
-            NetworkKeyHelper.cpp
-            NetworkKeysHelper.cpp
+add_library( keto_memory_vault
+                    MemoryVault.cpp
+                    MemoryVaultManager.cpp
+                    MemoryVaultStorage.cpp
+                    MemoryVaultCipher.cpp
+                    MemoryVaultEncryptor.cpp
 
-        ${HEADERS})
+             ${HEADERS})
 
-target_link_libraries( keto_rpc_protocol)
-target_include_directories( keto_rpc_protocol
+target_link_libraries( keto_memory_vault )
+target_include_directories( keto_memory_vault
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../common/include"
+                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../obfuscate/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../environment/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../event_service_api/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../transaction_manager_api/include"
@@ -41,10 +41,10 @@ target_include_directories( keto_rpc_protocol
 #endif(MSVC)
 
 INSTALL( TARGETS
-   keto_rpc_protocol
+   keto_memory_vault
 
    RUNTIME DESTINATION bin
    LIBRARY DESTINATION lib
    ARCHIVE DESTINATION lib
 )
-INSTALL( FILES ${HEADERS} DESTINATION "include/keto/rpc_protocol" )
+INSTALL( FILES ${HEADERS} DESTINATION "include/keto/memory_vault" )

@@ -14,7 +14,7 @@
 #include "keto/rpc_protocol/PeerRequestHelper.hpp"
 
 #include "keto/server_common/VectorUtils.hpp"
-#include "include/keto/rpc_protocol/PeerRequestHelper.hpp"
+#include "keto/rpc_protocol/PeerRequestHelper.hpp"
 
 namespace keto {
 namespace rpc_protocol {

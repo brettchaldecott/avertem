@@ -77,6 +77,8 @@ public:
         static const char* CLOSE;
         static const char* GO_AWAY;
         static const char* ACCEPTED;
+        static const char* REQUEST_NETWORK_KEYS;
+        static const char* REQUEST_NETWORK_KEYS_RESPONSE;
     };
     
 private:

@@ -43,6 +43,9 @@ public:
     
     SecureVector copyStringToSecure(const std::string& str);
     std::string copySecureToString(const SecureVector& vec);
+
+
+    SecureVector bitwiseXor(const SecureVector& lhs,const SecureVector& rhs);
 private:
 
 };

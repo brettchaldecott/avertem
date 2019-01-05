@@ -73,5 +73,14 @@ std::string SecureVectorUtils::copySecureToString(const SecureVector& vec) {
     return ss.str();
 }
 
+
+SecureVector SecureVectorUtils::bitwiseXor(const SecureVector& lhs,const SecureVector& rhs) {
+    SecureVector result;
+    for (int index = 0; index < lhs.size() && index < rhs.size(); index++) {
+        result.push_back(lhs[index] ^ rhs[index]);
+    }
+    return result;
+}
+
 }
 }

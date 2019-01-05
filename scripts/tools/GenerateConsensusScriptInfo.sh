@@ -29,6 +29,7 @@ do
 	#echo "${SOURCE_DIR}/../../${DEPS_BUILD}/build/install/bin/keto_tools.sh -E -k \"${keyDir}/key_${count}.json\" -s \"${consensusDir}/consensus_${count}.chai\""
 	encryptedCode=`${SOURCE_DIR}/../../${DEPS_BUILD}/build/install/bin/keto_tools.sh -E -k "${keyDir}/key_${count}.json" -s "${consensusDir}/consensus_${count}.chai"`
 	#encryptedCodeBytes=(`${SOURCE_DIR}/../../${DEPS_BUILD}/build/install/bin/keto_tools.sh -E -k "${keyDir}/key_${count}.json" -s "${consensusDir}/consensus_${count}.chai" | xxd -p -r | od -An -b`)
+	#echo "Hash ${codeHash} ${privateKeyBytes} ${encryptedCode}"
     echo "namespace consensus_code_${count} {
 	keto::crypto::SecureVector getHash() {
         std::string hash = OBFUSCATED(\"${codeHash}\");

@@ -100,5 +100,8 @@ const char* Events::GET_SOFTWARE_CONSENSUS_MESSAGE
 const char* Events::VALIDATE_SOFTWARE_CONSENSUS_MESSAGE
                                             = "VALDATE_SOFTWARE_CONSENSUS_MESSAGE";
 
+const char* Events::GET_NETWORK_KEYS        = "GET_NETWORK_KEYS";
+const char* Events::SET_NETWORK_KEYS        = "SET_NETWORK_KEYS";
+
 }
 }

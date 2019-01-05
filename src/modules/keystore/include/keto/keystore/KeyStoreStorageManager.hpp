@@ -11,6 +11,7 @@
 
 #include "keto/key_store_db/KeyStoreDB.hpp"
 
+#include "keto/event/Event.hpp"
 #include "keto/crypto/KeyLoader.hpp"
 #include "keto/common/MetaInfo.hpp"
 #include "keto/keystore/KeyStoreEntry.hpp"
@@ -62,6 +63,10 @@ public:
      * @return TRUE if this is the master
      */
     bool isMaster() const;
+
+
+    keto::event::Event getNetworkKeys(const keto::event::Event& event);
+    keto::event::Event setNetworkKeys(const keto::event::Event& event);
 
 private:
     keto::key_store_db::KeyStoreDBPtr keyStoreDBPtr;

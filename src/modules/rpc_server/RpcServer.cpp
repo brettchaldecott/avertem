@@ -20,6 +20,7 @@
 #include "Route.pb.h"
 #include "BlockChain.pb.h"
 #include "Protocol.pb.h"
+#include "KeyStore.pb.h"
 
 #include <boost/beast/core.hpp>
 
@@ -287,8 +288,11 @@ public:
                     keto::server_common::VectorUtils().copyVectorToString(    
                         serverHelloProtoHelperPtr->getAccountHash()));
                 return;
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS) == 0) {
+                handleRequestNetworkKeys(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS, payload);
+                return;
             }
-            
+
             transactionPtr->commit();
         } catch (keto::common::Exception& ex) {
             KETO_LOG_ERROR << "Cause: " << boost::diagnostic_information(ex,true);
@@ -503,6 +507,21 @@ public:
                 this->serverHelloProtoHelperPtr->getAccountHashStr() << "] : " 
                 << messageWrapperResponse.result();
         
+    }
+
+
+    void handleRequestNetworkKeys(const std::string& command, const std::string& payload) {
+
+
+        keto::proto::NetworkKeysWrapper networkKeysWrapper;
+        networkKeysWrapper =
+                keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(
+                        keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::NetworkKeysWrapper>(
+                                keto::server_common::Events::GET_NETWORK_KEYS,networkKeysWrapper)));
+
+        std::string result = networkKeysWrapper.SerializeAsString();
+        boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS_RESPONSE
+                                       << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
     }
 };
 

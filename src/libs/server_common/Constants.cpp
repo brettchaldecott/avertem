@@ -57,6 +57,8 @@ const char* Constants::RPC_COMMANDS::SERVICES = "SERVICES";
 const char* Constants::RPC_COMMANDS::CLOSE = "CLOSE";
 const char* Constants::RPC_COMMANDS::GO_AWAY = "GO_AWAY";
 const char* Constants::RPC_COMMANDS::ACCEPTED = "ACCEPTED";
+const char* Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS = "REQUEST_NETWORK_KEYS";
+const char* Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS_RESPONSE = "REQUEST_NETWORK_KEYS_RESPONSE";
 
 }
 }

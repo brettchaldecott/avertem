@@ -23,6 +23,7 @@
 #include "keto/keystore/EventRegistry.hpp"
 #include "keto/keystore/ConsensusService.hpp"
 #include "keto/keystore/TransactionEncryptionService.hpp"
+#include "keto/keystore/KeyStoreStorageManager.hpp"
 
 
 namespace keto {
@@ -70,6 +71,13 @@ keto::event::Event EventRegistry::decryptTransaction(const keto::event::Event& e
     return TransactionEncryptionService::getInstance()->decryptTransaction(event);
 }
 
+keto::event::Event EventRegistry::getNetworkKeys(const keto::event::Event& event) {
+    return KeyStoreStorageManager::getInstance()->getNetworkKeys(event);
+}
+
+keto::event::Event EventRegistry::setNetworkKeys(const keto::event::Event& event) {
+    return KeyStoreStorageManager::getInstance()->setNetworkKeys(event);
+}
 
 void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
@@ -95,10 +103,24 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler(
             keto::server_common::Events::CONSENSUS_SESSION::KEYSTORE,
             &EventRegistry::setModuleSession);
+
+    keto::server_common::registerEventHandler(
+            keto::server_common::Events::GET_NETWORK_KEYS,
+            &EventRegistry::getNetworkKeys);
+    keto::server_common::registerEventHandler(
+            keto::server_common::Events::SET_NETWORK_KEYS,
+            &EventRegistry::setNetworkKeys);
+
 }
 
 
 void EventRegistry::deregisterEventHandlers() {
+
+    keto::server_common::deregisterEventHandler(
+            keto::server_common::Events::GET_NETWORK_KEYS);
+    keto::server_common::deregisterEventHandler(
+            keto::server_common::Events::SET_NETWORK_KEYS);
+
     keto::server_common::deregisterEventHandler(
             keto::server_common::Events::CONSENSUS::KEYSTORE);
     keto::server_common::deregisterEventHandler(

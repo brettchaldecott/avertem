@@ -109,6 +109,16 @@ bool KeyStoreStorageManager::isMaster() const {
 }
 
 
+keto::event::Event KeyStoreStorageManager::getNetworkKeys(const keto::event::Event& event) {
+    
+    return event;
+}
+
+keto::event::Event KeyStoreStorageManager::setNetworkKeys(const keto::event::Event& event) {
+
+    return event;
+}
+
 }
 }
 

@@ -271,6 +271,7 @@ RpcSession::on_read(
             peerResponse(command, stringVector[1]);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REGISTER) == 0) {
             registerResponse(command, stringVector[1]);
+            return;
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
             KETO_LOG_INFO << "[RpcSession] handle a transaction";
             handleTransaction(command,stringVector[1]);
@@ -284,6 +285,9 @@ RpcSession::on_read(
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS) == 0) {
             consensusResponse(command,stringVector[1]);
             transactionPtr->commit();
+            return;
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS) == 0) {
+
             return;
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ROUTE) == 0) {
 
@@ -536,8 +540,9 @@ void RpcSession::registerResponse(const std::string& command, const std::string&
                 keto::server_common::processEvent(
                 keto::server_common::toEvent<keto::proto::RpcPeer>(
                 keto::server_common::Events::REGISTER_RPC_PEER,rpcPeer)));
-    
-    
+
+    serverRequest(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS,
+                  keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS);
 }
 
 void RpcSession::routeTransaction(keto::proto::MessageWrapper&  messageWrapper) {
