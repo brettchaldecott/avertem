@@ -37,6 +37,7 @@ BOOST_AUTO_TEST_CASE( memory_vault_encryptor_test ) {
     std::cout << "The key : " << Botan::hex_encode(key) << std::endl;
     value = std::string(secureVector.begin(),secureVector.end());
     std::cout << "The value : " << value << std::endl;
+    std::cout << "The value : " << Botan::hex_encode(secureVector) << std::endl;
 
     std::cout << "The decrypt : " << key.size() << std::endl;
     std::cout << "The secure vector : " << secureVector.size() << std::endl;
