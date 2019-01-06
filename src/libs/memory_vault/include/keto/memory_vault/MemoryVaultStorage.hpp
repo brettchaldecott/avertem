@@ -8,6 +8,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <mutex>
 
 
 #include "keto/obfuscate/MetaString.hpp"

@@ -9,6 +9,7 @@
 #include <string>
 
 #include <botan/block_cipher.h>
+#include <botan/stream_cipher.h>
 
 #include "keto/crypto/Containers.hpp"
 
@@ -39,7 +40,8 @@ public:
 
 private:
     bytes id;
-    std::unique_ptr<Botan::BlockCipher> cipher;
+    keto::crypto::SecureVector secureVector;
+    //std::unique_ptr<Botan::StreamCipher> cipher;
 };
 
 

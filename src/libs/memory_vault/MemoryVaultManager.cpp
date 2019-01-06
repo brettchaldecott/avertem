@@ -52,7 +52,7 @@ MemoryVaultManagerPtr MemoryVaultManager::init() {
     return singleton = MemoryVaultManagerPtr(new MemoryVaultManager);
 }
 
-MemoryVaultManagerPtr MemoryVaultManager::fin() {
+void MemoryVaultManager::fin() {
     singleton.reset();
 }
 

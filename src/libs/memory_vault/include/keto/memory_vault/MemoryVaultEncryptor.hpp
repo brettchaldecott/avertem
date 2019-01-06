@@ -50,8 +50,6 @@ private:
     std::vector<MemoryVaultCipherPtr> ciphers;
     std::map<bytes,MemoryVaultCipherPtr> bytesCiphers;
 
-
-    keto::crypto::SecureVector buildCheckHash(const keto::crypto::SecureVector& hash, int iterations);
 };
 
 

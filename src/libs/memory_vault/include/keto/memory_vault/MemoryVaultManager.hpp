@@ -58,7 +58,7 @@ public:
 
 
     static MemoryVaultManagerPtr init();
-    static MemoryVaultManagerPtr fin();
+    static void fin();
     static MemoryVaultManagerPtr getInstance();
 
 
