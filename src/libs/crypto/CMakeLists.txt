@@ -12,8 +12,12 @@ add_library( keto_crypto
             SecureVectorUtils.cpp
             SessionHashGenerator.cpp
             KeyBuilder.cpp
+            CipherBuilder.cpp
+            ConfigurableSha256.cpp
+            ShaDigest.cpp
+            PasswordPipeLine.cpp
 
-        ${HEADERS} CipherBuilder.cpp include/keto/crypto/CipherBuilder.hpp)
+        ${HEADERS})
 
 target_link_libraries( keto_crypto )
 target_include_directories( keto_crypto
