@@ -16,7 +16,8 @@ do
     consensusHashScript.push_back(std::make_shared<keto::software_consensus::ConsensusHashScriptInfo>(
                 &keto::${module}::consensus_code_${count}::getHash,
                 &keto::${module}::consensus_code_${count}::getEncodedKey,
-                &keto::${module}::consensus_code_${count}::getCode));"
+                &keto::${module}::consensus_code_${count}::getCode,
+                &keto::${module}::consensus_code_${count}::getShortCode));"
 done
 
 

@@ -278,8 +278,9 @@ void ConsensusHashGenerator::setSession(
 
             if (keto::crypto::HashGenerator().generateHash(
                     contentDecryptor.getContent()) == consensusScript->getHash()) {
-                this->sessionScript = contentDecryptor.getContent();
+                this->sessionScript = consensusScript->getCode();
                 this->encodedKey = consensusScript->getEncodedKey();
+                this->sessionShortScript = consensusScript->getShortCode();
                 break;
             }
         } catch (...) {
@@ -289,21 +290,40 @@ void ConsensusHashGenerator::setSession(
 }
 
 keto::crypto::SecureVector ConsensusHashGenerator::generateSeed(const keto::asn1::HashHelper& previousHash) {
+    keto::key_tools::ContentDecryptor contentDecryptor(this->sessionKey,this->encodedKey,this->sessionScript);
+    keto::crypto::SecureVector secureVector = contentDecryptor.getContent();
+
     ChaiScriptSessionScope scope(moduleSignatureRef,moduleKeyRef,sourceVersionMap,sessionKey,encodedKey,previousHash);
     ChaiScriptPtr chaiScriptPtr = scope.getChaiScriptPtr();
     
-    std::string code(this->sessionScript.begin(),this->sessionScript.end());
+    std::string code(secureVector.begin(),secureVector.end());
     return chaiScriptPtr->eval<keto::crypto::SecureVector>(code);
-    
 }
 
+
 keto::crypto::SecureVector ConsensusHashGenerator::generateHash(const keto::crypto::SecureVector& seed) {
+    keto::key_tools::ContentDecryptor contentDecryptor(this->sessionKey,this->encodedKey,this->sessionScript);
+    keto::crypto::SecureVector secureVector = contentDecryptor.getContent();
+
     ChaiScriptSessionScope scope(moduleSignatureRef,moduleKeyRef,sourceVersionMap,sessionKey,encodedKey,seed);
     ChaiScriptPtr chaiScriptPtr = scope.getChaiScriptPtr();
     
-    std::string code(this->sessionScript.begin(),this->sessionScript.end());
+    std::string code(secureVector.begin(),secureVector.end());
     return chaiScriptPtr->eval<keto::crypto::SecureVector>(code);
 }
+
+
+keto::crypto::SecureVector ConsensusHashGenerator::generateSessionHash(const keto::crypto::SecureVector& name) {
+    keto::key_tools::ContentDecryptor contentDecryptor(this->sessionKey,this->encodedKey,this->sessionShortScript);
+    keto::crypto::SecureVector secureVector = contentDecryptor.getContent();
+
+    ChaiScriptSessionScope scope(moduleSignatureRef,moduleKeyRef,sourceVersionMap,sessionKey,encodedKey,name);
+    ChaiScriptPtr chaiScriptPtr = scope.getChaiScriptPtr();
+
+    std::string code(secureVector.begin(),secureVector.end());
+    return chaiScriptPtr->eval<keto::crypto::SecureVector>(code);
+}
+
 
 }
 }

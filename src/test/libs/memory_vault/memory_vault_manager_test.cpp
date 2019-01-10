@@ -42,9 +42,11 @@ BOOST_AUTO_TEST_CASE( memory_vault_manager_test ) {
     memoryVaultPtr = memoryVaultManagerPtr->getVault("test",keto::crypto::SecureVectorUtils().copyStringToSecure("test"));
 
     keto::crypto::SecureVector testValue = keto::crypto::SecureVectorUtils().copyStringToSecure("here be dragons");
-    keto::crypto::SecureVector key = memoryVaultPtr->setValue(keto::crypto::SecureVectorUtils().copyStringToSecure("test"),testValue);
+    memoryVaultPtr->setValue(keto::crypto::SecureVectorUtils().copyStringToSecure("test"),
+            keto::crypto::SecureVectorUtils().copyStringToSecure("test"),testValue);
 
-    keto::crypto::SecureVector value = memoryVaultPtr->getValue(keto::crypto::SecureVectorUtils().copyStringToSecure("test"),key);
+    keto::crypto::SecureVector value = memoryVaultPtr->getValue(keto::crypto::SecureVectorUtils().copyStringToSecure("test"),
+                                                                keto::crypto::SecureVectorUtils().copyStringToSecure("test"));
 
     BOOST_CHECK_EQUAL_COLLECTIONS(value.begin(),value.end(),testValue.begin(),testValue.end());
 

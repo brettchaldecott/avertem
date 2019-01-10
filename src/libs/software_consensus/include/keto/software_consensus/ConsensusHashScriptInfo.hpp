@@ -45,17 +45,20 @@ public:
     
     ConsensusHashScriptInfo(keto::software_consensus::getHash hashFunctionRef, 
             keto::software_consensus::getEncodedKey keyFunctionRef,
-            keto::software_consensus::getCode codeFunctionRef);
+            keto::software_consensus::getCode codeFunctionRef,
+            keto::software_consensus::getCode shortCodeFunctionRef);
     ConsensusHashScriptInfo(const ConsensusHashScriptInfo& orig) = default;
     virtual ~ConsensusHashScriptInfo();
     
     keto::crypto::SecureVector getHash();
     keto::crypto::SecureVector getEncodedKey();
     std::vector<uint8_t> getCode();
+    std::vector<uint8_t> getShortCode();
 private:
     keto::software_consensus::getHash hashFunctionRef;
     keto::software_consensus::getEncodedKey keyFunctionRef;
     keto::software_consensus::getCode codeFunctionRef;
+    keto::software_consensus::getCode shortCodeFunctionRef;
     
 };
 

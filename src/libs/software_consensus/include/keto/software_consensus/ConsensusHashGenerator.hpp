@@ -59,13 +59,15 @@ public:
         const keto::crypto::SecureVector& sessionKey);
     keto::crypto::SecureVector generateSeed(const keto::asn1::HashHelper& previousHash);
     keto::crypto::SecureVector generateHash(const keto::crypto::SecureVector& seed);
+    keto::crypto::SecureVector generateSessionHash(const keto::crypto::SecureVector& name);
     
     
 private:
     ConsensusHashScriptInfoVector consensusVector;
     keto::crypto::SecureVector sessionKey;
     keto::crypto::SecureVector encodedKey;
-    keto::crypto::SecureVector sessionScript;
+    std::vector<uint8_t> sessionScript;
+    std::vector<uint8_t> sessionShortScript;
     
     // module configuration
     getModuleSignature moduleSignatureRef; 

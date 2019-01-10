@@ -1,4 +1,7 @@
 
+
+#include <botan/hex.h>
+
 #include "keto/memory_vault/MemoryVault.hpp"
 #include "keto/crypto/SecureVectorUtils.hpp"
 
@@ -11,7 +14,9 @@ std::string MemoryVault::getSourceVersion() {
 
 MemoryVault::MemoryVault(const keto::crypto::SecureVector& hashId, const MemoryVaultEncryptorPtr encryptorPtr) :
     hashId(hashId), encryptorPtr(encryptorPtr) {
+    memoryVaultPasswordEncryptorPtr = MemoryVaultPasswordEncryptorPtr(new MemoryVaultPasswordEncryptor());
     storagePtr = MemoryVaultStoragePtr(new MemoryVaultStorage());
+    keyStoragePtr = MemoryVaultStoragePtr(new MemoryVaultStorage());
 }
 
 MemoryVault::~MemoryVault() {
@@ -22,16 +27,25 @@ keto::crypto::SecureVector MemoryVault::getHashId() {
     return this->hashId;
 }
 
-keto::crypto::SecureVector MemoryVault::setValue(const keto::crypto::SecureVector& id,
-                                    const keto::crypto::SecureVector& value) {
+void MemoryVault::setValue(const keto::crypto::SecureVector& id,
+                                                 const keto::crypto::SecureVector& password,
+                                                 const keto::crypto::SecureVector& value) {
     keto::crypto::SecureVector valueCopy = value;
     keto::crypto::SecureVector key = this->encryptorPtr->encrypt(valueCopy);
     this->storagePtr->setEntry(id,keto::crypto::SecureVectorUtils().copyFromSecure(valueCopy));
-    return key;
+
+    this->memoryVaultPasswordEncryptorPtr->encrypt(password,key);
+
+    this->keyStoragePtr->setEntry(id,keto::crypto::SecureVectorUtils().copyFromSecure(key));
 }
 
 keto::crypto::SecureVector MemoryVault::getValue(const keto::crypto::SecureVector& id,
-                                    const keto::crypto::SecureVector& key) {
+                                    const keto::crypto::SecureVector& password) {
+
+    keto::crypto::SecureVector key = keto::crypto::SecureVectorUtils().copyToSecure(
+            this->keyStoragePtr->getEntry(id));
+    this->memoryVaultPasswordEncryptorPtr->decrypt(password,key);
+
     keto::crypto::SecureVector valueCopy = keto::crypto::SecureVectorUtils().copyToSecure(
             this->storagePtr->getEntry(id));
     this->encryptorPtr->decrypt(key,valueCopy);

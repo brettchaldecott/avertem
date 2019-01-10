@@ -10,6 +10,7 @@ add_library( keto_memory_vault
                     MemoryVaultStorage.cpp
                     MemoryVaultCipher.cpp
                     MemoryVaultEncryptor.cpp
+                    MemoryVaultPasswordEncryptor.cpp
 
              ${HEADERS})
 

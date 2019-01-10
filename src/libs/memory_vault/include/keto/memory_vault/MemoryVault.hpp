@@ -14,6 +14,7 @@
 
 #include "keto/memory_vault/MemoryVaultEncryptor.hpp"
 #include "keto/memory_vault/MemoryVaultStorage.hpp"
+#include "keto/memory_vault/MemoryVaultPasswordEncryptor.hpp"
 
 namespace keto {
 namespace memory_vault {
@@ -34,11 +35,12 @@ public:
 
     keto::crypto::SecureVector getHashId();
 
-    keto::crypto::SecureVector setValue(const keto::crypto::SecureVector& id,
-            const keto::crypto::SecureVector& value);
+    void setValue(const keto::crypto::SecureVector& id,
+                                        const keto::crypto::SecureVector& password,
+                                        const keto::crypto::SecureVector& value);
 
     keto::crypto::SecureVector getValue(const keto::crypto::SecureVector& id,
-            const keto::crypto::SecureVector& key);
+                                        const keto::crypto::SecureVector& password);
 
     void removeValue(const keto::crypto::SecureVector& id);
 
@@ -46,6 +48,8 @@ public:
 private:
     const keto::crypto::SecureVector hashId;
     MemoryVaultEncryptorPtr encryptorPtr;
+    MemoryVaultPasswordEncryptorPtr memoryVaultPasswordEncryptorPtr;
+    MemoryVaultStoragePtr keyStoragePtr;
     MemoryVaultStoragePtr storagePtr;
 
 

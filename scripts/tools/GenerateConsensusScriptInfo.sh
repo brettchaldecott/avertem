@@ -28,6 +28,7 @@ do
 	privateKeyBytes=`${SOURCE_DIR}/../../${DEPS_BUILD}/build/install/bin/keto_tools.sh -K -k "${keyDir}/key_${count}.json"`
 	#echo "${SOURCE_DIR}/../../${DEPS_BUILD}/build/install/bin/keto_tools.sh -E -k \"${keyDir}/key_${count}.json\" -s \"${consensusDir}/consensus_${count}.chai\""
 	encryptedCode=`${SOURCE_DIR}/../../${DEPS_BUILD}/build/install/bin/keto_tools.sh -E -k "${keyDir}/key_${count}.json" -s "${consensusDir}/consensus_${count}.chai"`
+	encryptedShortCode=`${SOURCE_DIR}/../../${DEPS_BUILD}/build/install/bin/keto_tools.sh -E -k "${keyDir}/key_${count}.json" -s "${consensusDir}/consensus_${count}.chai"`
 	#encryptedCodeBytes=(`${SOURCE_DIR}/../../${DEPS_BUILD}/build/install/bin/keto_tools.sh -E -k "${keyDir}/key_${count}.json" -s "${consensusDir}/consensus_${count}.chai" | xxd -p -r | od -An -b`)
 	#echo "Hash ${codeHash} ${privateKeyBytes} ${encryptedCode}"
     echo "namespace consensus_code_${count} {
@@ -43,6 +44,10 @@ do
 
 	std::vector<uint8_t> getCode() {
         std::string code = \"${encryptedCode}\";
+        return Botan::hex_decode(code);
+    }
+	std::vector<uint8_t> getShortCode() {
+        std::string code = \"${encryptedShortCode}\";
         return Botan::hex_decode(code);
     }
 }"

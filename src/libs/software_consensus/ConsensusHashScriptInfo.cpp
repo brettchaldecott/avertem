@@ -23,9 +23,10 @@ std::string ConsensusHashScriptInfo::getSourceVersion() {
 ConsensusHashScriptInfo::ConsensusHashScriptInfo(
         keto::software_consensus::getHash hashFunctionRef,
         keto::software_consensus::getEncodedKey keyFunctionRef,
-        keto::software_consensus::getCode codeFunctionRef) : 
+        keto::software_consensus::getCode codeFunctionRef,
+        keto::software_consensus::getCode shortCodeFunctionRef) : 
         hashFunctionRef(hashFunctionRef), keyFunctionRef(keyFunctionRef),
-        codeFunctionRef(codeFunctionRef) {
+        codeFunctionRef(codeFunctionRef), shortCodeFunctionRef(shortCodeFunctionRef) {
 }
 
 ConsensusHashScriptInfo::~ConsensusHashScriptInfo() {
@@ -42,6 +43,11 @@ keto::crypto::SecureVector ConsensusHashScriptInfo::getEncodedKey() {
 
 std::vector<uint8_t> ConsensusHashScriptInfo::getCode() {
     return this->codeFunctionRef();
+}
+
+
+std::vector<uint8_t> ConsensusHashScriptInfo::getShortCode() {
+    return this->shortCodeFunctionRef();
 }
 
 }

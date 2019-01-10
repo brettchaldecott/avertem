@@ -67,6 +67,14 @@ std::vector<uint8_t> getCode() {
     return contentEncryptor.getEncryptedContent();
 }
 
+std::vector<uint8_t> getShortCode() {
+    std::string code = CODE;
+    keto::key_tools::ContentEncryptor contentEncryptor(keyPairCreator.getSecret(),
+                                                       keyPairCreator.getEncodedKey(),
+                                                       keto::server_common::VectorUtils().copyStringToVector(code));
+    return contentEncryptor.getEncryptedContent();
+}
+
 }
 
 
@@ -97,6 +105,14 @@ std::vector<uint8_t> getCode() {
     return contentEncryptor.getEncryptedContent();
 }
 
+std::vector<uint8_t> getShortCode() {
+    std::string code = CODE;
+    keto::key_tools::ContentEncryptor contentEncryptor(keyPairCreator.getSecret(),
+                                                       keyPairCreator.getEncodedKey(),
+                                                       keto::server_common::VectorUtils().copyStringToVector(code));
+    return contentEncryptor.getEncryptedContent();
+}
+
 }
 
 
@@ -122,11 +138,13 @@ BOOST_AUTO_TEST_CASE( hash_generator_test ) {
     consensusVector.push_back(std::make_shared<keto::software_consensus::ConsensusHashScriptInfo>(
             &keto::software_consensus::example_code1::getHash,
             &keto::software_consensus::example_code1::getEncodedKey,
-            &keto::software_consensus::example_code1::getCode));
+            &keto::software_consensus::example_code1::getCode,
+            &keto::software_consensus::example_code1::getShortCode));
     consensusVector.push_back(std::make_shared<keto::software_consensus::ConsensusHashScriptInfo>(
             &keto::software_consensus::example_code2::getHash,
             &keto::software_consensus::example_code2::getEncodedKey,
-            &keto::software_consensus::example_code2::getCode));
+            &keto::software_consensus::example_code2::getCode,
+            &keto::software_consensus::example_code2::getShortCode));
     
     
     keto::software_consensus::ConsensusHashGeneratorPtr consensusHashGenerator = 
