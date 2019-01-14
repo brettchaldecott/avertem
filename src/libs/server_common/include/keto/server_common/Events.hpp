@@ -86,6 +86,7 @@ public:
         static const char* RPC_CLIENT;
         static const char* RPC_SERVER;
         static const char* CONSENSUS_QUERY;
+        static const char* MEMORY_VAULT_MANAGER_QUERY;
     };
     
     // consensus events
@@ -105,10 +106,13 @@ public:
         static const char* RPC_CLIENT;
         static const char* RPC_SERVER;
         static const char* CONSENSUS_QUERY;
+        static const char* MEMORY_VAULT_MANAGER_QUERY;
     };
     
     static const char* GET_SOFTWARE_CONSENSUS_MESSAGE;
     static const char* VALIDATE_SOFTWARE_CONSENSUS_MESSAGE;
+
+    static const char* SETUP_NODE_CONSENSUS_SESSION;
 
     static const char* GET_NETWORK_KEYS;
     static const char* SET_NETWORK_KEYS;

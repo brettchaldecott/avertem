@@ -13,6 +13,7 @@
 
 #include <botan/hex.h>
 #include <botan/base64.h>
+#include <keto/crypto/HashGenerator.hpp>
 
 
 #include "keto/environment/EnvironmentManager.hpp"
@@ -20,10 +21,20 @@
 #include "keto/server_common/VectorUtils.hpp"
 #include "keto/server_common/StringUtils.hpp"
 
+#include "keto/server_common/Events.hpp"
+#include "keto/server_common/EventServiceHelpers.hpp"
+
+
 #include "keto/software_consensus/ConsensusSessionManager.hpp"
 
 #include "keto/consensus_module/Constants.hpp"
 #include "keto/consensus_module/ConsensusServer.hpp"
+
+#include "keto/software_consensus/ConsensusBuilder.hpp"
+#include "keto/software_consensus/ConsensusSessionManager.hpp"
+#include "keto/software_consensus/ModuleConsensusHelper.hpp"
+#include "keto/software_consensus/ModuleHashMessageHelper.hpp"
+
 #include "include/keto/consensus_module/ConsensusServer.hpp"
 
 
@@ -104,12 +115,25 @@ void ConsensusServer::process() {
         keto::crypto::SecureVector initVector = Botan::hex_decode_locked(
                 this->sessionKeys[this->currentPos],true);
         keto::software_consensus::ConsensusSessionManager().updateSessionKey(initVector);
-        
+        internalConsensusInit(keto::crypto::HashGenerator().generateHash(initVector));
         this->time_point = currentTime;
     }
     
     this->timer->expires_from_now(boost::posix_time::seconds(10));
     this->timer->async_wait(&keto::consensus_module::process);
+}
+
+
+void ConsensusServer::internalConsensusInit(const keto::crypto::SecureVector& initHash) {
+    std::cout << "Setup the internal consensus" << std::endl;
+    keto::software_consensus::ModuleHashMessageHelper moduleHashMessageHelper;
+    moduleHashMessageHelper.setHash(initHash);
+    keto::proto::ModuleHashMessage moduleHashMessage = moduleHashMessageHelper.getModuleHashMessage();
+    keto::proto::ConsensusMessage consensusMessage =
+            keto::server_common::fromEvent<keto::proto::ConsensusMessage>(
+                    keto::server_common::processEvent(
+                            keto::server_common::toEvent<keto::proto::ModuleHashMessage>(
+                                    keto::server_common::Events::GET_SOFTWARE_CONSENSUS_MESSAGE,moduleHashMessage)));
 }
 
 }

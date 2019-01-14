@@ -50,6 +50,8 @@ private:
     std::vector<std::string> sessionKeys;
     int currentPos;
     std::chrono::system_clock::time_point time_point;
+
+    void internalConsensusInit(const keto::crypto::SecureVector& initHash);
 };
 
 

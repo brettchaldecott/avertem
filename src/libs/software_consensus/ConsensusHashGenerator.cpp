@@ -309,9 +309,13 @@ keto::crypto::SecureVector ConsensusHashGenerator::generateHash(const keto::cryp
     ChaiScriptPtr chaiScriptPtr = scope.getChaiScriptPtr();
     
     std::string code(secureVector.begin(),secureVector.end());
-    return chaiScriptPtr->eval<keto::crypto::SecureVector>(code);
+    return this->currentSoftwareHash = chaiScriptPtr->eval<keto::crypto::SecureVector>(code);
 }
 
+
+keto::crypto::SecureVector ConsensusHashGenerator::getCurrentSoftwareHash() {
+    return this->currentSoftwareHash;
+}
 
 keto::crypto::SecureVector ConsensusHashGenerator::generateSessionHash(const keto::crypto::SecureVector& name) {
     keto::key_tools::ContentDecryptor contentDecryptor(this->sessionKey,this->encodedKey,this->sessionShortScript);

@@ -1,0 +1,78 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+#include <boost/dll/alias.hpp>
+#include <boost/dll/shared_library.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <botan/hex.h>
+
+#include "keto/common/Log.hpp"
+
+#include "keto/obfuscate/MetaString.hpp"
+#include "keto/crypto/Containers.hpp"
+#include "keto/crypto/SecureVectorUtils.hpp"
+
+#include "keto/memory_vault_module/MemoryVaultModuleManager.hpp"
+#include "keto/common/MetaInfo.hpp"
+
+${0009_keto_memory_vault_module_headerList}
+
+namespace keto {
+namespace memory_vault_module {
+
+${0009_keto_memory_vault_module_consensus_scripts}
+
+keto::crypto::SecureVector ${MEMORY_VAULT_MODULE_SIGNATURE_METHOD}() {
+    std::string signature = OBFUSCATED("${MEMORY_VAULT_MODULE_SIGNATURE}");
+    return keto::crypto::SecureVectorUtils().copyStringToSecure(signature);
+}
+
+keto::crypto::SecureVector ${MEMORY_VAULT_MODULE_KEY_METHOD}() {
+    std::string key = OBFUSCATED("${MEMORY_VAULT_MODULE_KEY}");
+
+    return keto::crypto::SecureVectorUtils().copyStringToSecure(key);
+}
+
+keto::software_consensus::SourceVersionMap ${MEMORY_VAULT_MODULE_SOURCE_VERSION_METHOD_MAP}() {
+    keto::software_consensus::SourceVersionMap sourceVersionMap;
+
+    ${0009_keto_memory_vault_module_headerClassList}
+    ${0009_keto_memory_vault_module_sourceClassList}
+
+
+    return sourceVersionMap;
+}
+
+keto::software_consensus::ConsensusHashScriptInfoVector ${MEMORY_VAULT_MODULE_CONSENSUS_HASH_SCRIPT_METHOD}() {
+    keto::software_consensus::ConsensusHashScriptInfoVector consensusHashScript;
+    
+    ${0010_keto_keystore_module_consensus_mapping}
+
+    return consensusHashScript;
+}
+
+keto::software_consensus::ConsensusHashGeneratorPtr MemoryVaultModuleManager::getConsensusHash() {
+
+    keto::software_consensus::SourceVersionMap sourceVersionMap = ${MEMORY_VAULT_MODULE_SOURCE_VERSION_METHOD_MAP}();
+
+    keto::software_consensus::ConsensusHashScriptInfoVector consensusVector = ${MEMORY_VAULT_MODULE_CONSENSUS_HASH_SCRIPT_METHOD}();
+    
+    
+    keto::software_consensus::ConsensusHashGeneratorPtr consensusHashGenerator = 
+        keto::software_consensus::ConsensusHashGenerator::initInstance(
+            consensusVector,
+            &${MEMORY_VAULT_MODULE_SIGNATURE_METHOD},
+            &${MEMORY_VAULT_MODULE_KEY_METHOD},
+            sourceVersionMap);
+    
+    return consensusHashGenerator;
+}
+
+
+}
+}
+

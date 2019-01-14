@@ -98,6 +98,13 @@ keto::event::Event ConsensusServices::generateSoftwareConsensus(const keto::even
             this->keyLoaderPtr).
             buildConsensus(moduleHashMessageHelper.getHash())
             .getConsensus().operator keto::proto::ConsensusMessage();
+
+    // setup the consensus message
+    keto::server_common::fromEvent<keto::proto::ConsensusMessage>(
+            keto::server_common::processEvent(
+                    keto::server_common::toEvent<keto::proto::ConsensusMessage>(
+                            keto::server_common::Events::SETUP_NODE_CONSENSUS_SESSION,result)));
+
     return keto::server_common::toEvent<keto::proto::ConsensusMessage>(result);
 }
 
@@ -120,6 +127,7 @@ keto::event::Event ConsensusServices::generateSoftwareHash(const keto::event::Ev
             moduleConsensusHelper.getSeedHash().operator keto::crypto::SecureVector()));
     keto::proto::ModuleConsensusMessage moduleConsensusMessage =
             moduleConsensusHelper.getModuleConsensusMessage();
+
     return keto::server_common::toEvent<keto::proto::ModuleConsensusMessage>(moduleConsensusMessage);
 }
 

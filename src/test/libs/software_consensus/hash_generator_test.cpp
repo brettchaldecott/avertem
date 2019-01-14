@@ -161,6 +161,14 @@ BOOST_AUTO_TEST_CASE( hash_generator_test ) {
     keto::asn1::HashHelper previousHash(hashGenerator.generateHash("this is a test"));
     
     keto::crypto::SecureVector seed = consensusHashGenerator->generateSeed(previousHash);
-    consensusHashGenerator->generateHash(seed);
-    
+    keto::crypto::SecureVector softwareHash1 = consensusHashGenerator->generateHash(seed);
+    keto::crypto::SecureVector softwareHash2 = consensusHashGenerator->getCurrentSoftwareHash();
+
+    BOOST_CHECK_EQUAL_COLLECTIONS(softwareHash1.begin(),softwareHash1.end(),softwareHash2.begin(),softwareHash2.end());
+
+    keto::crypto::SecureVector sessionHash1 = consensusHashGenerator->generateSessionHash(softwareHash1);
+    keto::crypto::SecureVector sessionHash2 = consensusHashGenerator->generateSessionHash(softwareHash1);
+
+
+    BOOST_CHECK_EQUAL_COLLECTIONS(sessionHash1.begin(),sessionHash1.end(),sessionHash2.begin(),sessionHash2.end());
 }

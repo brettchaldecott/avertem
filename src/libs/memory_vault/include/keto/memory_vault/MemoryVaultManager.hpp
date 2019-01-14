@@ -25,7 +25,6 @@ namespace memory_vault {
 class MemoryVaultManager;
 typedef std::shared_ptr<MemoryVaultManager> MemoryVaultManagerPtr;
 typedef std::vector<keto::crypto::SecureVector> vectorOfSecureVectors;
-typedef std::set<keto::crypto::SecureVector> setOfSecureVectors;
 typedef std::vector<uint8_t> bytes;
 
 class MemoryVaultManager {

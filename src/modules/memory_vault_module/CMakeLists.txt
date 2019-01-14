@@ -1,37 +1,30 @@
-file(GLOB HEADERS "include/keto/keystore/*.hpp")
+file(GLOB HEADERS "include/keto/memory_vault_module/*.hpp")
 
 
-SET(KEYSTORE_MODULE_SIGNATURE_METHOD "getBlockServerModuleSignature")
-SET(KEYSTORE_MODULE_SIGNATURE "this is a signature")
-SET(KEYSTORE_MODULE_KEY_METHOD "getBlockModuleKey")
-SET(KEYSTORE_MODULE_SIGNATURE "this is a key")
-SET(KEYSTORE_MODULE_SOURCE_VERSION_METHOD_MAP "getClientSourceVersionMap")
-SET(KEYSTORE_MODULE_CONSENSUS_HASH_SCRIPT_METHOD "getConsensusHashScriptConfig")
+SET(MEMORY_VAULT_MODULE_SIGNATURE_METHOD "getMemoryVaultServerModuleSignature")
+SET(MEMORY_VAULT_MODULE_SIGNATURE "this is a signature")
+SET(MEMORY_VAULT_MODULE_KEY_METHOD "getMemoryVaultModuleKey")
+SET(MEMORY_VAULT_MODULE_SIGNATURE "this is a key")
+SET(MEMORY_VAULT_MODULE_SOURCE_VERSION_METHOD_MAP "getClientSourceVersionMap")
+SET(MEMORY_VAULT_MODULE_CONSENSUS_HASH_SCRIPT_METHOD "getConsensusHashScriptConfig")
 
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
 ## SORT .cpp by most likely to change / break compile
-add_library( 0010_keto_keystore_module
+add_library( 0009_keto_memory_vault_module
             SHARED
 
-            KeystoreModuleManager.cpp
-            KeystoreModule.cpp
-            EventRegistry.cpp
-            KeyStoreService.cpp
-            SessionKeyManager.cpp
+            MemoryVaultModule.cpp
+            MemoryVaultModuleManager.cpp
             ConsensusService.cpp
-            TransactionEncryptionService.cpp
-            KeyStoreReEncryptTransactionMessageHelper.cpp
-            KeyStoreStorageManager.cpp
-            include/keto/keystore/Constants.hpp
-            KeyStoreEntry.cpp
+            EventRegistry.cpp
 
-             ${HEADERS} Constants.cpp)
+             ${HEADERS} )
 
-add_dependencies(0010_keto_keystore_module keto_tools)
+add_dependencies(0009_keto_memory_vault_module keto_tools)
 
-KetoModuleDepencencies( 0010_keto_keystore_module 
-                            PRIVATE keto_software_consensus keto_key_store_db keto_memory_vault
+KetoModuleDepencencies( 0009_keto_memory_vault_module
+                            PRIVATE keto_software_consensus keto_memory_vault
                             PRIVATE keto_transaction_common keto_server_common keto_asn1_common keto_asn1_protocol
                             PRIVATE keto_key_tools keto_proto_environment keto_rocks_db ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_crypto key_store_utils
@@ -39,11 +32,11 @@ KetoModuleDepencencies( 0010_keto_keystore_module
                             PRIVATE ${BOTAN_LIBRARIES}
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
-KetoModuleConsensus( 0010_keto_keystore_module ${NUMBER_OF_KEYS} keystore )
+KetoModuleConsensus( 0009_keto_memory_vault_module ${NUMBER_OF_KEYS} "memory_vault" )
 
-configure_file(include/keto/keystore/KeystoreModuleManagerMisc.hpp.in include/keto/keystore/KeystoreModuleManagerMisc.hpp)
+configure_file(include/keto/memory_vault_module/MemoryVaultModuleManagerMisc.hpp.in include/keto/memory_vault_module/MemoryVaultModuleManagerMisc.hpp)
 
-target_include_directories( 0010_keto_keystore_module
+target_include_directories( 0009_keto_memory_vault_module
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/common/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/environment/include"
@@ -66,10 +59,10 @@ target_include_directories( 0010_keto_keystore_module
 #endif(MSVC)
 
 INSTALL( TARGETS
-   0010_keto_keystore_module
+   0009_keto_memory_vault_module
 
    RUNTIME DESTINATION bin
    LIBRARY DESTINATION shared
    ARCHIVE DESTINATION shared
 )
-INSTALL( FILES ${HEADERS} DESTINATION "include/keto/keystore" )
+INSTALL( FILES ${HEADERS} DESTINATION "include/keto/memory_vault_module" )

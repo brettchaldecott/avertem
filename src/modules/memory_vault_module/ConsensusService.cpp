@@ -1,40 +1,35 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+//
+// Created by Brett Chaldecott on 2019/01/14.
+//
 
-/* 
- * File:   ConsensusService.cpp
- * Author: ubuntu
- * 
- * Created on July 23, 2018, 11:35 AM
- */
+#include "keto/memory_vault_module/ConsensusService.hpp"
 
 #include <condition_variable>
 
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
 
+#include "keto/memory_vault/MemoryVaultManager.hpp"
 
+#include "keto/software_consensus/ConsensusMessageHelper.hpp"
 #include "keto/software_consensus/ModuleSessionMessageHelper.hpp"
 #include "keto/software_consensus/ModuleHashMessageHelper.hpp"
 #include "keto/software_consensus/ModuleConsensusHelper.hpp"
 
-#include "keto/keystore/ConsensusService.hpp"
 
-namespace keto{
-namespace keystore {
-    
+namespace keto {
+namespace memory_vault_module {
+
 static ConsensusServicePtr singleton;
 
 std::string ConsensusService::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
+
 ConsensusService::ConsensusService(
         const keto::software_consensus::ConsensusHashGeneratorPtr& consensusHashGenerator) :
-    consensusHashGenerator(consensusHashGenerator) {
+        consensusHashGenerator(consensusHashGenerator) {
 }
 
 ConsensusService::~ConsensusService() {
@@ -57,7 +52,7 @@ ConsensusServicePtr ConsensusService::getInstance() {
 
 keto::event::Event ConsensusService::generateSoftwareHash(const keto::event::Event& event) {
     keto::software_consensus::ModuleConsensusHelper moduleConsensusHelper(
-        keto::server_common::fromEvent<keto::proto::ModuleConsensusMessage>(event));
+            keto::server_common::fromEvent<keto::proto::ModuleConsensusMessage>(event));
     moduleConsensusHelper.setModuleHash(this->consensusHashGenerator->generateHash(
             moduleConsensusHelper.getSeedHash().operator keto::crypto::SecureVector()));
     keto::proto::ModuleConsensusMessage moduleConsensusMessage =
@@ -67,8 +62,20 @@ keto::event::Event ConsensusService::generateSoftwareHash(const keto::event::Eve
 
 keto::event::Event ConsensusService::setModuleSession(const keto::event::Event& event) {
     keto::software_consensus::ModuleSessionMessageHelper moduleSessionHelper(
-        keto::server_common::fromEvent<keto::proto::ModuleSessionMessage>(event));
+            keto::server_common::fromEvent<keto::proto::ModuleSessionMessage>(event));
     this->consensusHashGenerator->setSession(moduleSessionHelper.getSecret());
+    keto::memory_vault::MemoryVaultManager::getInstance()->clearSession();
+    return event;
+}
+
+keto::event::Event ConsensusService::setupNodeConsensusSession(const keto::event::Event& event) {
+    keto::software_consensus::ConsensusMessageHelper consensusMessageHelper(
+            keto::server_common::fromEvent<keto::proto::ConsensusMessage>(event));
+    keto::memory_vault::vectorOfSecureVectors vectorOfSecureVectors;
+    for (keto::asn1::HashHelper hashHelper : consensusMessageHelper.getMsg().getSystemHashes()) {
+        vectorOfSecureVectors.push_back((keto::crypto::SecureVector)hashHelper);
+    }
+    keto::memory_vault::MemoryVaultManager::getInstance()->createSession(vectorOfSecureVectors);
     return event;
 }
 

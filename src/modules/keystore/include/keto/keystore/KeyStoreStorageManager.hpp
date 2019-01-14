@@ -40,10 +40,13 @@ public:
     static void fin();
     static KeyStoreStorageManagerPtr getInstance();
 
+
+
     /**
      * Init the store
      */
     void initStore();
+
     /**
      * Unlock store
      */
