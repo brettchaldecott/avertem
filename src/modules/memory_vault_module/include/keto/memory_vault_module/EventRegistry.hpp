@@ -29,6 +29,13 @@ public:
     static keto::event::Event setModuleSession(const keto::event::Event& event);
     static keto::event::Event setupNodeConsensusSession(const keto::event::Event& event);
 
+    static keto::event::Event createVault(const keto::event::Event &event);
+    static keto::event::Event addEntry(const keto::event::Event &event);
+    static keto::event::Event setEntry(const keto::event::Event &event);
+    static keto::event::Event getEntry(const keto::event::Event &event);
+    static keto::event::Event removeEntry(const keto::event::Event &event);
+
+
 private:
     EventRegistry();
 

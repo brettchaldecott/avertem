@@ -108,6 +108,19 @@ public:
         static const char* CONSENSUS_QUERY;
         static const char* MEMORY_VAULT_MANAGER_QUERY;
     };
+
+
+    // memory vault methods
+    class MEMORY_VAULT {
+    public:
+        static const char* CREATE_VAULT;
+        static const char* ADD_ENTRY;
+        static const char* SET_ENTRY;
+        static const char* GET_ENTRY;
+        static const char* REMOVE_ENTRY;
+
+    };
+
     
     static const char* GET_SOFTWARE_CONSENSUS_MESSAGE;
     static const char* VALIDATE_SOFTWARE_CONSENSUS_MESSAGE;

@@ -97,6 +97,13 @@ const char* Events::CONSENSUS_SESSION::CONSENSUS_QUERY    = "CONSENSUS_SESSION_C
 const char* Events::CONSENSUS_SESSION::MEMORY_VAULT_MANAGER_QUERY    = "CONSENSUS_SESSION_MEMORY_VAULT_MANAGER";
 
 
+const char* Events::MEMORY_VAULT::CREATE_VAULT  = "CREATE_VAULT";
+const char* Events::MEMORY_VAULT::ADD_ENTRY     = "ADD_ENTRY";
+const char* Events::MEMORY_VAULT::GET_ENTRY     = "GET_ENTRY";
+const char* Events::MEMORY_VAULT::SET_ENTRY     = "SET_ENTRY";
+const char* Events::MEMORY_VAULT::REMOVE_ENTRY  = "REMOVE_ENTRY";
+
+
 const char* Events::GET_SOFTWARE_CONSENSUS_MESSAGE
                                             = "GET_SOFTWARE_CONSENSUS_MESSAGE";
 const char* Events::VALIDATE_SOFTWARE_CONSENSUS_MESSAGE
