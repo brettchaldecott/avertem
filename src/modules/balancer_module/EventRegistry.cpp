@@ -43,7 +43,9 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION::BALANCER,
             &keto::balancer::EventRegistry::setModuleSession);
-    
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::BALANCER,
+            &keto::balancer::EventRegistry::consensusSessionAccepted);
 }
 
 void EventRegistry::deregisterEventHandlers() {
@@ -52,6 +54,8 @@ void EventRegistry::deregisterEventHandlers() {
             keto::server_common::Events::CONSENSUS::BALANCER);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION::BALANCER);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::BALANCER);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::BALANCER_MESSAGE);
 }
@@ -68,6 +72,10 @@ keto::event::Event EventRegistry::setModuleSession(const keto::event::Event& eve
     return ConsensusService::getInstance()->setModuleSession(event);
 }
 
+keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Event& event) {
+
+    return event;
+}
 
 }
 }

@@ -18,12 +18,14 @@
 #include "keto/common/Log.hpp"
 #include "keto/common/MetaInfo.hpp"
 
+#include "keto/software_consensus/ConsensusSessionManager.hpp"
+
 #include "keto/consensus_module/ConsensusModuleManager.hpp"
 #include "keto/consensus_module/ConsensusModuleManagerMisc.hpp"
 #include "keto/consensus_module/ConsensusServices.hpp"
-#include "include/keto/consensus_module/ConsensusServices.hpp"
-#include "include/keto/consensus_module/EventRegistry.hpp"
-#include "include/keto/consensus_module/ConsensusServer.hpp"
+#include "keto/consensus_module/EventRegistry.hpp"
+#include "keto/consensus_module/ConsensusServer.hpp"
+
 
 namespace keto {
 namespace consensus_module {
@@ -55,6 +57,7 @@ const std::string ConsensusModuleManager::getVersion() const {
 // lifecycle methods
 void ConsensusModuleManager::start() {
     modules["ConsensusModule"] = std::make_shared<ConsensusModule>();
+    keto::software_consensus::ConsensusSessionManager::init();
     ConsensusServices::init(getConsensusSeedHash(),getConsensusModuleHash());
     EventRegistry::registerEventHandlers();
     KETO_LOG_INFO << "[ConsensusModuleManager] Started the ConsensusModule";
@@ -72,6 +75,7 @@ void ConsensusModuleManager::stop() {
     consensusServerPtr.reset();
     EventRegistry::deregisterEventHandlers();
     ConsensusServices::fin();
+    keto::software_consensus::ConsensusSessionManager::fin();
     modules.clear();
     KETO_LOG_INFO << "[ConsensusModuleManager] The ConsensusModuleManager is being stopped";
 }

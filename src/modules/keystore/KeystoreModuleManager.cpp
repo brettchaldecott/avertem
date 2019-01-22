@@ -26,6 +26,9 @@
 #include "keto/keystore/ConsensusService.hpp"
 #include "keto/keystore/TransactionEncryptionService.hpp"
 #include "keto/keystore/KeyStoreStorageManager.hpp"
+#include "keto/keystore/Constants.hpp"
+
+#include "keto/memory_vault_session/MemoryVaultSession.hpp"
 
 namespace keto {
 namespace keystore {
@@ -58,6 +61,7 @@ const std::string KeystoreModuleManager::getVersion() const {
 void KeystoreModuleManager::start() {
     KeyStoreService::init();
     modules["KeystoreModule"] = std::make_shared<KeystoreModule>();
+    keto::memory_vault_session::MemoryVaultSession::init(this->getConsensusHash(),Constants::MODULE_NAME);
     ConsensusService::init(this->getConsensusHash());
     TransactionEncryptionService::init();
     KeyStoreStorageManager::init();
@@ -72,13 +76,14 @@ void KeystoreModuleManager::stop() {
     KeyStoreStorageManager::fin();
     modules.clear();
     KeyStoreService::fin();
+    keto::memory_vault_session::MemoryVaultSession::fin();
     KETO_LOG_INFO << "[KeystoreModuleManager] The KeystoreModuleManager is being stopped";
 }
 
 void KeystoreModuleManager::postStart() {
-    keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
-    KeyStoreStorageManager::getInstance()->initStore();
-    transactionPtr->commit();
+    //keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
+    //KeyStoreStorageManager::getInstance()->initStore();
+    //transactionPtr->commit();
     KETO_LOG_INFO << "[KeystoreModuleManager] The keystore post start";
 }
 

@@ -14,12 +14,22 @@
 #ifndef CONSENSUSSESSIONMANAGER_HPP
 #define CONSENSUSSESSIONMANAGER_HPP
 
+#include <vector>
+#include <memory>
+#include <mutex>
+
+#include "HandShake.pb.h"
+
+
 #include "keto/crypto/Containers.hpp"
 
 #include "keto/obfuscate/MetaString.hpp"
 
 namespace keto {
 namespace software_consensus {
+
+class ConsensusSessionManager;
+typedef std::shared_ptr<ConsensusSessionManager> ConsensusSessionManagerPtr;
 
 class ConsensusSessionManager {
 public:
@@ -28,12 +38,25 @@ public:
     };
     static std::string getSourceVersion();
     
-    ConsensusSessionManager();
-    ConsensusSessionManager(const ConsensusSessionManager& orig) = default;
+    ConsensusSessionManager(const ConsensusSessionManager& orig) = delete;
     virtual ~ConsensusSessionManager();
-    
+
+    static ConsensusSessionManagerPtr init();
+    static ConsensusSessionManagerPtr getInstance();
+    static void fin();
+
     void updateSessionKey(const keto::crypto::SecureVector& sessionKey);
+    void setSession(keto::proto::ConsensusMessage& event);
+    void notifyAccepted();
 private:
+    std::mutex classMutex;
+
+    keto::crypto::SecureVector sessionHash;
+    bool activeSession;
+    bool accepted;
+
+    ConsensusSessionManager();
+
 
 };
 

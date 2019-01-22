@@ -58,7 +58,7 @@ void MemoryVaultSession::initSession() {
             keto::server_common::fromEvent<keto::proto::MemoryVaultCreate>(
                     keto::server_common::processEvent(
                             keto::server_common::toEvent<keto::proto::MemoryVaultCreate>(
-                                    keto::server_common::Events::MEMORY_VAULT::GET_ENTRY,request)));
+                                    keto::server_common::Events::MEMORY_VAULT::CREATE_VAULT,request)));
 
 }
 
@@ -111,6 +111,9 @@ keto::crypto::SecureVector MemoryVaultSession::generatePassword() {
     return this->passwordPipeLinePtr->generatePassword(this->consensusHashGenerator->generateSessionHash(seed));
 }
 
+std::string MemoryVaultSession::getVaultName() {
+    return this->vaultName;
+}
 
 }
 }

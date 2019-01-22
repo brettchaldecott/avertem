@@ -39,6 +39,9 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION::EVENT,
             &keto::event::EventRegistry::setModuleSession);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::EVENT,
+            &keto::event::EventRegistry::consensusSessionAccepted);
 }
 
 
@@ -48,6 +51,11 @@ keto::event::Event EventRegistry::generateSoftwareHash(const keto::event::Event&
 
 keto::event::Event EventRegistry::setModuleSession(const keto::event::Event& event) {
     return ConsensusService::getInstance()->setModuleSession(event);
+}
+
+keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Event& event) {
+
+    return event;
 }
 
 

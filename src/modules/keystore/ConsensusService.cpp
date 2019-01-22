@@ -22,6 +22,10 @@
 #include "keto/software_consensus/ModuleConsensusHelper.hpp"
 
 #include "keto/keystore/ConsensusService.hpp"
+#include "keto/memory_vault_session/MemoryVaultSession.hpp"
+
+#include "keto/keystore/KeyStoreStorageManager.hpp"
+
 
 namespace keto{
 namespace keystore {
@@ -69,6 +73,15 @@ keto::event::Event ConsensusService::setModuleSession(const keto::event::Event& 
     keto::software_consensus::ModuleSessionMessageHelper moduleSessionHelper(
         keto::server_common::fromEvent<keto::proto::ModuleSessionMessage>(event));
     this->consensusHashGenerator->setSession(moduleSessionHelper.getSecret());
+    keto::memory_vault_session::MemoryVaultSession::getInstance()->clearSession();
+    return event;
+}
+
+
+
+keto::event::Event ConsensusService::consensusSessionAccepted(const keto::event::Event& event) {
+    keto::memory_vault_session::MemoryVaultSession::getInstance()->initSession();
+    KeyStoreStorageManager::getInstance()->initStore();
     return event;
 }
 

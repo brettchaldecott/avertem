@@ -52,6 +52,23 @@ const std::vector<std::string> Constants::CONSENSUS_SESSION_ORDER = {
     keto::server_common::Events::CONSENSUS_SESSION::RPC_SERVER,
     keto::server_common::Events::CONSENSUS_SESSION::CONSENSUS_QUERY,
     keto::server_common::Events::CONSENSUS_SESSION::MEMORY_VAULT_MANAGER_QUERY};
+
+const std::vector<std::string> Constants::CONSENSUS_SESSION_ACCEPTED = {
+    keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::TEST,
+    keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::TRANSACTION,
+    keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::ROUTER,
+    keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::HTTPD,
+    keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::EVENT,
+    keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::BLOCK,
+    keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::SANDBOX,
+    keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::VERSION,
+    keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::KEYSTORE,
+    keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::BALANCER,
+    keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::ACCOUNT,
+    keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::RPC_CLIENT,
+    keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::RPC_SERVER,
+    keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::CONSENSUS_QUERY,
+    keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::MEMORY_VAULT_MANAGER_QUERY};
 //const keto::obfuscate::MetaString Constants::CPP_FILE_VERSION = DEF_OBFUSCATED("$Id$");
 
     std::string Constants::getSourceVersion() {

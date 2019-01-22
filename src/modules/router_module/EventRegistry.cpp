@@ -60,7 +60,10 @@ keto::event::Event EventRegistry::setModuleSession(const keto::event::Event& eve
     return ConsensusService::getInstance()->setModuleSession(event);
 }
 
+keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Event& event) {
 
+    return event;
+}
 
 void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
@@ -81,6 +84,9 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION::ROUTER,
             &keto::router::EventRegistry::setModuleSession);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::ROUTER,
+            &keto::router::EventRegistry::consensusSessionAccepted);
 }
 
 void EventRegistry::deregisterEventHandlers() {
@@ -88,6 +94,8 @@ void EventRegistry::deregisterEventHandlers() {
             keto::server_common::Events::CONSENSUS::ROUTER);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION::ROUTER);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::ROUTER);
     keto::server_common::deregisterEventHandler(keto::server_common::Events::REGISTER_SERVICE_MESSAGE);
     keto::server_common::deregisterEventHandler(keto::server_common::Events::UPDATE_STATUS_ROUTE_MESSSAGE);
     keto::server_common::deregisterEventHandler(keto::server_common::Events::ROUTE_MESSAGE);

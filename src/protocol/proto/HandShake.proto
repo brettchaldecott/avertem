@@ -89,3 +89,14 @@ message ConsensusMessage {
     // the serialized software consensus message
     bytes msg = 3;
 }
+
+
+/**
+ * The consensus accepted message
+ */
+message ConsensusAcceptedMessage {
+    // the version for this protocol
+    uint32 version = 1;
+    // the consensus accepted status
+    bool accepted = 2;
+}

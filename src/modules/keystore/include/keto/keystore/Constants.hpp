@@ -19,7 +19,8 @@ public:
     static std::string getHeaderVersion() {
         return OBFUSCATED("$Id$");
     };
-    
+
+    static constexpr const char* MODULE_NAME = "KETO_KEY_STORE";
     static constexpr const char* ENCRYPTION_PADDING = "EME1(SHA-256)";
     static constexpr const char* IS_MASTER = "is_master";
     static constexpr const char* IS_MASTER_TRUE = "TRUE";

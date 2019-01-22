@@ -62,6 +62,11 @@ keto::event::Event EventRegistry::setModuleSession(const keto::event::Event& eve
     return ConsensusService::getInstance()->setModuleSession(event);
 }
 
+keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Event& event) {
+
+    return event;
+}
+
 void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::CHECK_ACCOUNT_MESSAGE,
@@ -84,9 +89,14 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION::ACCOUNT,
             &keto::account::EventRegistry::setModuleSession);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::ACCOUNT,
+            &keto::account::EventRegistry::consensusSessionAccepted);
 }
 
 void EventRegistry::deregisterEventHandlers() {
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::ACCOUNT);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION::ACCOUNT);
     keto::server_common::deregisterEventHandler (

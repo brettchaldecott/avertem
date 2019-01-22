@@ -55,12 +55,10 @@ public:
     void removeEntry(const std::string& name);
 
 
-    keto::crypto::SecureVector generatePassword();
 
 protected:
-    keto::software_consensus::ConsensusHashGeneratorPtr getConsensusHashGenerator();
+    keto::crypto::SecureVector generatePassword();
     std::string getVaultName();
-    keto::crypto::PasswordPipeLinePtr getPasswordPipeLine();
 
 
 private:

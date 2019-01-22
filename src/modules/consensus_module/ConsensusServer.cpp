@@ -114,7 +114,7 @@ void ConsensusServer::process() {
         }
         keto::crypto::SecureVector initVector = Botan::hex_decode_locked(
                 this->sessionKeys[this->currentPos],true);
-        keto::software_consensus::ConsensusSessionManager().updateSessionKey(initVector);
+        keto::software_consensus::ConsensusSessionManager::getInstance()->updateSessionKey(initVector);
         internalConsensusInit(keto::crypto::HashGenerator().generateHash(initVector));
         this->time_point = currentTime;
     }
@@ -134,6 +134,8 @@ void ConsensusServer::internalConsensusInit(const keto::crypto::SecureVector& in
                     keto::server_common::processEvent(
                             keto::server_common::toEvent<keto::proto::ModuleHashMessage>(
                                     keto::server_common::Events::GET_SOFTWARE_CONSENSUS_MESSAGE,moduleHashMessage)));
+    keto::software_consensus::ConsensusSessionManager::getInstance()->setSession(consensusMessage);
+    keto::software_consensus::ConsensusSessionManager::getInstance()->notifyAccepted();
 }
 
 }

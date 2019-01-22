@@ -17,6 +17,9 @@
 
 #include "keto/common/Log.hpp"
 
+
+#include "keto/software_consensus/ConsensusSessionManager.hpp"
+
 #include "keto/rpc_client/RpcClientModuleManager.hpp"
 #include "keto/rpc_client/RpcClientModuleManagerMisc.hpp"
 #include "keto/rpc_client/RpcSessionManager.hpp"
@@ -54,6 +57,7 @@ const std::string RpcClientModuleManager::getVersion() const {
 // lifecycle methods
 void RpcClientModuleManager::start() {
     modules["RpcClientModule"] = std::make_shared<RpcClientModule>();
+    keto::software_consensus::ConsensusSessionManager::init();
     ConsensusService::init(getConsensusHash());
     EventRegistry::registerEventHandlers();
     RpcSessionManager::init();
@@ -69,9 +73,10 @@ void RpcClientModuleManager::postStart() {
 void RpcClientModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
     ConsensusService::fin();
-    modules.clear();
     RpcSessionManager::getInstance()->stop();
     RpcSessionManager::fin();
+    keto::software_consensus::ConsensusSessionManager::fin();
+    modules.clear();
     KETO_LOG_INFO << "[RpcClientModuleManager] The RpcClientModuleManager is being stopped";
 }
 

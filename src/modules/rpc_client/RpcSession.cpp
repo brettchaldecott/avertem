@@ -356,6 +356,7 @@ std::vector<uint8_t> RpcSession::buildConsensus(const keto::asn1::HashHelper& ha
                     keto::server_common::processEvent(
                     keto::server_common::toEvent<keto::proto::ModuleHashMessage>(
                     keto::server_common::Events::GET_SOFTWARE_CONSENSUS_MESSAGE,moduleHashMessage)));
+    keto::software_consensus::ConsensusSessionManager::getInstance()->setSession(consensusMessage);
     std::string result;
     consensusMessage.SerializePartialToString(&result);
     return keto::server_common::VectorUtils().copyStringToVector(result);
@@ -390,7 +391,7 @@ void RpcSession::closeResponse(const std::string& command, const std::string& me
 void RpcSession::helloConsensusResponse(const std::string& command, const std::string& sessionKey, const std::string& initHash) {
     keto::asn1::HashHelper initHashHelper(initHash,keto::common::StringEncoding::HEX);
     keto::crypto::SecureVector initVector = Botan::hex_decode_locked(sessionKey,true);
-    keto::software_consensus::ConsensusSessionManager().updateSessionKey(initVector);
+    keto::software_consensus::ConsensusSessionManager::getInstance()->updateSessionKey(initVector);
     
     boost::beast::ostream(buffer_) << 
             buildMessage(keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS,buildConsensus(initHashHelper));
@@ -407,7 +408,7 @@ void RpcSession::helloConsensusResponse(const std::string& command, const std::s
 
 void RpcSession::consensusSessionResponse(const std::string& command, const std::string& sessionKey) {
     keto::crypto::SecureVector initVector = Botan::hex_decode_locked(sessionKey,true);
-    keto::software_consensus::ConsensusSessionManager().updateSessionKey(initVector);
+    keto::software_consensus::ConsensusSessionManager::getInstance()->updateSessionKey(initVector);
     
     boost::beast::ostream(buffer_) << 
             buildMessage(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS_SESSION,"OK");

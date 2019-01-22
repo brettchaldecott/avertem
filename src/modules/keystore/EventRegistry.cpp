@@ -59,6 +59,10 @@ keto::event::Event EventRegistry::setModuleSession(const keto::event::Event& eve
     return ConsensusService::getInstance()->setModuleSession(event);
 }
 
+keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Event& event) {
+    return ConsensusService::getInstance()->consensusSessionAccepted(event);
+}
+
 keto::event::Event EventRegistry::reencryptTransaction(const keto::event::Event& event) {
     return TransactionEncryptionService::getInstance()->reencryptTransaction(event);
 }
@@ -103,6 +107,9 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler(
             keto::server_common::Events::CONSENSUS_SESSION::KEYSTORE,
             &EventRegistry::setModuleSession);
+    keto::server_common::registerEventHandler(
+            keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::KEYSTORE,
+            &EventRegistry::consensusSessionAccepted);
 
     keto::server_common::registerEventHandler(
             keto::server_common::Events::GET_NETWORK_KEYS,
@@ -125,6 +132,8 @@ void EventRegistry::deregisterEventHandlers() {
             keto::server_common::Events::CONSENSUS::KEYSTORE);
     keto::server_common::deregisterEventHandler(
             keto::server_common::Events::CONSENSUS_SESSION::KEYSTORE);
+    keto::server_common::deregisterEventHandler(
+            keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::KEYSTORE);
     
     keto::server_common::deregisterEventHandler(
             keto::key_store_utils::Events::TRANSACTION::REENCRYPT_TRANSACTION);

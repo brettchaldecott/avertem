@@ -270,6 +270,7 @@ ConsensusHashGeneratorPtr ConsensusHashGenerator::initInstance(
 void ConsensusHashGenerator::setSession(
         const keto::crypto::SecureVector& sessionKey) {
     this->sessionKey = sessionKey;
+    this->currentSoftwareHash.clear();
     for (ConsensusHashScriptInfoPtr consensusScript : this->consensusVector) {
         
         try {
@@ -309,7 +310,11 @@ keto::crypto::SecureVector ConsensusHashGenerator::generateHash(const keto::cryp
     ChaiScriptPtr chaiScriptPtr = scope.getChaiScriptPtr();
     
     std::string code(secureVector.begin(),secureVector.end());
-    return this->currentSoftwareHash = chaiScriptPtr->eval<keto::crypto::SecureVector>(code);
+    if (currentSoftwareHash.size()) {
+        return chaiScriptPtr->eval<keto::crypto::SecureVector>(code);
+    } else {
+        return this->currentSoftwareHash = chaiScriptPtr->eval<keto::crypto::SecureVector>(code);
+    }
 }
 
 

@@ -6,23 +6,24 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 ## SORT .cpp by most likely to change / break compile
 add_library( keto_software_consensus
             
-              SoftwareMerkelUtils.cpp
-	      ConsensusBuilder.cpp
-              ConsensusMessageHelper.cpp
-              ConsensusSessionManager.cpp
-              Constants.cpp
-              HashBuilder.cpp
-              SoftwareConsensusHelper.cpp
-              ConsensusHashScriptInfo.cpp
-              ConsensusHashGenerator.cpp
-              ModuleConsensusHelper.cpp
-              ModuleConsensusGenerator.cpp
-              ModuleSessionMessageHelper.cpp
-              ModuleHashMessageHelper.cpp
-              ModuleConsensusValidationMessageHelper.cpp
+		SoftwareMerkelUtils.cpp
+		ConsensusBuilder.cpp
+		ConsensusMessageHelper.cpp
+		ConsensusSessionManager.cpp
+		Constants.cpp
+		HashBuilder.cpp
+		SoftwareConsensusHelper.cpp
+		ConsensusHashScriptInfo.cpp
+		ConsensusHashGenerator.cpp
+		ModuleConsensusHelper.cpp
+		ModuleConsensusGenerator.cpp
+		ModuleSessionMessageHelper.cpp
+		ModuleHashMessageHelper.cpp
+		ModuleConsensusValidationMessageHelper.cpp
+		ConsensusAcceptedMessageHelper.cpp
 
-             ${HEADERS}
-           )
+		${HEADERS}
+		)
 
 target_link_libraries( keto_software_consensus)
 target_include_directories( keto_software_consensus
