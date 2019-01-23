@@ -44,6 +44,7 @@ message MemoryVaultGetEntryRequest {
 message MemoryVaultGetEntryResponse {
     bytes entry_id = 1;
     bytes value = 2;
+    bytes result = 3;
 }
 
 

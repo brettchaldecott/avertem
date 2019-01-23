@@ -50,7 +50,7 @@ keto::software_consensus::SourceVersionMap ${MEMORY_VAULT_MODULE_SOURCE_VERSION_
 keto::software_consensus::ConsensusHashScriptInfoVector ${MEMORY_VAULT_MODULE_CONSENSUS_HASH_SCRIPT_METHOD}() {
     keto::software_consensus::ConsensusHashScriptInfoVector consensusHashScript;
     
-    ${0010_keto_keystore_module_consensus_mapping}
+    ${0009_keto_memory_vault_module_consensus_mapping}
 
     return consensusHashScript;
 }

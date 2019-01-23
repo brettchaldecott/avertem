@@ -86,7 +86,7 @@ public:
         static const char* RPC_CLIENT;
         static const char* RPC_SERVER;
         static const char* CONSENSUS_QUERY;
-        static const char* MEMORY_VAULT_MANAGER_QUERY;
+        static const char* MEMORY_VAULT_MANAGER;
     };
     
     // consensus events
@@ -106,7 +106,7 @@ public:
         static const char* RPC_CLIENT;
         static const char* RPC_SERVER;
         static const char* CONSENSUS_QUERY;
-        static const char* MEMORY_VAULT_MANAGER_QUERY;
+        static const char* MEMORY_VAULT_MANAGER;
     };
 
     // consensus events
@@ -126,7 +126,7 @@ public:
         static const char* RPC_CLIENT;
         static const char* RPC_SERVER;
         static const char* CONSENSUS_QUERY;
-        static const char* MEMORY_VAULT_MANAGER_QUERY;
+        static const char* MEMORY_VAULT_MANAGER;
     };
 
 

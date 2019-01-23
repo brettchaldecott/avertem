@@ -26,7 +26,7 @@ std::string MemoryVaultSession::getSourceVersion() {
 MemoryVaultSession::MemoryVaultSession(
         const keto::software_consensus::ConsensusHashGeneratorPtr& consensusHashGenerator,
         const std::string& vaultName) :
-        consensusHashGenerator(consensusHashGenerator) {
+        consensusHashGenerator(consensusHashGenerator), vaultName(vaultName) {
     passwordPipeLinePtr = keto::crypto::PasswordPipeLinePtr(new keto::crypto::PasswordPipeLine());
 }
 
@@ -51,7 +51,8 @@ MemoryVaultSessionPtr MemoryVaultSession::getInstance() {
 void MemoryVaultSession::initSession() {
     keto::proto::MemoryVaultCreate request;
     request.set_vault(this->vaultName);
-    request.set_session(this->vaultName);
+    request.set_session(keto::crypto::SecureVectorUtils().copySecureToString(
+            this->consensusHashGenerator->getCurrentSoftwareHash()));
     request.set_password(keto::crypto::SecureVectorUtils().copySecureToString(generatePassword()));
 
     keto::proto::MemoryVaultCreate response =

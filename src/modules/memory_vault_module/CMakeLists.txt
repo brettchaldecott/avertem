@@ -16,6 +16,7 @@ add_library( 0009_keto_memory_vault_module
 
             MemoryVaultModule.cpp
             MemoryVaultModuleManager.cpp
+            MemoryVaultModuleService.cpp
             ConsensusService.cpp
             EventRegistry.cpp
 
@@ -32,7 +33,7 @@ KetoModuleDepencencies( 0009_keto_memory_vault_module
                             PRIVATE ${BOTAN_LIBRARIES}
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
-KetoModuleConsensus( 0009_keto_memory_vault_module ${NUMBER_OF_KEYS} "memory_vault" )
+KetoModuleConsensus( 0009_keto_memory_vault_module ${NUMBER_OF_KEYS} "memory_vault_module" )
 
 configure_file(include/keto/memory_vault_module/MemoryVaultModuleManagerMisc.hpp.in include/keto/memory_vault_module/MemoryVaultModuleManagerMisc.hpp)
 

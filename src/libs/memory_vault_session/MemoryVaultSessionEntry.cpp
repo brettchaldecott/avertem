@@ -78,7 +78,7 @@ void MemoryVaultSessionEntry::setValue(const keto::crypto::SecureVector& value) 
     request.set_vault(this->memoryVaultSession->getVaultName());
     request.set_password(keto::crypto::SecureVectorUtils().copySecureToString(this->memoryVaultSession->generatePassword()));
     request.set_entry_id(keto::crypto::SecureVectorUtils().copySecureToString(this->entryId));
-    request.set_entry_id(keto::crypto::SecureVectorUtils().copySecureToString(value));
+    request.set_value(keto::crypto::SecureVectorUtils().copySecureToString(value));
 
     keto::proto::MemoryVaultSetEntryResponse response =
         keto::server_common::fromEvent<keto::proto::MemoryVaultSetEntryResponse>(

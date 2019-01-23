@@ -80,8 +80,11 @@ keto::event::Event ConsensusService::setModuleSession(const keto::event::Event& 
 
 
 keto::event::Event ConsensusService::consensusSessionAccepted(const keto::event::Event& event) {
+    //std::cout << "[consensusSessionAccepted] consensus session accepted" << std::endl;
     keto::memory_vault_session::MemoryVaultSession::getInstance()->initSession();
+    //std::cout << "[consensusSessionAccepted] init the store" << std::endl;
     KeyStoreStorageManager::getInstance()->initStore();
+    //std::cout << "[consensusSessionAccepted] return the event" << std::endl;
     return event;
 }
 

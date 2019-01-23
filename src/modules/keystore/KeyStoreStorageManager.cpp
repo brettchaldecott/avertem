@@ -74,10 +74,12 @@ KeyStoreStorageManagerPtr KeyStoreStorageManager::getInstance() {
 
 
 void KeyStoreStorageManager::initStore() {
+    //std::cout << "Init the store" << std::endl;
     if (this->isMaster()) {
         keto::crypto::KeyBuilder keyBuilder;
         keyBuilder.addPrivateKey(this->keyLoaderPtr->getPrivateKey())
                 .addPrivateKey(this->keyLoaderPtr->getPrivateKey()).addPublicKey(this->keyLoaderPtr->getPublicKey());
+        //std::cout << "Setup the  derived key" << std::endl;
         this->setDerivedKey(keyBuilder.getPrivateKey());
         unlockStore();
     }
@@ -88,7 +90,8 @@ void KeyStoreStorageManager::unlockStore() {
 
     keto::key_store_db::OnionKeys onionKeys;
     onionKeys.push_back(this->keyLoaderPtr->getPrivateKey());
-    onionKeys.push_back(this->derivedKey);
+    //std::cout << "Unlock the store with the derived key" << std::endl;
+    onionKeys.push_back(this->derivedKey->getPrivateKey());
     std::string value;
     if (!this->keyStoreDBPtr->getValue(Constants::KEY_STORE_DB::KEY_STORE_MASTER_ENTRY,onionKeys,value)) {
         this->masterKeyStoreEntry = KeyStoreEntryPtr(new KeyStoreEntry());
@@ -100,7 +103,9 @@ void KeyStoreStorageManager::unlockStore() {
 
 
 void KeyStoreStorageManager::setDerivedKey(std::shared_ptr<Botan::Private_Key> derivedKey) {
-    this->derivedKey = derivedKey;
+    this->derivedKey =
+            keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr(
+                    new keto::memory_vault_session::MemoryVaultSessionKeyWrapper(derivedKey));
 }
 
 

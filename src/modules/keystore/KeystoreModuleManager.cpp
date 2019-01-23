@@ -61,8 +61,10 @@ const std::string KeystoreModuleManager::getVersion() const {
 void KeystoreModuleManager::start() {
     KeyStoreService::init();
     modules["KeystoreModule"] = std::make_shared<KeystoreModule>();
-    keto::memory_vault_session::MemoryVaultSession::init(this->getConsensusHash(),Constants::MODULE_NAME);
-    ConsensusService::init(this->getConsensusHash());
+    keto::software_consensus::ConsensusHashGeneratorPtr consensusHashGeneratorPtr =
+                                                                this->getConsensusHash();
+    keto::memory_vault_session::MemoryVaultSession::init(consensusHashGeneratorPtr,Constants::MODULE_NAME);
+    ConsensusService::init(consensusHashGeneratorPtr);
     TransactionEncryptionService::init();
     KeyStoreStorageManager::init();
     EventRegistry::registerEventHandlers();

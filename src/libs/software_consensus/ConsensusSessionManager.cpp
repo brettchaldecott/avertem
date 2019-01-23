@@ -80,16 +80,16 @@ void ConsensusSessionManager::updateSessionKey(const keto::crypto::SecureVector&
                     keto::server_common::toEvent<keto::proto::ModuleSessionMessage>(
                     event,moduleSessionMessage));
         } catch (keto::common::Exception& ex) {
-            KETO_LOG_ERROR << "Failed to process the event [" << event  << "] : " << ex.what();
-            KETO_LOG_ERROR << "Cause: " << boost::diagnostic_information(ex,true);
+            KETO_LOG_ERROR << "[updateSessionKey]Failed to process the event [" << event  << "] : " << ex.what();
+            KETO_LOG_ERROR << "[updateSessionKey]Cause: " << boost::diagnostic_information(ex,true);
         } catch (boost::exception& ex) {
-            KETO_LOG_ERROR << "Failed to process the event [" << event << "]";
-            KETO_LOG_ERROR << "Cause: " << boost::diagnostic_information(ex,true);
+            KETO_LOG_ERROR << "[updateSessionKey]Failed to process the event [" << event << "]";
+            KETO_LOG_ERROR << "[updateSessionKey]Cause: " << boost::diagnostic_information(ex,true);
         } catch (std::exception& ex) {
-            KETO_LOG_ERROR << "Failed to process the event [" << event << "]";
-            KETO_LOG_ERROR << "The cause is : " << ex.what();
+            KETO_LOG_ERROR << "[updateSessionKey]Failed to process the event [" << event << "]";
+            KETO_LOG_ERROR << "[updateSessionKey]The cause is : " << ex.what();
         } catch (...) {
-            KETO_LOG_ERROR << "Failed to process the event [" << event << "]";
+            KETO_LOG_ERROR << "[updateSessionKey]Failed to process the event [" << event << "]";
         }
     }
 }
@@ -121,16 +121,16 @@ void ConsensusSessionManager::notifyAccepted() {
                         keto::server_common::toEvent<keto::proto::ConsensusAcceptedMessage>(
                                 event,msg));
             } catch (keto::common::Exception& ex) {
-                KETO_LOG_ERROR << "Failed to process the event [" << event  << "] : " << ex.what();
-                KETO_LOG_ERROR << "Cause: " << boost::diagnostic_information(ex,true);
+                KETO_LOG_ERROR << "[notifyAccepted]Failed to process the event [" << event  << "] : " << ex.what();
+                KETO_LOG_ERROR << "[notifyAccepted]Cause: " << boost::diagnostic_information(ex,true);
             } catch (boost::exception& ex) {
-                KETO_LOG_ERROR << "Failed to process the event [" << event << "]";
-                KETO_LOG_ERROR << "Cause: " << boost::diagnostic_information(ex,true);
+                KETO_LOG_ERROR << "[notifyAccepted]Failed to process the event [" << event << "]";
+                KETO_LOG_ERROR << "[notifyAccepted]Cause: " << boost::diagnostic_information(ex,true);
             } catch (std::exception& ex) {
-                KETO_LOG_ERROR << "Failed to process the event [" << event << "]";
-                KETO_LOG_ERROR << "The cause is : " << ex.what();
+                KETO_LOG_ERROR << "[notifyAccepted]Failed to process the event [" << event << "]";
+                KETO_LOG_ERROR << "[notifyAccepted]The cause is : " << ex.what();
             } catch (...) {
-                KETO_LOG_ERROR << "Failed to process the event [" << event << "]";
+                KETO_LOG_ERROR << "[notifyAccepted]Failed to process the event [" << event << "]";
             }
         }
     }

@@ -76,7 +76,7 @@ keto::event::Event MemoryVaultModuleService::addEntry(const keto::event::Event &
     keto::proto::MemoryVaultAddEntryResponse memoryVaultAddEntryResponse;
     memoryVaultAddEntryResponse.set_entry_id(memoryVaultAddEntryRequest.entry_id());
     memoryVaultAddEntryResponse.set_result("success");
-    return keto::server_common::toEvent<keto::proto::memoryVaultAddEntryResponse>(memoryVaultAddEntryResponse);
+    return keto::server_common::toEvent<keto::proto::MemoryVaultAddEntryResponse>(memoryVaultAddEntryResponse);
 }
 
 keto::event::Event MemoryVaultModuleService::setEntry(const keto::event::Event &event) {
@@ -95,7 +95,7 @@ keto::event::Event MemoryVaultModuleService::setEntry(const keto::event::Event &
     keto::proto::MemoryVaultSetEntryResponse memoryVaultSetEntryResponse;
     memoryVaultSetEntryResponse.set_entry_id(memoryVaultSetEntryRequest.entry_id());
     memoryVaultSetEntryResponse.set_result("success");
-    return keto::server_common::toEvent<keto::proto::memoryVaultSetEntryResponse>(memoryVaultSetEntryResponse);
+    return keto::server_common::toEvent<keto::proto::MemoryVaultSetEntryResponse>(memoryVaultSetEntryResponse);
 }
 
 keto::event::Event MemoryVaultModuleService::getEntry(const keto::event::Event &event) {
@@ -111,8 +111,8 @@ keto::event::Event MemoryVaultModuleService::getEntry(const keto::event::Event &
     keto::proto::MemoryVaultGetEntryResponse memoryVaultGetEntryResponse;
     memoryVaultGetEntryResponse.set_entry_id(memoryVaultGetEntryRequest.entry_id());
     memoryVaultGetEntryResponse.set_value(keto::crypto::SecureVectorUtils().copySecureToString(memoryVaultPtr->getValue(
-            keto::crypto::SecureVectorUtils().copyStringToSecure(memoryVaultAddEntryRequest.entry_id()),
-            keto::crypto::SecureVectorUtils().copyStringToSecure(memoryVaultAddEntryRequest.password()))));
+            keto::crypto::SecureVectorUtils().copyStringToSecure(memoryVaultGetEntryRequest.entry_id()),
+            keto::crypto::SecureVectorUtils().copyStringToSecure(memoryVaultGetEntryRequest.password()))));
     memoryVaultGetEntryResponse.set_result("success");
     return keto::server_common::toEvent<keto::proto::MemoryVaultGetEntryResponse>(memoryVaultGetEntryResponse);
 }
@@ -127,13 +127,12 @@ keto::event::Event MemoryVaultModuleService::removeEntry(const keto::event::Even
                     keto::crypto::SecureVectorUtils().copyStringToSecure(memoryVaultRemoveEntryRequest.password()));
 
 
-    keto::proto::MemoryVaultGetEntryResponse memoryVaultRemoveEntryResponse;
+    keto::proto::MemoryVaultRemoveEntryResponse memoryVaultRemoveEntryResponse;
     memoryVaultRemoveEntryResponse.set_entry_id(memoryVaultRemoveEntryRequest.entry_id());
     memoryVaultPtr->removeValue(
-            keto::crypto::SecureVectorUtils().copyStringToSecure(memoryVaultRemoveEntryRequest.entry_id()),
-            keto::crypto::SecureVectorUtils().copyStringToSecure(memoryVaultRemoveEntryRequest.password()));
-    memoryVaultGetEntryResponse.set_result("success");
-    return keto::server_common::toEvent<keto::proto::MemoryVaultRemoveEntryResponse>(memoryVaultGetEntryResponse);
+            keto::crypto::SecureVectorUtils().copyStringToSecure(memoryVaultRemoveEntryRequest.entry_id()));
+    memoryVaultRemoveEntryResponse.set_result("success");
+    return keto::server_common::toEvent<keto::proto::MemoryVaultRemoveEntryResponse>(memoryVaultRemoveEntryResponse);
 }
 
 

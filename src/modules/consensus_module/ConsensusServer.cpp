@@ -23,6 +23,7 @@
 
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
+#include "keto/server_common/TransactionHelper.hpp"
 
 
 #include "keto/software_consensus/ConsensusSessionManager.hpp"
@@ -125,7 +126,7 @@ void ConsensusServer::process() {
 
 
 void ConsensusServer::internalConsensusInit(const keto::crypto::SecureVector& initHash) {
-    std::cout << "Setup the internal consensus" << std::endl;
+    //std::cout << "Setup the internal consensus" << std::endl;
     keto::software_consensus::ModuleHashMessageHelper moduleHashMessageHelper;
     moduleHashMessageHelper.setHash(initHash);
     keto::proto::ModuleHashMessage moduleHashMessage = moduleHashMessageHelper.getModuleHashMessage();
@@ -135,7 +136,11 @@ void ConsensusServer::internalConsensusInit(const keto::crypto::SecureVector& in
                             keto::server_common::toEvent<keto::proto::ModuleHashMessage>(
                                     keto::server_common::Events::GET_SOFTWARE_CONSENSUS_MESSAGE,moduleHashMessage)));
     keto::software_consensus::ConsensusSessionManager::getInstance()->setSession(consensusMessage);
+
+    keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
     keto::software_consensus::ConsensusSessionManager::getInstance()->notifyAccepted();
+    transactionPtr->commit();
+
 }
 
 }

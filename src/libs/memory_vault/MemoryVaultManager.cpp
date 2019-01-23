@@ -1,6 +1,7 @@
 
 
 #include <botan/bcrypt.h>
+#include <botan/hex.h>
 
 #include "keto/memory_vault/MemoryVaultManager.hpp"
 #include "keto/memory_vault/Exception.hpp"
@@ -19,6 +20,8 @@ MemoryVaultManager::MemoryVaultWrapper::MemoryVaultWrapper(const keto::crypto::S
                                                            const keto::crypto::SecureVector& sessionId,
                                                            const MemoryVaultPtr& memoryVaultPtr)
                                                            : sessionId(sessionId), memoryVaultPtr(memoryVaultPtr) {
+    //std::cout << "Create vault with password : " << Botan::hex_encode(password) << std::endl;
+
     std::string strPassword(password.begin(),password.end());
     std::shared_ptr<Botan::AutoSeeded_RNG> generator(new Botan::AutoSeeded_RNG());
     this->hash = Botan::generate_bcrypt(strPassword,*generator);
@@ -33,6 +36,7 @@ keto::crypto::SecureVector MemoryVaultManager::MemoryVaultWrapper::getSessionId(
 }
 
 MemoryVaultPtr MemoryVaultManager::MemoryVaultWrapper::getMemoryVault(const keto::crypto::SecureVector& password) {
+    //std::cout << "Get vault with the password : " << Botan::hex_encode(password) << std::endl;
     std::string strPassword(password.begin(),password.end());
     if (!Botan::check_bcrypt(strPassword,this->hash)) {
         BOOST_THROW_EXCEPTION(InvalidPasswordException());
@@ -66,6 +70,7 @@ void MemoryVaultManager::createSession(
     this->vaults.clear();
     this->sessions.clear();
     for (keto::crypto::SecureVector vector : sessions) {
+        //std::cout << "[createSession] vectors : " << Botan::hex_encode(vector) << std::endl;
         this->sessions.insert(std::pair<keto::crypto::SecureVector,MemoryVaultWrapperPtr>(vector,MemoryVaultWrapperPtr()));
     }
 }
@@ -77,6 +82,8 @@ void MemoryVaultManager::clearSession() {
 
 MemoryVaultPtr MemoryVaultManager::createVault(const std::string& name,
                                   const keto::crypto::SecureVector& sessionId, const keto::crypto::SecureVector& password) {
+
+    //std::cout << "[createVault] vectors : " << Botan::hex_encode(sessionId) << std::endl;
     if (!this->sessions.count(sessionId)) {
         BOOST_THROW_EXCEPTION(InvalidSesssionException());
     }
@@ -88,7 +95,7 @@ MemoryVaultPtr MemoryVaultManager::createVault(const std::string& name,
         BOOST_THROW_EXCEPTION(DuplicateVaultException());
     }
     MemoryVaultPtr memoryVaultPtr(new MemoryVault(sessionId,this->memoryVaultEncryptorPtr));
-    memoryVaultWrapperPtr = MemoryVaultWrapperPtr(new MemoryVaultWrapper(sessionId,password,memoryVaultPtr));
+    memoryVaultWrapperPtr = MemoryVaultWrapperPtr(new MemoryVaultWrapper(password,sessionId,memoryVaultPtr));
     this->sessions[sessionId] = memoryVaultWrapperPtr;
     this->vaults[name] = memoryVaultWrapperPtr;
     return memoryVaultPtr;

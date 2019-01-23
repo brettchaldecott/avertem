@@ -63,8 +63,10 @@ keto::event::Event ConsensusService::generateSoftwareHash(const keto::event::Eve
 keto::event::Event ConsensusService::setModuleSession(const keto::event::Event& event) {
     keto::software_consensus::ModuleSessionMessageHelper moduleSessionHelper(
             keto::server_common::fromEvent<keto::proto::ModuleSessionMessage>(event));
+    //std::cout << "Setup the memory module session key" << std::endl;
     this->consensusHashGenerator->setSession(moduleSessionHelper.getSecret());
     keto::memory_vault::MemoryVaultManager::getInstance()->clearSession();
+    //std::cout << "Clear the sessions" << std::endl;
     return event;
 }
 

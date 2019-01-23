@@ -16,6 +16,8 @@
 #include "keto/common/MetaInfo.hpp"
 #include "keto/keystore/KeyStoreEntry.hpp"
 
+#include "keto/memory_vault_session/MemoryVaultSessionKeyWrapper.hpp"
+
 
 namespace keto {
 namespace keystore {
@@ -75,7 +77,7 @@ private:
     keto::key_store_db::KeyStoreDBPtr keyStoreDBPtr;
     bool master;
     std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr;
-    std::shared_ptr<Botan::Private_Key> derivedKey;
+    keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr derivedKey;
     KeyStoreEntryPtr masterKeyStoreEntry;
 
 };

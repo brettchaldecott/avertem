@@ -84,16 +84,16 @@ ConsensusBuilder& ConsensusBuilder::buildConsensus(const keto::asn1::HashHelper&
                     event,moduleeConsensusMessage))));
             softwareConsensusHelper.addSystemHash(moduleConsensusResult.getModuleHash());
         } catch (keto::common::Exception& ex) {
-            KETO_LOG_ERROR << "Failed to process the event [" << event  << "] : " << ex.what();
-            KETO_LOG_ERROR << "Cause: " << boost::diagnostic_information(ex,true);
+            KETO_LOG_ERROR << "[buildConsensus]Failed to process the event [" << event  << "] : " << ex.what();
+            KETO_LOG_ERROR << "[buildConsensus]Cause: " << boost::diagnostic_information(ex,true);
         } catch (boost::exception& ex) {
-            KETO_LOG_ERROR << "Failed to process the event [" << event << "]";
-            KETO_LOG_ERROR << "Cause: " << boost::diagnostic_information(ex,true);
+            KETO_LOG_ERROR << "[buildConsensus]Failed to process the event [" << event << "]";
+            KETO_LOG_ERROR << "[buildConsensus]Cause: " << boost::diagnostic_information(ex,true);
         } catch (std::exception& ex) {
-            KETO_LOG_ERROR << "Failed to process the event [" << event << "]";
-            KETO_LOG_ERROR << "The cause is : " << ex.what();
+            KETO_LOG_ERROR << "[buildConsensus]Failed to process the event [" << event << "]";
+            KETO_LOG_ERROR << "[buildConsensus]The cause is : " << ex.what();
         } catch (...) {
-            KETO_LOG_ERROR << "Failed to process the event [" << event << "]";
+            KETO_LOG_ERROR << "[buildConsensus]Failed to process the event [" << event << "]";
         }
     }
     softwareConsensusHelper.generateMerkelRoot();
