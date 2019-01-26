@@ -147,6 +147,9 @@ public:
 
     static const char* SETUP_NODE_CONSENSUS_SESSION;
 
+    static const char* GET_NETWORK_SESSION_KEYS;
+    static const char* SET_NETWORK_SESSION_KEYS;
+
     static const char* GET_NETWORK_KEYS;
     static const char* SET_NETWORK_KEYS;
     

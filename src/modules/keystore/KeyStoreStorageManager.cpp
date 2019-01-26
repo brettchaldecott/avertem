@@ -9,7 +9,7 @@
 #include "keto/environment/Config.hpp"
 #include "keto/environment/EnvironmentManager.hpp"
 #include "keto/crypto/KeyBuilder.hpp"
-
+#include "keto/keystore/NetworkSessionKeyManager.hpp"
 
 
 namespace keto {
@@ -115,8 +115,8 @@ bool KeyStoreStorageManager::isMaster() const {
 
 
 keto::event::Event KeyStoreStorageManager::getNetworkKeys(const keto::event::Event& event) {
-    
-    return event;
+    //return keto::server_common::toEvent<keto::proto::ModuleConsensusMessage>(NetworkSessionKeyManager::getInstance()->getSession());
+    //return event;
 }
 
 keto::event::Event KeyStoreStorageManager::setNetworkKeys(const keto::event::Event& event) {

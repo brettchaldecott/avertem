@@ -7,6 +7,7 @@
 #include <keto/crypto/HashGenerator.hpp>
 #include <keto/crypto/SecureVectorUtils.hpp>
 #include "keto/keystore/NetworkSessionKeyManager.hpp"
+#include "keto/server_common/EventUtils.hpp"
 
 
 #include "keto/keystore/Exception.hpp"
@@ -74,9 +75,8 @@ void NetworkSessionKeyManager::generateSession() {
         return;
     }
     std::unique_ptr<Botan::RandomNumberGenerator> rng(new Botan::AutoSeeded_RNG);
-
+    std::cout << "Generate new session keys" << std::endl;
     for (int index = 0; index < this->networkSessionKeyNumber; index++) {
-
         std::shared_ptr<Botan::Private_Key> privateKey(new Botan::RSA_PrivateKey(*rng.get(), 2048));
         std::vector<uint8_t> hash = keto::crypto::SecureVectorUtils().copyFromSecure(
                 keto::crypto::HashGenerator().generateHash(
@@ -120,6 +120,18 @@ keto::proto::NetworkKeysWrapper NetworkSessionKeyManager::getSession() {
     keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper;
     networkKeysWrapperHelper.setBytes(this->consensusHashGenerator->encrypt((keto::crypto::SecureVector)networkKeysHelper));
     return networkKeysWrapperHelper;
+}
+
+
+keto::event::Event NetworkSessionKeyManager::getNetworkSessionKeys(const keto::event::Event& event) {
+    keto::proto::NetworkKeysWrapper networkKeysWrapper = getSession();
+    return keto::server_common::toEvent<keto::proto::NetworkKeysWrapper>(networkKeysWrapper);
+}
+
+keto::event::Event NetworkSessionKeyManager::setNetworkSessionKeys(const keto::event::Event& event) {
+    keto::proto::NetworkKeysWrapper networkKeysWrapper = keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(event);
+    setSession(networkKeysWrapper);
+    return event;
 }
 
 

@@ -13,6 +13,7 @@
 
 #include "keto/memory_vault_session/MemoryVaultSessionKeyWrapper.hpp"
 
+#include "keto/event/Event.hpp"
 #include "keto/keystore/NetworkSessionKeyEncryptor.hpp"
 #include "keto/keystore/NetworkSessionKeyDecryptor.hpp"
 
@@ -47,6 +48,10 @@ public:
     void generateSession();
     void setSession(const keto::proto::NetworkKeysWrapper& networkKeys);
     keto::proto::NetworkKeysWrapper getSession();
+
+    // network session key variables
+    keto::event::Event getNetworkSessionKeys(const keto::event::Event& event);
+    keto::event::Event setNetworkSessionKeys(const keto::event::Event& event);
 
     // methods to get the encryptor and decryptor
     NetworkSessionKeyEncryptorPtr getEncryptor();
