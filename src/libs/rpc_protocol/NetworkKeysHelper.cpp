@@ -4,6 +4,8 @@
 
 #include "keto/rpc_protocol/NetworkKeysHelper.hpp"
 
+#include "keto/rpc_protocol/Exception.hpp"
+
 namespace keto {
 namespace rpc_protocol {
 
@@ -12,6 +14,12 @@ NetworkKeysHelper::NetworkKeysHelper() {
 }
 
 NetworkKeysHelper::NetworkKeysHelper(const keto::proto::NetworkKeys& networkKeys) : networkKeys(networkKeys) {
+}
+
+NetworkKeysHelper::NetworkKeysHelper(const std::string& networkKeys) {
+    if (!this->networkKeys.ParseFromString(networkKeys)) {
+        BOOST_THROW_EXCEPTION(NetworkKeysDeserializationErrorException());
+    }
 }
 
 NetworkKeysHelper::~NetworkKeysHelper() {
@@ -43,6 +51,11 @@ NetworkKeysHelper::operator keto::proto::NetworkKeys() {
 }
 
 
+NetworkKeysHelper::operator std::string() {
+    std::string result;
+    networkKeys.SerializeToString(&result);
+    return result;
+}
 
 }
 }

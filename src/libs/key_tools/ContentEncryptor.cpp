@@ -19,9 +19,11 @@
 #include <botan/pubkey.h>
 #include <botan/rng.h>
 #include <botan/auto_rng.h>
+#include <botan/stream_cipher.h>
 
 #include "keto/key_tools/ContentEncryptor.hpp"
 #include "keto/key_tools/Constants.hpp"
+#include "keto/key_tools/KeyUtils.hpp"
 
 #include "keto/crypto/SecureVectorUtils.hpp"
 
@@ -37,40 +39,16 @@ std::string ContentEncryptor::getSourceVersion() {
     
 ContentEncryptor::ContentEncryptor(const keto::crypto::SecureVector& secret, const keto::crypto::SecureVector& encodedKey,
         const std::vector<uint8_t>& content) {
-    
-    keto::crypto::SecureVector encryptionKeyBits;
-    for (int index = 0; index < encodedKey.size(); index++) {
-        encryptionKeyBits.push_back(encodedKey[index] ^ secret[index]);
-    }
-    
-    Botan::DataSource_Memory memoryDatasource(encryptionKeyBits);
-    std::shared_ptr<Botan::Private_Key> privateKey =
-            Botan::PKCS8::load_key(memoryDatasource);
-    
-    std::unique_ptr<Botan::RandomNumberGenerator> rng(new Botan::AutoSeeded_RNG);
-    
-    Botan::PK_Encryptor_EME enc(*privateKey,*rng.get(), keto::key_tools::Constants::ENCRYPTION_PADDING);
-    
-    this->encyptedContent = enc.encrypt(content,*rng.get());
+    keto::crypto::SecureVector encyptedContent = keto::crypto::SecureVectorUtils().copyToSecure(content);
+    encrypt(secret, KeyUtils().getDerivedKey(secret,encodedKey),encyptedContent);
+    this->encyptedContent = keto::crypto::SecureVectorUtils().copyFromSecure(encyptedContent);
 }
 
 ContentEncryptor::ContentEncryptor(const keto::crypto::SecureVector& secret, const keto::crypto::SecureVector& encodedKey,
         const keto::crypto::SecureVector& content) {
-    
-    keto::crypto::SecureVector encryptionKeyBits;
-    for (int index = 0; index < encodedKey.size(); index++) {
-        encryptionKeyBits.push_back(encodedKey[index] ^ secret[index]);
-    }
-    
-    Botan::DataSource_Memory memoryDatasource(encryptionKeyBits);
-    std::shared_ptr<Botan::Private_Key> privateKey =
-            Botan::PKCS8::load_key(memoryDatasource);
-    
-    std::unique_ptr<Botan::RandomNumberGenerator> rng(new Botan::AutoSeeded_RNG);
-    
-    Botan::PK_Encryptor_EME enc(*privateKey,*rng.get(), keto::key_tools::Constants::ENCRYPTION_PADDING);
-    
-    this->encyptedContent = enc.encrypt(content,*rng.get());
+    keto::crypto::SecureVector encyptedContent = content;
+    encrypt(secret, KeyUtils().getDerivedKey(secret,encodedKey),encyptedContent);
+    this->encyptedContent = keto::crypto::SecureVectorUtils().copyFromSecure(encyptedContent);
 }
 
 ContentEncryptor::~ContentEncryptor() {
@@ -89,6 +67,14 @@ ContentEncryptor::operator std::vector<uint8_t>() {
     return this->encyptedContent;
 }
 
+void ContentEncryptor::encrypt(const keto::crypto::SecureVector& secret, const keto::crypto::SecureVector& derived,
+                               keto::crypto::SecureVector& content) {
+    std::unique_ptr<Botan::StreamCipher> cipher(Botan::StreamCipher::create("ChaCha(20)"));
+    cipher->set_key(keto::key_tools::KeyUtils().generateCipher(secret,derived));
+    cipher->set_iv(NULL,0);
+    cipher->encrypt(content);
+
+}
 
 }
 }

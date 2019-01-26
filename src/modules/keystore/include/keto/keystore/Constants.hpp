@@ -24,6 +24,12 @@ public:
     static constexpr const char* ENCRYPTION_PADDING = "EME1(SHA-256)";
     static constexpr const char* IS_MASTER = "is_master";
     static constexpr const char* IS_MASTER_TRUE = "TRUE";
+    static constexpr const char* IS_NETWORK_SESSION_GENERATOR = "is_network_session_generator";
+    static constexpr const char* IS_NETWORK_SESSION_GENERATOR_TRUE = "TRUE";
+    static constexpr const char* NETWORK_SESSION_GENERATOR_KEYS = "network_session_generator_keys";
+    static constexpr const int NETWORK_SESSION_GENERATOR_KEYS_DEFAULT = 6;
+    static constexpr const int ONION_LEVELS = 3;
+
     static const char* PRIVATE_KEY;
     static const char* PUBLIC_KEY;
 

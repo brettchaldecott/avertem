@@ -6,10 +6,11 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 ## SORT .cpp by most likely to change / break compile
 add_library( keto_key_tools
             
-              ContentDecryptor.cpp
-              ContentEncryptor.cpp
-              ContentSigner.cpp
-              KeyPairCreator.cpp
+            ContentDecryptor.cpp
+            ContentEncryptor.cpp
+            ContentSigner.cpp
+            KeyPairCreator.cpp
+            KeyUtils.cpp
 
              ${HEADERS}
            )

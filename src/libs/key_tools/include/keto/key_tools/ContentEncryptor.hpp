@@ -47,6 +47,9 @@ public:
     
 private:
     std::vector<uint8_t> encyptedContent;
+
+    void encrypt(const keto::crypto::SecureVector& secret, const keto::crypto::SecureVector& derived,
+                                   keto::crypto::SecureVector& content);
 };
 
 

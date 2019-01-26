@@ -19,9 +19,10 @@ public:
     NetworkKeyHelper(const NetworkKeyHelper& orig) = default;
     virtual ~NetworkKeyHelper();
 
-
-    keto::crypto::SecureVector getAccountHash();
-    NetworkKeyHelper& setAccountHash(const keto::crypto::SecureVector& accountHash);
+    NetworkKeyHelper& setHash(const std::vector<uint8_t>& hash);
+    std::vector<uint8_t> getHash();
+    NetworkKeyHelper& setHash(const keto::crypto::SecureVector& hash);
+    keto::crypto::SecureVector getHash_locked();
 
 
     keto::crypto::SecureVector getKeyBytes();

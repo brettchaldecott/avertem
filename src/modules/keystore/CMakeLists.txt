@@ -25,15 +25,19 @@ add_library( 0010_keto_keystore_module
             KeyStoreStorageManager.cpp
             include/keto/keystore/Constants.hpp
             KeyStoreEntry.cpp
+            Constants.cpp
+            NetworkSessionKeyEncryptor.cpp
+            NetworkSessionKeyDecryptor.cpp
+            NetworkSessionKeyManager.cpp
 
-             ${HEADERS} Constants.cpp)
+             ${HEADERS} )
 
 add_dependencies(0010_keto_keystore_module keto_tools)
 
 KetoModuleDepencencies( 0010_keto_keystore_module 
                             PRIVATE keto_memory_vault_session keto_software_consensus keto_key_store_db keto_memory_vault
                             PRIVATE keto_transaction_common keto_server_common keto_asn1_common keto_asn1_protocol
-                            PRIVATE keto_key_tools keto_proto_environment keto_rocks_db ${PROTOBUF_LIBRARIES}
+                            PRIVATE keto_key_tools keto_rpc_protocol keto_proto_environment keto_rocks_db ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_crypto key_store_utils
                             PRIVATE ${ROCKSDB_LIBRARIES}
                             PRIVATE ${BOTAN_LIBRARIES}

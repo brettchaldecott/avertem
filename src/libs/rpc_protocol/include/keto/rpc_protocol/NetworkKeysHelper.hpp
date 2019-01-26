@@ -5,6 +5,8 @@
 #ifndef KETO_NETWORKKEYSHELPER_HPP
 #define KETO_NETWORKKEYSHELPER_HPP
 
+#include <string>
+
 #include "KeyStore.pb.h"
 
 #include "keto/crypto/Containers.hpp"
@@ -18,6 +20,7 @@ class NetworkKeysHelper {
 public:
     NetworkKeysHelper();
     NetworkKeysHelper(const keto::proto::NetworkKeys& networkKeys);
+    NetworkKeysHelper(const std::string& networkKeys);
     NetworkKeysHelper(const NetworkKeysHelper& orig) = default;
     virtual ~NetworkKeysHelper();
 
@@ -26,6 +29,8 @@ public:
     std::vector<NetworkKeyHelper> getNetworkKeys();
 
     operator keto::proto::NetworkKeys();
+    operator std::string();
+    operator keto::crypto::SecureVector();
 
 private:
     keto::proto::NetworkKeys networkKeys;

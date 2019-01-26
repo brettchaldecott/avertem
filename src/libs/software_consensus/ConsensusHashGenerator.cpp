@@ -334,5 +334,16 @@ keto::crypto::SecureVector ConsensusHashGenerator::generateSessionHash(const ket
 }
 
 
+std::vector<uint8_t> ConsensusHashGenerator::encrypt(const keto::crypto::SecureVector& value) {
+    keto::key_tools::ContentEncryptor contentEncryptor(this->sessionKey,this->encodedKey,value);
+    return contentEncryptor.getEncryptedContent();
+}
+
+keto::crypto::SecureVector ConsensusHashGenerator::decrypt(const std::vector<uint8_t>& value) {
+    keto::key_tools::ContentDecryptor contentDecryptor(this->sessionKey,this->encodedKey,value);
+    return contentDecryptor.getContent();
+}
+
+
 }
 }

@@ -25,7 +25,7 @@
 #include "keto/memory_vault_session/MemoryVaultSession.hpp"
 
 #include "keto/keystore/KeyStoreStorageManager.hpp"
-
+#include "keto/keystore/NetworkSessionKeyManager.hpp"
 
 namespace keto{
 namespace keystore {
@@ -82,6 +82,7 @@ keto::event::Event ConsensusService::setModuleSession(const keto::event::Event& 
 keto::event::Event ConsensusService::consensusSessionAccepted(const keto::event::Event& event) {
     //std::cout << "[consensusSessionAccepted] consensus session accepted" << std::endl;
     keto::memory_vault_session::MemoryVaultSession::getInstance()->initSession();
+    NetworkSessionKeyManager::getInstance()->generateSession();
     //std::cout << "[consensusSessionAccepted] init the store" << std::endl;
     KeyStoreStorageManager::getInstance()->initStore();
     //std::cout << "[consensusSessionAccepted] return the event" << std::endl;

@@ -11,6 +11,7 @@ add_library( keto_rpc_protocol
             PeerResponseHelper.cpp
             NetworkKeyHelper.cpp
             NetworkKeysHelper.cpp
+            NetworkKeysWrapperHelper.cpp
 
         ${HEADERS})
 

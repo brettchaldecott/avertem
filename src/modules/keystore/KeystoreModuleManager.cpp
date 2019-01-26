@@ -27,6 +27,7 @@
 #include "keto/keystore/TransactionEncryptionService.hpp"
 #include "keto/keystore/KeyStoreStorageManager.hpp"
 #include "keto/keystore/Constants.hpp"
+#include "keto/keystore/NetworkSessionKeyManager.hpp"
 
 #include "keto/memory_vault_session/MemoryVaultSession.hpp"
 
@@ -64,21 +65,23 @@ void KeystoreModuleManager::start() {
     keto::software_consensus::ConsensusHashGeneratorPtr consensusHashGeneratorPtr =
                                                                 this->getConsensusHash();
     keto::memory_vault_session::MemoryVaultSession::init(consensusHashGeneratorPtr,Constants::MODULE_NAME);
-    ConsensusService::init(consensusHashGeneratorPtr);
+    NetworkSessionKeyManager::init(consensusHashGeneratorPtr);
     TransactionEncryptionService::init();
     KeyStoreStorageManager::init();
+    ConsensusService::init(consensusHashGeneratorPtr);
     EventRegistry::registerEventHandlers();
     KETO_LOG_INFO << "[KeystoreModuleManager] Started the KeystoreModuleManager";
 }
 
 void KeystoreModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
-    TransactionEncryptionService::fin();
     ConsensusService::fin();
+    TransactionEncryptionService::fin();
     KeyStoreStorageManager::fin();
-    modules.clear();
     KeyStoreService::fin();
+    NetworkSessionKeyManager::fin();
     keto::memory_vault_session::MemoryVaultSession::fin();
+    modules.clear();
     KETO_LOG_INFO << "[KeystoreModuleManager] The KeystoreModuleManager is being stopped";
 }
 

@@ -40,15 +40,13 @@ public:
     virtual ~ContentDecryptor();
     
     keto::crypto::SecureVector getContent();
-    keto::crypto::SecureVector getDerivedKey(
-            const keto::crypto::SecureVector& secret,
-            const keto::crypto::SecureVector& encodedKey);
     operator keto::crypto::SecureVector(); 
     
 private:
     keto::crypto::SecureVector content;
     
-    
+    void decrypt(const keto::crypto::SecureVector& secret, const keto::crypto::SecureVector& derived,
+                 keto::crypto::SecureVector& encyptedContent);
 };
 
 

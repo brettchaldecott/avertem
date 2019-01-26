@@ -24,6 +24,7 @@ KETO_DECLARE_EXCEPTION( KeyStoreModuleException, "General key store exception." 
 KETO_DECLARE_DERIVED_EXCEPTION (KeyStoreModuleException, InvalidSessionKeyException , "Invalid session key.");
 KETO_DECLARE_DERIVED_EXCEPTION (KeyStoreModuleException, PrivateKeyNotConfiguredException , "Private key has not been configured.");
 KETO_DECLARE_DERIVED_EXCEPTION (KeyStoreModuleException, PublicKeyNotConfiguredException , "Public key has not been configured.");
+KETO_DECLARE_DERIVED_EXCEPTION (KeyStoreModuleException, IndexOutOfBoundsException , "The index is beyound the size of the store..");
 
 
 

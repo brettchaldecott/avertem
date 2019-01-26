@@ -17,9 +17,11 @@
 #include <botan/pubkey.h>
 #include <botan/rng.h>
 #include <botan/auto_rng.h>
+#include <keto/crypto/SecureVectorUtils.hpp>
 
 #include "keto/key_tools/ContentDecryptor.hpp"
 #include "keto/key_tools/Constants.hpp"
+#include "keto/key_tools/KeyUtils.hpp"
 
 namespace keto {
 namespace key_tools {
@@ -30,42 +32,17 @@ std::string ContentDecryptor::getSourceVersion() {
 
 ContentDecryptor::ContentDecryptor(const keto::crypto::SecureVector& secret, const keto::crypto::SecureVector& encodedKey,
         const std::vector<uint8_t>& encyptedContent) {
-    
-    keto::crypto::SecureVector encryptionKeyBits = getDerivedKey(secret,encodedKey);
-    
-    Botan::DataSource_Memory memoryDatasource(encryptionKeyBits);
-    std::shared_ptr<Botan::Private_Key> privateKey =
-            Botan::PKCS8::load_key(memoryDatasource);
-    
-    std::unique_ptr<Botan::RandomNumberGenerator> rng(new Botan::AutoSeeded_RNG);
-    Botan::PK_Decryptor_EME dec(*privateKey,*rng.get(), keto::key_tools::Constants::ENCRYPTION_PADDING);
-    this->content = dec.decrypt(encyptedContent);
+    this->content = keto::crypto::SecureVectorUtils().copyToSecure(encyptedContent);
+    decrypt(secret, KeyUtils().getDerivedKey(secret,encodedKey),this->content);
 }
 
 ContentDecryptor::ContentDecryptor(const keto::crypto::SecureVector& secret, const keto::crypto::SecureVector& encodedKey,
         const keto::crypto::SecureVector& encyptedContent) {
-    
-    keto::crypto::SecureVector encryptionKeyBits = getDerivedKey(secret,encodedKey);
-    
-    Botan::DataSource_Memory memoryDatasource(encryptionKeyBits);
-    std::shared_ptr<Botan::Private_Key> privateKey =
-            Botan::PKCS8::load_key(memoryDatasource);
-    
-    std::unique_ptr<Botan::RandomNumberGenerator> rng(new Botan::AutoSeeded_RNG);
-    Botan::PK_Decryptor_EME dec(*privateKey,*rng.get(), keto::key_tools::Constants::ENCRYPTION_PADDING);
-    this->content = dec.decrypt(encyptedContent);
+    this->content = encyptedContent;
+    decrypt(secret, KeyUtils().getDerivedKey(secret,encodedKey),this->content);
 }
 
 ContentDecryptor::~ContentDecryptor() {
-}
-
-keto::crypto::SecureVector ContentDecryptor::getDerivedKey(const keto::crypto::SecureVector& secret,
-        const keto::crypto::SecureVector& encodedKey) {
-    keto::crypto::SecureVector encryptionKeyBits;
-    for (int index = 0; index < encodedKey.size(); index++) {
-        encryptionKeyBits.push_back(encodedKey[index] ^ secret[index]);
-    }
-    return encryptionKeyBits;
 }
 
 keto::crypto::SecureVector ContentDecryptor::getContent() {
@@ -76,6 +53,15 @@ ContentDecryptor::operator keto::crypto::SecureVector() {
     return this->content;
 }
 
+
+void ContentDecryptor::decrypt(const keto::crypto::SecureVector& secret, const keto::crypto::SecureVector& derived,
+             keto::crypto::SecureVector& encyptedContent) {
+    std::unique_ptr<Botan::StreamCipher> cipher(Botan::StreamCipher::create("ChaCha(20)"));
+    cipher->set_key(keto::key_tools::KeyUtils().generateCipher(secret,derived));
+    cipher->set_iv(NULL,0);
+    cipher->decrypt(encyptedContent);
+
+}
 
 }
 }

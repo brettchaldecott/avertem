@@ -61,7 +61,11 @@ public:
     keto::crypto::SecureVector generateHash(const keto::crypto::SecureVector& seed);
     keto::crypto::SecureVector getCurrentSoftwareHash();
     keto::crypto::SecureVector generateSessionHash(const keto::crypto::SecureVector& name);
-    
+
+    // encode and decode methods using the stored keys
+    std::vector<uint8_t> encrypt(const keto::crypto::SecureVector& value);
+    keto::crypto::SecureVector decrypt(const std::vector<uint8_t>& value);
+
     
 private:
     ConsensusHashScriptInfoVector consensusVector;
