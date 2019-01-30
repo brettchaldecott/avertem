@@ -16,6 +16,7 @@
 #include <botan/hex.h>
 
 
+#include "keto/server_common/VectorUtils.hpp"
 #include "keto/crypto/SecureVectorUtils.hpp"
 #include "keto/rocks_db/SliceHelper.hpp"
 #include "keto/key_store_db/KeyStoreDB.hpp"
@@ -82,13 +83,29 @@ void KeyStoreDB::setValue(const keto::crypto::SecureVector& key, const keto::cry
     keyStoreTransaction->Put(keyValue,valueHelper);
 }
 
+void KeyStoreDB::setValue(const keto::crypto::SecureVector& key, const keto::crypto::SecureVector& value, const keto::key_store_utils::Encryptor& encryptor) {
+    rocksdb::Transaction* keyStoreTransaction = keyStoreResourceManagerPtr->getResource()->getTransaction();
+    keto::rocks_db::SliceHelper keyValue(keto::crypto::SecureVectorUtils().copyFromSecure(
+            key));
+    rocksdb::ReadOptions readOptions;
+    keto::rocks_db::SliceHelper valueHelper(encryptor.encrypt(value));
+    keyStoreTransaction->Put(keyValue,valueHelper);
+}
 
 void KeyStoreDB::setValue(const std::string& key, const keto::crypto::SecureVector& value, const OnionKeys& onionKeys) {
     return setValue(keto::crypto::SecureVectorUtils().copyStringToSecure(key),value,onionKeys);
 }
 
+void KeyStoreDB::setValue(const std::string& key, const keto::crypto::SecureVector& value, const keto::key_store_utils::Encryptor& encryptor) {
+    return setValue(keto::crypto::SecureVectorUtils().copyStringToSecure(key),value,encryptor);
+}
+
 void KeyStoreDB::setValue(const std::string& key, const std::string& value, const OnionKeys& onionKeys) {
     return setValue(keto::crypto::SecureVectorUtils().copyStringToSecure(key),keto::crypto::SecureVectorUtils().copyStringToSecure(value),onionKeys);
+}
+
+void KeyStoreDB::setValue(const std::string& key, const std::string& value, const keto::key_store_utils::Encryptor& encryptor) {
+    return setValue(keto::crypto::SecureVectorUtils().copyStringToSecure(key),keto::crypto::SecureVectorUtils().copyStringToSecure(value),encryptor);
 }
 
 bool KeyStoreDB::getValue(const keto::crypto::SecureVector& key, const OnionKeys& onionKeys, keto::crypto::SecureVector& bytes) {
@@ -118,14 +135,39 @@ bool KeyStoreDB::getValue(const keto::crypto::SecureVector& key, const OnionKeys
     return true;
 }
 
+bool KeyStoreDB::getValue(const keto::crypto::SecureVector& key, const keto::key_store_utils::Decryptor& decryptor, keto::crypto::SecureVector& bytes) {
+    rocksdb::Transaction* keyStoreTransaction = keyStoreResourceManagerPtr->getResource()->getTransaction();
+    keto::rocks_db::SliceHelper keyValue(keto::crypto::SecureVectorUtils().copyFromSecure(
+            key));
+    rocksdb::ReadOptions readOptions;
+    std::string encrytedValues;
+    auto status = keyStoreTransaction->Get(readOptions,keyValue,&encrytedValues);
+    if (rocksdb::Status::OK() != status && rocksdb::Status::NotFound() == status) {
+        return false;
+    }
+    bytes = decryptor.decrypt(keto::server_common::VectorUtils().copyStringToVector(encrytedValues));
+    return true;
+}
+
 
 bool KeyStoreDB::getValue(const std::string& key, const OnionKeys& onionKeys, keto::crypto::SecureVector& bytes) {
     return getValue(keto::crypto::SecureVectorUtils().copyStringToSecure(key),onionKeys,bytes);
 }
 
+bool KeyStoreDB::getValue(const std::string& key, const keto::key_store_utils::Decryptor& decryptor, keto::crypto::SecureVector& bytes) {
+    return getValue(keto::crypto::SecureVectorUtils().copyStringToSecure(key),decryptor,bytes);
+}
+
 bool KeyStoreDB::getValue(const std::string& key, const OnionKeys& onionKeys, std::string& value) {
     keto::crypto::SecureVector bytes;
     bool result = getValue(keto::crypto::SecureVectorUtils().copyStringToSecure(key),onionKeys,bytes);
+    value = keto::crypto::SecureVectorUtils().copySecureToString(bytes);
+    return result;
+}
+
+bool KeyStoreDB::getValue(const std::string& key, const keto::key_store_utils::Decryptor& decryptor, std::string& value) {
+    keto::crypto::SecureVector bytes;
+    bool result = getValue(keto::crypto::SecureVectorUtils().copyStringToSecure(key),decryptor,bytes);
     value = keto::crypto::SecureVectorUtils().copySecureToString(bytes);
     return result;
 }

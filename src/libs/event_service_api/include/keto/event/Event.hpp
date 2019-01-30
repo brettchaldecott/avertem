@@ -30,7 +30,8 @@ public:
     inline static std::string getHeaderVersion() {
         return OBFUSCATED("$Id$");
     };
-    
+
+    Event() {}
     
     Event(std::vector<uint8_t> message) : 
         message(message)  {

@@ -25,6 +25,7 @@
 #include "keto/keystore/ConsensusService.hpp"
 #include "keto/keystore/TransactionEncryptionService.hpp"
 #include "keto/keystore/KeyStoreStorageManager.hpp"
+#include "keto/keystore/MasterKeyManager.hpp"
 
 
 namespace keto {
@@ -84,12 +85,20 @@ keto::event::Event EventRegistry::setNetworkSessionKeys(const keto::event::Event
     return NetworkSessionKeyManager::getInstance()->setNetworkSessionKeys(event);
 }
 
+keto::event::Event EventRegistry::getMasterKeys(const keto::event::Event& event) {
+    return MasterKeyManager::getInstance()->setMasterKey(event);
+}
+
+keto::event::Event EventRegistry::setMasterKeys(const keto::event::Event& event) {
+    return MasterKeyManager::getInstance()->getMasterKey(event);
+}
+
 keto::event::Event EventRegistry::getNetworkKeys(const keto::event::Event& event) {
-    return KeyStoreStorageManager::getInstance()->getNetworkKeys(event);
+    return MasterKeyManager::getInstance()->setWrappingKeys(event);
 }
 
 keto::event::Event EventRegistry::setNetworkKeys(const keto::event::Event& event) {
-    return KeyStoreStorageManager::getInstance()->setNetworkKeys(event);
+    return MasterKeyManager::getInstance()->getWrappingKeys(event);
 }
 
 void EventRegistry::registerEventHandlers() {
@@ -129,6 +138,13 @@ void EventRegistry::registerEventHandlers() {
             &EventRegistry::setNetworkSessionKeys);
 
     keto::server_common::registerEventHandler(
+            keto::server_common::Events::GET_MASTER_NETWORK_KEYS,
+            &EventRegistry::getMasterKeys);
+    keto::server_common::registerEventHandler(
+            keto::server_common::Events::SET_MASTER_NETWORK_KEYS,
+            &EventRegistry::setMasterKeys);
+
+    keto::server_common::registerEventHandler(
             keto::server_common::Events::GET_NETWORK_KEYS,
             &EventRegistry::getNetworkKeys);
     keto::server_common::registerEventHandler(
@@ -146,6 +162,16 @@ void EventRegistry::deregisterEventHandlers() {
             keto::server_common::Events::SET_NETWORK_KEYS);
 
     keto::server_common::deregisterEventHandler(
+            keto::server_common::Events::GET_MASTER_NETWORK_KEYS);
+    keto::server_common::deregisterEventHandler(
+            keto::server_common::Events::SET_MASTER_NETWORK_KEYS);
+
+    keto::server_common::deregisterEventHandler(
+            keto::server_common::Events::GET_NETWORK_SESSION_KEYS);
+    keto::server_common::deregisterEventHandler(
+            keto::server_common::Events::SET_NETWORK_SESSION_KEYS);
+
+    keto::server_common::deregisterEventHandler(
             keto::server_common::Events::CONSENSUS::KEYSTORE);
     keto::server_common::deregisterEventHandler(
             keto::server_common::Events::CONSENSUS_SESSION::KEYSTORE);
@@ -159,11 +185,6 @@ void EventRegistry::deregisterEventHandlers() {
     keto::server_common::deregisterEventHandler(
             keto::key_store_utils::Events::TRANSACTION::DECRYPT_TRANSACTION);
 
-    keto::server_common::deregisterEventHandler(
-            keto::server_common::Events::GET_NETWORK_SESSION_KEYS);
-    keto::server_common::deregisterEventHandler(
-            keto::server_common::Events::SET_NETWORK_SESSION_KEYS);
-    
     keto::server_common::deregisterEventHandler(keto::server_common::Events::REMOVE_SESSION_KEY);
     keto::server_common::deregisterEventHandler(keto::server_common::Events::REQUEST_SESSION_KEY);
 }

@@ -18,6 +18,9 @@
 #include "keto/obfuscate/MetaString.hpp"
 #include "keto/crypto/Containers.hpp"
 #include "keto/rocks_db/DBManager.hpp"
+
+#include "keto/key_store_utils/Encryptor.hpp"
+#include "keto/key_store_utils/Decryptor.hpp"
 #include "keto/key_store_db/KeyStoreResourceManager.hpp"
 
 namespace keto {
@@ -45,11 +48,17 @@ public:
     static KeyStoreDBPtr getInstance();
 
     void setValue(const keto::crypto::SecureVector& key, const keto::crypto::SecureVector& value, const OnionKeys& onionKeys);
+    void setValue(const keto::crypto::SecureVector& key, const keto::crypto::SecureVector& value, const keto::key_store_utils::Encryptor& encryptor);
     void setValue(const std::string& key, const keto::crypto::SecureVector& value, const OnionKeys& onionKeys);
+    void setValue(const std::string& key, const keto::crypto::SecureVector& value, const keto::key_store_utils::Encryptor& encryptor);
     void setValue(const std::string& key, const std::string& value, const OnionKeys& onionKeys);
+    void setValue(const std::string& key, const std::string& value, const keto::key_store_utils::Encryptor& encryptor);
     bool getValue(const keto::crypto::SecureVector& key, const OnionKeys& onionKeys, keto::crypto::SecureVector& bytes);
+    bool getValue(const keto::crypto::SecureVector& key, const keto::key_store_utils::Decryptor& decryptor, keto::crypto::SecureVector& bytes);
     bool getValue(const std::string& key, const OnionKeys& onionKeys, keto::crypto::SecureVector& bytes);
+    bool getValue(const std::string& key, const keto::key_store_utils::Decryptor& decryptor, keto::crypto::SecureVector& bytes);
     bool getValue(const std::string& key, const OnionKeys& onionKeys, std::string& value);
+    bool getValue(const std::string& key, const keto::key_store_utils::Decryptor& decryptor, std::string& value);
 
 
 private:

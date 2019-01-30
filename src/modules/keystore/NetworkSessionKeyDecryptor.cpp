@@ -27,7 +27,7 @@ NetworkSessionKeyDecryptor::~NetworkSessionKeyDecryptor() {
 
 }
 
-keto::crypto::SecureVector NetworkSessionKeyDecryptor::decrypt(const std::vector<uint8_t>& value) {
+keto::crypto::SecureVector NetworkSessionKeyDecryptor::decrypt(const std::vector<uint8_t>& value) const {
     keto::crypto::SecureVector content = keto::crypto::SecureVectorUtils().copyToSecure(value);
     for (int level = 0; level < Constants::ONION_LEVELS; level++) {
         keto::crypto::SecureVector indexes(&content[0],&content[2]);

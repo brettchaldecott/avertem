@@ -32,7 +32,7 @@ NetworkKeysHelper& NetworkKeysHelper::addNetworkKey(const keto::proto::NetworkKe
     return *this;
 }
 
-NetworkKeysHelper& NetworkKeysHelper::addNetworkKey(const NetworkKeyHelper& networkKeyHelper) {
+NetworkKeysHelper& NetworkKeysHelper::addNetworkKey(const NetworkKeyHelper& networkKeyHelper) const {
     keto::proto::NetworkKey* newNetworkKey = networkKeys.add_network_keys();
     newNetworkKey->CopyFrom((keto::proto::NetworkKey&)networkKeyHelper);
     return *this;

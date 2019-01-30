@@ -18,6 +18,7 @@
 
 #include "keto/transaction_common/TransactionEncryptionHandler.hpp"
 #include "keto/crypto/Containers.hpp"
+#include "keto/common/MetaInfo.hpp"
 
 
 namespace keto {
@@ -28,6 +29,12 @@ typedef std::shared_ptr<KeyStoreReEncryptTransactionMessageHelper> KeyStoreReEnc
 
 class KeyStoreReEncryptTransactionMessageHelper : public keto::transaction_common::TransactionEncryptionHandler {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id$");
+    };
+
+    static std::string getSourceVersion();
+
     KeyStoreReEncryptTransactionMessageHelper(const keto::crypto::SecureVector& privateKey);
     KeyStoreReEncryptTransactionMessageHelper(const KeyStoreReEncryptTransactionMessageHelper& orig) = delete;
     virtual~ KeyStoreReEncryptTransactionMessageHelper();

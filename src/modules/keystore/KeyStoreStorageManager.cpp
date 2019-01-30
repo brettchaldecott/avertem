@@ -10,6 +10,7 @@
 #include "keto/environment/EnvironmentManager.hpp"
 #include "keto/crypto/KeyBuilder.hpp"
 #include "keto/keystore/NetworkSessionKeyManager.hpp"
+#include "keto/keystore/MasterKeyManager.hpp"
 
 
 namespace keto {
@@ -21,14 +22,9 @@ std::string KeyStoreStorageManager::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
-KeyStoreStorageManager::KeyStoreStorageManager() : master(false) {
+KeyStoreStorageManager::KeyStoreStorageManager() {
     std::shared_ptr<keto::environment::Config> config =
             keto::environment::EnvironmentManager::getInstance()->getConfig();
-    if (config->getVariablesMap().count(Constants::IS_MASTER)) {
-        if (config->getVariablesMap()[Constants::IS_MASTER].as<std::string>().compare(Constants::IS_MASTER_TRUE)) {
-            this->master = true;
-        }
-    }
 
     // load the key information
     if (!config->getVariablesMap().count(Constants::PRIVATE_KEY)) {
@@ -49,8 +45,6 @@ KeyStoreStorageManager::KeyStoreStorageManager() : master(false) {
     keto::key_store_db::KeyStoreDB::init(this->keyLoaderPtr->getPrivateKey());
     this->keyStoreDBPtr = keto::key_store_db::KeyStoreDB::getInstance();
 
-
-
 }
 
 
@@ -61,6 +55,7 @@ KeyStoreStorageManager::~KeyStoreStorageManager() {
 
 KeyStoreStorageManagerPtr KeyStoreStorageManager::init() {
     return singleton = KeyStoreStorageManagerPtr(new KeyStoreStorageManager());
+
 }
 
 void KeyStoreStorageManager::fin() {
@@ -73,55 +68,19 @@ KeyStoreStorageManagerPtr KeyStoreStorageManager::getInstance() {
 }
 
 
-void KeyStoreStorageManager::initStore() {
-    //std::cout << "Init the store" << std::endl;
-    if (this->isMaster()) {
-        keto::crypto::KeyBuilder keyBuilder;
-        keyBuilder.addPrivateKey(this->keyLoaderPtr->getPrivateKey())
-                .addPrivateKey(this->keyLoaderPtr->getPrivateKey()).addPublicKey(this->keyLoaderPtr->getPublicKey());
-        //std::cout << "Setup the  derived key" << std::endl;
-        this->setDerivedKey(keyBuilder.getPrivateKey());
-        unlockStore();
-    }
+// init the store
+void KeyStoreStorageManager::initSession() {
+
+}
+
+void KeyStoreStorageManager::clearSession() {
+
 }
 
 
-void KeyStoreStorageManager::unlockStore() {
-
-    keto::key_store_db::OnionKeys onionKeys;
-    onionKeys.push_back(this->keyLoaderPtr->getPrivateKey());
-    //std::cout << "Unlock the store with the derived key" << std::endl;
-    onionKeys.push_back(this->derivedKey->getPrivateKey());
-    std::string value;
-    if (!this->keyStoreDBPtr->getValue(Constants::KEY_STORE_DB::KEY_STORE_MASTER_ENTRY,onionKeys,value)) {
-        this->masterKeyStoreEntry = KeyStoreEntryPtr(new KeyStoreEntry());
-        this->keyStoreDBPtr->setValue(Constants::KEY_STORE_DB::KEY_STORE_MASTER_ENTRY,this->masterKeyStoreEntry->getJson(),onionKeys);
-    } else {
-        this->masterKeyStoreEntry = KeyStoreEntryPtr(new KeyStoreEntry(value));
-    }
-}
-
-
-void KeyStoreStorageManager::setDerivedKey(std::shared_ptr<Botan::Private_Key> derivedKey) {
-    this->derivedKey =
-            keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr(
-                    new keto::memory_vault_session::MemoryVaultSessionKeyWrapper(derivedKey));
-}
-
-
-bool KeyStoreStorageManager::isMaster() const {
-    return master;
-}
-
-
-keto::event::Event KeyStoreStorageManager::getNetworkKeys(const keto::event::Event& event) {
-    //return keto::server_common::toEvent<keto::proto::ModuleConsensusMessage>(NetworkSessionKeyManager::getInstance()->getSession());
-    //return event;
-}
-
-keto::event::Event KeyStoreStorageManager::setNetworkKeys(const keto::event::Event& event) {
-
-    return event;
+// get the key loader
+std::shared_ptr<keto::crypto::KeyLoader> KeyStoreStorageManager::getKeyLoader() {
+    return this->keyLoaderPtr;
 }
 
 }

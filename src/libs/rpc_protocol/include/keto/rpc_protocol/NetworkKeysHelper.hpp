@@ -26,7 +26,7 @@ public:
 
     NetworkKeysHelper& addNetworkKey(const keto::proto::NetworkKey& networkKey);
     NetworkKeysHelper& addNetworkKey(const NetworkKeyHelper& networkKeyHelper);
-    std::vector<NetworkKeyHelper> getNetworkKeys();
+    std::vector<NetworkKeyHelper> getNetworkKeys() const;
 
     operator keto::proto::NetworkKeys();
     operator std::string();

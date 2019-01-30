@@ -26,6 +26,8 @@
 #include "keto/keystore/ConsensusService.hpp"
 #include "keto/keystore/TransactionEncryptionService.hpp"
 #include "keto/keystore/KeyStoreStorageManager.hpp"
+#include "keto/keystore/MasterKeyManager.hpp"
+#include "keto/keystore/KeyStoreWrapIndexManager.hpp"
 #include "keto/keystore/Constants.hpp"
 #include "keto/keystore/NetworkSessionKeyManager.hpp"
 
@@ -66,8 +68,10 @@ void KeystoreModuleManager::start() {
                                                                 this->getConsensusHash();
     keto::memory_vault_session::MemoryVaultSession::init(consensusHashGeneratorPtr,Constants::MODULE_NAME);
     NetworkSessionKeyManager::init(consensusHashGeneratorPtr);
-    TransactionEncryptionService::init();
     KeyStoreStorageManager::init();
+    KeyStoreWrapIndexManager::init();
+    MasterKeyManager::init();
+    TransactionEncryptionService::init();
     ConsensusService::init(consensusHashGeneratorPtr);
     EventRegistry::registerEventHandlers();
     KETO_LOG_INFO << "[KeystoreModuleManager] Started the KeystoreModuleManager";
@@ -77,6 +81,9 @@ void KeystoreModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
     ConsensusService::fin();
     TransactionEncryptionService::fin();
+    MasterKeyManager::fin();
+    KeyStoreWrapIndexManager::fin();
+    KeyStoreStorageManager::fin();
     KeyStoreStorageManager::fin();
     KeyStoreService::fin();
     NetworkSessionKeyManager::fin();

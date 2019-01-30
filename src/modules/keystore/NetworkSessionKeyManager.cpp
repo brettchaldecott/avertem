@@ -12,12 +12,14 @@
 
 #include "keto/keystore/Exception.hpp"
 #include "keto/keystore/KeyStoreStorageManager.hpp"
+#include "keto/keystore/MasterKeyManager.hpp"
 #include "keto/environment/Config.hpp"
 #include "keto/environment/EnvironmentManager.hpp"
 
 #include "keto/rpc_protocol/NetworkKeysWrapperHelper.hpp"
 #include "keto/rpc_protocol/NetworkKeysHelper.hpp"
 #include "keto/rpc_protocol/NetworkKeyHelper.hpp"
+
 
 
 namespace keto {
@@ -71,7 +73,7 @@ void NetworkSessionKeyManager::clearSession() {
 }
 
 void NetworkSessionKeyManager::generateSession() {
-    if (!keto::keystore::KeyStoreStorageManager::getInstance()->isMaster() || !this->networkSessionGenerator) {
+    if (!MasterKeyManager::getInstance()->isMaster() || !this->networkSessionGenerator) {
         return;
     }
     std::unique_ptr<Botan::RandomNumberGenerator> rng(new Botan::AutoSeeded_RNG);
@@ -95,7 +97,8 @@ void NetworkSessionKeyManager::setSession(const keto::proto::NetworkKeysWrapper&
         keto::crypto::SecureVectorUtils().copySecureToString(this->consensusHashGenerator->decrypt(networkKeysWrapperHelper.getBytes())));
     std::vector<keto::rpc_protocol::NetworkKeyHelper> networkKeyHelpers =  networkKeysHelper.getNetworkKeys();
     for (keto::rpc_protocol::NetworkKeyHelper networkKeyHelper : networkKeyHelpers) {
-        std::shared_ptr<Botan::Private_Key> privateKey;
+        Botan::DataSource_Memory datasource(networkKeyHelper.getKeyBytes_locked());
+        std::shared_ptr<Botan::Private_Key> privateKey = Botan::PKCS8::load_key(datasource);
         keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr memoryVaultSessionKeyWrapperPtr(
                 new keto::memory_vault_session::MemoryVaultSessionKeyWrapper(privateKey));
         std::vector<uint8_t> hash = networkKeyHelper.getHash();

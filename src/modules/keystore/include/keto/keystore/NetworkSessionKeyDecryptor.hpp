@@ -13,6 +13,8 @@
 
 #include "keto/obfuscate/MetaString.hpp"
 
+#include "keto/key_store_utils/Decryptor.hpp"
+
 namespace keto {
 namespace keystore {
 
@@ -21,7 +23,7 @@ class NetworkSessionKeyManager;
 class NetworkSessionKeyDecryptor;
 typedef std::shared_ptr<NetworkSessionKeyDecryptor> NetworkSessionKeyDecryptorPtr;
 
-class NetworkSessionKeyDecryptor {
+class NetworkSessionKeyDecryptor : virtual public keto::key_store_utils::Decryptor {
 public:
     inline static std::string getHeaderVersion() {
         return OBFUSCATED("$Id$");
@@ -34,7 +36,7 @@ public:
     NetworkSessionKeyDecryptor(const NetworkSessionKeyDecryptor& orig) = delete;
     ~NetworkSessionKeyDecryptor();
 
-    keto::crypto::SecureVector decrypt(const std::vector<uint8_t>& value);
+    keto::crypto::SecureVector decrypt(const std::vector<uint8_t>& value) const;
 
 private:
     NetworkSessionKeyManager* networkSessionKeyManager;

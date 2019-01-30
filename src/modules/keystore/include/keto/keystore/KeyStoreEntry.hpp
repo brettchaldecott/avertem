@@ -33,14 +33,19 @@ public:
     KeyStoreEntry(const KeyStoreEntry& orig) = default;
     virtual ~KeyStoreEntry();
 
+    std::vector<uint8_t> getHash();
     std::shared_ptr<Botan::Private_Key> getPrivateKey();
     std::shared_ptr<Botan::Public_Key> getPublicKey();
+    void setActive(bool active);
+    bool getActive();
 
     std::string getJson();
 
 private:
+    std::vector<uint8_t> hash;
     std::shared_ptr<Botan::Private_Key> privateKey;
     std::shared_ptr<Botan::Public_Key> publicKey;
+    bool active;
 
 };
 

@@ -27,7 +27,7 @@ NetworkSessionKeyEncryptor::~NetworkSessionKeyEncryptor() {
 
 }
 
-std::vector<uint8_t> NetworkSessionKeyEncryptor::encrypt(const keto::crypto::SecureVector& value) {
+std::vector<uint8_t> NetworkSessionKeyEncryptor::encrypt(const keto::crypto::SecureVector& value) const {
     size_t numKeys = this->networkSessionKeyManager->getNumberOfKeys();
 
     std::default_random_engine stdGenerator;

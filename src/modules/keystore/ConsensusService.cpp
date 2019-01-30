@@ -26,6 +26,7 @@
 
 #include "keto/keystore/KeyStoreStorageManager.hpp"
 #include "keto/keystore/NetworkSessionKeyManager.hpp"
+#include "keto/keystore/MasterKeyManager.hpp"
 
 namespace keto{
 namespace keystore {
@@ -73,6 +74,7 @@ keto::event::Event ConsensusService::setModuleSession(const keto::event::Event& 
     keto::software_consensus::ModuleSessionMessageHelper moduleSessionHelper(
         keto::server_common::fromEvent<keto::proto::ModuleSessionMessage>(event));
     this->consensusHashGenerator->setSession(moduleSessionHelper.getSecret());
+    MasterKeyManager::getInstance()->clearSession();
     keto::memory_vault_session::MemoryVaultSession::getInstance()->clearSession();
     return event;
 }
@@ -84,7 +86,7 @@ keto::event::Event ConsensusService::consensusSessionAccepted(const keto::event:
     keto::memory_vault_session::MemoryVaultSession::getInstance()->initSession();
     NetworkSessionKeyManager::getInstance()->generateSession();
     //std::cout << "[consensusSessionAccepted] init the store" << std::endl;
-    KeyStoreStorageManager::getInstance()->initStore();
+    MasterKeyManager::getInstance()->initSession();
     //std::cout << "[consensusSessionAccepted] return the event" << std::endl;
     return event;
 }

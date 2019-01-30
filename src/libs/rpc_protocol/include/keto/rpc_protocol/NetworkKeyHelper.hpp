@@ -25,9 +25,13 @@ public:
     keto::crypto::SecureVector getHash_locked();
 
 
-    keto::crypto::SecureVector getKeyBytes();
+    std::vector<uint8_t> getKeyBytes();
+    NetworkKeyHelper& setKeyBytes(const std::vector<uint8_t>& bytes);
+    keto::crypto::SecureVector getKeyBytes_locked();
     NetworkKeyHelper& setKeyBytes(const keto::crypto::SecureVector& bytes);
 
+    bool getActive();
+    NetworkKeyHelper& setActive(bool active);
 
     operator keto::proto::NetworkKey();
 

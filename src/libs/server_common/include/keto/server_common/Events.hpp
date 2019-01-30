@@ -150,6 +150,9 @@ public:
     static const char* GET_NETWORK_SESSION_KEYS;
     static const char* SET_NETWORK_SESSION_KEYS;
 
+    static const char* GET_MASTER_NETWORK_KEYS;
+    static const char* SET_MASTER_NETWORK_KEYS;
+
     static const char* GET_NETWORK_KEYS;
     static const char* SET_NETWORK_KEYS;
     

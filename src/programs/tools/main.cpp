@@ -17,6 +17,7 @@
 
 #include <nlohmann/json.hpp>
 #include <botan/hex.h>
+#include <botan/bcrypt.h>
 
 #include "keto/environment/EnvironmentManager.hpp"
 #include "keto/environment/Constants.hpp"
@@ -59,7 +60,8 @@ boost::program_options::options_description generateOptionDescriptions() {
             ("keys,k", po::value<std::string>(),"Key information needed for the encryption")
             ("source,s", po::value<std::string>(),"Source file to encode.")
             ("output,o",po::value<std::string>(), "Output encoded file.")
-            ("input,i", po::value<std::string>(), "Input to encode from the command line.");
+            ("input,i", po::value<std::string>(), "Input to encode from the command line.")
+            ("password,p", po::value<std::string>(), "Generate a password hash.");
     
     return optionDescripion;
 }
@@ -284,6 +286,20 @@ int printPrivateKey(std::shared_ptr<ketoEnv::Config> config,
     return 0;
 }
 
+int generatePasswordHash(std::shared_ptr<ketoEnv::Config> config,
+                    boost::program_options::options_description optionDescription) {
+    if (!config->getVariablesMap().count(keto::tools::Constants::PASSWORD)) {
+        std::cerr << "Please provide a password to create a hash for [" <<
+                  keto::tools::Constants::PASSWORD << "]" << std::endl;
+        return -1;
+    }
+
+    std::string password = config->getVariablesMap()[keto::tools::Constants::PASSWORD].as<std::string>();
+
+    std::cout << Botan::generate_bcrypt(password,*generator) << std::endl;
+
+    return 0;
+}
 
 /**
  * The CLI main file
@@ -327,6 +343,8 @@ int main(int argc, char** argv)
             return printEncodedKey(config,optionDescription);
         } else if (config->getVariablesMap().count(keto::tools::Constants::PRIVATE)) {
             return printPrivateKey(config,optionDescription);
+        } else if (config->getVariablesMap().count(keto::tools::Constants::PASSWORD)) {
+            return generatePasswordHash(config,optionDescription);
         }
         KETO_LOG_INFO << "Keto Tools Executed";
     } catch (keto::common::Exception& ex) {

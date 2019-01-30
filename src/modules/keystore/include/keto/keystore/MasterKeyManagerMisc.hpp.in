@@ -1,0 +1,42 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+
+#include <string>
+#include <memory>
+#include <vector>
+
+#include <botan/bcrypt.h>
+#include <botan/hex.h>
+
+#include "keto/common/Log.hpp"
+
+#include "keto/obfuscate/MetaString.hpp"
+#include "keto/crypto/Containers.hpp"
+#include "keto/crypto/SecureVectorUtils.hpp"
+
+#include "keto/keystore/"
+#include "keto/common/MetaInfo.hpp"
+
+namespace keto {
+namespace keystore {
+
+static constexpr const char* FALSE_PASSWORD = "FALSE_PASSWORD";
+std::string getMasterPassword() {
+    return OBFUSCATED("${KEYSTORE_MODULE_MASTER_STORE_PASSWORD_HASH}");
+}
+
+bool authenticateMaster(const std::string& password) {
+    bool result1 = Botan::check_bcrypt(password,getMasterPassword());
+    bool result2 = Botan::check_bcrypt(FALSE_PASSWORD,PASSWORD_HASH);
+    bool result3 = Botan::check_bcrypt(password,getMasterPassword());
+    return result1 && !result2 && result3;
+}
+
+
+
+}
+}

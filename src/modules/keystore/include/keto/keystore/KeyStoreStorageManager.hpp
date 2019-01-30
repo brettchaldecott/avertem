@@ -44,41 +44,17 @@ public:
 
 
 
-    /**
-     * Init the store
-     */
-    void initStore();
-
-    /**
-     * Unlock store
-     */
-    void unlockStore();
-
-    /**
-     * This method sets the derived key needed unlock the store.
-     *
-     * @param derivedKey
-     */
-    void setDerivedKey(std::shared_ptr<Botan::Private_Key> derivedKey);
+    // init the store
+    void initSession();
+    void clearSession();
 
 
-    /**
-     * This method returns the master reference.
-     *
-     * @return TRUE if this is the master
-     */
-    bool isMaster() const;
-
-
-    keto::event::Event getNetworkKeys(const keto::event::Event& event);
-    keto::event::Event setNetworkKeys(const keto::event::Event& event);
+    // get the key loader
+    std::shared_ptr<keto::crypto::KeyLoader> getKeyLoader();
 
 private:
     keto::key_store_db::KeyStoreDBPtr keyStoreDBPtr;
-    bool master;
     std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr;
-    keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr derivedKey;
-    KeyStoreEntryPtr masterKeyStoreEntry;
 
 };
 

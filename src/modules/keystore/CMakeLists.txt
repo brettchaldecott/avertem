@@ -8,6 +8,10 @@ SET(KEYSTORE_MODULE_SIGNATURE "this is a key")
 SET(KEYSTORE_MODULE_SOURCE_VERSION_METHOD_MAP "getClientSourceVersionMap")
 SET(KEYSTORE_MODULE_CONSENSUS_HASH_SCRIPT_METHOD "getConsensusHashScriptConfig")
 
+# master key store
+SET(KEYSTORE_MODULE_MASTER_STORE_PASSWORD_HASH "PASSWORD_HASH")
+
+
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
 ## SORT .cpp by most likely to change / break compile
@@ -29,6 +33,9 @@ add_library( 0010_keto_keystore_module
             NetworkSessionKeyEncryptor.cpp
             NetworkSessionKeyDecryptor.cpp
             NetworkSessionKeyManager.cpp
+        KeyStoreWrapIndexManager.cpp
+        KeyStoreWrapEntry.cpp
+        MasterKeyManager.cpp
 
              ${HEADERS} )
 
@@ -46,6 +53,7 @@ KetoModuleDepencencies( 0010_keto_keystore_module
 KetoModuleConsensus( 0010_keto_keystore_module ${NUMBER_OF_KEYS} keystore )
 
 configure_file(include/keto/keystore/KeystoreModuleManagerMisc.hpp.in include/keto/keystore/KeystoreModuleManagerMisc.hpp)
+configure_file(include/keto/keystore/MasterKeyManagerMisc.hpp.in include/keto/keystore/MasterKeyManagerMisc.hpp)
 
 target_include_directories( 0010_keto_keystore_module
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"

@@ -47,6 +47,9 @@ public:
     static keto::event::Event getNetworkSessionKeys(const keto::event::Event& event);
     static keto::event::Event setNetworkSessionKeys(const keto::event::Event& event);
 
+    static  keto::event::Event getMasterKeys(const keto::event::Event& event);
+    static  keto::event::Event setMasterKeys(const keto::event::Event& event);
+
     static keto::event::Event getNetworkKeys(const keto::event::Event& event);
     static keto::event::Event setNetworkKeys(const keto::event::Event& event);
     

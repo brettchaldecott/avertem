@@ -42,8 +42,17 @@ NetworkKeyHelper& NetworkKeyHelper::setHash(const keto::crypto::SecureVector& ha
     return *this;
 }
 
+std::vector<uint8_t> NetworkKeyHelper::getKeyBytes() {
+    return keto::server_common::VectorUtils.copyStringToVector(
+            networkKey.network_key());
+}
 
-keto::crypto::SecureVector NetworkKeyHelper::getKeyBytes() {
+NetworkKeyHelper& NetworkKeyHelper::setKeyBytes(const std::vector<uint8_t>& bytes) {
+    networkKey.set_network_key(bytes.data(),bytes.size());
+    return *this;
+}
+
+keto::crypto::SecureVector NetworkKeyHelper::getKeyBytes_locked() {
     return keto::crypto::SecureVectorUtils().copyStringToSecure(
             networkKey.network_key());
 }
@@ -54,6 +63,15 @@ NetworkKeyHelper& NetworkKeyHelper::setKeyBytes(const keto::crypto::SecureVector
     return *this;
 }
 
+
+bool NetworkKeyHelper::getActive() {
+    return networkKey.activate();
+}
+
+NetworkKeyHelper& NetworkKeyHelper::setActive(bool active) {
+    networkKey.set_activate(active);
+    return *this;
+}
 
 NetworkKeyHelper::operator keto::proto::NetworkKey() {
     return networkKey;
