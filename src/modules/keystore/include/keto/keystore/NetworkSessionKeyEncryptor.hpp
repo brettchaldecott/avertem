@@ -14,7 +14,6 @@
 
 #include "keto/obfuscate/MetaString.hpp"
 
-
 #include "keto/key_store_utils/Encryptor.hpp"
 
 

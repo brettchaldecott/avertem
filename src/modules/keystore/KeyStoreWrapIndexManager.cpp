@@ -85,6 +85,15 @@ void KeyStoreWrapIndexManager::setWrappingKeys(const keto::rpc_protocol::Network
     setWrapperIndex();
 }
 
+// methods to get the encryptor and decryptor
+KeyStoreWrapIndexEncryptorPtr KeyStoreWrapIndexManager::getEncryptor() {
+        return KeyStoreWrapIndexEncryptorPtr(new KeyStoreWrapIndexEncryptor(this));
+}
+
+KeyStoreWrapIndexDecryptorPtr KeyStoreWrapIndexManager::getDecryptor() {
+    return KeyStoreWrapIndexDecryptorPtr(new KeyStoreWrapIndexDecryptor(this));
+}
+
 int KeyStoreWrapIndexManager::getNumberOfKeys() {
     return this->index.size();
 }

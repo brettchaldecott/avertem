@@ -33,9 +33,11 @@ add_library( 0010_keto_keystore_module
             NetworkSessionKeyEncryptor.cpp
             NetworkSessionKeyDecryptor.cpp
             NetworkSessionKeyManager.cpp
-        KeyStoreWrapIndexManager.cpp
-        KeyStoreWrapEntry.cpp
-        MasterKeyManager.cpp
+            KeyStoreWrapIndexManager.cpp
+            KeyStoreWrapIndexDecryptor.cpp
+            KeyStoreWrapIndexEncryptor.cpp
+            KeyStoreWrapEntry.cpp
+            MasterKeyManager.cpp
 
              ${HEADERS} )
 

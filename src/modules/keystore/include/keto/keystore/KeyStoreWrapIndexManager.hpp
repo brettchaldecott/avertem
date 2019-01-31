@@ -20,11 +20,16 @@
 #include <botan/rsa.h>
 #include <botan/auto_rng.h>
 
-#include "keto/event/Event.hpp"
-#include "keto/keystore/Constants.hpp"
-#include "keto/keystore/KeyStoreWrapEntry.hpp"
 #include "keto/key_store_db/KeyStoreDB.hpp"
 #include "keto/rpc_protocol/NetworkKeysHelper.hpp"
+
+#include "keto/event/Event.hpp"
+#include "keto/keystore/Constants.hpp"
+
+#include "keto/keystore/KeyStoreWrapEntry.hpp"
+#include "keto/keystore/KeyStoreWrapIndexEncryptor.hpp"
+#include "keto/keystore/KeyStoreWrapIndexDecryptor.hpp"
+
 
 
 
@@ -40,6 +45,9 @@ public:
         return OBFUSCATED("$Id$");
     };
     static std::string getSourceVersion();
+
+    friend class KeyStoreWrapIndexDecryptor;
+    friend class KeyStoreWrapIndexEncryptor;
 
     // constructors
     KeyStoreWrapIndexManager();
@@ -58,6 +66,10 @@ public:
     // set the keys
     void setMasterKey(const keto::rpc_protocol::NetworkKeysHelper& event);
     void setWrappingKeys(const keto::rpc_protocol::NetworkKeysHelper& event);
+
+    // methods to get the encryptor and decryptor
+    KeyStoreWrapIndexEncryptorPtr getEncryptor();
+    KeyStoreWrapIndexDecryptorPtr getDecryptor();
 
 protected:
     int getNumberOfKeys();
