@@ -63,7 +63,7 @@ void KeyStoreWrapIndexManager::setMasterKey(const keto::rpc_protocol::NetworkKey
             keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr(
                     new keto::memory_vault_session::MemoryVaultSessionKeyWrapper(keyBuilder.getPrivateKey()));
 
-
+    loadWrapperIndex();
 
 
 }
@@ -71,14 +71,59 @@ void KeyStoreWrapIndexManager::setMasterKey(const keto::rpc_protocol::NetworkKey
 void KeyStoreWrapIndexManager::setWrappingKeys(const keto::rpc_protocol::NetworkKeysHelper& keys) {
     std::vector<keto::rpc_protocol::NetworkKeyHelper> keyVector = keys.getNetworkKeys();
 
+    for (keto::rpc_protocol::NetworkKeyHelper key : keys.getNetworkKeys()) {
+        if (!this->networkKeys.count(key.getHash())) {
+            KeyStoreWrapEntryPtr keyStoreWrapEntryPtr(new KeyStoreWrapEntry(key));
+            this->networkKeys[keyStoreWrapEntryPtr->getHash()] = keyStoreWrapEntryPtr;
+            this->index.push_back(keyStoreWrapEntryPtr->getHash());
+        } else {
+            KeyStoreWrapEntryPtr keyStoreWrapEntryPtr = this->networkKeys[key.getHash()];
+            keyStoreWrapEntryPtr->setKey(key);
+        }
+    }
+
+    setWrapperIndex();
 }
 
 int KeyStoreWrapIndexManager::getNumberOfKeys() {
-
+    return this->index.size();
 }
 
 keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr KeyStoreWrapIndexManager::getKey(int index) {
+    return this->networkKeys[this->index[index]]->getDerivedKey();
+}
 
+
+
+void KeyStoreWrapIndexManager::loadWrapperIndex() {
+    keto::key_store_db::OnionKeys onionKeys;
+    onionKeys.push_back(KeyStoreStorageManager::getInstance()->getKeyLoader()->getPrivateKey());
+    onionKeys.push_back(this->derivedKey->getPrivateKey());
+
+
+    std::string wrapperValue;
+    if (this->keyStoreDBPtr->getValue(Constants::KEY_STORE_DB::KEY_STORE_WRAPPER_INDEX,onionKeys,wrapperValue)) {
+        nlohmann::json json = nlohmann::json::parse(wrapperValue);
+        for (nlohmann::json::iterator it = json.begin(); it != json.end(); ++it) {
+            KeyStoreWrapEntryPtr keyStoreWrapEntryPtr(new KeyStoreWrapEntry(*it));
+            this->networkKeys[keyStoreWrapEntryPtr->getHash()] = keyStoreWrapEntryPtr;
+            this->index.push_back(keyStoreWrapEntryPtr->getHash());
+        }
+    }
+}
+
+void KeyStoreWrapIndexManager::setWrapperIndex() {
+    keto::key_store_db::OnionKeys onionKeys;
+    onionKeys.push_back(KeyStoreStorageManager::getInstance()->getKeyLoader()->getPrivateKey());
+    onionKeys.push_back(this->derivedKey->getPrivateKey());
+
+    nlohmann::json json;
+    for (std::vector<uint8_t> index : this->index) {
+        KeyStoreWrapEntryPtr keyStoreWrapEntryPtr = this->networkKeys[index];
+        json.push_back(keyStoreWrapEntryPtr->getJson());
+    }
+    std::string wrapperValue = json.dump();
+    this->keyStoreDBPtr->setValue(Constants::KEY_STORE_DB::KEY_STORE_WRAPPER_INDEX,wrapperValue,onionKeys);
 }
 
 }

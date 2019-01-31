@@ -18,7 +18,7 @@
 #include "keto/crypto/Containers.hpp"
 #include "keto/crypto/SecureVectorUtils.hpp"
 
-#include "keto/keystore/"
+#include "keto/keystore/MasterKeyManager.hpp"
 #include "keto/common/MetaInfo.hpp"
 
 namespace keto {
@@ -31,7 +31,7 @@ std::string getMasterPassword() {
 
 bool authenticateMaster(const std::string& password) {
     bool result1 = Botan::check_bcrypt(password,getMasterPassword());
-    bool result2 = Botan::check_bcrypt(FALSE_PASSWORD,PASSWORD_HASH);
+    bool result2 = Botan::check_bcrypt(FALSE_PASSWORD,getMasterPassword());
     bool result3 = Botan::check_bcrypt(password,getMasterPassword());
     return result1 && !result2 && result3;
 }

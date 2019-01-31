@@ -69,6 +69,9 @@ private:
     std::vector<std::vector<uint8_t>> index;
     std::map<std::vector<uint8_t>,KeyStoreWrapEntryPtr> networkKeys;
 
+    void loadWrapperIndex();
+    void setWrapperIndex();
+
 };
 
 

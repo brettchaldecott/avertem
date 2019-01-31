@@ -18,6 +18,7 @@
 #include <nlohmann/json.hpp>
 #include <botan/hex.h>
 #include <botan/bcrypt.h>
+#include <botan/auto_rng.h>
 
 #include "keto/environment/EnvironmentManager.hpp"
 #include "keto/environment/Constants.hpp"
@@ -295,7 +296,7 @@ int generatePasswordHash(std::shared_ptr<ketoEnv::Config> config,
     }
 
     std::string password = config->getVariablesMap()[keto::tools::Constants::PASSWORD].as<std::string>();
-
+    std::shared_ptr<Botan::AutoSeeded_RNG> generator(new Botan::AutoSeeded_RNG());
     std::cout << Botan::generate_bcrypt(password,*generator) << std::endl;
 
     return 0;

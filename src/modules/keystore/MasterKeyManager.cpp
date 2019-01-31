@@ -33,6 +33,7 @@ MasterKeyManager::MasterKeyListEntry::MasterKeyListEntry() {
 }
 
 MasterKeyManager::MasterKeyListEntry::MasterKeyListEntry(const std::string& jsonString) {
+    //std::cout << "The json string : " << jsonString << std::endl;
     nlohmann::json jsonEntry = nlohmann::json::parse(jsonString);
     for (nlohmann::json::iterator it = jsonEntry.begin(); it != jsonEntry.end(); ++it) {
         this->keys.push_back(*it);
@@ -107,12 +108,33 @@ MasterKeyManager::MasterSession::~MasterSession() {
 void MasterKeyManager::MasterSession::initSession() {
     initMasterKeys();
 
-    Session::initSession();
+    try {
+        //std::cout << "Init the session" << std::endl;
+        Session::initSession();
 
-    keto::event::Event event;
-    setMasterKey(event);
-    setWrappingKeys(event);
+        keto::event::Event event;
 
+        //std::cout << "Set the master key" << std::endl;
+        setMasterKey(event);
+        //std::cout << "Set the wrapping keys" << std::endl;
+        setWrappingKeys(event);
+        //std::cout << "After setting the wrapping keys" << std::endl;
+    }  catch (keto::common::Exception& ex) {
+        KETO_LOG_ERROR << "[initSession]Failed to init the session : " << ex.what();
+        KETO_LOG_ERROR << "[initSession]Cause: " << boost::diagnostic_information(ex,true);
+        throw;
+    } catch (boost::exception& ex) {
+        KETO_LOG_ERROR << "[initSession]Failed to init the session";
+        KETO_LOG_ERROR << "[initSession]Cause: " << boost::diagnostic_information(ex,true);
+        throw;
+    } catch (std::exception& ex) {
+        KETO_LOG_ERROR << "[initSession]Failed to init the session";
+        KETO_LOG_ERROR << "[initSession]The cause is : " << ex.what();
+        throw;
+    } catch (...) {
+        KETO_LOG_ERROR << "[initSession]Failed to init the session";
+        throw;
+    }
 }
 
 void MasterKeyManager::MasterSession::clearSession() {
@@ -140,12 +162,16 @@ keto::event::Event MasterKeyManager::MasterSession::getMasterKey(const keto::eve
 
 keto::event::Event MasterKeyManager::MasterSession::setMasterKey(const keto::event::Event& event) {
     // ignore this
+    //std::cout << "Load the onions" << std::endl;
     keto::key_store_db::OnionKeys onionKeys;
     onionKeys.push_back(KeyStoreStorageManager::getInstance()->getKeyLoader()->getPrivateKey());
     onionKeys.push_back(this->masterKeyLock->getPrivateKey());
     keto::rpc_protocol::NetworkKeysHelper networkKeysHelper;
+    //std::cout << "load the keys" << std::endl;
     this->loadKeys(this->masterKeyList,networkKeysHelper,onionKeys);
+    //std::cout << "Set the keys" << std::endl;
     KeyStoreWrapIndexManager::getInstance()->setMasterKey(networkKeysHelper);
+    //std::cout << "Return the keys" << std::endl;
     return event;
 }
 
@@ -173,24 +199,52 @@ keto::event::Event MasterKeyManager::MasterSession::setWrappingKeys(const keto::
 }
 
 void MasterKeyManager::MasterSession::initMasterKeys() {
+
     keto::key_store_db::OnionKeys onionKeys;
     onionKeys.push_back(KeyStoreStorageManager::getInstance()->getKeyLoader()->getPrivateKey());
     onionKeys.push_back(this->masterKeyLock->getPrivateKey());
 
-    std::string value;
-    if (!this->keyStoreDBPtr->getValue(Constants::KEY_STORE_DB::KEY_STORE_MASTER_ENTRY,onionKeys,value)) {
-        this->masterKeyList = generateKeys(1,onionKeys);
-        this->keyStoreDBPtr->setValue(Constants::KEY_STORE_DB::KEY_STORE_MASTER_ENTRY,this->masterKeyList->getJson(),onionKeys);
-    } else {
-        this->masterKeyList = MasterKeyListEntryPtr(new MasterKeyListEntry(value));
-    }
+    try {
+        std::string value;
+        //std::cout << "Get value" << std::endl;
+        if (!this->keyStoreDBPtr->getValue(Constants::KEY_STORE_DB::KEY_STORE_MASTER_ENTRY, onionKeys, value)) {
+            //std::cout << "Generate the keys" << std::endl;
+            this->masterKeyList = generateKeys(1, onionKeys);
+            //std::cout << "Set the value value" << std::endl;
+            this->keyStoreDBPtr->setValue(Constants::KEY_STORE_DB::KEY_STORE_MASTER_ENTRY,
+                                          this->masterKeyList->getJson(), onionKeys);
+        } else {
+            //std::cout << "Load the master key value" << std::endl;
+            this->masterKeyList = MasterKeyListEntryPtr(new MasterKeyListEntry(value));
+        }
+        //std::cout << "Load the wrapper keys" << std::endl;
 
-    std::string wrapperValue;
-    if (!this->keyStoreDBPtr->getValue(Constants::KEY_STORE_DB::KEY_STORE_WRAPPER_ENTRY,onionKeys,wrapperValue)) {
-        this->masterWrapperKeyList = generateKeys(Constants::KEY_STORE_DB::KEY_STORE_WRAPPER_SIZE,onionKeys);
-        this->keyStoreDBPtr->setValue(Constants::KEY_STORE_DB::KEY_STORE_WRAPPER_ENTRY,this->masterWrapperKeyList->getJson(),onionKeys);
-    } else {
-        this->masterWrapperKeyList = MasterKeyListEntryPtr(new MasterKeyListEntry(value));
+        if (!this->keyStoreDBPtr->getValue(Constants::KEY_STORE_DB::KEY_STORE_WRAPPER_ENTRY, onionKeys, value)) {
+            //std::cout << "Generate the wrapper keys" << std::endl;
+            this->masterWrapperKeyList = generateKeys(Constants::KEY_STORE_DB::KEY_STORE_WRAPPER_SIZE, onionKeys);
+            //std::cout << "Set the wrapper values" << std::endl;
+            this->keyStoreDBPtr->setValue(Constants::KEY_STORE_DB::KEY_STORE_WRAPPER_ENTRY,
+                                          this->masterWrapperKeyList->getJson(), onionKeys);
+        } else {
+            //std::cout << "Load the wrapper values" << std::endl;
+            this->masterWrapperKeyList = MasterKeyListEntryPtr(new MasterKeyListEntry(value));
+        }
+        //std::cout << "Finished initing the keys" << std::endl;
+    } catch (keto::common::Exception& ex) {
+        KETO_LOG_ERROR << "[initMasterKeys]Failed to add the master : " << ex.what();
+        KETO_LOG_ERROR << "[initMasterKeys]Cause: " << boost::diagnostic_information(ex,true);
+        throw;
+    } catch (boost::exception& ex) {
+        KETO_LOG_ERROR << "[initMasterKeys]Failed to add the master";
+        KETO_LOG_ERROR << "[initMasterKeys]Cause: " << boost::diagnostic_information(ex,true);
+        throw;
+    } catch (std::exception& ex) {
+        KETO_LOG_ERROR << "[initMasterKeys]Failed to add the master";
+        KETO_LOG_ERROR << "[initMasterKeys]The cause is : " << ex.what();
+        throw;
+    } catch (...) {
+        KETO_LOG_ERROR << "[initMasterKeys]Failed to add the master";
+        throw;
     }
 }
 
@@ -205,19 +259,28 @@ MasterKeyManager::MasterKeyListEntryPtr MasterKeyManager::MasterSession::generat
     return result;
 }
 
-void MasterKeyManager::MasterSession::loadKeys(MasterKeyManager::MasterKeyListEntryPtr keyList, keto::rpc_protocol::NetworkKeysHelper networkKeysHelper, keto::key_store_db::OnionKeys onionKeys) {
+void MasterKeyManager::MasterSession::loadKeys(MasterKeyManager::MasterKeyListEntryPtr keyList,
+        keto::rpc_protocol::NetworkKeysHelper& networkKeysHelper, keto::key_store_db::OnionKeys& onionKeys) {
+    //std::cout << "The list of keys" << std::endl;
     for (std::string key : keyList->getKeys()) {
         std::string value;
+        //std::cout << "Get the key value" << std::endl;
         if (!this->keyStoreDBPtr->getValue(key,onionKeys,value)) {
             BOOST_THROW_EXCEPTION(keto::keystore::UnknownKeyException());
         }
+        //std::cout << "Load the key : " << value << std::endl;
         KeyStoreEntry keyStoreEntry(value);
         keto::rpc_protocol::NetworkKeyHelper networkKeyHelper;
+        //std::cout << "Set the hash" << std::endl;
         networkKeyHelper.setHash(keyStoreEntry.getHash());
+        //std::cout << "Load the key : " << value << std::endl;
         networkKeyHelper.setKeyBytes(Botan::PKCS8::BER_encode(*keyStoreEntry.getPrivateKey()));
+        //std::cout << "Get the active key" << std::endl;
         networkKeyHelper.setActive(keyStoreEntry.getActive());
+        //std::cout << "The network key helper" << std::endl;
         networkKeysHelper.addNetworkKey(networkKeyHelper);
     }
+    //std::cout << "After the keys" << std::endl;
 }
 
 
@@ -286,8 +349,9 @@ MasterKeyManagerPtr MasterKeyManager::init() {
     return singleton = MasterKeyManagerPtr(new MasterKeyManager());
 }
 
-MasterKeyManagerPtr MasterKeyManager::fin() {
+void MasterKeyManager::fin() {
     singleton.reset();
+
 }
 
 MasterKeyManagerPtr MasterKeyManager::getInstance() {
@@ -310,7 +374,7 @@ keto::event::Event MasterKeyManager::getMasterKey(const keto::event::Event& even
 }
 
 keto::event::Event MasterKeyManager::setMasterKey(const keto::event::Event& event) {
-    return this->sessionPtr->setMasterKey();
+    return this->sessionPtr->setMasterKey(event);
 }
 
 

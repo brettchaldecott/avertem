@@ -33,7 +33,8 @@ public:
     bool getActive();
     NetworkKeyHelper& setActive(bool active);
 
-    operator keto::proto::NetworkKey();
+    keto::proto::NetworkKey getNetworkKey() const;
+    operator keto::proto::NetworkKey() const;
 
 private:
     keto::proto::NetworkKey networkKey;

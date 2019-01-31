@@ -28,7 +28,7 @@ std::vector<uint8_t> NetworkKeyHelper::getHash() {
 }
 
 NetworkKeyHelper& NetworkKeyHelper::setHash(const std::vector<uint8_t>& hash) {
-    networkKey.set_key_hash(hash.data(),hash.size());
+    networkKey.set_key_hash(keto::server_common::VectorUtils().copyVectorToString(hash));
     return *this;
 }
 
@@ -38,17 +38,17 @@ keto::crypto::SecureVector NetworkKeyHelper::getHash_locked() {
 }
 
 NetworkKeyHelper& NetworkKeyHelper::setHash(const keto::crypto::SecureVector& hash) {
-    networkKey.set_key_hash(hash.data(),hash.size());
+    networkKey.set_key_hash(keto::crypto::SecureVectorUtils().copySecureToString(hash));
     return *this;
 }
 
 std::vector<uint8_t> NetworkKeyHelper::getKeyBytes() {
-    return keto::server_common::VectorUtils.copyStringToVector(
+    return keto::server_common::VectorUtils().copyStringToVector(
             networkKey.network_key());
 }
 
 NetworkKeyHelper& NetworkKeyHelper::setKeyBytes(const std::vector<uint8_t>& bytes) {
-    networkKey.set_network_key(bytes.data(),bytes.size());
+    networkKey.set_network_key(keto::server_common::VectorUtils().copyVectorToString(bytes));
     return *this;
 }
 
@@ -59,21 +59,27 @@ keto::crypto::SecureVector NetworkKeyHelper::getKeyBytes_locked() {
 
 
 NetworkKeyHelper& NetworkKeyHelper::setKeyBytes(const keto::crypto::SecureVector& bytes) {
-    networkKey.set_network_key(bytes.data(),bytes.size());
+    networkKey.set_network_key(keto::crypto::SecureVectorUtils().copySecureToString(bytes));
     return *this;
 }
 
 
 bool NetworkKeyHelper::getActive() {
-    return networkKey.activate();
+    return networkKey.active();
 }
 
 NetworkKeyHelper& NetworkKeyHelper::setActive(bool active) {
-    networkKey.set_activate(active);
+    networkKey.set_active(active);
     return *this;
 }
 
-NetworkKeyHelper::operator keto::proto::NetworkKey() {
+
+keto::proto::NetworkKey NetworkKeyHelper::getNetworkKey() const {
+    //std::cout << "return the network key" << std::endl;
+    return networkKey;
+}
+
+NetworkKeyHelper::operator keto::proto::NetworkKey() const {
     return networkKey;
 }
 

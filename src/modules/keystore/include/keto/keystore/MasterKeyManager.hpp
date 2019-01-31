@@ -114,8 +114,8 @@ public:
 
         void initMasterKeys();
         MasterKeyListEntryPtr generateKeys(size_t number,keto::key_store_db::OnionKeys onionKeys);
-        void loadKeys(MasterKeyListEntryPtr keyList, keto::rpc_protocol::NetworkKeysHelper networkKeysHelper,
-                      keto::key_store_db::OnionKeys onionKeys);
+        void loadKeys(MasterKeyListEntryPtr keyList, keto::rpc_protocol::NetworkKeysHelper& networkKeysHelper,
+                      keto::key_store_db::OnionKeys& onionKeys);
 
     };
 
@@ -147,7 +147,7 @@ public:
     virtual ~MasterKeyManager();
 
     static MasterKeyManagerPtr init();
-    static MasterKeyManagerPtr fin();
+    static void fin();
     static MasterKeyManagerPtr getInstance();
 
     void initSession();
