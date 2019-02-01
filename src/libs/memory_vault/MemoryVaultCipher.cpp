@@ -19,7 +19,7 @@ std::string MemoryVaultCipher::getSourceVersion() {
 
 MemoryVaultCipher::MemoryVaultCipher() {
     std::shared_ptr<Botan::AutoSeeded_RNG> generator(new Botan::AutoSeeded_RNG());
-    std::unique_ptr<Botan::StreamCipher> cipher = Botan::StreamCipher::create("ChaCha(20)");
+    std::unique_ptr<Botan::StreamCipher> cipher = Botan::StreamCipher::create(keto::crypto::Constants::CIPHER_STREAM);
     this->secureVector = generator->random_vec(cipher->key_spec().maximum_keylength());
 
 }
@@ -38,7 +38,7 @@ bytes MemoryVaultCipher::getId() {
 }
 
 void MemoryVaultCipher::encrypt(keto::crypto::SecureVector& value) {
-    std::unique_ptr<Botan::StreamCipher> cipher = Botan::StreamCipher::create("ChaCha(20)");
+    std::unique_ptr<Botan::StreamCipher> cipher = Botan::StreamCipher::create(keto::crypto::Constants::CIPHER_STREAM);
 
     cipher->set_key(Botan::SymmetricKey(this->secureVector));
     cipher->set_iv(NULL,0);
@@ -47,7 +47,7 @@ void MemoryVaultCipher::encrypt(keto::crypto::SecureVector& value) {
 }
 
 void MemoryVaultCipher::decrypt(keto::crypto::SecureVector& value) {
-    std::unique_ptr<Botan::StreamCipher> cipher = Botan::StreamCipher::create("ChaCha(20)");
+    std::unique_ptr<Botan::StreamCipher> cipher = Botan::StreamCipher::create(keto::crypto::Constants::CIPHER_STREAM);
 
     cipher->set_key(Botan::SymmetricKey(this->secureVector));
     cipher->set_iv(NULL,0);

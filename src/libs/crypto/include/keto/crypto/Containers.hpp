@@ -17,6 +17,7 @@
 #include <botan/secmem.h>
 
 #include "keto/obfuscate/MetaString.hpp"
+#include "keto/crypto/Constants.hpp"
 
 
 namespace keto {

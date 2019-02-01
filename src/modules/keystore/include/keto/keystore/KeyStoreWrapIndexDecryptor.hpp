@@ -13,7 +13,7 @@
 
 #include "keto/obfuscate/MetaString.hpp"
 
-#include "keto/key_store_utils/Encryptor.hpp"
+#include "keto/key_store_utils/Decryptor.hpp"
 
 namespace keto {
 namespace keystore {
@@ -23,7 +23,7 @@ class KeyStoreWrapIndexManager;
 class KeyStoreWrapIndexDecryptor;
 typedef std::shared_ptr<KeyStoreWrapIndexDecryptor> KeyStoreWrapIndexDecryptorPtr;
 
-class KeyStoreWrapIndexDecryptor : virtual public keto::key_store_utils::Encryptor {
+class KeyStoreWrapIndexDecryptor : virtual public keto::key_store_utils::Decryptor {
 public:
     inline static std::string getHeaderVersion() {
         return OBFUSCATED("$Id$");

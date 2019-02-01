@@ -72,7 +72,7 @@ void KeyStoreDB::setValue(const keto::crypto::SecureVector& key, const keto::cry
     std::shared_ptr<Botan::AutoSeeded_RNG> generator(new Botan::AutoSeeded_RNG());
 
     for (PrivateKeyPtr privateKey : onionKeys) {
-        std::unique_ptr<Botan::StreamCipher> cipher(Botan::StreamCipher::create("ChaCha(20)"));
+        std::unique_ptr<Botan::StreamCipher> cipher(Botan::StreamCipher::create(keto::crypto::Constants::CIPHER_STREAM));
         Botan::SymmetricKey vector = cipherBuilder.derive(32,privateKey);
         cipher->set_key(vector);
         cipher->set_iv(NULL,0);
@@ -125,7 +125,7 @@ bool KeyStoreDB::getValue(const keto::crypto::SecureVector& key, const OnionKeys
     OnionKeys reversedKeys = onionKeys;
     std::reverse(reversedKeys.begin(), reversedKeys.end());
     for (PrivateKeyPtr privateKey : reversedKeys) {
-        std::unique_ptr<Botan::StreamCipher> cipher(Botan::StreamCipher::create("ChaCha(20)"));
+        std::unique_ptr<Botan::StreamCipher> cipher(Botan::StreamCipher::create(keto::crypto::Constants::CIPHER_STREAM));
 
         Botan::SymmetricKey vector = cipherBuilder.derive(32,privateKey);
         cipher->set_key(vector);

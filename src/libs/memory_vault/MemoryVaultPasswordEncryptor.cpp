@@ -21,7 +21,7 @@ MemoryVaultPasswordEncryptor::~MemoryVaultPasswordEncryptor() {
 }
 
 void MemoryVaultPasswordEncryptor::encrypt(const keto::crypto::SecureVector& password, keto::crypto::SecureVector& value) {
-    std::unique_ptr<Botan::StreamCipher> cipher = Botan::StreamCipher::create("ChaCha(20)");
+    std::unique_ptr<Botan::StreamCipher> cipher = Botan::StreamCipher::create(keto::crypto::Constants::CIPHER_STREAM);
 
     cipher->set_key(Botan::SymmetricKey(this->passwordPipeLinePtr->generatePassword(password)));
     cipher->set_iv(NULL,0);
@@ -30,7 +30,7 @@ void MemoryVaultPasswordEncryptor::encrypt(const keto::crypto::SecureVector& pas
 }
 
 void MemoryVaultPasswordEncryptor::decrypt(const keto::crypto::SecureVector& password, keto::crypto::SecureVector& value) {
-    std::unique_ptr<Botan::StreamCipher> cipher = Botan::StreamCipher::create("ChaCha(20)");
+    std::unique_ptr<Botan::StreamCipher> cipher = Botan::StreamCipher::create(keto::crypto::Constants::CIPHER_STREAM);
 
     cipher->set_key(Botan::SymmetricKey(this->passwordPipeLinePtr->generatePassword(password)));
     cipher->set_iv(NULL,0);

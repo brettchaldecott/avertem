@@ -69,7 +69,7 @@ ContentEncryptor::operator std::vector<uint8_t>() {
 
 void ContentEncryptor::encrypt(const keto::crypto::SecureVector& secret, const keto::crypto::SecureVector& derived,
                                keto::crypto::SecureVector& content) {
-    std::unique_ptr<Botan::StreamCipher> cipher(Botan::StreamCipher::create("ChaCha(20)"));
+    std::unique_ptr<Botan::StreamCipher> cipher(Botan::StreamCipher::create(keto::crypto::Constants::CIPHER_STREAM));
     cipher->set_key(keto::key_tools::KeyUtils().generateCipher(secret,derived));
     cipher->set_iv(NULL,0);
     cipher->encrypt(content);

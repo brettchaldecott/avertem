@@ -46,11 +46,11 @@ TransactionMessage_t* KeyStoreReEncryptTransactionMessageHelper::decrypt(
     Botan::DataSource_Memory memoryDatasource(privateKey);
     std::shared_ptr<Botan::Private_Key> privateKey =
             Botan::PKCS8::load_key(memoryDatasource);
-    
+
     std::unique_ptr<Botan::RandomNumberGenerator> rng(new Botan::AutoSeeded_RNG);
     Botan::PK_Decryptor_EME dec(*privateKey,*rng.get(), Constants::ENCRYPTION_PADDING);
-    
-    
+
+
     
     return keto::asn1::DeserializationHelper<TransactionMessage_t>(
                 dec.decrypt(copyEncryptedToVector(encrypt)),&asn_DEF_TransactionMessage);

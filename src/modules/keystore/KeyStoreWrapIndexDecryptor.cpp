@@ -33,7 +33,7 @@ keto::crypto::SecureVector KeyStoreWrapIndexDecryptor::decrypt(const std::vector
         uint8_t pIndex = indexes[1];
 
         keto::crypto::CipherBuilder cipherBuilder(this->keyStoreWrapIndexManager->getKey(baseIndex)->getPrivateKey());
-        std::unique_ptr<Botan::StreamCipher> cipher(Botan::StreamCipher::create("ChaCha(20)"));
+        std::unique_ptr<Botan::StreamCipher> cipher(Botan::StreamCipher::create(keto::crypto::Constants::CIPHER_STREAM));
         cipher->set_key(cipherBuilder.derive(32,this->keyStoreWrapIndexManager->getKey(pIndex)->getPrivateKey()));
         cipher->set_iv(NULL,0);
         cipher->decrypt(encryptedValue);
