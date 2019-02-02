@@ -19,6 +19,7 @@
 #include <botan/rng.h>
 #include <botan/rsa.h>
 #include <botan/auto_rng.h>
+#include <botan/stream_cipher.h>
 
 #include "ANY.h"
 #include "der_encoder.h"
@@ -32,7 +33,6 @@
 
 #include "keto/session/Exception.hpp"
 #include "keto/session/HttpSessionTransactionEncryptor.hpp"
-#include "include/keto/session/HttpSessionTransactionEncryptor.hpp"
 
 namespace keto{
 namespace session {
@@ -50,21 +50,30 @@ EncryptedDataWrapper_t* HttpSessionTransactionEncryptor::encrypt(
         const TransactionMessage_t& transaction) {
     EncryptedDataWrapper_t* result = (EncryptedDataWrapper_t*)calloc(1, sizeof *result);
     result->version = keto::common::MetaInfo::PROTOCOL_VERSION;
-    std::vector<uint8_t> bytes = 
+    keto::crypto::SecureVector bytes =
         keto::asn1::SerializationHelper<TransactionMessage>(&transaction,
-        &asn_DEF_TransactionMessage).operator std::vector<uint8_t>&();
-    
+        &asn_DEF_TransactionMessage);
+
     std::unique_ptr<Botan::RandomNumberGenerator> rng(new Botan::AutoSeeded_RNG);
     std::shared_ptr<Botan::Public_Key> publicKey(
              Botan::X509::load_key(this->publicKey));
-    
+
+    std::unique_ptr<Botan::StreamCipher> cipher = Botan::StreamCipher::create(keto::crypto::Constants::CIPHER_STREAM);
+    keto::crypto::SecureVector secureVector = rng->random_vec(cipher->key_spec().maximum_keylength());
+
+    cipher->set_key(Botan::SymmetricKey(secureVector));
+    cipher->set_iv(NULL,0);
+    cipher->encrypt(bytes);
+
     Botan::PK_Encryptor_EME enc(*publicKey,*rng.get(), keto::crypto::Constants::ENCRYPTION_PADDING);
-    std::vector<uint8_t> ct = enc.encrypt(bytes,*rng.get());
+    std::vector<uint8_t> ct = enc.encrypt(secureVector,*rng.get());
     
     keto::asn1::HashHelper hash(
         keto::crypto::HashGenerator().generateHash(bytes));
     Hash_t hashT = hash;
     ASN_SEQUENCE_ADD(&result->hash.list,new Hash_t(hashT));
+
+    bytes.insert(bytes.begin(),ct.begin(),ct.end());
     
     EncryptedData_t* encryptedData = OCTET_STRING_new_fromBuf(&asn_DEF_EncryptedData,
             (const char *)bytes.data(),bytes.size());

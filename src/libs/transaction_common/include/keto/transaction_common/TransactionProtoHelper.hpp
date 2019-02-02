@@ -50,6 +50,8 @@ public:
     virtual ~TransactionProtoHelper();
     
     TransactionProtoHelper& setTransaction(const TransactionMessageHelperPtr& transactionMessageHelper);
+    TransactionProtoHelper& setTransaction(const TransactionMessageHelperPtr& transactionMessageHelper,
+            keto::transaction_common::TransactionEncryptionHandler& transactionEncryptionHandler);
     TransactionProtoHelper& setTransaction(const std::string& buffer);
     
     operator std::string();

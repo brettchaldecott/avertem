@@ -29,6 +29,7 @@
 #include "keto/chain_common/SignedTransactionBuilder.hpp"
 #include "keto/chain_common/ActionBuilder.hpp"
 #include "keto/transaction_common/TransactionMessageHelper.hpp"
+#include "keto/transaction_common/TransactionTraceBuilder.hpp"
 
 #include "keto/account_utils/AccountGenerator.hpp"
 
@@ -185,15 +186,21 @@ int generateTransaction(std::shared_ptr<ketoEnv::Config> config,
     
     signedTransBuild->setTransaction(transactionPtr);
     signedTransBuild->sign();
-    
+
+    keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelperPtr(
+            new keto::transaction_common::TransactionWrapperHelper(
+                    *signedTransBuild,keto::asn1::HashHelper(sourceAccount,
+                                                             keto::common::HEX),keto::asn1::HashHelper(targetAccount,
+                                                             keto::common::HEX)));
+
+    transactionWrapperHelperPtr->addTransactionTrace(
+            *keto::transaction_common::TransactionTraceBuilder::createTransactionTrace(sourceAccount,keyLoader));
+
     keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr(
-    new keto::transaction_common::TransactionMessageHelper(
-        keto::transaction_common::TransactionWrapperHelperPtr(
-        new keto::transaction_common::TransactionWrapperHelper(
-            *signedTransBuild,keto::asn1::HashHelper(sourceAccount,
-            keto::common::HEX),keto::asn1::HashHelper(targetAccount,
-            keto::common::HEX)))));
-    
+        new keto::transaction_common::TransactionMessageHelper(
+                transactionWrapperHelperPtr));
+
+
     // The io_context is required for all I/O
     boost::asio::io_context ioc;
 

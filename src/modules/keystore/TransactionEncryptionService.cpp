@@ -19,6 +19,7 @@
 #include "keto/keystore/KeyStoreService.hpp"
 #include "keto/keystore/Exception.hpp"
 #include "keto/keystore/KeyStoreReEncryptTransactionMessageHelper.hpp"
+#include "keto/keystore/NetworkSessionKeyTransactionEncryptionHandler.hpp"
 
 
 
@@ -68,22 +69,50 @@ keto::event::Event TransactionEncryptionService::reencryptTransaction(const keto
     std::cout << "The decrptor has been called" << std::endl;
     KeyStoreReEncryptTransactionMessageHelper decryptor(
             sessionKeyManagerPtr->getPrivateKey(sessionHash));
-    
+    NetworkSessionKeyTransactionEncryptionHandler encryptor;
     
     keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr =
             messageWrapperProtoHelper.getTransaction()->getTransactionMessageHelper()->decryptMessage(decryptor);
-    
-    
-    
-    return event;
+
+    std::cout << "Re-incrypt the transaction using the network session key transaction encryptor" << std::endl;
+    messageWrapperProtoHelper.getTransaction()->setTransaction(transactionMessageHelperPtr,encryptor);
+
+    keto::proto::MessageWrapper messageWrapper = messageWrapperProtoHelper;
+    return keto::server_common::toEvent<keto::proto::MessageWrapper>(messageWrapper);
 }
 
 keto::event::Event TransactionEncryptionService::encryptTransaction(const keto::event::Event& event) {
-    return event;
+    keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper(
+            keto::server_common::fromEvent<keto::proto::MessageWrapper>(event));
+
+    // retrieve the private key
+    NetworkSessionKeyTransactionEncryptionHandler encryptor;
+
+    keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr =
+            messageWrapperProtoHelper.getTransaction()->getTransactionMessageHelper();
+
+    std::cout << "Encrypt the transaction using the network session key transaction encryptor" << std::endl;
+    messageWrapperProtoHelper.getTransaction()->setTransaction(transactionMessageHelperPtr,encryptor);
+
+    keto::proto::MessageWrapper messageWrapper = messageWrapperProtoHelper;
+    return keto::server_common::toEvent<keto::proto::MessageWrapper>(messageWrapper);
 }
 
 keto::event::Event TransactionEncryptionService::decryptTransaction(const keto::event::Event& event) {
-    return event;
+    keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper(
+            keto::server_common::fromEvent<keto::proto::MessageWrapper>(event));
+
+    // retrieve the private key
+    std::cout << "Decrypt the transaction" << std::endl;
+    NetworkSessionKeyTransactionEncryptionHandler decryptor;
+
+    keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr =
+            messageWrapperProtoHelper.getTransaction()->getTransactionMessageHelper()->decryptMessage(decryptor);
+
+    messageWrapperProtoHelper.getTransaction()->setTransaction(transactionMessageHelperPtr);
+
+    keto::proto::MessageWrapper messageWrapper = messageWrapperProtoHelper;
+    return keto::server_common::toEvent<keto::proto::MessageWrapper>(messageWrapper);
 }
 
 

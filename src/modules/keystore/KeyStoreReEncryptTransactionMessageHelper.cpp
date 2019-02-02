@@ -13,6 +13,7 @@
 #include <botan/pubkey.h>
 #include <botan/rng.h>
 #include <botan/auto_rng.h>
+#include <botan/stream_cipher.h>
 
 
 #include "keto/keystore/KeyStoreReEncryptTransactionMessageHelper.hpp"
@@ -50,10 +51,20 @@ TransactionMessage_t* KeyStoreReEncryptTransactionMessageHelper::decrypt(
     std::unique_ptr<Botan::RandomNumberGenerator> rng(new Botan::AutoSeeded_RNG);
     Botan::PK_Decryptor_EME dec(*privateKey,*rng.get(), Constants::ENCRYPTION_PADDING);
 
+    keto::crypto::SecureVector encrypted = copyEncryptedToVector(encrypt);
 
+    keto::crypto::SecureVector encryptedCipher(&encrypted[0],&encrypted[privateKey->key_length()]);
+    keto::crypto::SecureVector encryptedValue(&encrypted[privateKey->key_length()],&encrypted[encrypted.size()]);
+
+    keto::crypto::SecureVector cipherVector = dec.decrypt(encryptedCipher);
+
+    std::unique_ptr<Botan::StreamCipher> cipher = Botan::StreamCipher::create(keto::crypto::Constants::CIPHER_STREAM);
+    cipher->set_key(Botan::SymmetricKey(cipherVector));
+    cipher->set_iv(NULL,0);
+    cipher->encrypt(encryptedValue);
     
     return keto::asn1::DeserializationHelper<TransactionMessage_t>(
-                dec.decrypt(copyEncryptedToVector(encrypt)),&asn_DEF_TransactionMessage);
+                encryptedValue,&asn_DEF_TransactionMessage);
 }
 
 

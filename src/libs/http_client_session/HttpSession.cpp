@@ -114,10 +114,12 @@ std::string HttpSession::makeRequest(
     keto::session::HttpSessionTransactionEncryptor httpSessionTransactionEncryption(
             keto::crypto::KeyLoaderPtr(new keto::crypto::KeyLoader(this->keyLoader)),
             keto::server_common::VectorUtils().copyStringToVector(
-            this->clientResponse.session_hash()));
-    
+            this->clientResponse.session_key()));
+
+
+
     keto::transaction_common::TransactionProtoHelper 
-        transactionProtoHelper(request);
+        transactionProtoHelper(request,httpSessionTransactionEncryption);
     
     
     boost::beast::http::response<boost::beast::http::string_body> response = 
