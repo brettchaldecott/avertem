@@ -17,6 +17,7 @@
 #include "keto/server_common/EventServiceHelpers.hpp"
 
 
+#include "keto/software_consensus/ConsensusStateManager.hpp"
 #include "keto/software_consensus/ModuleSessionMessageHelper.hpp"
 #include "keto/software_consensus/ModuleHashMessageHelper.hpp"
 #include "keto/software_consensus/ModuleConsensusHelper.hpp"
@@ -39,9 +40,11 @@ ConsensusService::ConsensusService(
         const RpcServerPtr& rpcServerPtr) :
     consensusHashGenerator(consensusHashGenerator),
     rpcServerPtr(rpcServerPtr) {
+    keto::software_consensus::ConsensusStateManager::init();
 }
 
 ConsensusService::~ConsensusService() {
+    keto::software_consensus::ConsensusStateManager::fin();
 }
 
 
@@ -73,6 +76,8 @@ keto::event::Event ConsensusService::generateSoftwareHash(const keto::event::Eve
 keto::event::Event ConsensusService::setModuleSession(const keto::event::Event& event) {
     keto::software_consensus::ModuleSessionMessageHelper moduleSessionHelper(
         keto::server_common::fromEvent<keto::proto::ModuleSessionMessage>(event));
+    keto::software_consensus::ConsensusStateManager::getInstance()->setState(
+            keto::software_consensus::ConsensusStateManager::GENERATE);
     this->consensusHashGenerator->setSession(moduleSessionHelper.getSecret());
     std::cout << "Setting up the module secret : " << std::endl;
     this->rpcServerPtr->setSecret(moduleSessionHelper.getSecret());

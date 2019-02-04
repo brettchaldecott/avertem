@@ -37,7 +37,7 @@ public:
     };
     static std::string getSourceVersion();
 
-    MerkleUtils(const Block_t* block);
+    MerkleUtils(std::vector<keto::asn1::HashHelper> hashs);
     MerkleUtils(const MerkleUtils& orig) = default;
     virtual ~MerkleUtils();
     

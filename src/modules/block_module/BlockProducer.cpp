@@ -12,6 +12,7 @@
  */
 
 #include <iostream>
+#include <keto/block_db/MerkleUtils.hpp>
 
 #include "keto/block/BlockProducer.hpp"
 
@@ -23,6 +24,7 @@
 #include "keto/block_db/BlockBuilder.hpp"
 #include "keto/block_db/SignedBlockBuilder.hpp"
 #include "keto/block_db/BlockChainStore.hpp"
+#include "keto/block_db/MerkleUtils.hpp"
 
 #include "keto/block/Constants.hpp"
 
@@ -45,6 +47,10 @@
 #include "keto/server_common/EventUtils.hpp"
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
+
+#include "keto/software_consensus/ConsensusStateManager.hpp"
+#include "keto/software_consensus/SoftwareConsensusHelper.hpp"
+#include "keto/software_consensus/ModuleHashMessageHelper.hpp"
 
 
 namespace keto {
@@ -113,7 +119,9 @@ BlockProducerPtr BlockProducer::getInstance() {
 void BlockProducer::run() {
     BlockProducer::State currentState;
     while((currentState = this->checkState()) != State::terminated) {
-        if (currentState == BlockProducer::State::block_producer) {
+        if (currentState == BlockProducer::State::block_producer &&
+        keto::software_consensus::ConsensusStateManager::getInstance()->getState()
+        == keto::software_consensus::ConsensusStateManager::State::ACCEPTED) {
             generateBlock(this->getTransactions());
         }
     }
@@ -133,6 +141,12 @@ void BlockProducer::setState(const State& state) {
     // the block producer has to be enabled.
     if (!this->enabled && state == State::block_producer) {
         return;
+    }
+    // the block producer has to be enabled.
+    if (this->enabled && state == State::block_producer &&
+        keto::software_consensus::ConsensusStateManager::getInstance()->getState()
+        != keto::software_consensus::ConsensusStateManager::State::ACCEPTED) {
+        BOOST_THROW_EXCEPTION(keto::block::BlockProducerNotAcceptedByNetworkException());
     }
     this->currentState = state;
     this->stateCondition.notify_all();
@@ -155,6 +169,9 @@ void BlockProducer::addTransaction(keto::proto::Transaction transaction) {
     std::lock_guard<std::mutex> uniqueLock(this->classMutex);
     if (this->currentState == State::terminated) {
         BOOST_THROW_EXCEPTION(keto::block::BlockProducerTerminatedException());
+    }
+    if (this->currentState != State::block_producer) {
+        BOOST_THROW_EXCEPTION(keto::block::NotBlockProducerException());
     }
     this->transactions.push_back(transaction);
 }
@@ -186,6 +203,7 @@ void BlockProducer::generateBlock(std::deque<keto::proto::Transaction> transacti
     keto::asn1::HashHelper parentHash = keto::block_db::BlockChainStore::getInstance()->getParentHash();
     keto::block_db::BlockBuilderPtr blockBuilderPtr = 
             std::make_shared<keto::block_db::BlockBuilder>(parentHash);
+
     for (keto::proto::Transaction& transaction : transactions) {
         std::cout << "The transaction" << std::endl;
         keto::transaction_common::TransactionProtoHelper transactionProtoHelper(
@@ -195,6 +213,20 @@ void BlockProducer::generateBlock(std::deque<keto::proto::Transaction> transacti
         
         blockBuilderPtr->addTransactionMessage(transactionProtoHelper.getTransactionMessageHelper());
     }
+    blockBuilderPtr->setAcceptedCheck(this->consensusMessageHelper.getMsg());
+
+    // build the block consensus based on the software consensus
+    keto::block_db::MerkleUtils merkleUtils(blockBuilderPtr->getCurrentHashs());
+    keto::software_consensus::ModuleHashMessageHelper moduleHashMessageHelper;
+    moduleHashMessageHelper.setHash(merkleUtils.computation());
+    keto::proto::ModuleHashMessage moduleHashMessage = moduleHashMessageHelper.getModuleHashMessage();
+    keto::software_consensus::ConsensusMessageHelper consensusMessageHelper(
+            keto::server_common::fromEvent<keto::proto::ConsensusMessage>(
+                    keto::server_common::processEvent(
+                            keto::server_common::toEvent<keto::proto::ModuleHashMessage>(
+                                    keto::server_common::Events::GET_SOFTWARE_CONSENSUS_MESSAGE,moduleHashMessage))));
+    blockBuilderPtr->setValidateCheck(consensusMessageHelper.getMsg());
+
     keto::block_db::SignedBlockBuilderPtr signedBlockBuilderPtr(new keto::block_db::SignedBlockBuilder(
             blockBuilderPtr->operator Block_t*(),
             keyLoaderPtr));

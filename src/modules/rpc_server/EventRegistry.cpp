@@ -19,6 +19,8 @@
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
 
+#include "keto/software_consensus/ConsensusStateManager.hpp"
+
 
 namespace keto {
 namespace rpc_server {
@@ -82,7 +84,8 @@ keto::event::Event EventRegistry::routeTransaction(const keto::event::Event& eve
 }
 
 keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Event& event) {
-
+    keto::software_consensus::ConsensusStateManager::getInstance()->setState(
+            keto::software_consensus::ConsensusStateManager::GENERATE);
     return event;
 }
 

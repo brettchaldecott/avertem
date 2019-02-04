@@ -50,8 +50,6 @@ public:
      */
     enum State {
         inited,
-        consensus_check,
-        consensus_accepted,
         block_producer,
         terminated
     };

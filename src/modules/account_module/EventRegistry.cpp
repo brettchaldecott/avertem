@@ -17,9 +17,9 @@
 #include "keto/server_common/EventServiceHelpers.hpp"
 
 
+#include "keto/software_consensus/ConsensusStateManager.hpp"
 #include "keto/account/AccountService.hpp"
 #include "keto/account/ConsensusService.hpp"
-#include "include/keto/account/ConsensusService.hpp"
 
 namespace keto {
 namespace account {
@@ -63,7 +63,8 @@ keto::event::Event EventRegistry::setModuleSession(const keto::event::Event& eve
 }
 
 keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Event& event) {
-
+    keto::software_consensus::ConsensusStateManager::getInstance()->setState(
+            keto::software_consensus::ConsensusStateManager::ACCEPTED);
     return event;
 }
 

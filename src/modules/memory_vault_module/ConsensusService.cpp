@@ -11,6 +11,7 @@
 
 #include "keto/memory_vault/MemoryVaultManager.hpp"
 
+#include "keto/software_consensus/ConsensusStateManager.hpp"
 #include "keto/software_consensus/ConsensusMessageHelper.hpp"
 #include "keto/software_consensus/ModuleSessionMessageHelper.hpp"
 #include "keto/software_consensus/ModuleHashMessageHelper.hpp"
@@ -30,9 +31,11 @@ std::string ConsensusService::getSourceVersion() {
 ConsensusService::ConsensusService(
         const keto::software_consensus::ConsensusHashGeneratorPtr& consensusHashGenerator) :
         consensusHashGenerator(consensusHashGenerator) {
+    keto::software_consensus::ConsensusStateManager::init();
 }
 
 ConsensusService::~ConsensusService() {
+    keto::software_consensus::ConsensusStateManager::fin();
 }
 
 
@@ -64,6 +67,8 @@ keto::event::Event ConsensusService::setModuleSession(const keto::event::Event& 
     keto::software_consensus::ModuleSessionMessageHelper moduleSessionHelper(
             keto::server_common::fromEvent<keto::proto::ModuleSessionMessage>(event));
     //std::cout << "Setup the memory module session key" << std::endl;
+    keto::software_consensus::ConsensusStateManager::getInstance()->setState(
+            keto::software_consensus::ConsensusStateManager::GENERATE);
     this->consensusHashGenerator->setSession(moduleSessionHelper.getSecret());
     keto::memory_vault::MemoryVaultManager::getInstance()->clearSession();
     //std::cout << "Clear the sessions" << std::endl;

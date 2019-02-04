@@ -56,6 +56,9 @@ public:
     
     // balancer
     static const char* BLOCK_MESSAGE;
+
+    // block producer
+    static const char* ENABLE_BLOCK_PRODUCER;
     
     // action messages
     static const char* EXECUTE_ACTION_MESSAGE;

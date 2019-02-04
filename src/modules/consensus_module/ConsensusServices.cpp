@@ -24,6 +24,7 @@
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
 
+#include "keto/software_consensus/ConsensusStateManager.hpp"
 #include "keto/software_consensus/ModuleSessionMessageHelper.hpp"
 #include "keto/software_consensus/ModuleHashMessageHelper.hpp"
 #include "keto/software_consensus/ModuleConsensusHelper.hpp"
@@ -50,6 +51,7 @@ ConsensusServices::ConsensusServices(
             const keto::software_consensus::ConsensusHashGeneratorPtr& moduleHashGenerator) :
     seedHashGenerator(seedHashGenerator),
     moduleHashGenerator(moduleHashGenerator) {
+    keto::software_consensus::ConsensusStateManager::init();
     
     // setup the key loader
     std::shared_ptr<keto::environment::Config> config = 
@@ -70,6 +72,7 @@ ConsensusServices::ConsensusServices(
 }
 
 ConsensusServices::~ConsensusServices() {
+    keto::software_consensus::ConsensusStateManager::fin();
 }
 
 // account service management methods
@@ -128,6 +131,8 @@ keto::event::Event ConsensusServices::generateSoftwareHash(const keto::event::Ev
 keto::event::Event ConsensusServices::setModuleSession(const keto::event::Event& event) {
     keto::software_consensus::ModuleSessionMessageHelper moduleSessionHelper(
         keto::server_common::fromEvent<keto::proto::ModuleSessionMessage>(event));
+    keto::software_consensus::ConsensusStateManager::getInstance()->setState(
+            keto::software_consensus::ConsensusStateManager::GENERATE);
     this->moduleHashGenerator->setSession(moduleSessionHelper.getSecret());
     this->seedHashGenerator->setSession(moduleSessionHelper.getSecret());
     return event;

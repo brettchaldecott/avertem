@@ -66,22 +66,20 @@ BlockBuilder& BlockBuilder::addTransactionMessage(
     return (*this);
 }
 
-BlockBuilder& BlockBuilder::setAcceptedCheck(const SoftwareConsensus_t* softwareConsensus) {
-    SoftwareConsensus_t* cloneSoftwareConsensus = keto::asn1::clone<SoftwareConsensus_t>(softwareConsensus,&asn_DEF_SoftwareConsensus);
-    this->block->acceptedCheck = *cloneSoftwareConsensus;
-    free(cloneSoftwareConsensus);
+BlockBuilder& BlockBuilder::setAcceptedCheck(SoftwareConsensus_t* softwareConsensus) {
+    this->block->acceptedCheck = *softwareConsensus;
+    free(softwareConsensus);
     return *this;
 }
 
-BlockBuilder& BlockBuilder::setValidateCheck(const SoftwareConsensus_t* softwareConsensus) {
-    SoftwareConsensus_t* cloneSoftwareConsensus = keto::asn1::clone<SoftwareConsensus_t>(softwareConsensus,&asn_DEF_SoftwareConsensus);
-    this->block->validateCheck = *cloneSoftwareConsensus;
-    free(cloneSoftwareConsensus);
+BlockBuilder& BlockBuilder::setValidateCheck(SoftwareConsensus_t* softwareConsensus) {
+    this->block->validateCheck = *softwareConsensus;
+    free(softwareConsensus);
     return *this;
 }
 
 BlockBuilder::operator Block_t*() {
-    MerkleUtils merkleUtils(this->block);
+    MerkleUtils merkleUtils(this->getCurrentHashs());
     
     block->merkelRoot = merkleUtils.computation();
     
@@ -92,13 +90,39 @@ BlockBuilder::operator Block_t*() {
 }
 
 BlockBuilder::operator Block_t&() {
-    MerkleUtils merkleUtils(this->block);
+    MerkleUtils merkleUtils(getCurrentHashs());
     
     block->merkelRoot = merkleUtils.computation();
     
     return *this->block;
 }
 
+
+std::vector<keto::asn1::HashHelper> BlockBuilder::getCurrentHashs() {
+    std::vector<keto::asn1::HashHelper> hashs;
+    hashs.push_back(keto::asn1::HashHelper(this->block->parent));
+
+    // add the transaction hashes
+    for (int index = 0; index < this->block->transactions.list.count; index++) {
+        TransactionWrapper* transactionWrapper = this->block->transactions.list.array[index];
+        hashs.push_back(keto::asn1::HashHelper(transactionWrapper->transactionHash));
+        for (int changeIndex = 0; changeIndex < transactionWrapper->changeSet.list.count; changeIndex++) {
+            hashs.push_back(keto::asn1::HashHelper(transactionWrapper->changeSet.list.array[changeIndex]->changeSetHash));
+        }
+    }
+
+    if (block->acceptedCheck.merkelRoot.size) {
+        hashs.push_back(keto::asn1::HashHelper(this->block->acceptedCheck.merkelRoot));
+    }
+    if (block->validateCheck.merkelRoot.size) {
+        hashs.push_back(keto::asn1::HashHelper(this->block->validateCheck.merkelRoot));
+    }
+
+    if (!hashs.size()) {
+        BOOST_THROW_EXCEPTION(keto::block_db::ZeroLengthHashListException());
+    }
+    return hashs;
+}
 
 }
 }

@@ -15,6 +15,7 @@
 
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
+#include "keto/software_consensus/ConsensusStateManager.hpp"
 
 #include "keto/event/ConsensusService.hpp"
 
@@ -54,7 +55,8 @@ keto::event::Event EventRegistry::setModuleSession(const keto::event::Event& eve
 }
 
 keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Event& event) {
-
+    keto::software_consensus::ConsensusStateManager::getInstance()->setState(
+            keto::software_consensus::ConsensusStateManager::ACCEPTED);
     return event;
 }
 

@@ -48,6 +48,8 @@ const char* Events::BALANCER_MESSAGE    = "BALANCER_MESSAGE";
 // block message
 const char* Events::BLOCK_MESSAGE       = "BLOCK_MESSAGE";
 
+const char* Events::ENABLE_BLOCK_PRODUCER = "ENABLE_BLOCK_PRODUCER";
+
 // block message
 const char* Events::EXECUTE_ACTION_MESSAGE  = "EXECUTE_ACTION_MESSAGE";
 

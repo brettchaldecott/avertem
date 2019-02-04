@@ -18,6 +18,7 @@
 #include "keto/server_common/EventServiceHelpers.hpp"
 
 #include "keto/block/ConsensusService.hpp"
+#include "keto/block/BlockProducer.hpp"
 
 namespace keto {
 namespace block {
@@ -34,6 +35,9 @@ EventRegistry::~EventRegistry() {
 
 
 void EventRegistry::registerEventHandlers() {
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::ENABLE_BLOCK_PRODUCER,
+            &keto::block::EventRegistry::enableBlockProducer);
     keto::server_common::registerEventHandler (
             keto::server_common::Events::BLOCK_MESSAGE,
             &keto::block::EventRegistry::blockMessage);
@@ -62,7 +66,8 @@ void EventRegistry::deregisterEventHandlers() {
             keto::server_common::Events::CONSENSUS_SESSION_STATE::BLOCK);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::BLOCK_MESSAGE);
-    
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::ENABLE_BLOCK_PRODUCER);
 }
 
 keto::event::Event EventRegistry::blockMessage(const keto::event::Event& event) {
@@ -82,9 +87,13 @@ keto::event::Event EventRegistry::setupNodeConsensusSession(const keto::event::E
     return ConsensusService::getInstance()->setupNodeConsensusSession(event);
 }
 
-
 keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Event& event) {
     return ConsensusService::getInstance()->consensusSessionAccepted(event);
+}
+
+keto::event::Event EventRegistry::enableBlockProducer(const keto::event::Event& event) {
+    BlockProducer::getInstance()->setState(BlockProducer::State::block_producer);
+    return event;
 }
 
 }

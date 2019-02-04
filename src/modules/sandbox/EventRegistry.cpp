@@ -19,6 +19,8 @@
 #include "keto/sandbox/SandboxService.hpp"
 #include "keto/sandbox/ConsensusService.hpp"
 
+#include "keto/software_consensus/ConsensusStateManager.hpp"
+
 
 namespace keto {
 namespace sandbox {
@@ -75,7 +77,8 @@ keto::event::Event EventRegistry::setModuleSession(const keto::event::Event& eve
 }
 
 keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Event& event) {
-
+    keto::software_consensus::ConsensusStateManager::getInstance()->setState(
+            keto::software_consensus::ConsensusStateManager::ACCEPTED);
     return event;
 }
 

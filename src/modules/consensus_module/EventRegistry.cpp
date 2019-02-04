@@ -16,7 +16,7 @@
 
 #include "keto/consensus_module/EventRegistry.hpp"
 #include "keto/consensus_module/ConsensusServices.hpp"
-
+#include "keto/software_consensus/ConsensusStateManager.hpp"
 
 namespace keto {
 namespace consensus_module {
@@ -80,6 +80,8 @@ keto::event::Event EventRegistry::setModuleSession(const keto::event::Event& eve
 }
 
 keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Event& event) {
+    keto::software_consensus::ConsensusStateManager::getInstance()->setState(
+            keto::software_consensus::ConsensusStateManager::ACCEPTED);
 
     return event;
 }

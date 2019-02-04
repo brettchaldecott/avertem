@@ -17,6 +17,7 @@
 #include "keto/server_common/EventServiceHelpers.hpp"
 
 
+#include "keto/software_consensus/ConsensusStateManager.hpp"
 #include "keto/software_consensus/ModuleSessionMessageHelper.hpp"
 #include "keto/software_consensus/ModuleHashMessageHelper.hpp"
 #include "keto/software_consensus/ModuleConsensusHelper.hpp"
@@ -37,9 +38,11 @@ std::string ConsensusService::getSourceVersion() {
 ConsensusService::ConsensusService(
         const keto::software_consensus::ConsensusHashGeneratorPtr& consensusHashGenerator) :
     consensusHashGenerator(consensusHashGenerator) {
+    keto::software_consensus::ConsensusStateManager::init();
 }
 
 ConsensusService::~ConsensusService() {
+    keto::software_consensus::ConsensusStateManager::fin();
 }
 
 
@@ -70,6 +73,8 @@ keto::event::Event ConsensusService::generateSoftwareHash(const keto::event::Eve
 keto::event::Event ConsensusService::setModuleSession(const keto::event::Event& event) {
     keto::software_consensus::ModuleSessionMessageHelper moduleSessionHelper(
         keto::server_common::fromEvent<keto::proto::ModuleSessionMessage>(event));
+    keto::software_consensus::ConsensusStateManager::getInstance()->setState(
+            keto::software_consensus::ConsensusStateManager::GENERATE);
     this->consensusHashGenerator->setSession(moduleSessionHelper.getSecret());
     return event;
 }

@@ -53,13 +53,13 @@ public:
     
     BlockBuilder& addTransactionMessage(
             const keto::transaction_common::TransactionMessageHelperPtr transaction);
-    BlockBuilder& setAcceptedCheck(const SoftwareConsensus_t* softwareConsensus);
-    BlockBuilder& setValidateCheck(const SoftwareConsensus_t* softwareConsensus);
+    BlockBuilder& setAcceptedCheck(SoftwareConsensus_t* softwareConsensus);
+    BlockBuilder& setValidateCheck(SoftwareConsensus_t* softwareConsensus);
 
     operator Block_t*();
     operator Block_t&();
-    
-    
+
+    std::vector<keto::asn1::HashHelper> getCurrentHashs();
     
 private:
     Block_t* block;

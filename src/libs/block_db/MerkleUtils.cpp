@@ -26,22 +26,7 @@ std::string MerkleUtils::getSourceVersion() {
 }
 
 
-MerkleUtils::MerkleUtils(const Block_t* block) {
-    // place the parent hash as the first hash in the merkel tree.
-    // this means that even if there are no blocks we can still produce a hash
-    hashs.push_back(keto::asn1::HashHelper(block->parent));
-    
-    // add the transaction hashes
-    for (int index = 0; index < block->transactions.list.count; index++) {
-        TransactionWrapper* transactionWrapper = block->transactions.list.array[index];
-        hashs.push_back(keto::asn1::HashHelper(transactionWrapper->transactionHash));
-        for (int changeIndex = 0; changeIndex < transactionWrapper->changeSet.list.count; changeIndex++) {
-            hashs.push_back(keto::asn1::HashHelper(transactionWrapper->changeSet.list.array[changeIndex]->changeSetHash));
-        }
-    }
-    if (!hashs.size()) {
-        BOOST_THROW_EXCEPTION(keto::block_db::ZeroLengthHashListException());
-    }
+MerkleUtils::MerkleUtils(std::vector<keto::asn1::HashHelper> hashs) : hashs(hashs) {
 }
 
 MerkleUtils::~MerkleUtils() {
