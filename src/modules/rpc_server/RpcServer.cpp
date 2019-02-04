@@ -288,6 +288,12 @@ public:
                     keto::server_common::VectorUtils().copyVectorToString(    
                         serverHelloProtoHelperPtr->getAccountHash()));
                 return;
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS) == 0) {
+                handleRequestNetworkSessionKeys(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS, payload);
+                return;
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_MASTER_NETWORK_KEYS) == 0) {
+                handleRequestMasterNetworkKeys(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS, payload);
+                return;
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS) == 0) {
                 handleRequestNetworkKeys(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS, payload);
                 return;
@@ -509,6 +515,33 @@ public:
         
     }
 
+    void handleRequestNetworkSessionKeys(const std::string& command, const std::string& payload) {
+
+
+        keto::proto::NetworkKeysWrapper networkKeysWrapper;
+        networkKeysWrapper =
+                keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(
+                        keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::NetworkKeysWrapper>(
+                                keto::server_common::Events::GET_NETWORK_SESSION_KEYS,networkKeysWrapper)));
+
+        std::string result = networkKeysWrapper.SerializeAsString();
+        boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_SESSION_KEYS
+                                       << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
+    }
+
+    void handleRequestMasterNetworkKeys(const std::string& command, const std::string& payload) {
+
+
+        keto::proto::NetworkKeysWrapper networkKeysWrapper;
+        networkKeysWrapper =
+                keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(
+                        keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::NetworkKeysWrapper>(
+                                keto::server_common::Events::GET_MASTER_NETWORK_KEYS,networkKeysWrapper)));
+
+        std::string result = networkKeysWrapper.SerializeAsString();
+        boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::RESPONSE_MASTER_NETWORK_KEYS
+                                       << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
+    }
 
     void handleRequestNetworkKeys(const std::string& command, const std::string& payload) {
 
@@ -520,7 +553,7 @@ public:
                                 keto::server_common::Events::GET_NETWORK_KEYS,networkKeysWrapper)));
 
         std::string result = networkKeysWrapper.SerializeAsString();
-        boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS_RESPONSE
+        boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_KEYS
                                        << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
     }
 };

@@ -38,7 +38,7 @@ void EventRegistry::registerEventHandlers() {
             keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::MEMORY_VAULT_MANAGER,
             &keto::memory_vault_module::EventRegistry::consensusSessionAccepted);
     keto::server_common::registerEventHandler(
-            keto::server_common::Events::SETUP_NODE_CONSENSUS_SESSION,
+            keto::server_common::Events::CONSENSUS_SESSION_STATE::MEMORY_VAULT_MANAGER,
             &EventRegistry::setupNodeConsensusSession);
 
     keto::server_common::registerEventHandler(
@@ -71,7 +71,7 @@ void EventRegistry::deregisterEventHandlers() {
             keto::server_common::Events::MEMORY_VAULT::REMOVE_ENTRY);
 
     keto::server_common::deregisterEventHandler(
-            keto::server_common::Events::SETUP_NODE_CONSENSUS_SESSION);
+            keto::server_common::Events::CONSENSUS_SESSION_STATE::MEMORY_VAULT_MANAGER);
     keto::server_common::deregisterEventHandler(
             keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::MEMORY_VAULT_MANAGER);
     keto::server_common::deregisterEventHandler(

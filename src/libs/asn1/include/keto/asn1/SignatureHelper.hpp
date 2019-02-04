@@ -44,10 +44,11 @@ public:
     SignatureHelper& operator=(const Signature_t* signature);
     SignatureHelper& operator=(const Signature_t& signature);
     operator Signature_t() const;
+    operator Signature_t*() const;
     
     SignatureHelper& operator =(const std::vector<uint8_t>& signature);
     operator std::vector<uint8_t>() const;
-    
+
     SignatureHelper& setSignature(const std::string& signature,keto::common::StringEncoding stringEncoding);
     std::string getSignature(keto::common::StringEncoding stringEncoding);
     

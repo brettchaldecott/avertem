@@ -77,8 +77,12 @@ public:
         static const char* CLOSE;
         static const char* GO_AWAY;
         static const char* ACCEPTED;
+        static const char* REQUEST_NETWORK_SESSION_KEYS;
+        static const char* RESPONSE_NETWORK_SESSION_KEYS;
+        static const char* REQUEST_MASTER_NETWORK_KEYS;
+        static const char* RESPONSE_MASTER_NETWORK_KEYS;
         static const char* REQUEST_NETWORK_KEYS;
-        static const char* REQUEST_NETWORK_KEYS_RESPONSE;
+        static const char* RESPONSE_NETWORK_KEYS;
     };
     
 private:

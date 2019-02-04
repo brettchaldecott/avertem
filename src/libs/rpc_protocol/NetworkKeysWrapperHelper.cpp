@@ -24,6 +24,13 @@ NetworkKeysWrapperHelper::NetworkKeysWrapperHelper(const std::string& source) {
     }
 }
 
+
+NetworkKeysWrapperHelper::NetworkKeysWrapperHelper(const std::vector<uint8_t>& source) {
+    if (!this->networkKeysWrapper.ParseFromString(keto::server_common::VectorUtils().copyVectorToString(source))) {
+        BOOST_THROW_EXCEPTION(NetworkKeysWrapperDeserializationErrorException());
+    }
+}
+
 NetworkKeysWrapperHelper::~NetworkKeysWrapperHelper() {
 
 }

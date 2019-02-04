@@ -136,6 +136,9 @@ private:
     void serverRequest(const std::string& command, const std::string& message);
     void peerResponse(const std::string& command, const std::string& message);
     void registerResponse(const std::string& command, const std::string& message);
+    void requestNetworkSessionKeysResponse(const std::string& command, const std::string& message);
+    void requestNetworkMasterKeyResponse(const std::string& command, const std::string& message);
+    void requestNetworkKeysResponse(const std::string& command, const std::string& message);
     void handleRegisterRequest(const std::string& command, const std::string& message);
     void handleTransaction(const std::string& command, const std::string& message);
     

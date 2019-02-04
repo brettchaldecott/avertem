@@ -50,6 +50,8 @@ public:
     
     keto::event::Event generateSoftwareHash(const keto::event::Event& event);
     keto::event::Event setModuleSession(const keto::event::Event& event);
+    keto::event::Event setupNodeConsensusSession(const keto::event::Event& event);
+    keto::event::Event consensusSessionAccepted(const keto::event::Event& event);
 
 private:
     

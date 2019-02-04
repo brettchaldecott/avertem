@@ -22,6 +22,7 @@
 #include "SignedChangeSet.h"
 #include "TransactionMessage.h"
 #include "Block.h"
+#include "SoftwareConsensus.h"
 
 #include "keto/asn1/TimeHelper.hpp"
 #include "keto/asn1/HashHelper.hpp"
@@ -52,7 +53,9 @@ public:
     
     BlockBuilder& addTransactionMessage(
             const keto::transaction_common::TransactionMessageHelperPtr transaction);
-    
+    BlockBuilder& setAcceptedCheck(const SoftwareConsensus_t* softwareConsensus);
+    BlockBuilder& setValidateCheck(const SoftwareConsensus_t* softwareConsensus);
+
     operator Block_t*();
     operator Block_t&();
     

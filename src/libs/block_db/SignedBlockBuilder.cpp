@@ -16,6 +16,7 @@
 #include "keto/asn1/SerializationHelper.hpp"
 #include "keto/asn1/BerEncodingHelper.hpp"
 #include "keto/asn1/SignatureHelper.hpp"
+#include "keto/asn1/CloneHelper.hpp"
 #include "keto/crypto/SignatureGenerator.hpp"
 #include "keto/crypto/HashGenerator.hpp"
 
@@ -32,6 +33,10 @@ std::string SignedBlockBuilder::getSourceVersion() {
 SignedBlockBuilder::SignedBlockBuilder() {
     this->signedBlock = (SignedBlock_t*)calloc(1, sizeof *signedBlock);
     this->signedBlock->date = keto::asn1::TimeHelper();
+}
+
+SignedBlockBuilder::SignedBlockBuilder(const SignedBlock_t* signedBlock) {
+    this->signedBlock = keto::asn1::clone<SignedBlock_t>(signedBlock,&asn_DEF_SignedBlock);
 }
 
 SignedBlockBuilder::SignedBlockBuilder(
@@ -84,11 +89,26 @@ SignedBlockBuilder& SignedBlockBuilder::sign() {
     keto::crypto::SignatureGenerator generator(*keyLoaderPtr);
     keto::asn1::HashHelper hashHelper(this->signedBlock->hash);
     keto::asn1::SignatureHelper signatureHelper(generator.sign(hashHelper));
-    this->signedBlock->signature = signatureHelper;
+    if (0 != ASN_SEQUENCE_ADD(&this->signedBlock->signatures,(Signature_t*)signatureHelper)) {
+        BOOST_THROW_EXCEPTION(keto::block_db::FailedToAddTheTransactionException());
+    }
     return (*this);
     
 }
 
+SignedBlockBuilder& SignedBlockBuilder::sign(std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr) {
+    if (!this->signedBlock) {
+        BOOST_THROW_EXCEPTION(keto::block_db::SignedBlockReleasedException());
+    }
+    keto::crypto::SignatureGenerator generator(*keyLoaderPtr);
+    keto::asn1::HashHelper hashHelper(this->signedBlock->hash);
+    keto::asn1::SignatureHelper signatureHelper(generator.sign(hashHelper));
+    if (0 != ASN_SEQUENCE_ADD(&this->signedBlock->signatures,(Signature_t*)signatureHelper)) {
+        BOOST_THROW_EXCEPTION(keto::block_db::FailedToAddTheTransactionException());
+    }
+    return (*this);
+
+}
 
 SignedBlockBuilder::operator SignedBlock_t*() {
     SignedBlock_t* result = this->signedBlock;

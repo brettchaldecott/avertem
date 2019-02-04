@@ -34,6 +34,8 @@ public:
     static const std::vector<std::string> CONSENSUS_SESSION_ORDER;
 
     static const std::vector<std::string> CONSENSUS_SESSION_ACCEPTED;
+
+    static const std::vector<std::string> CONSENSUS_SESSION_STATE;
     
     inline static std::string getHeaderVersion() {
         return OBFUSCATED("$Id$");

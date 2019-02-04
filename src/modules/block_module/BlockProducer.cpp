@@ -111,8 +111,11 @@ BlockProducerPtr BlockProducer::getInstance() {
 }
 
 void BlockProducer::run() {
-    while(this->checkState() != State::terminated) {
-        generateBlock(this->getTransactions());
+    BlockProducer::State currentState;
+    while((currentState = this->checkState()) != State::terminated) {
+        if (currentState == BlockProducer::State::block_producer) {
+            generateBlock(this->getTransactions());
+        }
     }
 }
 
@@ -120,6 +123,32 @@ void BlockProducer::terminate() {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
     this->currentState = State::terminated;
     this->stateCondition.notify_all();
+}
+
+void BlockProducer::setState(const State& state) {
+    std::lock_guard<std::mutex> uniqueLock(this->classMutex);
+    if (currentState == State::terminated || state == State::terminated) {
+        return;
+    }
+    // the block producer has to be enabled.
+    if (!this->enabled && state == State::block_producer) {
+        return;
+    }
+    this->currentState = state;
+    this->stateCondition.notify_all();
+}
+
+
+keto::event::Event BlockProducer::setupNodeConsensusSession(const keto::event::Event& event) {
+    std::lock_guard<std::mutex> uniqueLock(this->classMutex);
+    this->consensusMessageHelper = keto::software_consensus::ConsensusMessageHelper(
+            keto::server_common::fromEvent<keto::proto::ConsensusMessage>(event));
+    return event;
+}
+
+BlockProducer::State BlockProducer::getState() {
+    std::lock_guard<std::mutex> uniqueLock(this->classMutex);
+    return this->currentState;
 }
 
 void BlockProducer::addTransaction(keto::proto::Transaction transaction) {

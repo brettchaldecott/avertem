@@ -28,6 +28,7 @@ public:
     NetworkKeysWrapperHelper();
     NetworkKeysWrapperHelper(const keto::proto::NetworkKeysWrapper& source);
     NetworkKeysWrapperHelper(const std::string& source);
+    NetworkKeysWrapperHelper(const std::vector<uint8_t>& source);
     NetworkKeysWrapperHelper(const NetworkKeysWrapperHelper& orig) = default;
     virtual ~NetworkKeysWrapperHelper();
 

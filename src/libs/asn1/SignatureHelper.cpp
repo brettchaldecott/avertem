@@ -73,6 +73,11 @@ SignatureHelper::operator Signature_t() const {
     return result;
 }
 
+SignatureHelper::operator Signature_t*() const {
+    return (Signature_t*)OCTET_STRING_new_fromBuf(&asn_DEF_Signature,
+                                                                     (const char *)this->signature.data(),this->signature.size());
+}
+
 SignatureHelper& SignatureHelper::operator =(const std::vector<uint8_t>& signature) {
     this->signature = signature;
     return (*this);

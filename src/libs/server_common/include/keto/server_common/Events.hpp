@@ -129,6 +129,12 @@ public:
         static const char* MEMORY_VAULT_MANAGER;
     };
 
+    class CONSENSUS_SESSION_STATE {
+    public:
+        static const char* BLOCK;
+        static const char* MEMORY_VAULT_MANAGER;
+    };
+
 
     // memory vault methods
     class MEMORY_VAULT {
@@ -141,11 +147,9 @@ public:
 
     };
 
-    
+
     static const char* GET_SOFTWARE_CONSENSUS_MESSAGE;
     static const char* VALIDATE_SOFTWARE_CONSENSUS_MESSAGE;
-
-    static const char* SETUP_NODE_CONSENSUS_SESSION;
 
     static const char* GET_NETWORK_SESSION_KEYS;
     static const char* SET_NETWORK_SESSION_KEYS;

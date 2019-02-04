@@ -95,15 +95,30 @@ void ConsensusSessionManager::updateSessionKey(const keto::crypto::SecureVector&
 }
 
 
-void ConsensusSessionManager::setSession(keto::proto::ConsensusMessage& event) {
+void ConsensusSessionManager::setSession(keto::proto::ConsensusMessage& msg) {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
     if (!this->activeSession) {
         this->activeSession = true;
         // setup the consensus message
-        keto::server_common::fromEvent<keto::proto::ConsensusMessage>(
-                keto::server_common::processEvent(
-                        keto::server_common::toEvent<keto::proto::ConsensusMessage>(
-                                keto::server_common::Events::SETUP_NODE_CONSENSUS_SESSION, event)));
+        for (std::string event : Constants::CONSENSUS_SESSION_STATE) {
+            try {
+                keto::server_common::fromEvent<keto::proto::ConsensusMessage>(
+                        keto::server_common::processEvent(
+                                keto::server_common::toEvent<keto::proto::ConsensusMessage>(
+                                        event, msg)));
+            } catch (keto::common::Exception& ex) {
+                KETO_LOG_ERROR << "[setSession]Failed to process the event [" << event  << "] : " << ex.what();
+                KETO_LOG_ERROR << "[setSession]Cause: " << boost::diagnostic_information(ex,true);
+            } catch (boost::exception& ex) {
+                KETO_LOG_ERROR << "[setSession]Failed to process the event [" << event << "]";
+                KETO_LOG_ERROR << "[setSession]Cause: " << boost::diagnostic_information(ex,true);
+            } catch (std::exception& ex) {
+                KETO_LOG_ERROR << "[setSession]Failed to process the event [" << event << "]";
+                KETO_LOG_ERROR << "[setSession]The cause is : " << ex.what();
+            } catch (...) {
+                KETO_LOG_ERROR << "[setSession]Failed to process the event [" << event << "]";
+            }
+        }
 
     }
 }

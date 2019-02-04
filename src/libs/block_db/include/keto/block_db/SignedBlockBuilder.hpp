@@ -40,6 +40,7 @@ public:
     static std::string getSourceVersion();
     
     SignedBlockBuilder();
+    SignedBlockBuilder(const SignedBlock_t* signedBlock);
     SignedBlockBuilder(const std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr);
     SignedBlockBuilder(Block_t* block,
         const std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr);
@@ -52,6 +53,7 @@ public:
     SignedBlockBuilder& setBlock(Block_t* block);
     
     SignedBlockBuilder& sign();
+    SignedBlockBuilder& sign(std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr);
     
     operator SignedBlock_t*();
     operator SignedBlock_t&();

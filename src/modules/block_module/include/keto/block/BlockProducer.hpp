@@ -26,6 +26,8 @@
 
 #include "keto/crypto/KeyLoader.hpp"
 #include "keto/common/MetaInfo.hpp"
+#include "keto/event/Event.hpp"
+#include "keto/software_consensus/ConsensusMessageHelper.hpp"
 
 
 namespace keto {
@@ -48,7 +50,9 @@ public:
      */
     enum State {
         inited,
-        producing,
+        consensus_check,
+        consensus_accepted,
+        block_producer,
         terminated
     };
     
@@ -62,6 +66,10 @@ public:
     
     void run();
     void terminate();
+    void setState(const State& state);
+    State getState();
+
+    keto::event::Event setupNodeConsensusSession(const keto::event::Event& event);
     
     void addTransaction(keto::proto::Transaction transaction);
     
@@ -74,8 +82,9 @@ private:
     std::mutex classMutex;
     std::deque<keto::proto::Transaction> transactions;
     std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr;
-    
-    
+    keto::software_consensus::ConsensusMessageHelper consensusMessageHelper;
+
+
     State checkState();
     std::deque<keto::proto::Transaction> getTransactions();
     void generateBlock(std::deque<keto::proto::Transaction> transactions);

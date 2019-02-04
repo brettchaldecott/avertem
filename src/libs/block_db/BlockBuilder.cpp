@@ -66,6 +66,20 @@ BlockBuilder& BlockBuilder::addTransactionMessage(
     return (*this);
 }
 
+BlockBuilder& BlockBuilder::setAcceptedCheck(const SoftwareConsensus_t* softwareConsensus) {
+    SoftwareConsensus_t* cloneSoftwareConsensus = keto::asn1::clone<SoftwareConsensus_t>(softwareConsensus,&asn_DEF_SoftwareConsensus);
+    this->block->acceptedCheck = *cloneSoftwareConsensus;
+    free(cloneSoftwareConsensus);
+    return *this;
+}
+
+BlockBuilder& BlockBuilder::setValidateCheck(const SoftwareConsensus_t* softwareConsensus) {
+    SoftwareConsensus_t* cloneSoftwareConsensus = keto::asn1::clone<SoftwareConsensus_t>(softwareConsensus,&asn_DEF_SoftwareConsensus);
+    this->block->validateCheck = *cloneSoftwareConsensus;
+    free(cloneSoftwareConsensus);
+    return *this;
+}
+
 BlockBuilder::operator Block_t*() {
     MerkleUtils merkleUtils(this->block);
     

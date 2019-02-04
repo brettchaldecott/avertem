@@ -69,7 +69,11 @@ const std::vector<std::string> Constants::CONSENSUS_SESSION_ACCEPTED = {
     keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::RPC_SERVER,
     keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::CONSENSUS_QUERY,
     keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::MEMORY_VAULT_MANAGER};
-//const keto::obfuscate::MetaString Constants::CPP_FILE_VERSION = DEF_OBFUSCATED("$Id$");
+
+const std::vector<std::string> Constants::CONSENSUS_SESSION_STATE = {
+    keto::server_common::Events::CONSENSUS_SESSION_STATE::BLOCK,
+    keto::server_common::Events::CONSENSUS_SESSION_STATE::MEMORY_VAULT_MANAGER
+};
 
     std::string Constants::getSourceVersion() {
         return OBFUSCATED("$Id$");

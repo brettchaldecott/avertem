@@ -5,6 +5,8 @@ BlockChainModule DEFINITIONS AUTOMATIC TAGS ::= BEGIN
         FROM AccountModule
         Action
         FROM ActionModule
+        SoftwareConsensus
+        FROM SofwareConsensusModule
         Transaction, SignedTransaction, ChangeSet, SignedChangeSet, TransactionWrapper
         FROM TransactionModule;
 
@@ -14,6 +16,8 @@ Block ::= SEQUENCE {
     date                UTCTime,
     parent              Hash,
     transactions        SEQUENCE OF TransactionWrapper,
+    acceptedCheck       SoftwareConsensus,
+    validateCheck       SoftwareConsensus,
     merkelRoot          Hash
 }
 
@@ -23,7 +27,7 @@ SignedBlock ::= SEQUENCE {
     parent          Hash,
     block           Block,
     hash            Hash,
-    signature       Signature
+    signatures      SEQUENCE OF Signature
 }
 
 END

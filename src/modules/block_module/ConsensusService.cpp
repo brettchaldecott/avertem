@@ -23,6 +23,8 @@
 
 
 #include "keto/block/ConsensusService.hpp"
+#include "keto/block/BlockProducer.hpp"
+
 
 namespace keto{
 namespace block {
@@ -69,10 +71,20 @@ keto::event::Event ConsensusService::generateSoftwareHash(const keto::event::Eve
 keto::event::Event ConsensusService::setModuleSession(const keto::event::Event& event) {
     keto::software_consensus::ModuleSessionMessageHelper moduleSessionHelper(
         keto::server_common::fromEvent<keto::proto::ModuleSessionMessage>(event));
+    BlockProducer::getInstance()->setState(BlockProducer::State::consensus_check);
     this->consensusHashGenerator->setSession(moduleSessionHelper.getSecret());
     return event;
 }
 
+keto::event::Event ConsensusService::setupNodeConsensusSession(const keto::event::Event& event) {
+    BlockProducer::getInstance()->setupNodeConsensusSession(event);
+    return event;
+}
+
+keto::event::Event ConsensusService::consensusSessionAccepted(const keto::event::Event& event) {
+    BlockProducer::getInstance()->setState(BlockProducer::State::consensus_accepted);
+    return event;
+}
 
 }
 }
