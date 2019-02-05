@@ -52,7 +52,9 @@ public:
 
     static keto::event::Event getNetworkKeys(const keto::event::Event& event);
     static keto::event::Event setNetworkKeys(const keto::event::Event& event);
-    
+
+    static keto::event::Event isMaster(const keto::event::Event& event);
+
     static void registerEventHandlers();
     static void deregisterEventHandlers();
 private:

@@ -63,6 +63,8 @@ public:
     TransactionMessageHelper& addNestedTransaction(TransactionMessage_t* nestedTransaction);
     TransactionMessageHelper& addNestedTransaction(const TransactionMessageHelperPtr& nestedTransaction);
     TransactionMessageHelper& addNestedTransaction(const TransactionMessageHelper& nestedTransaction);
+    int numberOfNestedTransactions();
+    TransactionMessageHelperPtr getNestedTransaction(int index);
     
     
     TransactionMessageHelper& operator =(const std::string& transactionMessage);

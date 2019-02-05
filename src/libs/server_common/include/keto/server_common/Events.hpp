@@ -162,7 +162,9 @@ public:
 
     static const char* GET_NETWORK_KEYS;
     static const char* SET_NETWORK_KEYS;
-    
+
+    static const char* IS_MASTER;
+
 private:
 
 };

@@ -87,6 +87,11 @@ keto::event::Event ConsensusService::setupNodeConsensusSession(const keto::event
 keto::event::Event ConsensusService::consensusSessionAccepted(const keto::event::Event& event) {
     keto::software_consensus::ConsensusStateManager::getInstance()->setState(
             keto::software_consensus::ConsensusStateManager::ACCEPTED);
+    if (keto::server_common::ServerInfo::getInstance()->isMaster() &&
+        BlockProducer::getInstance()->getState() == BlockProducer::State::inited) {
+        BlockProducer::getInstance()->setState(BlockProducer::State::block_producer);
+    }
+
     return event;
 }
 

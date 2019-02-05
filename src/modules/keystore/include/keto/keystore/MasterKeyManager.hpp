@@ -170,6 +170,9 @@ public:
      */
     bool isMaster() const;
 
+
+    keto::event::Event isMaster(const keto::event::Event& event) const;
+
 private:
     SessionPtr sessionPtr;
 

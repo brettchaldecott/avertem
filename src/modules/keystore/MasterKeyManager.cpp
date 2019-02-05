@@ -397,6 +397,12 @@ bool MasterKeyManager::isMaster() const {
 }
 
 
+keto::event::Event MasterKeyManager::isMaster(const keto::event::Event& event) const {
+    keto::proto::MasterInfo masterInfo = keto::server_common::fromEvent<keto::proto::MasterInfo>(event);
+    masterInfo.set_is_master(this->sessionPtr->isMaster());
+    return keto::server_common::toEvent<keto::proto::MasterInfo>(masterInfo);
+}
+
 
 }
 }

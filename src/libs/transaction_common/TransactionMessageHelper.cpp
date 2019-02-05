@@ -110,7 +110,13 @@ TransactionMessageHelper& TransactionMessageHelper::addNestedTransaction(
     return *this;
 }
 
+int TransactionMessageHelper::numberOfNestedTransactions() {
+    return this->nestedTransactions.size();
+}
 
+TransactionMessageHelperPtr TransactionMessageHelper::getNestedTransaction(int index) {
+    return nestedTransactions[index];
+}
 
 TransactionMessageHelper& TransactionMessageHelper::operator =(const std::string& transactionMessage) {
     this->transactionMessage = 

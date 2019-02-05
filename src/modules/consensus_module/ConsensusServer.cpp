@@ -108,7 +108,9 @@ void ConsensusServer::process() {
     std::chrono::system_clock::time_point currentTime = std::chrono::system_clock::now();
     std::chrono::hours diff(
              std::chrono::duration_cast<std::chrono::hours>(currentTime-this->time_point));
+    std::cout << "Process the event" << std::endl;
     if ((this->currentPos == -1) || (diff.count() > 2)) {
+        std::cout << "Release a new session key" << std::endl;
         this->currentPos++;
         if (this->currentPos >= this->sessionKeys.size()) {
             this->currentPos = 0;

@@ -101,6 +101,10 @@ keto::event::Event EventRegistry::setNetworkKeys(const keto::event::Event& event
     return MasterKeyManager::getInstance()->getWrappingKeys(event);
 }
 
+keto::event::Event EventRegistry::isMaster(const keto::event::Event& event) {
+    return MasterKeyManager::getInstance()->isMaster(event);
+}
+
 void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::REQUEST_SESSION_KEY,
@@ -151,10 +155,17 @@ void EventRegistry::registerEventHandlers() {
             keto::server_common::Events::SET_NETWORK_KEYS,
             &EventRegistry::setNetworkKeys);
 
+    keto::server_common::registerEventHandler(
+            keto::server_common::Events::IS_MASTER,
+            &EventRegistry::isMaster);
+
 }
 
 
 void EventRegistry::deregisterEventHandlers() {
+
+    keto::server_common::deregisterEventHandler(
+            keto::server_common::Events::IS_MASTER);
 
     keto::server_common::deregisterEventHandler(
             keto::server_common::Events::GET_NETWORK_KEYS);

@@ -30,6 +30,9 @@
 
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
+
+#include "keto/key_store_utils/Events.hpp"
+
 #include "keto/block/TransactionProcessor.hpp"
 #include "keto/block/BlockProducer.hpp"
 
@@ -86,8 +89,14 @@ void BlockService::genesis() {
 }
 
 keto::event::Event BlockService::blockMessage(const keto::event::Event& event) {
-    keto::proto::MessageWrapper  messageWrapper = 
+    keto::proto::MessageWrapper  messageWrapper =
             keto::server_common::fromEvent<keto::proto::MessageWrapper>(event);
+    messageWrapper =
+            keto::server_common::fromEvent<keto::proto::MessageWrapper>(
+                    keto::server_common::processEvent(
+                            keto::server_common::toEvent<keto::proto::MessageWrapper>(
+                                    keto::key_store_utils::Events::TRANSACTION::DECRYPT_TRANSACTION,messageWrapper)));
+
     std::cout << "The block service says hi" << std::endl;
     
     keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper(
@@ -95,6 +104,7 @@ keto::event::Event BlockService::blockMessage(const keto::event::Event& event) {
     
     keto::transaction_common::TransactionProtoHelperPtr transactionProtoHelperPtr
             = messageWrapperProtoHelper.getTransaction();
+
     {
         std::lock_guard<std::mutex> guard(getAccountLock(
             keto::server_common::VectorUtils().copyStringToVector(
@@ -105,9 +115,16 @@ keto::event::Event BlockService::blockMessage(const keto::event::Event& event) {
         BlockProducer::getInstance()->addTransaction(
             transactionProtoHelperPtr->operator keto::proto::Transaction&());
     }
+
     // move transaction to next phase and submit to router
-    messageWrapper = messageWrapperProtoHelper.operator keto::proto::MessageWrapper();
     messageWrapperProtoHelper.setTransaction(transactionProtoHelperPtr);
+    messageWrapper = messageWrapperProtoHelper.operator keto::proto::MessageWrapper();
+    messageWrapper =
+            keto::server_common::fromEvent<keto::proto::MessageWrapper>(
+                    keto::server_common::processEvent(
+                            keto::server_common::toEvent<keto::proto::MessageWrapper>(
+                                    keto::key_store_utils::Events::TRANSACTION::ENCRYPT_TRANSACTION,messageWrapper)));
+
     keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
             keto::server_common::Events::UPDATE_STATUS_ROUTE_MESSSAGE,
             messageWrapper));
@@ -115,6 +132,7 @@ keto::event::Event BlockService::blockMessage(const keto::event::Event& event) {
     keto::proto::MessageWrapperResponse response;
     response.set_success(true);
     response.set_result("balanced");
+
     return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
 }
 

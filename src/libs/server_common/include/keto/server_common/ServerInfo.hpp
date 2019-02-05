@@ -59,11 +59,15 @@ public:
      * @return The path to the public key path.
      */
     boost::filesystem::path getPublicKeyPath();
+
+    bool isMaster();
     
 private:
     std::vector<uint8_t> accountHash;
     std::vector<uint8_t> feeAccountHash;
     boost::filesystem::path publicKeyPath;
+    bool checkedMaster;
+    bool master;
     
     ServerInfo();
     

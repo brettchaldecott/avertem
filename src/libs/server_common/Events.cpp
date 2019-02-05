@@ -139,5 +139,7 @@ const char* Events::SET_MASTER_NETWORK_KEYS = "SET_MASTER_NETWORK_KEYS";
 const char* Events::GET_NETWORK_KEYS        = "GET_NETWORK_KEYS";
 const char* Events::SET_NETWORK_KEYS        = "SET_NETWORK_KEYS";
 
+const char* Events::IS_MASTER               = "IS_MASTER";
+
 }
 }

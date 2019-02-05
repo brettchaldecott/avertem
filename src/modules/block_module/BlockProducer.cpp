@@ -218,7 +218,9 @@ void BlockProducer::generateBlock(std::deque<keto::proto::Transaction> transacti
     // build the block consensus based on the software consensus
     keto::block_db::MerkleUtils merkleUtils(blockBuilderPtr->getCurrentHashs());
     keto::software_consensus::ModuleHashMessageHelper moduleHashMessageHelper;
-    moduleHashMessageHelper.setHash(merkleUtils.computation());
+    keto::asn1::HashHelper consensusMerkelHash = merkleUtils.computation();
+    moduleHashMessageHelper.setHash(consensusMerkelHash);
+    std::cout << "Build a consensus hash for the block : " << consensusMerkelHash.getHash(keto::common::HEX) << std::endl;
     keto::proto::ModuleHashMessage moduleHashMessage = moduleHashMessageHelper.getModuleHashMessage();
     keto::software_consensus::ConsensusMessageHelper consensusMessageHelper(
             keto::server_common::fromEvent<keto::proto::ConsensusMessage>(

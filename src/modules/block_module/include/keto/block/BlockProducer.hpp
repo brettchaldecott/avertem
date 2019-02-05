@@ -51,6 +51,7 @@ public:
     enum State {
         inited,
         block_producer,
+        block_producer_complete,
         terminated
     };
     
