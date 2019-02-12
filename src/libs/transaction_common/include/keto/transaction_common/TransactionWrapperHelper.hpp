@@ -50,6 +50,7 @@ public:
     TransactionWrapperHelper(SignedTransaction_t* signedTransaction,
             const keto::asn1::HashHelper& sourceAccount, 
             const keto::asn1::HashHelper& targetAccount);
+    TransactionWrapperHelper(const TransactionWrapper_t& transactionWrapper);
     TransactionWrapperHelper(TransactionWrapper_t* transactionWrapper);
     TransactionWrapperHelper(TransactionWrapper_t* transactionWrapper, bool own);
     TransactionWrapperHelper(const std::string& transactionWrapper);
@@ -70,12 +71,14 @@ public:
     operator ANY_t*();
     
     operator std::vector<uint8_t>();
+    operator std::string();
     
     keto::asn1::HashHelper getSourceAccount();
     keto::asn1::HashHelper getTargetAccount();
     keto::asn1::HashHelper getFeeAccount();
     keto::asn1::HashHelper getCurrentAccount();
     keto::asn1::HashHelper getHash();
+    keto::asn1::HashHelper getParentHash();
     keto::asn1::SignatureHelper getSignature();
     Status getStatus();
     Status incrementStatus();

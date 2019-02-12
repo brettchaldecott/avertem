@@ -38,31 +38,37 @@ public:
         return OBFUSCATED("$Id$");
     };
     static std::string getSourceVersion();
+
+    friend class BlockChain;
     
     SignedBlockBuilder();
-    SignedBlockBuilder(const SignedBlock_t* signedBlock);
-    SignedBlockBuilder(const std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr);
-    SignedBlockBuilder(Block_t* block,
+    SignedBlockBuilder(const BlockBuilderPtr& blockBuilderPtr);
+    SignedBlockBuilder(const BlockBuilderPtr& blockBuilderPtr,
         const std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr);
-    
+    SignedBlockBuilder(const keto::proto::SignedBlockWrapper& signedBlockWrapper);
+
     SignedBlockBuilder(const SignedBlockBuilder& orig) = delete;
     virtual ~SignedBlockBuilder();
-    
-    SignedBlockBuilder& setPrivateKey(
-            const std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr);
-    SignedBlockBuilder& setBlock(Block_t* block);
     
     SignedBlockBuilder& sign();
     SignedBlockBuilder& sign(std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr);
     
-    operator SignedBlock_t*();
-    operator SignedBlock_t&();
+    std::vector<SignedBlockBuilderPtr> getNestedBlocks();
+    keto::asn1::HashHelper getHash();
+    keto::asn1::HashHelper getParentHash();
+    operator keto::proto::SignedBlockWrapper() const;
     
 private:
     std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr;
     SignedBlock_t* signedBlock;
+    std::vector<SignedBlockBuilderPtr> nestedBlocks;
     
     keto::asn1::HashHelper getBlockHash(Block_t* block);
+    SignedBlockBuilder& setBlock(Block_t* block);
+
+    operator SignedBlock_t*();
+    operator SignedBlock_t&();
+
 };
 
 

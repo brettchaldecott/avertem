@@ -44,9 +44,14 @@ MemoryVaultEncryptor::MemoryVaultEncryptor() {
             Botan::BigInt randomNum(generator->random_vec(this->bits * 8));
             randomNum = Botan::power_mod(randomNum, index,twoBytesModulas);
             randomId = Botan::BigInt::encode(randomNum);
+            //std::cout << "The random id length : " << randomId.size() << std::endl;
+            if (randomId.size() == 1) {
+                randomId.insert(randomId.begin(),randomId.begin(),randomId.end());
+            }
+            //std::cout << "The random id length : " << randomId.size() << std::endl;
         }
-        while (this->bytesCiphers.count(randomId));
-        //std::cout << "The random id length : " << randomId.size() << std::endl;
+        while ( randomId.size() == 0 || this->bytesCiphers.count(randomId));
+        std::cout << "The random id length : " << randomId.size() << std::endl;
         memoryVaultCipherPtr->setId(randomId);
         this->bytesCiphers[randomId] = memoryVaultCipherPtr;
     }
@@ -120,6 +125,9 @@ void MemoryVaultEncryptor::decrypt(const keto::crypto::SecureVector& key, keto::
                 keto::crypto::SecureVector(&encryptedHash[index*2],&encryptedHash[(index*2)+2])));
         //std::cout << "The id is : " << Botan::hex_encode(entryId) << std::endl;
         MemoryVaultCipherPtr memoryVaultCipherPtr = this->bytesCiphers[entryId];
+        if (!memoryVaultCipherPtr) {
+            BOOST_THROW_EXCEPTION(InvalidCipherIDException());
+        }
 
         //std::cout << "Size of bytes : " << entryId.size() << std::endl;
 

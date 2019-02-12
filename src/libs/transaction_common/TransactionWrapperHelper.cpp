@@ -13,11 +13,13 @@
 
 #include "keto/transaction_common/TransactionWrapperHelper.hpp"
 #include "keto/common/MetaInfo.hpp"
+#include "keto/server_common/VectorUtils.hpp"
 #include "keto/asn1/HashHelper.hpp"
 #include "keto/asn1/SignatureHelper.hpp"
 #include "keto/transaction_common/Exception.hpp"
 #include "keto/asn1/SerializationHelper.hpp"
 #include "keto/asn1/DeserializationHelper.hpp"
+#include "keto/asn1/CloneHelper.hpp"
 
 namespace keto {
 namespace transaction_common {
@@ -42,6 +44,8 @@ TransactionWrapperHelper::TransactionWrapperHelper(SignedTransaction_t* signedTr
             signedTransaction->transactionHash);
     this->transactionWrapper->signature = keto::asn1::SignatureHelper(
             signedTransaction->signature);
+    this->transactionWrapper->parent = keto::asn1::HashHelper(
+            signedTransaction->transaction.parent);
     this->transactionWrapper->sourceAccount = keto::asn1::HashHelper(
             signedTransaction->transaction.sourceAccount);
     this->transactionWrapper->targetAccount = keto::asn1::HashHelper(
@@ -56,17 +60,21 @@ TransactionWrapperHelper::TransactionWrapperHelper(SignedTransaction_t* signedTr
     this->transactionWrapper = (TransactionWrapper_t*)calloc(1, sizeof *transactionWrapper);
     this->transactionWrapper->version = keto::common::MetaInfo::PROTOCOL_VERSION;
     this->transactionWrapper->signedTransaction = *signedTransaction;
-    this->transactionWrapper->sourceAccount = sourceAccount;
-    this->transactionWrapper->targetAccount = targetAccount;
     this->transactionWrapper->transactionHash = keto::asn1::HashHelper(
             signedTransaction->transactionHash);
     this->transactionWrapper->signature = keto::asn1::SignatureHelper(
             signedTransaction->signature);
+    this->transactionWrapper->parent = keto::asn1::HashHelper(
+            signedTransaction->transaction.parent);
     this->transactionWrapper->sourceAccount = sourceAccount;
     this->transactionWrapper->targetAccount = targetAccount;
     
 }
 
+TransactionWrapperHelper::TransactionWrapperHelper(const TransactionWrapper_t& transactionWrapper) {
+    this->transactionWrapper = keto::asn1::clone<TransactionWrapper_t>(&transactionWrapper,&asn_DEF_TransactionWrapper);
+    this->own = true;
+}
 
 TransactionWrapperHelper::TransactionWrapperHelper(TransactionWrapper_t* transactionWrapper) :
     transactionWrapper(transactionWrapper) {
@@ -102,7 +110,9 @@ TransactionWrapperHelper& TransactionWrapperHelper::setSignedTransaction(
             signedTransaction->transactionHash);
     this->transactionWrapper->signature = keto::asn1::SignatureHelper(
             signedTransaction->signature);
-    
+    this->transactionWrapper->parent = keto::asn1::HashHelper(
+            signedTransaction->transaction.parent);
+
     return (*this);
 }
 
@@ -167,6 +177,13 @@ TransactionWrapperHelper::operator std::vector<uint8_t>() {
     return keto::asn1::SerializationHelper<TransactionWrapper>(this->transactionWrapper,
         &asn_DEF_TransactionWrapper).operator std::vector<uint8_t>&();
 }
+
+
+TransactionWrapperHelper::operator std::string() {
+    std::vector<uint8_t> bytes = keto::asn1::SerializationHelper<TransactionWrapper>(this->transactionWrapper,
+                                                               &asn_DEF_TransactionWrapper);
+    return keto::server_common::VectorUtils().copyVectorToString(bytes);
+}
     
 
 TransactionWrapperHelper::operator ANY_t*() {
@@ -192,6 +209,11 @@ keto::asn1::HashHelper TransactionWrapperHelper::getFeeAccount() {
 
 keto::asn1::HashHelper TransactionWrapperHelper::getHash() {
     return this->transactionWrapper->transactionHash;
+}
+
+
+keto::asn1::HashHelper TransactionWrapperHelper::getParentHash() {
+    return this->transactionWrapper->parent;
 }
 
 keto::asn1::SignatureHelper TransactionWrapperHelper::getSignature() {

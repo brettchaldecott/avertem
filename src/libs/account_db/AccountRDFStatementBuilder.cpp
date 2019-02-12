@@ -12,6 +12,7 @@
  */
 
 #include <vector>
+#include <sstream>
 
 #include "TransactionMessage.h"
 
@@ -22,6 +23,7 @@
 #include "keto/account_db/AccountSystemOntologyTypes.hpp"
 #include "keto/transaction_common/TransactionWrapperHelper.hpp"
 #include "keto/crypto/SecureVectorUtils.hpp"
+#include "keto/asn1/Constants.hpp"
 
 namespace keto {
 namespace account_db {
@@ -31,11 +33,15 @@ std::string AccountRDFStatementBuilder::getSourceVersion() {
 }
     
 AccountRDFStatementBuilder::AccountRDFStatementBuilder(
-    const keto::transaction_common::TransactionMessageHelperPtr& transactionMessageHelper,
-    bool existingAccount) :
-    transactionMessageHelper(transactionMessageHelper) {
-    keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelperPtr = transactionMessageHelper->getTransactionWrapper();
-    
+        const keto::asn1::HashHelper& chainId,
+        const keto::asn1::HashHelper& blockId,
+        const keto::transaction_common::TransactionWrapperHelperPtr& transactionWrapperHelperPtr,
+        bool existingAccount) :
+        newChain(false),
+        chainId(chainId),
+        blockId(blockId),
+        transactionWrapperHelperPtr(transactionWrapperHelperPtr) {
+
     this->accountInfo.set_version(keto::common::MetaInfo::PROTOCOL_VERSION);
     
     keto::asn1::HashHelper accountHash;
@@ -46,6 +52,53 @@ AccountRDFStatementBuilder::AccountRDFStatementBuilder(
     } else if ((transactionWrapperHelperPtr->getStatus() == Status_credit) || (transactionWrapperHelperPtr->getStatus() == Status_complete)) {
         accountHash = transactionWrapperHelperPtr->getTargetAccount();
     }
+
+    // build the block chain rdf statement
+    this->rdfModelHelperPtr = keto::asn1::RDFModelHelperPtr(new keto::asn1::RDFModelHelper());
+
+    keto::asn1::RDFSubjectHelper blockRDFSubject(buildRdfUri(AccountSystemOntologyTypes::BLOCK_ONTOLOGY_CLASS,
+            blockId.getHash(keto::common::StringEncoding::HEX)));
+    keto::asn1::RDFPredicateHelper blockIdPredicate = buildPredicate(AccountSystemOntologyTypes::BLOCK_PREDICATES::ID,
+            blockId.getHash(keto::common::StringEncoding::HEX),
+            keto::asn1::Constants::RDF_TYPES::STRING,
+            keto::asn1::Constants::RDF_NODE::LITERAL);
+    blockRDFSubject.addPredicate(blockIdPredicate);
+    keto::asn1::RDFPredicateHelper chainRDFPredicate = buildPredicate(AccountSystemOntologyTypes::BLOCK_PREDICATES::CHAIN,
+            buildRdfUri(AccountSystemOntologyTypes::CHAIN_ONTOLOGY_CLASS,
+            chainId.getHash(keto::common::StringEncoding::HEX)),
+            keto::asn1::Constants::RDF_TYPES::STRING,
+            keto::asn1::Constants::RDF_NODE::URI);
+    blockRDFSubject.addPredicate(chainRDFPredicate);
+
+    this->rdfModelHelperPtr->addSubject(blockRDFSubject);
+
+
+    // build the transaction statement
+    keto::asn1::RDFSubjectHelper transactionRDFSubject(buildRdfUri(AccountSystemOntologyTypes::TRANSACTION_ONTOLOGY_CLASS,
+            transactionWrapperHelperPtr->getHash().getHash(keto::common::StringEncoding::HEX)));
+    keto::asn1::RDFPredicateHelper transactionIdPredicate = buildPredicate(AccountSystemOntologyTypes::TRANSACTION_PREDICATES::ID,
+            transactionWrapperHelperPtr->getHash().getHash(keto::common::StringEncoding::HEX),
+            keto::asn1::Constants::RDF_TYPES::STRING,
+            keto::asn1::Constants::RDF_NODE::LITERAL);
+    transactionRDFSubject.addPredicate(transactionIdPredicate);
+    keto::asn1::RDFPredicateHelper transactionBlockRDFPredicate = buildPredicate(AccountSystemOntologyTypes::TRANSACTION_PREDICATES::BLOCK,
+            buildRdfUri(AccountSystemOntologyTypes::BLOCK_ONTOLOGY_CLASS,
+            blockId.getHash(keto::common::StringEncoding::HEX)),
+            keto::asn1::Constants::RDF_TYPES::STRING,
+            keto::asn1::Constants::RDF_NODE::URI);
+    transactionRDFSubject.addPredicate(transactionBlockRDFPredicate);
+    keto::asn1::RDFPredicateHelper transactionDateRDFPredicate = buildPredicate(AccountSystemOntologyTypes::TRANSACTION_PREDICATES::DATE,
+            buildTimeString(transactionWrapperHelperPtr->getSignedTransaction()->getTransaction()->getDate()),
+            keto::asn1::Constants::RDF_TYPES::DATE_TIME,
+            keto::asn1::Constants::RDF_NODE::LITERAL);
+    transactionRDFSubject.addPredicate(transactionDateRDFPredicate);
+
+    this->rdfModelHelperPtr->addSubject(transactionRDFSubject);
+
+
+
+    // add the statement to the beginning of the list
+    statements.push_back(AccountRDFStatementPtr(new AccountRDFStatement(this->rdfModelHelperPtr)));
     
     for (int count = 0; count < 
             transactionWrapperHelperPtr->operator TransactionWrapper_t&().changeSet.list.count; count++) {
@@ -58,6 +111,16 @@ AccountRDFStatementBuilder::AccountRDFStatementBuilder(
             for (std::string subject : accountRDFStatement->getModel()->subjects()) {
                 keto::asn1::RDFSubjectHelperPtr subjectPtr = 
                         accountRDFStatement->getModel()->operator [](subject);
+
+                // add the account information
+                keto::asn1::RDFPredicateHelper transactionAccountRDFPredicate =
+                        buildPredicate(AccountSystemOntologyTypes::ACCOUNT_PREDICATES::TRANSACTION,
+                                       buildRdfUri(AccountSystemOntologyTypes::TRANSACTION_ONTOLOGY_CLASS,
+                                                   transactionWrapperHelperPtr->getHash().getHash(keto::common::StringEncoding::HEX)),
+                                       keto::asn1::Constants::RDF_TYPES::STRING,
+                                       keto::asn1::Constants::RDF_NODE::URI);
+                subjectPtr->addPredicate(transactionAccountRDFPredicate);
+
                 if (!AccountSystemOntologyTypes::validateClassOperation(
                     accountHash,existingAccount,subjectPtr)) {
                     BOOST_THROW_EXCEPTION(keto::account_db::InvalidAccountOperationException());
@@ -84,7 +147,7 @@ AccountRDFStatementBuilder::AccountRDFStatementBuilder(
                     }
                     accountInfo.set_account_type(
                         (*subjectPtr)[AccountSystemOntologyTypes::ACCOUNT_PREDICATES::TYPE]->getStringLiteral());
-                    
+
                 }
             }
             statements.push_back(accountRDFStatement);
@@ -108,7 +171,54 @@ keto::proto::AccountInfo AccountRDFStatementBuilder::getAccountInfo() {
 std::string AccountRDFStatementBuilder::accountAction() {
     return this->action;
 }
-    
+
+bool AccountRDFStatementBuilder::isNewChain() {
+    return this->newChain;
+}
+
+void AccountRDFStatementBuilder::setNewChain(bool newChain) {
+
+    // build the chain statement
+    keto::asn1::RDFSubjectHelper chainRDFSubject(buildRdfUri(AccountSystemOntologyTypes::CHAIN_ONTOLOGY_CLASS,
+            chainId.getHash(keto::common::StringEncoding::HEX)));
+    keto::asn1::RDFPredicateHelper chainIdPredicate = buildPredicate(AccountSystemOntologyTypes::CHAIN_PREDICATES::ID,
+                                                                     chainId.getHash(keto::common::StringEncoding::HEX),
+                                                                     keto::asn1::Constants::RDF_TYPES::STRING,
+                                                                     keto::asn1::Constants::RDF_NODE::LITERAL);
+    chainRDFSubject.addPredicate(chainIdPredicate);
+
+    this->rdfModelHelperPtr->addSubject(chainRDFSubject);
+
+    this->newChain = newChain;
+
+}
+
+
+std::string AccountRDFStatementBuilder::buildRdfUri(const std::string uri, const std::string id) {
+    std::stringstream ss;
+    ss << uri << "/" << id;
+    return ss.str();
+}
+
+
+keto::asn1::RDFPredicateHelper AccountRDFStatementBuilder::buildPredicate(const std::string& predicate,
+        const std::string& value, const std::string& type, const std::string& dataType) {
+    keto::asn1::RDFPredicateHelper rdfPredicate(predicate);
+    keto::asn1::RDFObjectHelper objectHelper(value,keto::asn1::Constants::RDF_NODE::URI,
+                                            keto::asn1::Constants::RDF_TYPES::STRING);
+    rdfPredicate.addObject(objectHelper);
+    return rdfPredicate;
+}
+
+std::string AccountRDFStatementBuilder::buildTimeString(const std::time_t value) {
+    struct tm  tstruct;
+    char       buf[80];
+    struct tm result;
+    localtime_r(&value,&result);
+    strftime(buf, sizeof(buf), "%Y-%m-%dT%X", &tstruct);
+    return buf;
+}
+
 
 
 }

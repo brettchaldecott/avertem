@@ -45,28 +45,38 @@ public:
     };
     static std::string getSourceVersion();
 
+    friend class SignedBlockBuilder;
+
     BlockBuilder();
     BlockBuilder(const keto::asn1::HashHelper& parentHash);
     BlockBuilder(const BlockBuilder& orig) = delete;
     virtual ~BlockBuilder();
-    
-    
+
+
+
     BlockBuilder& addTransactionMessage(
             const keto::transaction_common::TransactionMessageHelperPtr transaction);
     BlockBuilder& setAcceptedCheck(SoftwareConsensus_t* softwareConsensus);
     BlockBuilder& setValidateCheck(SoftwareConsensus_t* softwareConsensus);
 
+    std::vector<keto::asn1::HashHelper> getCurrentHashs();
+
+    std::vector<BlockBuilderPtr> getNestedBlocks();
+
+    bool matches(const keto::asn1::HashHelper& parentHash);
+
+private:
+    Block_t* block;
+    keto::asn1::HashHelper parentHash;
+    std::vector<BlockBuilderPtr> nestedBlocks;
+    std::set<std::vector<std::uint8_t>> transactionIds;
+
     operator Block_t*();
     operator Block_t&();
 
-    std::vector<keto::asn1::HashHelper> getCurrentHashs();
-    
-private:
-    Block_t* block;
-    
-    
-    
-    
+
+
+
 
 };
 

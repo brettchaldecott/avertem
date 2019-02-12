@@ -36,7 +36,10 @@ RDFObjectHelper::RDFObjectHelper(const RDFObject& rdfObject) :
 RDFObjectHelper::RDFObjectHelper(const std::string& value, const std::string& dataType) :
     value(value),type(Constants::RDF_NODE::LITERAL), lang(Constants::RDF_LANGUAGE), dataType(dataType) {
 }
-    
+
+RDFObjectHelper::RDFObjectHelper(const std::string& value,const std::string& type , const std::string& dataType) :
+        value(value),type(type), lang(Constants::RDF_LANGUAGE), dataType(dataType) {
+}
 
 RDFObjectHelper::~RDFObjectHelper() {
 }

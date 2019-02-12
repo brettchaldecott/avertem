@@ -87,13 +87,13 @@ bool AccountStore::getAccountInfo(const keto::asn1::HashHelper& accountHash,
 
 
 void AccountStore::applyTransaction(
-        const keto::transaction_common::TransactionMessageHelperPtr& transactionMessageHelper) {
+        const keto::asn1::HashHelper& chainId,const keto::asn1::HashHelper& blockId,
+        const keto::transaction_common::TransactionWrapperHelperPtr& transactionWrapperHelperPtr) {
     AccountResourcePtr resource = accountResourceManagerPtr->getResource();
     keto::proto::AccountInfo accountInfo;
     AccountRDFStatementBuilderPtr accountRDFStatementBuilder;
     keto::asn1::HashHelper accountHash;
-    keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelperPtr = 
-        transactionMessageHelper->getTransactionWrapper();
+
     if ((transactionWrapperHelperPtr->getStatus() == Status_debit) || (transactionWrapperHelperPtr->getStatus() == Status_init)) {
         accountHash = transactionWrapperHelperPtr->getSourceAccount();
     } else if (transactionWrapperHelperPtr->getStatus() == Status_fee) {
@@ -104,13 +104,13 @@ void AccountStore::applyTransaction(
     
     if (!getAccountInfo(accountHash,accountInfo)) {
         accountRDFStatementBuilder =  AccountRDFStatementBuilderPtr(
-                new AccountRDFStatementBuilder(
-                transactionMessageHelper,false));
-        createAccount(accountHash,transactionMessageHelper,accountRDFStatementBuilder,accountInfo);
+                new AccountRDFStatementBuilder(chainId,blockId,
+                        transactionWrapperHelperPtr,false));
+        createAccount(chainId, accountHash,transactionWrapperHelperPtr,accountRDFStatementBuilder,accountInfo);
     } else {
         accountRDFStatementBuilder =  AccountRDFStatementBuilderPtr(
-                new AccountRDFStatementBuilder(
-                transactionMessageHelper,true));
+                new AccountRDFStatementBuilder(chainId,blockId,
+                        transactionWrapperHelperPtr,true));
     }
     AccountGraphSessionPtr sessionPtr = resource->getGraphSession(accountInfo.graph_name());
         
@@ -162,8 +162,9 @@ void AccountStore::getContract(
 
 
 void AccountStore::createAccount(
+            const keto::asn1::HashHelper& chainId,
             const keto::asn1::HashHelper& accountHash,
-            const keto::transaction_common::TransactionMessageHelperPtr& transactionMessageHelper,
+            const keto::transaction_common::TransactionWrapperHelperPtr& transactionWrapperHelperPtr,
             AccountRDFStatementBuilderPtr accountRDFStatementBuilder,
             keto::proto::AccountInfo& accountInfo) {
     if (accountRDFStatementBuilder->accountAction().compare(
@@ -183,10 +184,11 @@ void AccountStore::createAccount(
         if (accountInfo.parent_account_hash().empty()) {
             accountInfo.set_graph_name(Constants::BASE_GRAPH);
         } else {
-            accountInfo.set_graph_name(accountHash.getHash(keto::common::HEX));
+            accountInfo.set_graph_name(chainId.getHash(keto::common::HEX));
         }
         if (!this->accountGraphStoreManagerPtr->checkForDb(accountInfo.graph_name())) {
             this->accountGraphStoreManagerPtr->createStore(accountInfo.graph_name());
+            accountRDFStatementBuilder->setNewChain(true);
         }
     } else {
         keto::asn1::HashHelper parentAccountHash(

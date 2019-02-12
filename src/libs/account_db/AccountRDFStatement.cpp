@@ -26,7 +26,11 @@ namespace account_db {
 std::string AccountRDFStatement::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
-    
+
+AccountRDFStatement::AccountRDFStatement(const keto::asn1::RDFModelHelperPtr& rdfModelHelper) {
+    this->rdfModelHelper = rdfModelHelper;
+}
+
 AccountRDFStatement::AccountRDFStatement(ChangeData* changeData) {
     if (changeData->present != ChangeData_PR_asn1Change) {
         BOOST_THROW_EXCEPTION(keto::account_db::UnsupportedChangeTypeFormatException());

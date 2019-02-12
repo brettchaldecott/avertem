@@ -56,15 +56,13 @@ public:
     TransactionMessageHelper(const TransactionMessageHelper& orig);
     virtual ~TransactionMessageHelper();
     
-    TransactionMessageHelper& setEncrypted(bool encrypted);
     TransactionMessageHelper& setTransactionWrapper(TransactionWrapper_t* transactionWrapper);
     TransactionMessageHelper& setTransactionWrapper(const TransactionWrapperHelperPtr& transactionWrapper);
     TransactionWrapperHelperPtr getTransactionWrapper();
     TransactionMessageHelper& addNestedTransaction(TransactionMessage_t* nestedTransaction);
     TransactionMessageHelper& addNestedTransaction(const TransactionMessageHelperPtr& nestedTransaction);
     TransactionMessageHelper& addNestedTransaction(const TransactionMessageHelper& nestedTransaction);
-    int numberOfNestedTransactions();
-    TransactionMessageHelperPtr getNestedTransaction(int index);
+    std::vector<TransactionMessageHelperPtr> getNestedTransactions();
     
     
     TransactionMessageHelper& operator =(const std::string& transactionMessage);
@@ -87,7 +85,6 @@ public:
     
     
 private:
-    bool encrypt;
     TransactionMessage_t* transactionMessage;
     std::vector<TransactionMessageHelperPtr> nestedTransactions;
     

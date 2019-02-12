@@ -52,6 +52,8 @@ public:
     keto::asn1::TimeHelper getDate();
     keto::asn1::HashHelper getSourceAccount();
     keto::asn1::HashHelper getTargetAccount();
+    bool isEncrypted();
+    void setEncrypted(bool encrypted);
     
     std::vector<ActionHelperPtr> getActions();
     

@@ -188,12 +188,12 @@ void GenesisLoader::load() {
     }
     
     keto::block_db::SignedBlockBuilderPtr signedBlockBuilderPtr(new keto::block_db::SignedBlockBuilder(
-            blockBuilderPtr->operator Block_t*(),
+            blockBuilderPtr,
             keyLoaderPtr));
     signedBlockBuilderPtr->sign();
     
     KETO_LOG_INFO << "Create the genesis BLOCK";
-    keto::block_db::BlockChainStore::getInstance()->writeBlock(*signedBlockBuilderPtr);
+    keto::block_db::BlockChainStore::getInstance()->writeBlock(signedBlockBuilderPtr);
     KETO_LOG_INFO << "Created the genesis BLOCK";
         
 }

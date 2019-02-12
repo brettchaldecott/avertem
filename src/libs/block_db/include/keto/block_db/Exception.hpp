@@ -31,7 +31,9 @@ KETO_DECLARE_DERIVED_EXCEPTION (DBException, FailedToAddTheChangeSetException , 
 KETO_DECLARE_DERIVED_EXCEPTION (DBException, SignedChangeSetReleasedException , "The change set has been released.");
 KETO_DECLARE_DERIVED_EXCEPTION (DBException, SignedBlockReleasedException , "The signed block has been released.");
 KETO_DECLARE_DERIVED_EXCEPTION (DBException, SignedBlockFailureException , "Failed to sign a block.");
-KETO_DECLARE_DERIVED_EXCEPTION (DBException, InvalidParentKeyIdentifierException , "The parent key identifier is invalid.");
+KETO_DECLARE_DERIVED_EXCEPTION (DBException, InvalidParentHashIdentifierException , "The parent hash identifier is invalid.");
+KETO_DECLARE_DERIVED_EXCEPTION (DBException, InvalidLastBlockHashException , "The hash could not be found.");
+KETO_DECLARE_DERIVED_EXCEPTION (DBException, InvalidTransactionHashException , "The hash is invalid.");
 
     
 }

@@ -22,6 +22,9 @@
 #include "keto/asn1/HashHelper.hpp"
 #include "keto/rocks_db/DBManager.hpp"
 #include "keto/block_db/BlockResourceManager.hpp"
+#include "keto/block_db/BlockChain.hpp"
+#include "keto/block_db/SignedBlockBuilder.hpp"
+#include "keto/block_db/BlockChainCallback.hpp"
 
 #include "keto/obfuscate/MetaString.hpp"
 
@@ -43,17 +46,18 @@ public:
     static std::shared_ptr<BlockChainStore> init();
     static void fin();
     static std::shared_ptr<BlockChainStore> getInstance();
-    
+
+
+
     bool requireGenesis();
-    void writeBlock(SignedBlock& signedBlock);
+    void writeBlock(const SignedBlockBuilderPtr& signedBlock, const BlockChainCallback& callback);
     keto::asn1::HashHelper getParentHash();
-    long getBlockCount();
-    
+    keto::asn1::HashHelper getParentHash(const keto::asn1::HashHelper& transactionHash);
+
 private:
     std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr;
     BlockResourceManagerPtr blockResourceManagerPtr;
-    keto::asn1::HashHelper parentBlock;
-    long blockCount;
+    BlockChainPtr masterChain;
 };
 
 

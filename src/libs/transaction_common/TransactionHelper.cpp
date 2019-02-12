@@ -51,6 +51,14 @@ keto::asn1::HashHelper TransactionHelper::getTargetAccount() {
     return transaction->targetAccount;
 }
 
+bool TransactionHelper::isEncrypted() {
+    return transaction->encrypted;
+}
+
+void TransactionHelper::setEncrypted(bool encrypted) {
+    transaction->encrypted = encrypted;
+}
+
 std::vector<ActionHelperPtr> TransactionHelper::getActions() {
     std::vector<ActionHelperPtr> result;
     for (int index = 0; index < transaction->actions.list.count; index++) {

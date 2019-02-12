@@ -14,12 +14,14 @@
 #include <vector>
 
 #include "keto/common/MetaInfo.hpp"
+#include "keto/block_db/Constants.hpp"
 #include "keto/block_db/BlockBuilder.hpp"
 #include "keto/block_db/Exception.hpp"
 #include "keto/block_db/MerkleUtils.hpp"
 #include "keto/block_db/SignedChangeSetBuilder.hpp"
 #include "keto/block_db/MerkleUtils.hpp"
 #include "keto/block_db/BlockBuilder.hpp"
+#include "keto/block_db/BlockChainStore.hpp"
 #include "keto/asn1/CloneHelper.hpp"
 
 
@@ -62,6 +64,29 @@ BlockBuilder& BlockBuilder::addTransactionMessage(
             transaction->getTransactionWrapper()->operator TransactionWrapper_t*(),
             &asn_DEF_TransactionWrapper))) {
         BOOST_THROW_EXCEPTION(keto::block_db::FailedToAddTheTransactionException());
+    }
+    this->transactionIds.insert(transaction->getTransactionWrapper()->getHash());
+
+    for (keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr: transaction->getNestedTransactions()) {
+        keto::asn1::HashHelper currentParentHash = transactionMessageHelperPtr->getTransactionWrapper()->getParentHash();
+        BlockBuilderPtr blockBuilderPtr;
+        if (keto::block_db::Constants::GENESIS_HASH == currentParentHash) {
+            blockBuilderPtr = BlockBuilderPtr(new BlockBuilder(keto::block_db::Constants::GENESIS_HASH));
+            this->nestedBlocks.push_back(blockBuilderPtr);
+        } else {
+            for (BlockBuilderPtr nestedBlockBuilderPtr: this->nestedBlocks) {
+                if (nestedBlockBuilderPtr->matches(currentParentHash)) {
+                    blockBuilderPtr = nestedBlockBuilderPtr;
+                    break;
+                }
+            }
+            if (!blockBuilderPtr) {
+                blockBuilderPtr = BlockBuilderPtr(new BlockBuilder(
+                        BlockChainStore::getInstance()->getParentHash(currentParentHash)));
+                this->nestedBlocks.push_back(blockBuilderPtr);
+            }
+        }
+        blockBuilderPtr->addTransactionMessage(transactionMessageHelperPtr);
     }
     return (*this);
 }
@@ -122,6 +147,24 @@ std::vector<keto::asn1::HashHelper> BlockBuilder::getCurrentHashs() {
         BOOST_THROW_EXCEPTION(keto::block_db::ZeroLengthHashListException());
     }
     return hashs;
+}
+
+
+std::vector<BlockBuilderPtr> BlockBuilder::getNestedBlocks() {
+    return this->nestedBlocks;
+}
+
+bool BlockBuilder::matches(const keto::asn1::HashHelper& parentHash) {
+    if (this->parentHash == parentHash) {
+        return true;
+    }
+    if (this->transactionIds.count((std::vector<uint8_t>)parentHash)) {
+        return true;
+    }
+    if (BlockChainStore::getInstance()->getParentHash(parentHash) == this->parentHash) {
+        return true;
+    }
+    return false;
 }
 
 }

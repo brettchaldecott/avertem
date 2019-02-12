@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/timestamp.proto";
+
 package keto.proto;
 
 enum TransactionStatus {
@@ -29,17 +31,16 @@ message Transaction {
     bytes asn1_transaction_message = 5;
 }
 
-
-/**
- * The block definition
- */
-message Block {
-    bytes block_hash = 1;
-    bytes block_parent_hash = 2;
-    bytes block_signature = 3;
-    bytes asn1_block = 4;
+message AccountTransactionInfo {
+    bytes blockchain_id = 1;
+    bytes block_id = 2;
+    bytes asn1_transaction_message = 3;
 }
 
+message SignedBlockWrapper {
+    bytes asn1_block_message = 1;
+    repeated SignedBlockWrapper nested_blocks = 2;
+}
 
 /**
  * The change set
@@ -47,3 +48,5 @@ message Block {
 message ChangeSet {
     bytes asn1_change_set = 1;
 }
+
+

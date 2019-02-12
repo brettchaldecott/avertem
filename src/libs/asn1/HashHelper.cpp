@@ -39,7 +39,13 @@ HashHelper::HashHelper(const std::string& hash) {
         this->hash.push_back(entry);
     }
 }
-    
+
+
+HashHelper::HashHelper(const std::vector<uint8_t>& hash) {
+    for (uint8_t entry: hash) {
+        this->hash.push_back(entry);
+    }
+}
 
 HashHelper::HashHelper(const keto::crypto::SecureVector& hash) {
     this->hash = hash;

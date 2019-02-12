@@ -14,6 +14,10 @@ add_library( keto_block_db
             MerkleUtils.cpp
             SignedChangeSetBuilder.cpp
             SignedBlockBuilder.cpp
+            BlockChain.cpp
+            BlockChainMeta.cpp
+            BlockChainTangleMeta.cpp
+            include/keto/block_db/BlockChainCallback.hpp
 
              ${HEADERS}
            )

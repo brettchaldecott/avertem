@@ -35,52 +35,47 @@ SignedBlockBuilder::SignedBlockBuilder() {
     this->signedBlock->date = keto::asn1::TimeHelper();
 }
 
-SignedBlockBuilder::SignedBlockBuilder(const SignedBlock_t* signedBlock) {
-    this->signedBlock = keto::asn1::clone<SignedBlock_t>(signedBlock,&asn_DEF_SignedBlock);
-}
-
-SignedBlockBuilder::SignedBlockBuilder(
-    const std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr) : 
-        keyLoaderPtr(keyLoaderPtr) {
-    this->signedBlock = (SignedBlock_t*)calloc(1, sizeof *signedBlock);
-    this->signedBlock->date = keto::asn1::TimeHelper();
-}
-
-SignedBlockBuilder::SignedBlockBuilder(Block_t* block,
-    const std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr) : 
-        keyLoaderPtr(keyLoaderPtr) {
+SignedBlockBuilder::SignedBlockBuilder(const BlockBuilderPtr& blockBuilderPtr) {
+    Block_t* block = *blockBuilderPtr;
     this->signedBlock = (SignedBlock_t*)calloc(1, sizeof *signedBlock);
     this->signedBlock->date = keto::asn1::TimeHelper();
     this->signedBlock->block = *block;
     this->signedBlock->parent = keto::asn1::HashHelper(block->parent);
     this->signedBlock->hash = getBlockHash(block);
     free(block);
+    for (BlockBuilderPtr nestedBlock : blockBuilderPtr->getNestedBlocks()) {
+        this->nestedBlocks.push_back(SignedBlockBuilderPtr(new SignedBlockBuilder(nestedBlock)));
+    }
+}
+
+SignedBlockBuilder::SignedBlockBuilder(const BlockBuilderPtr& blockBuilderPtr,
+    const std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr) : 
+        keyLoaderPtr(keyLoaderPtr) {
+    Block_t* block = *blockBuilderPtr;
+    this->signedBlock = (SignedBlock_t*)calloc(1, sizeof *signedBlock);
+    this->signedBlock->date = keto::asn1::TimeHelper();
+    this->signedBlock->block = *block;
+    this->signedBlock->parent = keto::asn1::HashHelper(block->parent);
+    this->signedBlock->hash = getBlockHash(block);
+    free(block);
+    for (BlockBuilderPtr nestedBlock : blockBuilderPtr->getNestedBlocks()) {
+        this->nestedBlocks.push_back(SignedBlockBuilderPtr(new SignedBlockBuilder(nestedBlock,keyLoaderPtr)));
+    }
+}
+
+
+SignedBlockBuilder::SignedBlockBuilder(const keto::proto::SignedBlockWrapper& signedBlockWrapper) {
+
 }
 
 SignedBlockBuilder::~SignedBlockBuilder() {
+    this->nestedBlocks.clear();
     if (this->signedBlock) {
         ASN_STRUCT_FREE(asn_DEF_SignedBlock, signedBlock);
         signedBlock = NULL;
     }
 }
 
-
-SignedBlockBuilder& SignedBlockBuilder::setPrivateKey(
-    const std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr) {
-    this->keyLoaderPtr = keyLoaderPtr;
-    return (*this);
-}
-
-SignedBlockBuilder& SignedBlockBuilder::setBlock(Block_t* block) {
-    if (!this->signedBlock) {
-        BOOST_THROW_EXCEPTION(keto::block_db::SignedBlockReleasedException());
-    }
-    this->signedBlock->block = *block;
-    this->signedBlock->parent = keto::asn1::HashHelper(block->parent);
-    this->signedBlock->hash = getBlockHash(block);
-    free(block);
-    return (*this);
-}
 
 SignedBlockBuilder& SignedBlockBuilder::sign() {
     if (!this->signedBlock) {
@@ -91,6 +86,9 @@ SignedBlockBuilder& SignedBlockBuilder::sign() {
     keto::asn1::SignatureHelper signatureHelper(generator.sign(hashHelper));
     if (0 != ASN_SEQUENCE_ADD(&this->signedBlock->signatures,(Signature_t*)signatureHelper)) {
         BOOST_THROW_EXCEPTION(keto::block_db::FailedToAddTheTransactionException());
+    }
+    for (SignedBlockBuilderPtr signedBlockBuilderPtr: nestedBlocks) {
+        signedBlockBuilderPtr->sign();
     }
     return (*this);
     
@@ -106,6 +104,9 @@ SignedBlockBuilder& SignedBlockBuilder::sign(std::shared_ptr<keto::crypto::KeyLo
     if (0 != ASN_SEQUENCE_ADD(&this->signedBlock->signatures,(Signature_t*)signatureHelper)) {
         BOOST_THROW_EXCEPTION(keto::block_db::FailedToAddTheTransactionException());
     }
+    for (SignedBlockBuilderPtr signedBlockBuilderPtr: nestedBlocks) {
+        signedBlockBuilderPtr->sign(keyLoaderPtr);
+    }
     return (*this);
 
 }
@@ -120,6 +121,26 @@ SignedBlockBuilder::operator SignedBlock_t&() {
     return *this->signedBlock;
 }
 
+
+std::vector<SignedBlockBuilderPtr> SignedBlockBuilder::getNestedBlocks() {
+    return this->nestedBlocks;
+}
+
+keto::asn1::HashHelper SignedBlockBuilder::getParentHash() {
+    return this->signedBlock->block.parent;
+}
+
+keto::asn1::HashHelper SignedBlockBuilder::getHash() {
+    return this->signedBlock->hash;
+}
+
+
+SignedBlockBuilder::operator keto::proto::SignedBlockWrapper() const {
+    keto::proto::SignedBlockWrapper signedBlockWrapper;
+    
+
+    return signedBlockWrapper;
+}
 
 keto::asn1::HashHelper SignedBlockBuilder::getBlockHash(Block_t* block) {
     keto::asn1::SerializationHelper<Block_t> serializationHelper(block, &asn_DEF_Block);

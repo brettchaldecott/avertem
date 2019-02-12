@@ -25,6 +25,7 @@
 #include "keto/account/AccountService.hpp"
 #include "keto/account_db/AccountStore.hpp"
 #include "keto/transaction_common/TransactionProtoHelper.hpp"
+#include "keto/transaction_common/AccountTransactionInfoProtoHelper.hpp"
 #include "keto/crypto/SecureVectorUtils.hpp"
 
 namespace keto {
@@ -59,15 +60,15 @@ std::shared_ptr<AccountService> AccountService::getInstance() {
 }
 
 keto::event::Event AccountService::applyTransaction(const keto::event::Event& event) {
-    keto::proto::Transaction  transaction = 
-            keto::server_common::fromEvent<keto::proto::Transaction>(event);
-    
-    keto::transaction_common::TransactionProtoHelper transactionProtoHelper;
-    transactionProtoHelper = transaction;
+    keto::proto::AccountTransactionInfo transaction =
+            keto::server_common::fromEvent<keto::proto::AccountTransactionInfo>(event);
+    keto::transaction_common::AccountTransactionInfoProtoHelper accountTransactionInfoProtoHelper(transaction);
+    accountTransactionInfoProtoHelper.getTransaction();
     keto::account_db::AccountStore::getInstance()->applyTransaction(
-        transactionProtoHelper.getTransactionMessageHelper());
+        accountTransactionInfoProtoHelper.getBlockChainId(),accountTransactionInfoProtoHelper.getBlockId(),
+        accountTransactionInfoProtoHelper.getTransaction());
     
-    return keto::server_common::toEvent<keto::proto::Transaction>(transaction);
+    return keto::server_common::toEvent<keto::proto::AccountTransactionInfo>(transaction);
 }
     
 

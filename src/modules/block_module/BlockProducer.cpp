@@ -30,6 +30,7 @@
 
 #include "include/keto/block/BlockProducer.hpp"
 #include "include/keto/block/Exception.hpp"
+#include "include/keto/block/BlockChainCallbackImpl.hpp"
 
 #include "keto/transaction/Transaction.hpp"
 #include "keto/server_common/TransactionHelper.hpp"
@@ -210,7 +211,7 @@ void BlockProducer::generateBlock(std::deque<keto::proto::Transaction> transacti
             keto::server_common::fromEvent<keto::proto::Transaction>(
             keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::Transaction>(
             keto::server_common::Events::APPLY_ACCOUNT_TRANSACTION_MESSAGE,transaction))));
-        
+
         blockBuilderPtr->addTransactionMessage(transactionProtoHelper.getTransactionMessageHelper());
     }
     blockBuilderPtr->setAcceptedCheck(this->consensusMessageHelper.getMsg());
@@ -230,15 +231,14 @@ void BlockProducer::generateBlock(std::deque<keto::proto::Transaction> transacti
     blockBuilderPtr->setValidateCheck(consensusMessageHelper.getMsg());
 
     keto::block_db::SignedBlockBuilderPtr signedBlockBuilderPtr(new keto::block_db::SignedBlockBuilder(
-            blockBuilderPtr->operator Block_t*(),
+            blockBuilderPtr,
             keyLoaderPtr));
     signedBlockBuilderPtr->sign();
     
     KETO_LOG_INFO << "Write a block";
-    keto::block_db::BlockChainStore::getInstance()->writeBlock(*signedBlockBuilderPtr);
-    KETO_LOG_INFO << "Wrote a block [" << 
-            keto::block_db::BlockChainStore::getInstance()->getBlockCount() << "][" <<
-            keto::block_db::BlockChainStore::getInstance()->getParentHash().getHash(keto::common::HEX)
+    keto::block_db::BlockChainStore::getInstance()->writeBlock(signedBlockBuilderPtr,BlockChainCallbackImpl());
+    KETO_LOG_INFO << "Wrote a block [" <<
+            signedBlockBuilderPtr->getHash().getHash(keto::common::StringEncoding::HEX)
             << "]";
     
     transactionPtr->commit();

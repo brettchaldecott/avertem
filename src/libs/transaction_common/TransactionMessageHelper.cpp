@@ -58,7 +58,6 @@ TransactionMessageHelper::TransactionMessageHelper(const std::string& transactio
 
 TransactionMessageHelper::TransactionMessageHelper(const TransactionMessageHelper& orig) {
     this->transactionMessage = keto::asn1::clone<TransactionMessage_t>(orig.transactionMessage,&asn_DEF_TransactionMessage);
-    this->encrypt = orig.encrypt;
     this->nestedTransactions = orig.nestedTransactions;
 }
 
@@ -86,11 +85,6 @@ TransactionWrapperHelperPtr TransactionMessageHelper::getTransactionWrapper() {
             new TransactionWrapperHelper(&this->transactionMessage->transaction,false));
 }
 
-TransactionMessageHelper& TransactionMessageHelper::setEncrypted(bool encrypted) {
-    this->encrypt = encrypted;
-    return *this;
-}
-
 TransactionMessageHelper& TransactionMessageHelper::addNestedTransaction(TransactionMessage_t* nestedTransaction) {
     this->nestedTransactions.push_back(TransactionMessageHelperPtr(
             new TransactionMessageHelper(nestedTransaction)));
@@ -110,12 +104,8 @@ TransactionMessageHelper& TransactionMessageHelper::addNestedTransaction(
     return *this;
 }
 
-int TransactionMessageHelper::numberOfNestedTransactions() {
-    return this->nestedTransactions.size();
-}
-
-TransactionMessageHelperPtr TransactionMessageHelper::getNestedTransaction(int index) {
-    return nestedTransactions[index];
+std::vector<TransactionMessageHelperPtr> TransactionMessageHelper::getNestedTransactions() {
+    return this->nestedTransactions;
 }
 
 TransactionMessageHelper& TransactionMessageHelper::operator =(const std::string& transactionMessage) {
@@ -185,9 +175,8 @@ TransactionMessageHelperPtr TransactionMessageHelper::decryptMessage(Transaction
 }
 
 bool TransactionMessageHelper::isEncrypted() {
-    return this->encrypt;
+    return this->transactionMessage->transaction.signedTransaction.transaction.encrypted;
 }
-
 
 void TransactionMessageHelper::getMessage(TransactionEncryptionHandler& 
             transactionEncryptionHandler,TransactionMessage_t* transactionMessage) {
@@ -212,7 +201,6 @@ void TransactionMessageHelper::getMessage(TransactionEncryptionHandler&
     ASN_SEQUENCE_ADD(&transactionMessage->nestedTransactions,nestedTransaction);
 }
 
-
 void TransactionMessageHelper::decryptMessage(TransactionEncryptionHandler&
         transactionEncryptionHandler, TransactionMessageHelperPtr transactionMessageHelperPtr, 
         TransactionMessage__nestedTransactions__Member* nestedTransaction) {
@@ -231,8 +219,6 @@ void TransactionMessageHelper::decryptMessage(TransactionEncryptionHandler&
     
     TransactionMessageHelperPtr transactionMessageHelperPtr_(new TransactionMessageHelper(
             transactionMessage));
-    transactionMessageHelperPtr_->setEncrypted(encrypted);
-    
     for (int index = 0; index < transactionMessage->nestedTransactions.list.count; index++) {
         TransactionMessage__nestedTransactions__Member* nestedTransaction =
             transactionMessage->nestedTransactions.list.array[index];    

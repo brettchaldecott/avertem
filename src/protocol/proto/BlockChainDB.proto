@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package keto.proto;
+
+message ShardMeta {
+    bytes shard_id = 1;
+    google.protobuf.Timestamp created = 2;
+    google.protobuf.Timestamp last_modified = 3;
+    bytes type = 4;
+}
+
+message ShardMapping {
+    bytes shard_id = 1;
+    bytes type = 2;
+    string path = 3;
+}
+
+message ShardMappingList {
+    bytes id = 1;
+    bytes type = 2;
+    repeated ShardMapping mapping = 3;
+}
+
+message BlockChainTangleMeta {
+    bytes hash_id = 1;
+    bytes last_block_hash = 2;
+    google.protobuf.Timestamp last_modified = 3;
+}
+
+message BlockChainMeta {
+    bytes hash_id = 1;
+    bool encrypted = 2;
+    google.protobuf.Timestamp created_date = 3;
+    repeated BlockChainTangleMeta tangle = 4;
+}
+
+message TransactionMeta {
+    bytes transaction_hash = 1;
+    bytes block_hash = 2;
+    bytes block_chain_hash = 3;
+}
+
+message BlockMeta {
+    bytes block_hash = 1;
+    bytes block_parent_hash = 2;
+    bytes chain_id = 3;
+    bool encrypted = 4;
+}
+
+/**
+ * The block definition
+ */
+message BlockWapper {
+    BlockMeta block_meta = 1;
+    bytes asn1_block = 2;
+}

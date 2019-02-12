@@ -1,8 +1,6 @@
 TransactionModule DEFINITIONS AUTOMATIC TAGS ::= BEGIN
     IMPORTS Number, Hash, Version, Key, Signature, Status, EncryptedData
         FROM BasicModule
-        Account 
-        FROM AccountModule
         Action
         FROM ActionModule
         ChangeSet, SignedTransaction
@@ -13,6 +11,7 @@ Transaction ::= SEQUENCE {
     date            UTCTime,
     value           Number,
     parent          Hash,
+    encrypted       boolean,
     -- the source account for the transaction
     sourceAccount   Hash,
     -- the target account for the transaction
@@ -37,6 +36,7 @@ TransactionWrapper ::= SEQUENCE {
     -- transaction header information
     sourceAccount       Hash,
     targetAccount       Hash,
+    parent              Hash,
     feeAccount          Hash,
     transactionHash     Hash,
     signature           Signature,

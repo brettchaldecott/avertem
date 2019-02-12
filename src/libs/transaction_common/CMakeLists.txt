@@ -16,6 +16,7 @@ add_library( keto_transaction_common
             TransactionHelper.cpp
             ActionHelper.cpp
             MessageWrapperProtoHelper.cpp
+            AccountTransactionInfoProtoHelper.cpp
             
              ${HEADERS}
            )

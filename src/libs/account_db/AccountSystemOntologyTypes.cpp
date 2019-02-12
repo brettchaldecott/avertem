@@ -23,12 +23,27 @@ std::string AccountSystemOntologyTypes::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
+const char* AccountSystemOntologyTypes::CHAIN_ONTOLOGY_CLASS = "http://keto-coin.io/schema/rdf/1.0/keto/Chain#Chain";
+
+const char* AccountSystemOntologyTypes::CHAIN_PREDICATES::ID = "http://keto-coin.io/schema/rdf/1.0/keto/Chain#id";
+
+const char* AccountSystemOntologyTypes::BLOCK_ONTOLOGY_CLASS = "http://keto-coin.io/schema/rdf/1.0/keto/Block#Block";
+
+const char* AccountSystemOntologyTypes::BLOCK_PREDICATES::ID = "http://keto-coin.io/schema/rdf/1.0/keto/Block#id";
+const char* AccountSystemOntologyTypes::BLOCK_PREDICATES::CHAIN  = "http://keto-coin.io/schema/rdf/1.0/keto/Block#chain";
+
+const char* AccountSystemOntologyTypes::TRANSACTION_ONTOLOGY_CLASS = "http://keto-coin.io/schema/rdf/1.0/keto/Transaction#Transaction";
+
+const char* AccountSystemOntologyTypes::TRANSACTION_PREDICATES::ID = "http://keto-coin.io/schema/rdf/1.0/keto/Block#id";
+const char* AccountSystemOntologyTypes::TRANSACTION_PREDICATES::BLOCK  = "http://keto-coin.io/schema/rdf/1.0/keto/Block#block";
+
 const char* AccountSystemOntologyTypes::ACCOUNT_ONTOLOGY_CLASS = "http://keto-coin.io/schema/rdf/1.0/keto/Account#Account";
 
 const char* AccountSystemOntologyTypes::ACCOUNT_PREDICATES::STATUS = "http://keto-coin.io/schema/rdf/1.0/keto/Account#status";
 const char* AccountSystemOntologyTypes::ACCOUNT_PREDICATES::ID = "http://keto-coin.io/schema/rdf/1.0/keto/Account#id";
 const char* AccountSystemOntologyTypes::ACCOUNT_PREDICATES::PARENT = "http://keto-coin.io/schema/rdf/1.0/keto/Account#parent";
 const char* AccountSystemOntologyTypes::ACCOUNT_PREDICATES::TYPE = "http://keto-coin.io/schema/rdf/1.0/keto/Account#type";
+const char* AccountSystemOntologyTypes::ACCOUNT_PREDICATES::TRANSACTION = "http://keto-coin.io/schema/rdf/1.0/keto/Account#transaction";
 
 const char* AccountSystemOntologyTypes::ACCOUNT_CREATE_OBJECT_STATUS = "create";
 

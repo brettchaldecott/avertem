@@ -33,6 +33,7 @@ TransactionBuilder::TransactionBuilder() {
     this->transaction = (Transaction*)calloc(1, sizeof *transaction);
     this->transaction->version = keto::common::MetaInfo::PROTOCOL_VERSION;
     this->transaction->date = (UTCTime_t)keto::asn1::TimeHelper();
+    this->transaction->encrypted = false;
 }
 
 TransactionBuilder::~TransactionBuilder() {
@@ -99,6 +100,15 @@ TransactionBuilder& TransactionBuilder::addAction(const std::shared_ptr<ActionBu
     return (*this);
 }
 
+
+TransactionBuilder& TransactionBuilder::setEncrypted(bool encrypted) {
+    this->transaction->encrypted = encrypted;
+    return *this;
+}
+
+bool TransactionBuilder::getEncrypted() {
+    return this->transaction->encrypted;
+}
 
 TransactionBuilder::operator std::vector<uint8_t>&() {
     serializeTransaction();

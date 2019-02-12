@@ -33,7 +33,15 @@ public:
         static constexpr const char* LITERAL = "literal";
         static constexpr const char* URI = "uri";
     };
-    
+
+    class RDF_TYPES {
+    public:
+        static constexpr const char* STRING = "http://www.w3.org/2001/XMLSchema#string";
+        static constexpr const char* LONG = "http://www.w3.org/2001/XMLSchema#decimal";
+        static constexpr const char* FLOAT = "http://www.w3.org/2001/XMLSchema#float";
+        static constexpr const char* BOOLEAN = "http://www.w3.org/2001/XMLSchema#Boolean";
+        static constexpr const char* DATE_TIME = "http://www.w3.org/2001/XMLSchema#dateTime";
+    };
     
 };
 

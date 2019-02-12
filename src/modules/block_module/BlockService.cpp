@@ -116,6 +116,8 @@ keto::event::Event BlockService::blockMessage(const keto::event::Event& event) {
             transactionProtoHelperPtr->operator keto::proto::Transaction&());
     }
 
+
+
     // move transaction to next phase and submit to router
     messageWrapperProtoHelper.setTransaction(transactionProtoHelperPtr);
     messageWrapper = messageWrapperProtoHelper.operator keto::proto::MessageWrapper();

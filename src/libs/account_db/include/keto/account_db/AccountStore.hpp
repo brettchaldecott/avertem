@@ -50,7 +50,9 @@ public:
     bool getAccountInfo(const keto::asn1::HashHelper& accountHash,
         keto::proto::AccountInfo& result);
     void applyTransaction(
-        const keto::transaction_common::TransactionMessageHelperPtr& transactionMessageHelper);
+            const keto::asn1::HashHelper& chainId,
+            const keto::asn1::HashHelper& blockId,
+            const keto::transaction_common::TransactionWrapperHelperPtr& transactionWrapperHelperPtr);
     void sparqlQuery(
         const keto::proto::AccountInfo& accountInfo,
         keto::proto::SparqlQuery& sparlQuery);
@@ -68,8 +70,9 @@ private:
     AccountStore();
     
     void createAccount(
+            const keto::asn1::HashHelper& chainId,
             const keto::asn1::HashHelper& accountHash,
-            const keto::transaction_common::TransactionMessageHelperPtr& transactionMessageHelper,
+            const keto::transaction_common::TransactionWrapperHelperPtr& transactionWrapperHelperPtr,
             AccountRDFStatementBuilderPtr accountRDFStatementBuilder,
             keto::proto::AccountInfo& accountInfo);
     

@@ -39,6 +39,7 @@ public:
 
     RDFObjectHelper();
     RDFObjectHelper(const std::string& value, const std::string& dataType);
+    RDFObjectHelper(const std::string& value,const std::string& type , const std::string& dataType);
     RDFObjectHelper(const RDFObject& rdfObject);
     RDFObjectHelper(const RDFObjectHelper& orig) = default;
     virtual ~RDFObjectHelper();

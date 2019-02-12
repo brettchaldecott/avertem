@@ -36,7 +36,8 @@ public:
         return OBFUSCATED("$Id$");
     };
     static std::string getSourceVersion();
-    
+
+    AccountRDFStatement(const keto::asn1::RDFModelHelperPtr& rdfModelHelper);
     AccountRDFStatement(ChangeData* changeData);
     AccountRDFStatement(const AccountRDFStatement& orig) = delete;
     virtual ~AccountRDFStatement();

@@ -67,7 +67,9 @@ public:
     keto::asn1::HashHelper getTargetAccount();
     
     TransactionBuilder& addAction(const std::shared_ptr<ActionBuilder> action);
-    
+
+    TransactionBuilder& setEncrypted(bool encrypted);
+    bool getEncrypted();
     
     operator std::vector<uint8_t>&();
     

@@ -45,7 +45,9 @@ public:
     static std::string getSourceVersion();
     
     AccountRDFStatementBuilder(
-            const keto::transaction_common::TransactionMessageHelperPtr& transactionMessageHelper,
+            const keto::asn1::HashHelper& chainId,
+            const keto::asn1::HashHelper& blockId,
+            const keto::transaction_common::TransactionWrapperHelperPtr& transactionWrapperHelperPtr,
             bool existingAccount);
     AccountRDFStatementBuilder(const AccountRDFStatementBuilder& orig) = delete;
     virtual ~AccountRDFStatementBuilder();
@@ -54,13 +56,24 @@ public:
     
     std::string accountAction();
     keto::proto::AccountInfo getAccountInfo();
-    
+
+    bool isNewChain();
+    void setNewChain(bool newChain);
     
 private:
-    keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelper;
+    bool newChain;
+    keto::asn1::HashHelper chainId;
+    keto::asn1::HashHelper blockId;
+    keto::asn1::RDFModelHelperPtr rdfModelHelperPtr;
+    keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelperPtr;
     std::vector<AccountRDFStatementPtr> statements;
     keto::proto::AccountInfo accountInfo;
     std::string action;
+
+    std::string buildRdfUri(const std::string uri, const std::string id);
+    keto::asn1::RDFPredicateHelper buildPredicate(const std::string& predicate,
+            const std::string& value, const std::string& type, const std::string& dataType);
+    std::string buildTimeString(const std::time_t value);
 };
 
 

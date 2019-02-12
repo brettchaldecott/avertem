@@ -17,6 +17,7 @@
 #include <vector>
 #include <string>
 
+#include "keto/asn1/HashHelper.hpp"
 #include "keto/obfuscate/MetaString.hpp"
 
 
@@ -33,13 +34,17 @@ public:
     static std::string getSourceVersion();
     
     // string constants
+    static const char* BLOCK_META_INDEX;
     static const char* BLOCKS_INDEX;
     static const char* TRANSACTIONS_INDEX;
     static const char* ACCOUNTS_INDEX;
     static const char* CHILD_INDEX;
     
     // boot constants
+    static const char* MASTER_CHAIN_KEY;
+    static const keto::asn1::HashHelper MASTER_CHAIN_HASH;
     static const char* GENESIS_KEY;
+    static const keto::asn1::HashHelper GENESIS_HASH;
     
     // parent block
     static const char* PARENT_KEY;

@@ -31,7 +31,34 @@ public:
         return OBFUSCATED("$Id$");
     };
     static std::string getSourceVersion();
-    
+
+    static const char* CHAIN_ONTOLOGY_CLASS;
+
+    // CHAIN PREDICATE identifiers
+    class CHAIN_PREDICATES {
+    public:
+        static const char* ID;
+    };
+
+    static const char* BLOCK_ONTOLOGY_CLASS;
+
+    // BLOCK PREDICATE identifiers
+    class BLOCK_PREDICATES {
+    public:
+        static const char* ID;
+        static const char* CHAIN;
+    };
+
+    static const char* TRANSACTION_ONTOLOGY_CLASS;
+
+    // BLOCK PREDICATE identifiers
+    class TRANSACTION_PREDICATES {
+    public:
+        static const char* ID;
+        static const char* BLOCK;
+        static const char* DATE;
+    };
+
     static const char* ACCOUNT_ONTOLOGY_CLASS;
     
     // PREDICATE identifiers
@@ -41,6 +68,7 @@ public:
         static const char* ID;
         static const char* PARENT;
         static const char* TYPE;
+        static const char* TRANSACTION;
     };
     
     class ACCOUNT_TYPE {
