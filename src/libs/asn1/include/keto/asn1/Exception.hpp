@@ -40,6 +40,8 @@ KETO_DECLARE_DERIVED_EXCEPTION (ASN1Exception, FailedToAddChangeToChangeSetExcep
 KETO_DECLARE_DERIVED_EXCEPTION (ASN1Exception, PredicateNotFoundException , "Predicate not found");
 KETO_DECLARE_DERIVED_EXCEPTION (ASN1Exception, UnsupportedChangeTypeFormatException , "This change type is not currently supported");
 KETO_DECLARE_DERIVED_EXCEPTION (ASN1Exception, FailedToAddPermission , "Failed to add the permissions");
+KETO_DECLARE_DERIVED_EXCEPTION (ASN1Exception, InvalidAnyToTypeConversion , "Failed to perform the conversion");
+KETO_DECLARE_DERIVED_EXCEPTION (ASN1Exception, ChangeDataIsDifferentType , "Asking for data in the incorrect format");
 
 
 }

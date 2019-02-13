@@ -1,5 +1,5 @@
 TransactionModule DEFINITIONS AUTOMATIC TAGS ::= BEGIN
-    IMPORTS Number, Hash, Version, Key, Signature, Status, EncryptedData
+    IMPORTS Number, Hash, Version, Key, Signature, Status, EncryptedData, Boolean
         FROM BasicModule
         Action
         FROM ActionModule
@@ -11,7 +11,7 @@ Transaction ::= SEQUENCE {
     date            UTCTime,
     value           Number,
     parent          Hash,
-    encrypted       boolean,
+    encrypted       Boolean,
     -- the source account for the transaction
     sourceAccount   Hash,
     -- the target account for the transaction

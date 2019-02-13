@@ -50,7 +50,7 @@ public:
     BlockChainTangleMetaPtr getTangleEntry(int id);
     BlockChainTangleMetaPtr getTangleEntry(const keto::asn1::HashHelper& id);
     BlockChainTangleMetaPtr getTangleEntryByLastBlock(const keto::asn1::HashHelper& id);
-    BlockChainTangleMetaPtr& addTangle(const keto::asn1::HashHelper& hash);
+    BlockChainTangleMetaPtr addTangle(const keto::asn1::HashHelper& hash);
 private:
     keto::asn1::HashHelper hashId;
     std::time_t created;
@@ -63,7 +63,7 @@ private:
     BlockChainMeta(
             const std::vector<uint8_t>& id);
     BlockChainMeta(
-            const keto::proto::BlockMeta& blockMeta);
+            const keto::proto::BlockChainMeta& blockChainMeta);
 
     void updateTangleEntryByLastBlock(const keto::asn1::HashHelper& orig, const keto::asn1::HashHelper& update);
 };

@@ -11,6 +11,7 @@
  * Created on March 12, 2018, 5:17 PM
  */
 
+#include "ANY.h"
 #include "RDFDataFormat.h"
 #include "keto/asn1/RDFModelHelper.hpp"
 #include "keto/asn1/RDFSubjectHelper.hpp"
@@ -38,14 +39,21 @@ RDFModelHelper::RDFModelHelper(const RDFChange_t& change) {
 }
 
 RDFModelHelper::RDFModelHelper(RDFModel_t* rdfModel) : rdfModel(rdfModel) {
-    
+
+}
+
+RDFModelHelper::RDFModelHelper(const AnyHelper& anyHelper) {
+    this->rdfModel = anyHelper.extract<RDFModel_t>(&asn_DEF_RDFModel);
+    if (!this->rdfModel) {
+        BOOST_THROW_EXCEPTION(keto::asn1::InvalidAnyToTypeConversion());
+    }
 }
     
 RDFModelHelper::RDFModelHelper(const RDFModelHelper& orig) {
     this->rdfModel = keto::asn1::clone<RDFModel>(orig.rdfModel,
             &asn_DEF_RDFModel);
 }
-    
+
 
 RDFModelHelper::~RDFModelHelper() {
     if (this->rdfModel) {

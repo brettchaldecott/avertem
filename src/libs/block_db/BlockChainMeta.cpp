@@ -2,6 +2,8 @@
 // Created by Brett Chaldecott on 2019/02/06.
 //
 
+#include <chrono>
+
 #include "keto/block_db/BlockChainMeta.hpp"
 
 
@@ -38,10 +40,14 @@ void BlockChainMeta::setEncrypted(bool encrypted) {
 
 BlockChainMeta::operator std::string() const {
     keto::proto::BlockChainMeta blockMeta;
-    blockMeta.set_hash_id((const std::vector<uint8_t>)hashId);
+    blockMeta.set_hash_id(hashId);
     blockMeta.set_encrypted(this->encrypted);
-    blockMeta.created_date.set_seconds(this->created);
-    blockMeta.created_date.set_nanos(0);
+
+    google::protobuf::Timestamp timestamp;
+    timestamp.set_seconds(this->created);
+    timestamp.set_nanos(0);
+    blockMeta.set_allocated_created_date(&timestamp);
+
     for (BlockChainTangleMetaPtr blockChainTangleMetaPtr: this->tangles) {
         keto::proto::BlockChainTangleMeta* blockChainTangleMeta = blockMeta.add_tangle();
         *blockChainTangleMeta = *blockChainTangleMetaPtr;
@@ -75,12 +81,12 @@ BlockChainTangleMetaPtr BlockChainMeta::getTangleEntryByLastBlock(const keto::as
     return this->tangleMapByLastBlock[id];
 }
 
-BlockChainTangleMetaPtr& BlockChainMeta::addTangle(const keto::asn1::HashHelper& hash) {
+BlockChainTangleMetaPtr BlockChainMeta::addTangle(const keto::asn1::HashHelper& hash) {
     BlockChainTangleMetaPtr blockChainTangleMetaPtr(new BlockChainTangleMeta(this,hash));
     this->tangles.push_back(blockChainTangleMetaPtr);
     this->tangleMap[blockChainTangleMetaPtr->getHash()] = blockChainTangleMetaPtr;
     this->tangleMapByLastBlock[blockChainTangleMetaPtr->getLastBlockHash()] = blockChainTangleMetaPtr;
-    return blockResourceManagerPtr;
+    return blockChainTangleMetaPtr;
 }
 
 BlockChainMeta::BlockChainMeta(
@@ -89,12 +95,12 @@ BlockChainMeta::BlockChainMeta(
 }
 
 BlockChainMeta::BlockChainMeta(
-        const keto::proto::BlockMeta& blockMeta) : {
-    this->hashId = keto::asn1::HashHelper(blockMeta.hash_id());
-    this->encrypted = blockMeta.encrypted();
-    this->created = blockMeta.created_date.seconds();
-    for (int index = 0; index < blockMeta.tangle_size(); index++) {
-        BlockChainTangleMetaPtr blockChainTangleMetaPtr(new BlockChainTangleMeta(blockMeta.tangle(index)));
+        const keto::proto::BlockChainMeta& blockChainMeta) {
+    this->hashId = keto::asn1::HashHelper(blockChainMeta.hash_id());
+    this->encrypted = blockChainMeta.encrypted();
+    this->created = blockChainMeta.created_date().seconds();
+    for (int index = 0; index < blockChainMeta.tangle_size(); index++) {
+        BlockChainTangleMetaPtr blockChainTangleMetaPtr(new BlockChainTangleMeta(this,blockChainMeta.tangle(index)));
         this->tangles.push_back(blockChainTangleMetaPtr);
         this->tangleMap[blockChainTangleMetaPtr->getHash()] = blockChainTangleMetaPtr;
         this->tangleMapByLastBlock[blockChainTangleMetaPtr->getLastBlockHash()] = blockChainTangleMetaPtr;

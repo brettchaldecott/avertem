@@ -28,6 +28,7 @@
 #include "keto/asn1/SignatureHelper.hpp"
 
 #include "keto/transaction_common/SignedTransactionHelper.hpp"
+#include "keto/transaction_common/SignedChangeSetHelper.hpp"
 
 #include "keto/obfuscate/MetaString.hpp"
 
@@ -64,6 +65,7 @@ public:
     TransactionWrapperHelper& setStatus(const Status& status);
     TransactionWrapperHelper& addTransactionTrace(TransactionTrace_t* transactionTrace);
     TransactionWrapperHelper& addChangeSet(SignedChangeSet_t* signedChangeSet);
+    std::vector<SignedChangeSetHelperPtr> getChangeSets();
     
     TransactionWrapperHelper& operator =(const std::string& transactionWrapper);
     operator TransactionWrapper_t&();

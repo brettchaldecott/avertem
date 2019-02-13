@@ -75,10 +75,11 @@ keto::proto::Transaction TransactionProcessor::processTransaction(keto::proto::T
             keto::server_common::fromEvent<keto::proto::SandboxCommandMessage>(
             keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SandboxCommandMessage>(
             keto::server_common::Events::EXECUTE_ACTION_MESSAGE,sandboxCommandMessage)));
-    
-    
-    
-    std::cout << "Before looping through the actions" << std::endl; 
+
+    // update the transaction proto helper
+    transactionProtoHelper.setTransaction(sandboxCommandMessage.transaction());
+
+    std::cout << "Before looping through the actions" << std::endl;
     keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr = 
             transactionProtoHelper.getTransactionMessageHelper();
     keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelperPtr = 
@@ -89,12 +90,45 @@ keto::proto::Transaction TransactionProcessor::processTransaction(keto::proto::T
             transactionWrapperHelperPtr->getSignedTransaction()->getTransaction()->getActions();    
         for (keto::transaction_common::ActionHelperPtr action : actions) {
             std::cout << "The action is contract : " << action->getContract().getHash(keto::common::HEX) << std::endl;
+
+            keto::proto::ContractMessage contractMessage;
+            contractMessage.set_account_hash(transaction.active_account());
+            contractMessage.set_contract_hash(action->getContract());
+
+            contractMessage =
+                    keto::server_common::fromEvent<keto::proto::ContractMessage>(
+                            keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::ContractMessage>(
+                                    keto::server_common::Events::GET_CONTRACT,contractMessage)));
+
+
+            keto::proto::SandboxCommandMessage sandboxCommandMessage;
+            sandboxCommandMessage.set_contract(contractMessage.contract());
+            sandboxCommandMessage.set_transaction((std::string)transactionProtoHelper);
+            sandboxCommandMessage.set_model(action->getModel());
+
+            sandboxCommandMessage =
+                    keto::server_common::fromEvent<keto::proto::SandboxCommandMessage>(
+                            keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SandboxCommandMessage>(
+                                    keto::server_common::Events::EXECUTE_ACTION_MESSAGE,sandboxCommandMessage)));
+
+
+            // update the transaction proto helper
+            transactionProtoHelper.setTransaction(sandboxCommandMessage.transaction());
         }
         
     }
-    transactionProtoHelper.setTransaction(sandboxCommandMessage.transaction());
-    
-    //transactionProtoHelper.getTransactionMessageHelper()
+
+
+    for (keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr :
+        transactionProtoHelper.getTransactionMessageHelper()->getNestedTransactions()) {
+
+        keto::transaction_common::TransactionProtoHelper nestedTransaction(transactionMessageHelperPtr);
+        nestedTransaction = processTransaction(nestedTransaction);
+        transactionMessageHelperPtr->setTransactionWrapper(
+                nestedTransaction.getTransactionMessageHelper()->getTransactionWrapper());
+
+    }
+
     return transactionProtoHelper;
 }
 

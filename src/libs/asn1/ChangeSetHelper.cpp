@@ -11,10 +11,12 @@
  * Created on March 13, 2018, 10:54 AM
  */
 
+#include <ChangeSet.h>
 #include "ChangeData.h"
 
 #include "keto/asn1/ChangeSetHelper.hpp"
 #include "keto/asn1/Exception.hpp"
+#include "keto/asn1/CloneHelper.hpp"
 #include "keto/common/MetaInfo.hpp"
 
 namespace keto {
@@ -27,59 +29,66 @@ std::string ChangeSetHelper::getSourceVersion() {
 ChangeSetHelper::ChangeSetHelper() {
 }
 
+ChangeSetHelper::ChangeSetHelper(ChangeSet_t* changeSet) : own(false), changeSet(changeSet) {
+}
+
 ChangeSetHelper::ChangeSetHelper(const HashHelper& transactionHash,
-        const HashHelper& accountHash) : transactionHash(transactionHash),
+        const HashHelper& accountHash) : own(true), transactionHash(transactionHash),
     accountHash(accountHash) {
-    
+    changeSet = (ChangeSet_t*)calloc(1, sizeof *changeSet);
+    changeSet->version = keto::common::MetaInfo::PROTOCOL_VERSION;
+    changeSet->transactionHash = this->transactionHash;
+    changeSet->accountHash = this->accountHash;
 }
 
 ChangeSetHelper::~ChangeSetHelper() {
+    if (own && this->changeSet) {
+        ASN_STRUCT_FREE(asn_DEF_ChangeSet, this->changeSet);
+    }
+    this->changeSet = NULL;
 }
 
 ChangeSetHelper& ChangeSetHelper::setTransactionHash(const HashHelper& transactionHash) {
-    this->transactionHash = transactionHash;
+    changeSet->transactionHash = transactionHash;
     return (*this);
 }
 
 ChangeSetHelper& ChangeSetHelper::setAccountHash(const HashHelper& accountHash) {
-    this->accountHash = accountHash;
+    changeSet->accountHash = accountHash;
     return (*this);
 }
 
 ChangeSetHelper& ChangeSetHelper::setStatus(const Status_t status) {
-    this->status = status;
+    changeSet->status = status;
     return (*this);
 }
 
 ChangeSetHelper& ChangeSetHelper::addChange(const ANY_t& change) {
-    this->changes.push_back(change);
+    ChangeData_t* changeData = (ChangeData_t*)calloc(1, sizeof *changeSet);
+    changeData->choice.asn1Change = change;
+    changeData->present = ChangeData_PR_asn1Change;
+    if (0!= ASN_SEQUENCE_ADD(&changeSet->changes,changeData)) {
+        ASN_STRUCT_FREE(asn_DEF_ChangeSet, changeSet);
+        BOOST_THROW_EXCEPTION(keto::asn1::FailedToAddChangeToChangeSetException());
+    }
     return (*this);
 }
 
-ChangeSetHelper::operator ChangeSet_t*() {
-    ChangeSet_t* changeSet = (ChangeSet_t*)calloc(1, sizeof *changeSet);
-    changeSet->version = keto::common::MetaInfo::PROTOCOL_VERSION;
-    changeSet->transactionHash = this->transactionHash;
-    changeSet->accountHash = this->accountHash;
-    changeSet->status = this->status;
-    
-    for (ANY_t change : this->changes) {
-        // check if the 
-        ChangeData_t* changeData = (ChangeData_t*)calloc(1, sizeof *changeSet);
-        changeData->choice.asn1Change = change;
-        changeData->present = ChangeData_PR_asn1Change;
-        if (0!= ASN_SEQUENCE_ADD(&changeSet->changes,new ANY_t(change))) {
-            ASN_STRUCT_FREE(asn_DEF_ChangeSet, changeSet);
-            BOOST_THROW_EXCEPTION(keto::asn1::FailedToAddChangeToChangeSetException());
-        }
+std::vector<ChangeSetDataHelperPtr> ChangeSetHelper::getChanges() {
+    std::vector<ChangeSetDataHelperPtr> result;
+    for (int index = 0; index < this->changeSet->changes.list.count; index++) {
+        result.push_back(ChangeSetDataHelperPtr(new ChangeSetDataHelper(
+                this->changeSet->changes.list.array[index])));
     }
-    return changeSet;
+    return result;
+}
+
+ChangeSetHelper::operator ChangeSet_t*() {
+    return keto::asn1::clone<ChangeSet_t>(this->changeSet, &asn_DEF_ChangeSet);
 }
 
 ChangeSetHelper::operator ANY_t*() {
-    ChangeSet_t* ptr = this->operator ChangeSet_t*();
-    ANY_t* anyPtr = ANY_new_fromType(&asn_DEF_ChangeSet, ptr);
-    ASN_STRUCT_FREE(asn_DEF_ChangeSet, ptr);
+    ANY_t* anyPtr = ANY_new_fromType(&asn_DEF_ChangeSet, this->changeSet);
     if (!anyPtr) {
         BOOST_THROW_EXCEPTION(keto::asn1::TypeToAnyConversionFailedException());
     }

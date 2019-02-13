@@ -68,8 +68,8 @@ WavmSessionManagerPtr WavmSessionManager::getInstance() {
 
 WavmSessionPtr WavmSessionManager::initWavmSession(
     const keto::proto::SandboxCommandMessage& sandboxCommandMessage) {
-    return wavmSessionPtr = std::make_shared<WavmSession>(sandboxCommandMessage,
-            this->keyLoaderPtr);
+    return WavmSessionPtr(new WavmSession(sandboxCommandMessage,
+            this->keyLoaderPtr));
 }
 
 

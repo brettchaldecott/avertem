@@ -14,14 +14,16 @@
 #ifndef CHANGESETHELPER_HPP
 #define CHANGESETHELPER_HPP
 
+#include <string>
+#include <memory>
+
 #include "Status.h"
 #include "ChangeData.h"
 #include "ChangeSet.h"
 
-
-
 #include "keto/asn1/HashHelper.hpp"
 #include "keto/asn1/SignatureHelper.hpp"
+#include "keto/asn1/ChangeSetDataHelper.hpp"
 
 #include "keto/obfuscate/MetaString.hpp"
 
@@ -29,6 +31,8 @@
 namespace keto {
 namespace asn1 {
 
+class ChangeSetHelper;
+typedef std::shared_ptr<ChangeSetHelper> ChangeSetHelperPtr;
 
 class ChangeSetHelper {
 public:
@@ -39,23 +43,31 @@ public:
 
 
     ChangeSetHelper();
+    ChangeSetHelper(ChangeSet_t* changeSet);
     ChangeSetHelper(const HashHelper& transactionHash,const HashHelper& accountHash);
     ChangeSetHelper(const ChangeSetHelper& orig) = default;
     virtual ~ChangeSetHelper();
     
     ChangeSetHelper& setTransactionHash(const HashHelper& transactionHash);
+    HashHelper getTransactionHash();
     ChangeSetHelper& setAccountHash(const HashHelper& accountHash);
+    HashHelper getAccountHash();
     ChangeSetHelper& setStatus(const Status_t status);
+    Status_t getStatus();
     ChangeSetHelper& addChange(const ANY_t& change);
+
+    std::vector<ChangeSetDataHelperPtr> getChanges();
     
     operator ChangeSet_t*();
     operator ANY_t*();
     
 private:
+    bool own;
+    ChangeSet_t* changeSet;
     HashHelper transactionHash;
     HashHelper accountHash;
     Status_t status;
-    std::vector<ANY_t> changes;
+    std::vector<ChangeData_t*> changes;
 };
 
 

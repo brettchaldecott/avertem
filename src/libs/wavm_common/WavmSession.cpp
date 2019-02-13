@@ -47,7 +47,27 @@ WavmSession::WavmSession(const keto::proto::SandboxCommandMessage& sandboxComman
     transactionProtoHelper.setTransaction(sandboxCommandMessage.transaction());
     transactionMessageHelperPtr = transactionProtoHelper.getTransactionMessageHelper();
     rdfSessionPtr = std::make_shared<RDFMemorySession>();
-    
+    if (sandboxCommandMessage.model().size() && transactionMessageHelperPtr->getTransactionWrapper()->getStatus() == Status_debit) {
+        keto::asn1::RDFModelHelper rdfModelHelper(keto::asn1::AnyHelper(sandboxCommandMessage.model()));
+        for (keto::asn1::RDFSubjectHelperPtr subject : rdfModelHelper.getSubjects()) {
+            rdfSessionPtr->persist(subject);
+        }
+    }
+    for (keto::transaction_common::SignedChangeSetHelperPtr signedChangeSetHelperPtr :
+        transactionMessageHelperPtr->getTransactionWrapper()->getChangeSets()) {
+        for (keto::asn1::ChangeSetDataHelperPtr changeSetDataHelperPtr:
+            signedChangeSetHelperPtr->getChangeSetHelper()->getChanges()) {
+            if (!changeSetDataHelperPtr->isASN1()) {
+                continue;
+            }
+
+            keto::asn1::RDFModelHelper rdfModelHelper(
+                    changeSetDataHelperPtr->getAny());
+            for (keto::asn1::RDFSubjectHelperPtr subject : rdfModelHelper.getSubjects()) {
+                rdfSessionPtr->persist(subject);
+            }
+        }
+    }
 }
 
 WavmSession::~WavmSession() {

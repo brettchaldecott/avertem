@@ -29,9 +29,9 @@ public:
     AccountTransactionInfoProtoHelper();
     AccountTransactionInfoProtoHelper(const keto::asn1::HashHelper& blockchainId, const keto::asn1::HashHelper& blockId,
                                       const keto::transaction_common::TransactionWrapperHelperPtr& transactionWrapperHelperPtr);
-    AccountTransactionInfoProtoHelper(const keto::asn1::HashHelper& blockChainId, const keto::asn1::HashHelper& blockId,
+    AccountTransactionInfoProtoHelper(const keto::asn1::HashHelper& blockchainId, const keto::asn1::HashHelper& blockId,
                                       TransactionWrapper_t* transactionWrapper);
-    AccountTransactionInfoProtoHelper(const keto::asn1::HashHelper& blockChainId, const keto::asn1::HashHelper& blockId,
+    AccountTransactionInfoProtoHelper(const keto::asn1::HashHelper& blockchainId, const keto::asn1::HashHelper& blockId,
                                       const TransactionWrapper_t& transactionWrapper);
     AccountTransactionInfoProtoHelper(const keto::proto::AccountTransactionInfo& accountTransactionInfo);
     AccountTransactionInfoProtoHelper(const AccountTransactionInfoProtoHelper& accountTransactionInfoProtoHelper) = default;
@@ -46,7 +46,7 @@ public:
     AccountTransactionInfoProtoHelper& setBlockId(const keto::asn1::HashHelper& blockId);
     keto::asn1::HashHelper getBlockId();
     AccountTransactionInfoProtoHelper& setTransaction(const keto::transaction_common::TransactionWrapperHelperPtr& transaction);
-    keto::transaction_common::TransactionWrapperHelperPtr getTransaction();
+    keto::transaction_common::TransactionWrapperHelperPtr getTransaction() const;
 
 
 private:

@@ -11,6 +11,7 @@
  * Created on March 17, 2018, 4:21 AM
  */
 
+#include <TransactionWrapper.h>
 #include "keto/transaction_common/TransactionWrapperHelper.hpp"
 #include "keto/common/MetaInfo.hpp"
 #include "keto/server_common/VectorUtils.hpp"
@@ -154,6 +155,15 @@ TransactionWrapperHelper& TransactionWrapperHelper::addChangeSet(
         BOOST_THROW_EXCEPTION(keto::transaction_common::SignedChangeSetSequenceAddFailedException());
     }
     return (*this);
+}
+
+std::vector<SignedChangeSetHelperPtr> TransactionWrapperHelper::getChangeSets() {
+    std::vector<SignedChangeSetHelperPtr> result;
+    for(int index =0; index < this->transactionWrapper->changeSet.list.size; index++) {
+        result.push_back(SignedChangeSetHelperPtr(new SignedChangeSetHelper(this->transactionWrapper->changeSet.list.array[index])));
+    }
+
+    return result;
 }
 
 TransactionWrapperHelper& TransactionWrapperHelper::operator =(const std::string& transactionWrapper) {

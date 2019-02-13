@@ -60,6 +60,8 @@ public:
      * @param any
      */
     AnyHelper(ANY_t* any);
+
+    AnyHelper(const std::string& value);
     
     /**
      * The default copy constructor
@@ -75,7 +77,7 @@ public:
      * @return NULL if extraction failed. Object pointer reference if successful.
      */
     template<typename T>
-    T* extract (struct asn_TYPE_descriptor_s *type_descriptor) {
+    T* extract (struct asn_TYPE_descriptor_s *type_descriptor) const {
         if (!any) {
             BOOST_THROW_EXCEPTION(keto::asn1::InvalidAnyValueException());
         }
@@ -91,6 +93,8 @@ public:
      * @return Returns a structure containing the memory of the serialized pointer
      */
     operator ANY_t();
+
+    operator std::string();
     
 private: 
     AnyInterface* anyInterface;

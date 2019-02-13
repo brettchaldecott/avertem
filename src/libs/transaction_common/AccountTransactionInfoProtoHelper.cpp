@@ -23,13 +23,13 @@ AccountTransactionInfoProtoHelper::AccountTransactionInfoProtoHelper(const keto:
 
 }
 
-AccountTransactionInfoProtoHelper::AccountTransactionInfoProtoHelper(const keto::asn1::HashHelper& blockChainId,
+AccountTransactionInfoProtoHelper::AccountTransactionInfoProtoHelper(const keto::asn1::HashHelper& blockchainId,
         const keto::asn1::HashHelper& blockId, TransactionWrapper_t* transactionWrapper) :
         blockchainId(blockchainId), blockId(blockId), transaction(new keto::transaction_common::TransactionWrapperHelper(transactionWrapper)){
 }
 
 
-AccountTransactionInfoProtoHelper::AccountTransactionInfoProtoHelper(const keto::asn1::HashHelper& blockChainId, const keto::asn1::HashHelper& blockId,
+AccountTransactionInfoProtoHelper::AccountTransactionInfoProtoHelper(const keto::asn1::HashHelper& blockchainId, const keto::asn1::HashHelper& blockId,
                               const TransactionWrapper_t& transactionWrapper) :
         blockchainId(blockchainId), blockId(blockId), transaction(new keto::transaction_common::TransactionWrapperHelper(transactionWrapper)){
 
@@ -52,7 +52,7 @@ AccountTransactionInfoProtoHelper::operator keto::proto::AccountTransactionInfo(
     keto::proto::AccountTransactionInfo accountTransactionInfo;
     accountTransactionInfo.set_blockchain_id(this->blockchainId);
     accountTransactionInfo.set_block_id(this->blockId);
-    accountTransactionInfo.set_asn1_transaction_message(this->getTransaction());
+    accountTransactionInfo.set_asn1_transaction_message((const std::string)*this->getTransaction());
 
     return accountTransactionInfo;
 }
@@ -61,7 +61,7 @@ AccountTransactionInfoProtoHelper::operator std::string() {
     keto::proto::AccountTransactionInfo accountTransactionInfo;
     accountTransactionInfo.set_blockchain_id(this->blockchainId);
     accountTransactionInfo.set_block_id(this->blockId);
-    accountTransactionInfo.set_asn1_transaction_message(this->getTransaction());
+    accountTransactionInfo.set_asn1_transaction_message((const std::string)*this->getTransaction());
 
     std::string value;
     accountTransactionInfo.SerializeToString(&value);
@@ -91,7 +91,7 @@ AccountTransactionInfoProtoHelper& AccountTransactionInfoProtoHelper::setTransac
     return *this;
 }
 
-keto::transaction_common::TransactionWrapperHelperPtr AccountTransactionInfoProtoHelper::getTransaction() {
+keto::transaction_common::TransactionWrapperHelperPtr AccountTransactionInfoProtoHelper::getTransaction() const {
     return this->transaction;
 }
 

@@ -8,6 +8,7 @@ add_library( keto_asn1_common
             TimeHelper.cpp
             NumberHelper.cpp
             HashHelper.cpp
+            include/keto/asn1/HashHelper.hpp
             KeyHelper.cpp
             AnyHelper.cpp
             TestEntityHelper.cpp
@@ -19,6 +20,7 @@ add_library( keto_asn1_common
             RDFSubjectHelper.cpp
             RDFModelHelper.cpp
             ChangeSetHelper.cpp
+            ChangeSetDataHelper.cpp
             StringUtils.cpp
 
              ${HEADERS}

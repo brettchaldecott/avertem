@@ -20,6 +20,8 @@
 #include "Block.h"
 #include "SignedBlock.h"
 
+#include "BlockChain.pb.h"
+
 #include "keto/asn1/PrivateKeyHelper.hpp"
 #include "keto/crypto/KeyLoader.hpp"
 #include "keto/block_db/BlockBuilder.hpp"

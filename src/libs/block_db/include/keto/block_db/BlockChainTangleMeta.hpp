@@ -9,6 +9,7 @@
 #include <memory>
 
 #include "BlockChain.pb.h"
+#include "BlockChainDB.pb.h"
 
 #include "keto/asn1/HashHelper.hpp"
 #include "keto/rocks_db/DBManager.hpp"
@@ -52,7 +53,7 @@ private:
 
     BlockChainTangleMeta(BlockChainMeta* blockChainMeta, const keto::asn1::HashHelper& hash);
     BlockChainTangleMeta(BlockChainMeta* blockChainMeta, const keto::proto::BlockChainTangleMeta& blockChainTangleMeta);
-    BlockChainTangleMeta(BlockChainMeta* blockChainMeta, const BlockChainTangleMeta& orig);
+    BlockChainTangleMeta(const BlockChainTangleMeta& orig) = delete;
 
 };
 

@@ -151,16 +151,18 @@ void BlockChain::writeBlock(SignedBlock& signedBlock, const BlockChainCallback& 
                                        signedBlock, *transactionWrapper);
     }
 
-    keto::proto::BlockWapper blockWapper;
-    blockWapper.set_asn1_block(keto::server_common::VectorUtils().copyVectorToString(
+    keto::proto::BlockWrapper blockWrapper;
+    blockWrapper.set_asn1_block(keto::server_common::VectorUtils().copyVectorToString(
             (const std::vector<uint8_t>)(*serializationHelperPtr)));
-    blockWapper.block_meta.set_block_hash(blockHash);
-    blockWapper.block_meta.set_block_parent_hash(parentHash);
-    blockWapper.block_meta.set_chain_id(this->blockChainMetaPtr->getHashId());
 
+    keto::proto::BlockMeta blockMeta;
+    blockMeta.set_block_hash((const std::string&)blockHash);
+    blockMeta.set_block_parent_hash((const std::string&)parentHash);
+    blockMeta.set_chain_id((const std::string&)this->blockChainMetaPtr->getHashId());
+    blockWrapper.set_allocated_block_meta(&blockMeta);
 
     std::string blockWrapperStr;
-    blockWapper.SerializeToString(&blockWrapperStr)
+    blockWrapper.SerializeToString(&blockWrapperStr);
     keto::rocks_db::SliceHelper valueHelper(blockWrapperStr);
 
 
@@ -171,7 +173,7 @@ void BlockChain::writeBlock(SignedBlock& signedBlock, const BlockChainCallback& 
     BlockChainTangleMetaPtr blockChainTangleMetaPtr =
             this->blockChainMetaPtr->getTangleEntryByLastBlock(parentHash);
     if (!blockChainTangleMetaPtr) {
-        (blockChainTangleMetaPtr = this->blockChainMetaPtr->addTangle(blockHash);
+        blockChainTangleMetaPtr = this->blockChainMetaPtr->addTangle(blockHash);
     } else {
         blockChainTangleMetaPtr->setLastBlockHash(blockHash);
     }
@@ -200,10 +202,10 @@ void BlockChain::load(const std::vector<uint8_t>& id) {
                 new BlockChainMeta(id));
     } else {
         this->inited = true;
-        keto::proto::BlockMeta blockMeta;
-        blockMeta.ParseFromString(value);
+        keto::proto::BlockChainMeta blockChainMeta;
+        blockChainMeta.ParseFromString(value);
         this->blockChainMetaPtr = BlockChainMetaPtr(
-                new BlockChainMeta(blockMeta));
+                new BlockChainMeta(blockChainMeta));
     }
 }
 
@@ -227,10 +229,10 @@ BlockChainPtr BlockChain::getChildPtr(const keto::asn1::HashHelper& parentHash) 
     if (rocksdb::Status::OK() != status || rocksdb::Status::NotFound() == status) {
         BOOST_THROW_EXCEPTION(keto::block_db::InvalidParentHashIdentifierException());
     }
-    keto::proto::BlockWapper blockWapper;
-    blockWapper.ParseFromString(value);
+    keto::proto::BlockWrapper blockWrapper;
+    blockWrapper.ParseFromString(value);
     return BlockChainPtr(new BlockChain(this->dbManagerPtr,this->blockResourceManagerPtr,
-            keto::server_common::VectorUtils().copyStringToVector(blockWapper.block_meta.chain_id())));
+            keto::server_common::VectorUtils().copyStringToVector(blockWrapper.block_meta().chain_id())));
 }
 
 }

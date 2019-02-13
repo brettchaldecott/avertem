@@ -22,6 +22,7 @@
 #include "RDFModel.h"
 
 #include "keto/asn1/RDFSubjectHelper.hpp"
+#include "keto/asn1/AnyHelper.hpp"
 
 #include "keto/obfuscate/MetaString.hpp"
 
@@ -42,6 +43,7 @@ public:
     RDFModelHelper();
     RDFModelHelper(const RDFChange_t& change);
     RDFModelHelper(RDFModel_t* rdfModel);
+    RDFModelHelper(const AnyHelper& any);
     RDFModelHelper(const RDFModelHelper& orig);
     virtual ~RDFModelHelper();
     

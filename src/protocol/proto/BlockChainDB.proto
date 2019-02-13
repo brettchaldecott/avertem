@@ -52,7 +52,7 @@ message BlockMeta {
 /**
  * The block definition
  */
-message BlockWapper {
+message BlockWrapper {
     BlockMeta block_meta = 1;
     bytes asn1_block = 2;
 }
