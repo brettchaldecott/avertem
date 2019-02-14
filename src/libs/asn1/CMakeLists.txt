@@ -8,7 +8,6 @@ add_library( keto_asn1_common
             TimeHelper.cpp
             NumberHelper.cpp
             HashHelper.cpp
-            include/keto/asn1/HashHelper.hpp
             KeyHelper.cpp
             AnyHelper.cpp
             TestEntityHelper.cpp

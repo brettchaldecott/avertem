@@ -35,6 +35,7 @@
 #include "keto/block/GenesisLoader.hpp"
 #include "keto/block/Exception.hpp"
 #include "keto/block/Constants.hpp"
+#include "keto/block/BlockChainCallbackImpl.hpp"
 
 #include "keto/asn1/RDFObjectHelper.hpp"
 #include "keto/asn1/RDFPredicateHelper.hpp"
@@ -193,7 +194,7 @@ void GenesisLoader::load() {
     signedBlockBuilderPtr->sign();
     
     KETO_LOG_INFO << "Create the genesis BLOCK";
-    keto::block_db::BlockChainStore::getInstance()->writeBlock(signedBlockBuilderPtr);
+    keto::block_db::BlockChainStore::getInstance()->writeBlock(signedBlockBuilderPtr,BlockChainCallbackImpl());
     KETO_LOG_INFO << "Created the genesis BLOCK";
         
 }

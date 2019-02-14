@@ -69,13 +69,9 @@ private:
     void copyHashToVector(const Hash_t& hash, keto::crypto::SecureVector& vector);
 };
 
-bool operator==(const HashHelper& lhs, const std::vector<uint8_t>& rhs) {
-    return (std::vector<uint8_t >)lhs == rhs;
-};
+bool operator==(const HashHelper& lhs, const std::vector<uint8_t>& rhs);
 
-bool operator==(const HashHelper& lhs, const HashHelper& rhs) {
-    return (std::vector<uint8_t >)lhs == (std::vector<uint8_t >)rhs;
-};
+bool operator==(const HashHelper& lhs, const HashHelper& rhs);
 
 }
 }
