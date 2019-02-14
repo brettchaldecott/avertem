@@ -14,7 +14,8 @@ namespace block_db {
 std::string Constants::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
-    
+
+const char* Constants::BLOCK_META_INDEX = "block_meta_index";
 const char* Constants::BLOCKS_INDEX = "blocks";
 const char* Constants::TRANSACTIONS_INDEX = "transactions";
 const char* Constants::ACCOUNTS_INDEX = "accounts";
@@ -32,7 +33,7 @@ const char* Constants::PARENT_KEY      = "PARENT_KEY";
 const char* Constants::BLOCK_COUNT     = "BLOCK_COUNT";
 
 const std::vector<std::string> Constants::DB_LIST = 
-    {Constants::BLOCKS_INDEX,Constants::TRANSACTIONS_INDEX,Constants::ACCOUNTS_INDEX,
+    {Constants::BLOCK_META_INDEX, Constants::BLOCKS_INDEX, Constants::TRANSACTIONS_INDEX, Constants::ACCOUNTS_INDEX,
     Constants::CHILD_INDEX};
     
 }

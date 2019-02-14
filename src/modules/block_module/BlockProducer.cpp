@@ -202,6 +202,10 @@ void BlockProducer::generateBlock(std::deque<keto::proto::Transaction> transacti
     keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
     
     keto::asn1::HashHelper parentHash = keto::block_db::BlockChainStore::getInstance()->getParentHash();
+    if (parentHash.empty()) {
+        KETO_LOG_INFO << "The block producer is not initialized";
+        return;
+    }
     keto::block_db::BlockBuilderPtr blockBuilderPtr = 
             std::make_shared<keto::block_db::BlockBuilder>(parentHash);
 

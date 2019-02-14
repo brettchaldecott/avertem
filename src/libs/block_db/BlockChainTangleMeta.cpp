@@ -46,7 +46,7 @@ BlockChainTangleMeta::operator keto::proto::BlockChainTangleMeta() {
     google::protobuf::Timestamp timestamp;
     timestamp.set_seconds(this->lastModified);
     timestamp.set_nanos(0);
-    result.set_allocated_last_modified(&timestamp);
+    *result.mutable_last_modified() = timestamp;
     return result;
 }
 

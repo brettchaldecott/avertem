@@ -6,6 +6,9 @@
 # Created on Jan 12, 2018, 5:44:49 PM
 #
 
+ulimit -c unlimited
+ulimit -a
+
 # initialize the environment
 export LC_ALL=en_US.UTF-8
 

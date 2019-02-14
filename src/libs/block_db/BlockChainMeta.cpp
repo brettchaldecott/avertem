@@ -46,11 +46,10 @@ BlockChainMeta::operator std::string() const {
     google::protobuf::Timestamp timestamp;
     timestamp.set_seconds(this->created);
     timestamp.set_nanos(0);
-    blockMeta.set_allocated_created_date(&timestamp);
+    *blockMeta.mutable_created_date() = timestamp;
 
     for (BlockChainTangleMetaPtr blockChainTangleMetaPtr: this->tangles) {
-        keto::proto::BlockChainTangleMeta* blockChainTangleMeta = blockMeta.add_tangle();
-        *blockChainTangleMeta = *blockChainTangleMetaPtr;
+        *blockMeta.add_tangle() = *blockChainTangleMetaPtr;
     }
     std::string value;
     blockMeta.SerializeToString(&value);
@@ -62,9 +61,12 @@ int BlockChainMeta::tangleCount() {
 }
 
 BlockChainTangleMetaPtr BlockChainMeta::selectTangleEntry() {
+    if (!this->tangles.size()) {
+        return BlockChainTangleMetaPtr();
+    }
     std::default_random_engine stdGenerator;
     stdGenerator.seed(std::chrono::system_clock::now().time_since_epoch().count());
-    std::uniform_int_distribution<int> distribution(0,this->tangles.size());
+    std::uniform_int_distribution<int> distribution(0,this->tangles.size() -1);
     distribution(stdGenerator);
     return this->tangles[distribution(stdGenerator)];
 }

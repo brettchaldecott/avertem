@@ -42,8 +42,6 @@ BlockChainStore::BlockChainStore() {
             new keto::rocks_db::DBManager(Constants::DB_LIST));
     blockResourceManagerPtr  =  BlockResourceManagerPtr(
             new BlockResourceManager(dbManagerPtr));
-
-    this->masterChain = BlockChainPtr(new BlockChain(dbManagerPtr,blockResourceManagerPtr));
 }
 
 BlockChainStore::~BlockChainStore() {
@@ -65,6 +63,13 @@ void BlockChainStore::fin() {
 
 std::shared_ptr<BlockChainStore> BlockChainStore::getInstance() {
     return singleton;
+}
+
+void BlockChainStore::load() {
+    if (this->masterChain) {
+        return;
+    }
+    this->masterChain = BlockChainPtr(new BlockChain(dbManagerPtr,blockResourceManagerPtr));
 }
 
 bool BlockChainStore::requireGenesis() {

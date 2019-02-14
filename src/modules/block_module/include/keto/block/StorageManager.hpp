@@ -38,7 +38,8 @@ public:
     static std::shared_ptr<StorageManager> init();
     static void fin();
     static std::shared_ptr<StorageManager> getInstance();
-    
+
+    void load();
     
 private:
     StorageManager();

@@ -12,6 +12,7 @@ public-key-dir=keys/ketod/public
 server-public-key=keys/ketod/server/public_key.pem
 server-private-key=keys/ketod/server/private_key.pem
 # block chain files
+block_meta_index=data/block_meta_index
 blocks=data/blocks
 transactions=data/transactions
 accounts=data/accounts

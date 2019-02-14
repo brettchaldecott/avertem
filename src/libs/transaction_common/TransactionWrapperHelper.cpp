@@ -91,6 +91,9 @@ TransactionWrapperHelper::TransactionWrapperHelper(TransactionWrapper_t* transac
 
 TransactionWrapperHelper::TransactionWrapperHelper(const std::string& transactionWrapper) {
     this->own = true;
+    if (!transactionWrapper.size()) {
+        BOOST_THROW_EXCEPTION(keto::transaction_common::InvalidTransactionDataException());
+    }
     this->transactionWrapper = 
             keto::asn1::DeserializationHelper<TransactionWrapper_t>((const uint8_t*)transactionWrapper.data(), 
             transactionWrapper.size(),&asn_DEF_TransactionWrapper).takePtr();
@@ -167,9 +170,12 @@ std::vector<SignedChangeSetHelperPtr> TransactionWrapperHelper::getChangeSets() 
 }
 
 TransactionWrapperHelper& TransactionWrapperHelper::operator =(const std::string& transactionWrapper) {
-    this->transactionWrapper = 
-            keto::asn1::DeserializationHelper<TransactionWrapper_t>((const uint8_t*)transactionWrapper.data(), 
-            transactionWrapper.size(),&asn_DEF_TransactionWrapper).takePtr();
+    if (!transactionWrapper.size()) {
+        BOOST_THROW_EXCEPTION(keto::transaction_common::InvalidTransactionDataException());
+    }
+    this->transactionWrapper =
+            keto::asn1::DeserializationHelper<TransactionWrapper_t>((const uint8_t*)transactionWrapper.data(),
+                    transactionWrapper.size(),&asn_DEF_TransactionWrapper).takePtr();
     return (*this);
 }
 

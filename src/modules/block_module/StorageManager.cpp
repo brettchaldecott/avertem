@@ -52,6 +52,10 @@ std::shared_ptr<StorageManager> StorageManager::getInstance() {
     return singleton;
 }
 
+void StorageManager::load() {
+    keto::block_db::BlockChainStore::getInstance()->load();
+}
+
 
 }
 }

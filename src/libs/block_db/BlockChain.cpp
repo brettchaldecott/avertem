@@ -35,7 +35,7 @@ BlockChain::~BlockChain() {
 }
 
 bool BlockChain::requireGenesis() {
-    return inited;
+    return !inited;
 }
 
 void BlockChain::writeBlock(const SignedBlockBuilderPtr& signedBlock, const BlockChainCallback& callback) {
@@ -53,6 +53,9 @@ void BlockChain::writeBlock(const SignedBlockBuilderPtr& signedBlock, const Bloc
 }
 
 keto::asn1::HashHelper BlockChain::getParentHash() {
+    if (!this->activeTangle) {
+        return selectParentHash();
+    }
     return this->activeTangle->getLastBlockHash();
 }
 
@@ -95,6 +98,9 @@ keto::asn1::HashHelper BlockChain::selectParentHash() {
         return activeTangle->getLastBlockHash();
     }
     activeTangle = this->blockChainMetaPtr->selectTangleEntry();
+    if (!activeTangle) {
+        return keto::asn1::HashHelper();
+    }
     return activeTangle->getLastBlockHash();
 }
 
@@ -159,7 +165,7 @@ void BlockChain::writeBlock(SignedBlock& signedBlock, const BlockChainCallback& 
     blockMeta.set_block_hash((const std::string&)blockHash);
     blockMeta.set_block_parent_hash((const std::string&)parentHash);
     blockMeta.set_chain_id((const std::string&)this->blockChainMetaPtr->getHashId());
-    blockWrapper.set_allocated_block_meta(&blockMeta);
+    *blockWrapper.mutable_block_meta() = blockMeta;
 
     std::string blockWrapperStr;
     blockWrapper.SerializeToString(&blockWrapperStr);
@@ -173,8 +179,10 @@ void BlockChain::writeBlock(SignedBlock& signedBlock, const BlockChainCallback& 
     BlockChainTangleMetaPtr blockChainTangleMetaPtr =
             this->blockChainMetaPtr->getTangleEntryByLastBlock(parentHash);
     if (!blockChainTangleMetaPtr) {
+        std::cout << "Add a new block chain tangle" << std::endl;
         blockChainTangleMetaPtr = this->blockChainMetaPtr->addTangle(blockHash);
     } else {
+        std::cout << "Update the last block hash" << std::endl;
         blockChainTangleMetaPtr->setLastBlockHash(blockHash);
     }
     blockChainTangleMetaPtr->setLastModified(keto::asn1::TimeHelper(signedBlock.date));

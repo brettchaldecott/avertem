@@ -60,6 +60,7 @@ const std::string BlockModuleManager::getVersion() const {
 
 // lifecycle methods
 void BlockModuleManager::start() {
+    KETO_LOG_INFO << "[BlockModuleManager] Start the BlockModuleManager";
     BlockProducer::init();
     TransactionProcessor::init();
     StorageManager::init();
@@ -73,6 +74,7 @@ void BlockModuleManager::start() {
 void BlockModuleManager::postStart() {
     KETO_LOG_INFO << "[BlockModuleManager] Block manager post start has been called";
     keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
+    StorageManager::getInstance()->load();
     BlockService::getInstance()->genesis();
     transactionPtr->commit();
     

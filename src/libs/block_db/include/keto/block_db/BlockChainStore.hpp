@@ -48,7 +48,7 @@ public:
     static std::shared_ptr<BlockChainStore> getInstance();
 
 
-
+    void load();
     bool requireGenesis();
     void writeBlock(const SignedBlockBuilderPtr& signedBlock, const BlockChainCallback& callback);
     keto::asn1::HashHelper getParentHash();

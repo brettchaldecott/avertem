@@ -163,6 +163,7 @@ void GenesisLoader::load() {
         
         
         // create a change set set
+        KETO_LOG_INFO << "Setup the change set" << std::endl;
         keto::transaction_common::ChangeSetBuilderPtr changeSetBuilder(
             new keto::transaction_common::ChangeSetBuilder(
                 transactionWrapperHelper->getHash(),
@@ -173,21 +174,24 @@ void GenesisLoader::load() {
         signedChangeSetBuilder->sign();
         
         transactionWrapperHelper->addChangeSet(*signedChangeSetBuilder);
-        
+
+        KETO_LOG_INFO << "Setup the transaction message" << std::endl;
         keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelper(
             new keto::transaction_common::TransactionMessageHelper(transactionWrapperHelper));
         
         
-        keto::transaction_common::TransactionProtoHelper transactionProtoHelper(
-                transactionMessageHelper);
-        transactionProtoHelper = 
-            keto::server_common::fromEvent<keto::proto::Transaction>(
-            keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::Transaction>(
-            keto::server_common::Events::APPLY_ACCOUNT_TRANSACTION_MESSAGE,transactionProtoHelper)));
-        
-        blockBuilderPtr->addTransactionMessage(transactionProtoHelper.getTransactionMessageHelper());
+        //keto::transaction_common::TransactionProtoHelper transactionProtoHelper(
+        //        transactionMessageHelper);
+        //transactionProtoHelper =
+        //    keto::server_common::fromEvent<keto::proto::Transaction>(
+        //    keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::Transaction>(
+        //    keto::server_common::Events::APPLY_ACCOUNT_TRANSACTION_MESSAGE,transactionProtoHelper)));
+
+        KETO_LOG_INFO << "Add the transaction" << std::endl;
+        blockBuilderPtr->addTransactionMessage(transactionMessageHelper);
     }
-    
+
+    KETO_LOG_INFO << "Sign the block" << std::endl;
     keto::block_db::SignedBlockBuilderPtr signedBlockBuilderPtr(new keto::block_db::SignedBlockBuilder(
             blockBuilderPtr,
             keyLoaderPtr));
