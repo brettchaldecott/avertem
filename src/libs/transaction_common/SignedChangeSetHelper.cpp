@@ -3,6 +3,7 @@
 //
 
 #include "keto/transaction_common/SignedChangeSetHelper.hpp"
+#include "../../../ide_build/src/protocol/asn1/SignedChangeSet.h"
 
 namespace keto {
 namespace transaction_common {
@@ -29,6 +30,10 @@ SignedChangeSetHelper::operator SignedChangeSet_t&() {
 
 keto::asn1::ChangeSetHelperPtr SignedChangeSetHelper::getChangeSetHelper() {
     return keto::asn1::ChangeSetHelperPtr(new keto::asn1::ChangeSetHelper(&this->signedChangedSet->changeSet));
+}
+
+keto::asn1::HashHelper SignedChangeSetHelper::getHash() {
+    return this->signedChangedSet->changeSetHash;
 }
 
 

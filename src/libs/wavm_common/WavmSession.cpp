@@ -16,6 +16,7 @@
 
 #include "RDFChange.h"
 
+#include "keto/asn1/StatusUtils.hpp"
 #include "keto/server_common/Constants.hpp"
 #include "keto/wavm_common/WavmSession.hpp"
 #include "keto/wavm_common/RDFURLUtils.hpp"
@@ -47,27 +48,22 @@ WavmSession::WavmSession(const keto::proto::SandboxCommandMessage& sandboxComman
     transactionProtoHelper.setTransaction(sandboxCommandMessage.transaction());
     transactionMessageHelperPtr = transactionProtoHelper.getTransactionMessageHelper();
     rdfSessionPtr = std::make_shared<RDFMemorySession>();
-    if (sandboxCommandMessage.model().size() && transactionMessageHelperPtr->getTransactionWrapper()->getStatus() == Status_debit) {
-        keto::asn1::RDFModelHelper rdfModelHelper(keto::asn1::AnyHelper(sandboxCommandMessage.model()));
-        for (keto::asn1::RDFSubjectHelperPtr subject : rdfModelHelper.getSubjects()) {
-            rdfSessionPtr->persist(subject);
-        }
-    }
-    for (keto::transaction_common::SignedChangeSetHelperPtr signedChangeSetHelperPtr :
-        transactionMessageHelperPtr->getTransactionWrapper()->getChangeSets()) {
-        for (keto::asn1::ChangeSetDataHelperPtr changeSetDataHelperPtr:
-            signedChangeSetHelperPtr->getChangeSetHelper()->getChanges()) {
-            if (!changeSetDataHelperPtr->isASN1()) {
-                continue;
-            }
-
-            keto::asn1::RDFModelHelper rdfModelHelper(
-                    changeSetDataHelperPtr->getAny());
+    if (sandboxCommandMessage.model().size()) {
+        keto::asn1::AnyHelper anyHelper(sandboxCommandMessage.model());
+        RDFModel_t* rdfModel;
+        TransactionMessage_t* transactionMessage;
+        if ((rdfModel = anyHelper.extract<RDFModel_t>(&asn_DEF_RDFModel)) != NULL) {
+            keto::asn1::RDFModelHelper rdfModelHelper(rdfModel);
             for (keto::asn1::RDFSubjectHelperPtr subject : rdfModelHelper.getSubjects()) {
                 rdfSessionPtr->persist(subject);
             }
+        } else if ((transactionMessage = anyHelper.extract<TransactionMessage_t>(&asn_DEF_TransactionMessage)) != NULL) {
+            keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr(
+                    new keto::transaction_common::TransactionMessageHelper(transactionMessage));
+            addTransaction(transactionMessageHelperPtr,true);
         }
     }
+    addTransaction(transactionMessageHelperPtr,false);
 }
 
 WavmSession::~WavmSession() {
@@ -84,6 +80,9 @@ std::string WavmSession::getTransaction() {
 }
 
 Status WavmSession::getStatus() {
+    if (!transactionMessageHelperPtr->getTransactionWrapper()) {
+        BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidTransactionReferenceException());
+    }
     return transactionMessageHelperPtr->getTransactionWrapper()->getStatus();
 }
 
@@ -103,7 +102,7 @@ long WavmSession::getRequestModelTransactionValue(
     keto::wavm_common::RDFURLUtils transactionUrl(transactionValueModel);
     std::string transactionId = getTransaction();
     return rdfSessionPtr->getLongValue(transactionUrl.buildSubjectUrl(transactionId),
-            transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_SUBJECTS::VALUE));
+            transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::VALUE));
 }
 
 std::string WavmSession::getRequestStringValue(const std::string& subject, 
@@ -139,17 +138,17 @@ void WavmSession::createDebitEntry(const std::string& accountModel, const std::s
     ss << "debit_" << hash << "_" << id;
     std::string subjectUrl = transactionUrl.buildSubjectUrl(ss.str());
     this->addModelEntry(
-        subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_SUBJECTS::ID),id);
+        subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::ID),id);
     this->addDateTimeModelEntry(
-        subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_SUBJECTS::DATE_TIME),time(0));
+        subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::DATE_TIME),time(0));
     this->addModelEntry(
-        subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_SUBJECTS::TYPE),
+        subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::TYPE),
             keto::server_common::Constants::Constants::ACCOUNT_ACTIONS::DEBIT);
     this->addModelEntry(
-        subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_SUBJECTS::ACCOUNT_HASH),
+        subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::ACCOUNT_HASH),
             hash);
     this->addModelEntry(
-        subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_SUBJECTS::VALUE),
+        subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::VALUE),
             value.operator long());
     
 }
@@ -164,17 +163,17 @@ void WavmSession::createCreditEntry(const std::string& accountModel, const std::
     ss << "credit_" << hash << "_" << id;
     std::string subjectUrl = transactionUrl.buildSubjectUrl(ss.str());
     this->addModelEntry(
-        subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_SUBJECTS::ID),id);
+        subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::ID),id);
     this->addDateTimeModelEntry(
-        subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_SUBJECTS::DATE_TIME),time(0));
+        subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::DATE_TIME),time(0));
     this->addModelEntry(
-        subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_SUBJECTS::TYPE),
+        subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::TYPE),
             keto::server_common::Constants::Constants::ACCOUNT_ACTIONS::CREDIT);
     this->addModelEntry(
-        subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_SUBJECTS::ACCOUNT_HASH),
+        subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::ACCOUNT_HASH),
             hash);
     this->addModelEntry(
-        subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_SUBJECTS::VALUE),
+        subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::VALUE),
             value.operator long());
     
 }
@@ -343,6 +342,49 @@ void WavmSession::addDateTimeModelEntry(const std::string& subjectUrl, const std
 
 keto::asn1::HashHelper WavmSession::getCurrentAccountHash() {
     return transactionMessageHelperPtr->getTransactionWrapper()->getCurrentAccount();
+}
+
+
+void WavmSession::addTransaction(keto::transaction_common::TransactionMessageHelperPtr& transactionMessageHelperPtr,
+                                 bool defineRdfChangeSet) {
+    RDFURLUtils rdfurlUtils(RDFConstants::CHANGE_SET_SUBJECT);
+    for (keto::transaction_common::SignedChangeSetHelperPtr signedChangeSetHelperPtr :
+            transactionMessageHelperPtr->getTransactionWrapper()->getChangeSets()) {
+        keto::asn1::ChangeSetHelperPtr changeSetHelperPtr = signedChangeSetHelperPtr->getChangeSetHelper();
+        std::string hash = signedChangeSetHelperPtr->getHash().getHash(keto::common::StringEncoding::HEX);
+
+        if (defineRdfChangeSet) {
+            rdfSessionPtr->setStringValue(
+                    rdfurlUtils.buildSubjectUrl(hash), rdfurlUtils.buildSubjectUrl(RDFConstants::CHANGE_SET_PREDICATES::ID), hash);
+            rdfSessionPtr->setStringValue(
+                    rdfurlUtils.buildSubjectUrl(hash), rdfurlUtils.buildSubjectUrl(RDFConstants::CHANGE_SET_PREDICATES::CHANGE_SET_HASH), hash);
+            rdfSessionPtr->setDateTimeValue(
+                    rdfurlUtils.buildSubjectUrl(hash), rdfurlUtils.buildSubjectUrl(RDFConstants::CHANGE_SET_PREDICATES::DATE_TIME), time(0));
+            rdfSessionPtr->setStringValue(
+                    rdfurlUtils.buildSubjectUrl(hash), rdfurlUtils.buildSubjectUrl(RDFConstants::CHANGE_SET_PREDICATES::TYPE),
+                    keto::asn1::StatusUtils::statusToString(
+                            changeSetHelperPtr->getStatus()));
+
+        }
+
+        for (keto::asn1::ChangeSetDataHelperPtr changeSetDataHelperPtr:
+                changeSetHelperPtr->getChanges()) {
+            if (!changeSetDataHelperPtr->isASN1()) {
+                continue;
+            }
+
+            keto::asn1::RDFModelHelper rdfModelHelper(
+                    changeSetDataHelperPtr->getAny());
+            for (keto::asn1::RDFSubjectHelperPtr subject : rdfModelHelper.getSubjects()) {
+                rdfSessionPtr->persist(subject);
+                if (defineRdfChangeSet) {
+                    rdfSessionPtr->setStringValue(
+                            rdfurlUtils.buildSubjectUrl(hash), rdfurlUtils.buildSubjectUrl(RDFConstants::CHANGE_SET_PREDICATES::URI),
+                            subject->getSubject());
+                }
+            }
+        }
+    }
 }
 
 }

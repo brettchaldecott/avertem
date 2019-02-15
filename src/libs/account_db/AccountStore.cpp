@@ -142,14 +142,26 @@ void AccountStore::getContract(
     AccountResourcePtr resource = accountResourceManagerPtr->getResource();
     AccountGraphSessionPtr sessionPtr = resource->getGraphSession(accountInfo.graph_name());
     std::stringstream ss;
+    keto::asn1::HashHelper accountHash(contractMessage.account_hash());
     if (!contractMessage.contract_name().empty()) {
-        ss << "SELECT ?code WHERE { ?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#name> '" << 
-                contractMessage.contract_name() << "'^^<http://www.w3.org/2001/XMLSchema#string> . " << 
-                "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#value> ?code . } ";
+
+        ss << "SELECT ?code WHERE { " <<
+           "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#name> '" << contractMessage.contract_name() << "'^^<http://www.w3.org/2001/XMLSchema#string> . " <<
+           "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#accountHash> '" << accountHash.getHash(keto::common::StringEncoding::HEX) << "'^^<http://www.w3.org/2001/XMLSchema#string> . " <<
+           "?contractVersion <http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#contract> ?contract . " <<
+           "?contractVersion <http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#dateTime> ?dateTime . " <<
+           "?contractVersion <http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#value> ?code . } " <<
+           "ORDER BY DESC (?dateTime) LIMIT 1";
+
     } else {
-        ss << "SELECT ?code WHERE { ?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#hash> '" << 
-                contractMessage.account_hash() << "'^^<http://www.w3.org/2001/XMLSchema#string> . " << 
-                "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#value> ?code . } ";
+        keto::asn1::HashHelper contractHash(contractMessage.contract_hash());
+        ss << "SELECT ?code WHERE { " <<
+            "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#hash> '" << contractHash.getHash(keto::common::StringEncoding::HEX) << "'^^<http://www.w3.org/2001/XMLSchema#string> . " <<
+            "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#accountHash> '" << accountHash.getHash(keto::common::StringEncoding::HEX) << "'^^<http://www.w3.org/2001/XMLSchema#string> . " <<
+            "?contractVersion <http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#contract> ?contract . " <<
+            "?contractVersion <http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#dateTime> ?dateTime . " <<
+            "?contractVersion <http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#value> ?code . } " <<
+            "ORDER BY DESC (?dateTime) LIMIT 1";
     }
     ResultVectorMap result = sessionPtr->executeQuery(ss.str());
     if (result.size() == 1) {

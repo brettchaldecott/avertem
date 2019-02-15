@@ -17,9 +17,15 @@
 #include <memory>
 #include <string>
 
+#include "Sandbox.pb.h"
+#include "Contract.pb.h"
 #include "BlockChain.pb.h"
 
 #include "keto/common/MetaInfo.hpp"
+
+#include "keto/transaction_common/ActionHelper.hpp"
+#include "keto/transaction_common/TransactionProtoHelper.hpp"
+
 
 namespace keto {
 namespace block {
@@ -46,7 +52,16 @@ public:
     keto::proto::Transaction processTransaction(keto::proto::Transaction& transaction);
     
 private:
-    
+
+    std::string getContractByName(const std::string& account, const std::string& name);
+    std::string getContractByHash(const std::string& account, const std::string& hash);
+    keto::proto::ContractMessage getContract(keto::proto::ContractMessage& contractMessage);
+
+    keto::proto::SandboxCommandMessage executeContract(const std::string& contract,
+            const keto::transaction_common::TransactionProtoHelper& transactionProtoHelper);
+    keto::proto::SandboxCommandMessage executeContract(const std::string& contract,
+            const keto::transaction_common::TransactionProtoHelper& transactionProtoHelper,
+            keto::asn1::AnyHelper model);
 };
 
 

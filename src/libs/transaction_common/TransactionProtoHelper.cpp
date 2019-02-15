@@ -209,7 +209,7 @@ TransactionProtoHelper& TransactionProtoHelper::setTransaction(
     return (*this);
 }
 
-TransactionProtoHelper::operator std::string() {
+TransactionProtoHelper::operator std::string() const {
     std::string buffer;
     transaction.SerializeToString(&buffer);
     return buffer;

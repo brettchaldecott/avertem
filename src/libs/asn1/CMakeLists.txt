@@ -21,6 +21,7 @@ add_library( keto_asn1_common
             ChangeSetHelper.cpp
             ChangeSetDataHelper.cpp
             StringUtils.cpp
+            StatusUtils.cpp
 
              ${HEADERS}
            )

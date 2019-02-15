@@ -20,11 +20,20 @@ std::string RDFConstants::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
-const char* RDFConstants::ACCOUNT_TRANSACTION_SUBJECTS::ID = "id";
-const char* RDFConstants::ACCOUNT_TRANSACTION_SUBJECTS::ACCOUNT_HASH = "accountHash";
-const char* RDFConstants::ACCOUNT_TRANSACTION_SUBJECTS::TYPE = "type";
-const char* RDFConstants::ACCOUNT_TRANSACTION_SUBJECTS::DATE_TIME = "dateTime";
-const char* RDFConstants::ACCOUNT_TRANSACTION_SUBJECTS::VALUE = "value";
+
+const char* RDFConstants::CHANGE_SET_SUBJECT            = "http://keto-coin.io/schema/rdf/1.0/keto/ChangeSet#ChangeSet";
+
+const char* RDFConstants::CHANGE_SET_PREDICATES::ID                 = "id";
+const char* RDFConstants::CHANGE_SET_PREDICATES::CHANGE_SET_HASH    = "changeSetHash";
+const char* RDFConstants::CHANGE_SET_PREDICATES::TYPE               = "type";
+const char* RDFConstants::CHANGE_SET_PREDICATES::DATE_TIME          = "dateTime";
+const char* RDFConstants::CHANGE_SET_PREDICATES::URI                = "uri";
+
+const char* RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::ID = "id";
+const char* RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::ACCOUNT_HASH = "accountHash";
+const char* RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::TYPE = "type";
+const char* RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::DATE_TIME = "dateTime";
+const char* RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::VALUE = "value";
 
 const char* RDFConstants::TYPES::STRING = "http://www.w3.org/2001/XMLSchema#string";
 const char* RDFConstants::TYPES::LONG = "http://www.w3.org/2001/XMLSchema#decimal";

@@ -111,6 +111,8 @@ private:
         const time_t value);
     
     keto::asn1::HashHelper getCurrentAccountHash();
+    void addTransaction(keto::transaction_common::TransactionMessageHelperPtr& transactionMessageHelperPtr,
+            bool rdfChangeSet);
     
 };
 

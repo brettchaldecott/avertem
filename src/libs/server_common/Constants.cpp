@@ -38,6 +38,7 @@ const char* Constants::SERVICE::PROCESS     = "process";
 
 
 const char* Constants::CONTRACTS::BASE_ACCOUNT_CONTRACT     = "base_account_transaction";
+const char* Constants::CONTRACTS::NESTED_TRANSACTION_CONTRACT = "nested_transaction";
 
 const char* Constants::ACCOUNT_ACTIONS::DEBIT     = "debit";
 const char* Constants::ACCOUNT_ACTIONS::CREDIT     = "credit";

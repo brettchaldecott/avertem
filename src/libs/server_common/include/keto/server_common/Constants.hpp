@@ -52,6 +52,7 @@ public:
     class CONTRACTS {
     public:
         static const char* BASE_ACCOUNT_CONTRACT;
+        static const char* NESTED_TRANSACTION_CONTRACT;
         
     };
     

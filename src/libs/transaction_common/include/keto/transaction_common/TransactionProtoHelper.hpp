@@ -54,7 +54,7 @@ public:
             keto::transaction_common::TransactionEncryptionHandler& transactionEncryptionHandler);
     TransactionProtoHelper& setTransaction(const std::string& buffer);
     
-    operator std::string();
+    operator std::string() const;
     operator keto::proto::Transaction&();
     TransactionProtoHelper& operator = (const keto::proto::Transaction& transaction);
     

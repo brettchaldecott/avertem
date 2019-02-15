@@ -31,8 +31,19 @@ public:
     RDFConstants() = delete;
     RDFConstants(const RDFConstants& orig) = delete;
     virtual ~RDFConstants() = delete;
-    
-    class ACCOUNT_TRANSACTION_SUBJECTS {
+
+    static const char* CHANGE_SET_SUBJECT;
+
+    class CHANGE_SET_PREDICATES {
+    public:
+        static const char* ID;
+        static const char* CHANGE_SET_HASH;
+        static const char* TYPE;
+        static const char* DATE_TIME;
+        static const char* URI;
+    };
+
+    class ACCOUNT_TRANSACTION_PREDICATES {
     public:
         static const char* ID;
         static const char* ACCOUNT_HASH;

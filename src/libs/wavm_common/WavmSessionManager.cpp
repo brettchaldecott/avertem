@@ -68,7 +68,7 @@ WavmSessionManagerPtr WavmSessionManager::getInstance() {
 
 WavmSessionPtr WavmSessionManager::initWavmSession(
     const keto::proto::SandboxCommandMessage& sandboxCommandMessage) {
-    return WavmSessionPtr(new WavmSession(sandboxCommandMessage,
+    return wavmSessionPtr = WavmSessionPtr(new WavmSession(sandboxCommandMessage,
             this->keyLoaderPtr));
 }
 
