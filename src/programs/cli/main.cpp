@@ -81,7 +81,7 @@ std::shared_ptr<keto::chain_common::TransactionBuilder> buildTransaction(
             keto::asn1::HashHelper(accountHash,
         keto::common::HEX)).setTargetAccount(
             keto::asn1::HashHelper(targetHash,
-        keto::common::HEX)).setValue(keto::asn1::NumberHelper(longValue)).addAction(actionPtr);
+        keto::common::HEX)).setValue(keto::asn1::NumberHelper(longValue));//.addAction(actionPtr);
     
     return transactionPtr;
 }

@@ -162,7 +162,7 @@ TransactionWrapperHelper& TransactionWrapperHelper::addChangeSet(
 
 std::vector<SignedChangeSetHelperPtr> TransactionWrapperHelper::getChangeSets() {
     std::vector<SignedChangeSetHelperPtr> result;
-    for(int index =0; index < this->transactionWrapper->changeSet.list.size; index++) {
+    for(int index =0; index < this->transactionWrapper->changeSet.list.count; index++) {
         result.push_back(SignedChangeSetHelperPtr(new SignedChangeSetHelper(this->transactionWrapper->changeSet.list.array[index])));
     }
 

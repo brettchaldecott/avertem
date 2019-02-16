@@ -210,14 +210,12 @@ void BlockProducer::generateBlock(std::deque<keto::proto::Transaction> transacti
             std::make_shared<keto::block_db::BlockBuilder>(parentHash);
 
     for (keto::proto::Transaction& transaction : transactions) {
-        std::cout << "The transaction" << std::endl;
-        keto::transaction_common::TransactionProtoHelper transactionProtoHelper(
-            keto::server_common::fromEvent<keto::proto::Transaction>(
-            keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::Transaction>(
-            keto::server_common::Events::APPLY_ACCOUNT_TRANSACTION_MESSAGE,transaction))));
-
+        std::cout << "Add the transaction message" << std::endl;
+        keto::transaction_common::TransactionProtoHelper transactionProtoHelper(transaction);
         blockBuilderPtr->addTransactionMessage(transactionProtoHelper.getTransactionMessageHelper());
+        std::cout << "After adding the transaction" << std::endl;
     }
+    std::cout << "Set the accepted check" << std::endl;
     blockBuilderPtr->setAcceptedCheck(this->consensusMessageHelper.getMsg());
 
     // build the block consensus based on the software consensus

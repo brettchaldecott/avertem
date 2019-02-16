@@ -60,9 +60,11 @@ WavmSession::WavmSession(const keto::proto::SandboxCommandMessage& sandboxComman
         } else if ((transactionMessage = anyHelper.extract<TransactionMessage_t>(&asn_DEF_TransactionMessage)) != NULL) {
             keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr(
                     new keto::transaction_common::TransactionMessageHelper(transactionMessage));
+            std::cout << "Set the transaction model" << std::endl;
             addTransaction(transactionMessageHelperPtr,true);
         }
     }
+    std::cout << "Setup the existing transaction" << std::endl;
     addTransaction(transactionMessageHelperPtr,false);
 }
 
@@ -351,6 +353,7 @@ void WavmSession::addTransaction(keto::transaction_common::TransactionMessageHel
     for (keto::transaction_common::SignedChangeSetHelperPtr signedChangeSetHelperPtr :
             transactionMessageHelperPtr->getTransactionWrapper()->getChangeSets()) {
         keto::asn1::ChangeSetHelperPtr changeSetHelperPtr = signedChangeSetHelperPtr->getChangeSetHelper();
+        std::cout << "Get all the hashes for the signature" << std::endl;
         std::string hash = signedChangeSetHelperPtr->getHash().getHash(keto::common::StringEncoding::HEX);
 
         if (defineRdfChangeSet) {

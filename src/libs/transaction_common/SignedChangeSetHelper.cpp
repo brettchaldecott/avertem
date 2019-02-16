@@ -33,6 +33,9 @@ keto::asn1::ChangeSetHelperPtr SignedChangeSetHelper::getChangeSetHelper() {
 }
 
 keto::asn1::HashHelper SignedChangeSetHelper::getHash() {
+    if (this->signedChangedSet) {
+
+    }
     return this->signedChangedSet->changeSetHash;
 }
 
