@@ -229,7 +229,7 @@ keto::proto::SandboxCommandMessage WavmSession::getSandboxCommandMessage() {
     std::chrono::high_resolution_clock::time_point endTime = std::chrono::high_resolution_clock::now();
     std::chrono::milliseconds elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
 
-    sandboxCommandMessage.set_elapsed_time(sandboxCommandMessage.elapsed_time() + (endTime.count()));
+    sandboxCommandMessage.set_elapsed_time(sandboxCommandMessage.elapsed_time() + (elapsedTime.count()));
     
     return this->sandboxCommandMessage;
 }

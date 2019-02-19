@@ -42,7 +42,9 @@ target_include_directories(keto_cli
         PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/account_utils/include"
         PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
         PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/proto/"
-        ${BOTAN_INCLUDE_DIR}
+        PUBLIC "${PROTO_HDRS}"
+
+        ${Boost_INCLUDE_DIRS}
         ${JSON_INCLUDE_DIR})
 
 target_link_libraries( keto_cli 

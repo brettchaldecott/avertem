@@ -144,7 +144,7 @@ keto::proto::SandboxCommandMessage TransactionProcessor::executeContract(const s
     sandboxCommandMessage = keto::server_common::fromEvent<keto::proto::SandboxCommandMessage>(
             keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SandboxCommandMessage>(
                     keto::server_common::Events::EXECUTE_ACTION_MESSAGE,sandboxCommandMessage)));
-    transactionTracker.incrementElapsedTime(sandboxCommandMessage.get_elapsed_time() - transactionTracker.getElapsedTime());
+    transactionTracker.incrementElapsedTime(sandboxCommandMessage.elapsed_time() - transactionTracker.getElapsedTime());
     return sandboxCommandMessage;
 }
 
@@ -164,7 +164,7 @@ keto::proto::SandboxCommandMessage TransactionProcessor::executeContract(const s
     sandboxCommandMessage = keto::server_common::fromEvent<keto::proto::SandboxCommandMessage>(
                     keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SandboxCommandMessage>(
                             keto::server_common::Events::EXECUTE_ACTION_MESSAGE,sandboxCommandMessage)));
-    transactionTracker.incrementElapsedTime(sandboxCommandMessage.get_elapsed_time() - transactionTracker.getElapsedTime());
+    transactionTracker.incrementElapsedTime(sandboxCommandMessage.elapsed_time() - transactionTracker.getElapsedTime());
     return sandboxCommandMessage;
 }
 
@@ -251,7 +251,7 @@ keto::transaction_common::TransactionProtoHelper TransactionProcessor::processTr
                 transactionProtoHelper,transactionTracker).transaction());
     }
 
-
+    return transactionProtoHelper;
 }
 
 }

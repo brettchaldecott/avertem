@@ -211,7 +211,7 @@ void BlockChain::load(const std::vector<uint8_t>& id) {
     } else {
         this->inited = true;
         keto::proto::BlockChainMeta blockChainMeta;
-        blockChainMeta.ParseFromString(value);~
+        blockChainMeta.ParseFromString(value);
         this->blockChainMetaPtr = BlockChainMetaPtr(
                 new BlockChainMeta(blockChainMeta));
     }

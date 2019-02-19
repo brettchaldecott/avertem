@@ -75,8 +75,8 @@ keto::event::Event NetworkFeeManager::getNetworkFeeInfo(const keto::event::Event
 }
 
 keto::event::Event NetworkFeeManager::setNetworkFeeInfo(const keto::event::Event& event) {
-    setFeeInfo(NetworkFeeManagerPtr(new NetworkFeeManager(
-            keto::server_common::fromEvent<keto::proto::FeeInfoMsg>(event)));
+    setFeeInfo(keto::transaction_common::FeeInfoMsgProtoHelperPtr(new keto::transaction_common::FeeInfoMsgProtoHelper(
+            keto::server_common::fromEvent<keto::proto::FeeInfoMsg>(event))));
     return event;
 }
 

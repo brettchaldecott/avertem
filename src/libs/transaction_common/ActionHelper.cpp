@@ -12,6 +12,7 @@
  */
 
 #include "keto/transaction_common/ActionHelper.hpp"
+#include "keto/asn1/StringUtils.hpp"
 
 namespace keto {
 namespace transaction_common {
@@ -41,7 +42,7 @@ std::string ActionHelper::getContractName() {
     if (action->contractName.size) {
         return keto::asn1::StringUtils::copyBuffer(action->contractName);
     }
-    return std::string;
+    return "";
 }
 
 keto::asn1::HashHelper ActionHelper::getParent() {

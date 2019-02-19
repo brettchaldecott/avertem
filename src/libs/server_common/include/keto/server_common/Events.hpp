@@ -151,6 +151,7 @@ public:
     };
 
     class NETWORK_FEE_INFO {
+    public:
         static const char* GET_NETWORK_FEE;
         static const char* SET_NETWORK_FEE;
     };

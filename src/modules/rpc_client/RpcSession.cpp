@@ -301,7 +301,7 @@ RpcSession::on_read(
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_KEYS) == 0) {
             requestNetworkKeysResponse(command,stringVector[1]);
             transactionPtr->commit();
-            return
+            return;
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_FEES) == 0) {
             requestNetworkFeesResponse(command,stringVector[1]);
             transactionPtr->commit();

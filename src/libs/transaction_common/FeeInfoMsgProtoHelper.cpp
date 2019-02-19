@@ -27,7 +27,7 @@ FeeInfoMsgProtoHelper::FeeInfoMsgProtoHelper(const long fee) {
     google::protobuf::Timestamp expiryTime;
     expiryTime.set_seconds(time(0) + Constants::DEFAULT_EXIRY_DURATION);
     expiryTime.set_nanos(0);
-    this->feeInfoMsg.mutable_expiry_time() = expiryTime;
+    *this->feeInfoMsg.mutable_expiry_time() = expiryTime;
 }
 
 FeeInfoMsgProtoHelper::FeeInfoMsgProtoHelper(const long fee, const long expiryDuration, const long maxFee) {
@@ -38,7 +38,7 @@ FeeInfoMsgProtoHelper::FeeInfoMsgProtoHelper(const long fee, const long expiryDu
     google::protobuf::Timestamp expiryTime;
     expiryTime.set_seconds(time(0) + expiryDuration);
     expiryTime.set_nanos(0);
-    this->feeInfoMsg.mutable_expiry_time() = expiryTime;
+    *this->feeInfoMsg.mutable_expiry_time() = expiryTime;
 }
 
 FeeInfoMsgProtoHelper::FeeInfoMsgProtoHelper(const keto::proto::FeeInfoMsg& feeInfoMsg) : feeInfoMsg(feeInfoMsg) {
@@ -72,7 +72,7 @@ FeeInfoMsgProtoHelper& FeeInfoMsgProtoHelper::setMaxFee(const long maxFee) {
 }
 
 long FeeInfoMsgProtoHelper::getMaxFee() {
-    return this->feeInfoMsg.get_max_fee();
+    return this->feeInfoMsg.max_fee();
 }
 
 std::time_t FeeInfoMsgProtoHelper::getExpiryTime() {
@@ -83,7 +83,7 @@ FeeInfoMsgProtoHelper& FeeInfoMsgProtoHelper::setExpiryTime(const std::time_t& e
     google::protobuf::Timestamp expiryTime;
     expiryTime.set_seconds(expiry);
     expiryTime.set_nanos(0);
-    this->feeInfoMsg.mutable_expiry_time() = expiryTime;
+    *this->feeInfoMsg.mutable_expiry_time() = expiryTime;
 }
 
 bool FeeInfoMsgProtoHelper::isExpired() {
