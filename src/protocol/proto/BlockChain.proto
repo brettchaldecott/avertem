@@ -53,7 +53,7 @@ message ChangeSet {
 
 message FeeInfoMsg {
     uint32 version = 1;
-    int64 fee_ratio = 2;
+    float fee_ratio = 2;
     int64 max_fee = 3;
     google.protobuf.Timestamp expiry_time = 4;
 }

@@ -12,5 +12,5 @@ message SandboxCommandMessage {
     bytes changes = 4;
     int64 available_time = 5;
     int64 elapsed_time = 6;
-    int64 fee_ratio = 7;
+    float fee_ratio = 7;
 }

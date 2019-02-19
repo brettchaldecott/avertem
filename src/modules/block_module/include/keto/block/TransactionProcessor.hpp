@@ -43,18 +43,18 @@ public:
 
     class TransactionTracker {
     public:
-        TransactionTracker(long availableTime, long elapsedTime, long feeRatio);
+        TransactionTracker(long availableTime, long elapsedTime, float feeRatio);
         TransactionTracker(const TransactionTracker& orig) = default;
         virtual ~TransactionTracker();
 
         long getAvailableTime();
         long getElapsedTime();
         long incrementElapsedTime(int increase);
-        long getFeeRatio();
+        float getFeeRatio();
     private:
         long availableTime;
         long elapsedTime;
-        long feeRatio;
+        float feeRatio;
     };
     typedef std::shared_ptr<TransactionTracker> TransactionTrackerPtr;
 

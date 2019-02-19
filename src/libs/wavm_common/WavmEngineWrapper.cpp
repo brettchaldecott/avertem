@@ -167,8 +167,7 @@ void WavmEngineWrapper::execute() {
     module.featureSpec.requireSharedFlagForAtomicOperators = false;
 
     // Load the module.
-
-    if(!loadTextModule(wast,module)) { 
+    if(!loadTextModule(wast,module)) {
         BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidContractException());
     }
     // Link the module with the intrinsic modules.

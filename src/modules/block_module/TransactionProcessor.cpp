@@ -38,7 +38,7 @@ std::string TransactionProcessor::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
-TransactionProcessor::TransactionTracker::TransactionTracker(long availableTime, long elapsedTime, long feeRatio) {
+TransactionProcessor::TransactionTracker::TransactionTracker(long availableTime, long elapsedTime, float feeRatio) {
     this->availableTime = availableTime;
     this->elapsedTime = elapsedTime;
     this->feeRatio = feeRatio;
@@ -60,7 +60,7 @@ long TransactionProcessor::TransactionTracker::incrementElapsedTime(int increase
     return this->elapsedTime += increase;
 }
 
-long TransactionProcessor::TransactionTracker::getFeeRatio() {
+float TransactionProcessor::TransactionTracker::getFeeRatio() {
     return this->feeRatio;
 }
 
@@ -112,7 +112,7 @@ keto::proto::Transaction TransactionProcessor::processTransaction(keto::proto::T
 
 std::string TransactionProcessor::getContractByName(const keto::asn1::HashHelper& account, const std::string& name) {
     keto::proto::ContractMessage contractMessage;
-    contractMessage.set_account_hash(account.getHash(keto::common::StringEncoding::HEX));
+    contractMessage.set_account_hash(account);
     contractMessage.set_contract_name(name);
     return getContract(contractMessage).contract();
 }
@@ -176,7 +176,8 @@ keto::transaction_common::TransactionProtoHelper TransactionProcessor::processTr
 
     // get the transaction from the account store
     keto::asn1::HashHelper activeAccount;
-    if (transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getStatus() == Status_debit) {
+    if ((transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getStatus() == Status_init) ||
+        (transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getStatus() == Status_debit)) {
         activeAccount = transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getSourceAccount();
         transactionProtoHelper.setTransaction(executeContract(
                 getContractByName(activeAccount, keto::server_common::Constants::CONTRACTS::BASE_ACCOUNT_CONTRACT),

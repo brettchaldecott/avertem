@@ -29,9 +29,9 @@ public:
 
 
     FeeInfoMsgProtoHelper();
-    FeeInfoMsgProtoHelper(const long fee);
-    FeeInfoMsgProtoHelper(const long fee, const long expiryDuration);
-    FeeInfoMsgProtoHelper(const long fee, const long expiryDuration, const long maxFee);
+    FeeInfoMsgProtoHelper(const float fee);
+    FeeInfoMsgProtoHelper(const float fee, const long expiryDuration);
+    FeeInfoMsgProtoHelper(const float fee, const long expiryDuration, const long maxFee);
     FeeInfoMsgProtoHelper(const keto::proto::FeeInfoMsg& feeInfoMsg);
     FeeInfoMsgProtoHelper(const std::string& msg);
     FeeInfoMsgProtoHelper(const std::vector<uint8_t>& msg);
@@ -39,8 +39,8 @@ public:
     virtual ~FeeInfoMsgProtoHelper();
 
 
-    FeeInfoMsgProtoHelper& setFeeRatio(const long fee);
-    long getFeeRatio();
+    FeeInfoMsgProtoHelper& setFeeRatio(const float fee);
+    float getFeeRatio();
 
     FeeInfoMsgProtoHelper& setMaxFee(const long maxFee);
     long getMaxFee();

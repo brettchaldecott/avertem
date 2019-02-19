@@ -49,8 +49,8 @@ void NetworkFeeManager::load() {
         if (!config->getVariablesMap().count(Constants::NETWORK_FEE_RATIO)) {
             BOOST_THROW_EXCEPTION(keto::block::NetworkFeeRatioNotSetException());
         }
-        long feeRatio =
-                config->getVariablesMap()[Constants::NETWORK_FEE_RATIO].as<long>();
+        float feeRatio = std::stof(
+                config->getVariablesMap()[Constants::NETWORK_FEE_RATIO].as<std::string>());
         this->feeInfoMsgProtoHelperPtr = keto::transaction_common::FeeInfoMsgProtoHelperPtr(
                 new keto::transaction_common::FeeInfoMsgProtoHelper(feeRatio));
         this->feeInfoMsgProtoHelperPtr->setMaxFee(Constants::MAX_RUN_TIME / feeRatio);
