@@ -38,6 +38,10 @@ public:
     // block producer
     static const char* BLOCK_PRODUCER_ENABLED;
     static const char* BLOCK_PRODUCER_ENABLED_TRUE;
+
+    // network fee manager
+    static const char* NETWORK_FEE_RATIO;
+    static const long MAX_RUN_TIME;
 };
 
 

@@ -239,17 +239,26 @@ void WavmEngineWrapper::execute() {
         [&]
         {
             Result functionResult = invokeFunctionChecked(context,functionInstance,invokeArgs);
+
+            // collect the garbage
             Runtime::collectGarbage();
         },
         [&](Runtime::Exception&& exception)
         {
             std::stringstream ss;
             ss << "Failed to handle the exception : " << describeException(exception).c_str();
-            
+
+            // collect the garbage
+            try {
+				Runtime::collectGarbage();
+			} catch (...) {
+                KETO_LOG_INFO << "[WavmEngineWrapper][execute] failed to garbage collect";
+            }
+
             std::cout << ss.str() << std::endl;
             BOOST_THROW_EXCEPTION(keto::wavm_common::ContactExecutionFailedException(ss.str()));
         });
-    
+
 }
 
 }

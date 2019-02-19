@@ -25,6 +25,7 @@ add_library( 0020_keto_block_module
             TransactionProcessor.cpp
             ConsensusService.cpp
             BlockChainCallbackImpl.cpp
+            NetworkFeeManager.cpp
 
              ${HEADERS}
            )

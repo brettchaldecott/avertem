@@ -43,6 +43,9 @@ public:
     static keto::event::Event consensusSessionAccepted(const keto::event::Event& event);
     static keto::event::Event enableBlockProducer(const keto::event::Event& event);
 
+    static keto::event::Event getNetworkFeeInfo(const keto::event::Event& event);
+    static keto::event::Event setNetworkFeeInfo(const keto::event::Event& event);
+
 private:
     EventRegistry();
     

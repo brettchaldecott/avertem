@@ -82,6 +82,12 @@ public:
             transactionEncryptionHandler);
     
     bool isEncrypted();
+
+    // the number of seconds available to this contract
+    time_t getAvailableTime();
+    TransactionMessageHelper& setAvailableTime(time_t availableTime);
+    time_t getElapsedTime();
+    TransactionMessageHelper& setElapsedTime(time_t elapsedTime);
     
     
 private:

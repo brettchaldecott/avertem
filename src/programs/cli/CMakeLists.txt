@@ -1,4 +1,7 @@
-add_executable( keto_cli main.cpp )
+add_executable( keto_cli
+        main.cpp
+        TransactionReader.cpp
+        TransactionLoader.cpp)
 if( UNIX AND NOT APPLE )
   set(rt_library rt )
 endif()

@@ -94,6 +94,7 @@ private:
     RDFMemorySessionPtr rdfSessionPtr;
     keto::asn1::RDFModelHelper modelHelper;
     keto::crypto::KeyLoaderPtr keyLoaderPtr;
+    std::chrono::high_resolution_clock::time_point startTime;
     
     
     keto::asn1::RDFSubjectHelperPtr getSubject(const std::string& subjectUrl);

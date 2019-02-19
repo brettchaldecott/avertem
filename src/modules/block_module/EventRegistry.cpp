@@ -19,6 +19,7 @@
 
 #include "keto/block/ConsensusService.hpp"
 #include "keto/block/BlockProducer.hpp"
+#include "keto/block/NetworkFeeManager.hpp"
 
 namespace keto {
 namespace block {
@@ -53,9 +54,21 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION_STATE::BLOCK,
             &keto::block::EventRegistry::setupNodeConsensusSession);
+
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::NETWORK_FEE_INFO::GET_NETWORK_FEE,
+            &keto::block::EventRegistry::getNetworkFeeInfo);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::NETWORK_FEE_INFO::SET_NETWORK_FEE,
+            &keto::block::EventRegistry::setNetworkFeeInfo);
 }
 
 void EventRegistry::deregisterEventHandlers() {
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::NETWORK_FEE_INFO::GET_NETWORK_FEE);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::NETWORK_FEE_INFO::SET_NETWORK_FEE);
+
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::CONSENSUS::BLOCK);
     keto::server_common::deregisterEventHandler (
@@ -94,6 +107,14 @@ keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Ev
 keto::event::Event EventRegistry::enableBlockProducer(const keto::event::Event& event) {
     BlockProducer::getInstance()->setState(BlockProducer::State::block_producer);
     return event;
+}
+
+keto::event::Event EventRegistry::getNetworkFeeInfo(const keto::event::Event& event) {
+    return NetworkFeeManager::getInstance()->getNetworkFeeInfo(event);
+}
+
+keto::event::Event EventRegistry::setNetworkFeeInfo(const keto::event::Event& event) {
+    return NetworkFeeManager::getInstance()->setNetworkFeeInfo(event);
 }
 
 }

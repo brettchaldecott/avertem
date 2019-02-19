@@ -139,6 +139,7 @@ private:
     void requestNetworkSessionKeysResponse(const std::string& command, const std::string& message);
     void requestNetworkMasterKeyResponse(const std::string& command, const std::string& message);
     void requestNetworkKeysResponse(const std::string& command, const std::string& message);
+    void requestNetworkFeesResponse(const std::string& command, const std::string& message);
     void handleRegisterRequest(const std::string& command, const std::string& message);
     void handleTransaction(const std::string& command, const std::string& message);
     

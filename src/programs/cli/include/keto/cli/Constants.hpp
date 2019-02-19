@@ -24,7 +24,8 @@ public:
     static constexpr const char* KETOD_PORT = "ketod_port";
     static constexpr const char* PRIVATE_KEY = "private_key";
     static constexpr const char* PUBLIC_KEY = "public_key";
-    
+
+    static constexpr const char* FILE = "file";
     static constexpr const char* ACTION = "action";
     static constexpr const char* PARENT = "parent";
     static constexpr const char* SOURCE_ACCOUNT = "source";

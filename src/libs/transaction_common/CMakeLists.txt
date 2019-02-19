@@ -18,6 +18,8 @@ add_library( keto_transaction_common
             MessageWrapperProtoHelper.cpp
             AccountTransactionInfoProtoHelper.cpp
             SignedChangeSetHelper.cpp
+            FeeInfoMsgProtoHelper.cpp
+            include/keto/transaction_common/Constants.hpp
 
              ${HEADERS}
            )

@@ -23,7 +23,8 @@
 #include "keto/cli/Constants.hpp"
 #include "keto/session/HttpSession.hpp"
 #include "keto/session/HttpSessionTransactionEncryptor.hpp"
-
+#include "keto/cli/TransactionReader.hpp"
+#include "keto/cli/TransactionLoader.hpp"
 
 #include "keto/chain_common/TransactionBuilder.hpp"
 #include "keto/chain_common/SignedTransactionBuilder.hpp"
@@ -49,6 +50,7 @@ boost::program_options::options_description generateOptionDescriptions() {
             ("account_key,K", po::value<std::string>(),"Private key file.")
             ("transgen,T", "Generate a transaction.")
             ("sessiongen,S", "Generate a new session ID.")
+            ("file,f", po::value<std::string>(),"Input file.")
             ("action,a", po::value<std::string>(),"Action Hash or Name.")
             ("parent,p", po::value<std::string>(),"Parent Transaction.")
             ("source,s", po::value<std::string>(),"Source Account Hash.")
@@ -89,6 +91,7 @@ std::shared_ptr<keto::chain_common::TransactionBuilder> buildTransaction(
 int generateTransaction(std::shared_ptr<ketoEnv::Config> config,
         boost::program_options::options_description optionDescription) {
     // retrieve the host information from the configuration file
+
     if (!config->getVariablesMap().count(keto::cli::Constants::KETOD_SERVER)) {
         std::cerr << "Please configure the ketod server host information [" << 
                 keto::cli::Constants::KETOD_SERVER << "]" << std::endl;
@@ -123,83 +126,98 @@ int generateTransaction(std::shared_ptr<ketoEnv::Config> config,
     // read in the keys
     keto::crypto::KeyLoader keyLoader(privateKey, publicKey);
 
-    // retrieve the action hash
-    if (!config->getVariablesMap().count(keto::cli::Constants::ACTION)) {
-        std::cerr << "Please provide the action name or hash [" << 
-                keto::cli::Constants::ACTION << "]" << std::endl;
-        std::cout <<  optionDescription << std::endl;
-        return -1;
+    keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr;
+
+    // check if there is a file
+    if (config->getVariablesMap().count(keto::cli::Constants::FILE)) {
+        std::string filePath = config->getVariablesMap()[keto::cli::Constants::FILE].as<std::string>();
+        boost::filesystem::path transactionPath = filePath;
+        keto::cli::TransactionReader transactionReader(transactionPath);
+
+        transactionMessageHelperPtr = keto::cli::TransactionLoader(transactionReader,keyLoader).load();
+
+    } else {
+        // retrieve the action hash
+        if (!config->getVariablesMap().count(keto::cli::Constants::ACTION)) {
+            std::cerr << "Please provide the action name or hash [" <<
+                      keto::cli::Constants::ACTION << "]" << std::endl;
+            std::cout << optionDescription << std::endl;
+            return -1;
+        }
+        std::string action = config->getVariablesMap()[keto::cli::Constants::ACTION].as<std::string>();
+        if (config->getVariablesMap().count(action)) {
+            action = config->getVariablesMap()[action].as<std::string>();
+        }
+
+        // retrieve the parent hash
+        if (!config->getVariablesMap().count(keto::cli::Constants::PARENT)) {
+            std::cerr << "Please provide the parent hash [" <<
+                      keto::cli::Constants::PARENT << "]" << std::endl;
+            std::cout << optionDescription << std::endl;
+            return -1;
+        }
+        std::string parentHash = config->getVariablesMap()[keto::cli::Constants::PARENT].as<std::string>();
+
+        // retrieve source account hash
+        if (!config->getVariablesMap().count(keto::cli::Constants::SOURCE_ACCOUNT)) {
+            std::cerr << "Please provide the source account [" <<
+                      keto::cli::Constants::SOURCE_ACCOUNT << "]" << std::endl;
+            std::cout << optionDescription << std::endl;
+            return -1;
+        }
+        std::string sourceAccount = config->getVariablesMap()[keto::cli::Constants::SOURCE_ACCOUNT].as<std::string>();
+
+        // retrieve target account hash
+        if (!config->getVariablesMap().count(keto::cli::Constants::TARGET_ACCOUNT)) {
+            std::cerr << "Please provide the target account [" <<
+                      keto::cli::Constants::TARGET_ACCOUNT << "]" << std::endl;
+            std::cout << optionDescription << std::endl;
+            return -1;
+        }
+        std::string targetAccount = config->getVariablesMap()[keto::cli::Constants::TARGET_ACCOUNT].as<std::string>();
+
+        // retrieve transaction value
+        if (!config->getVariablesMap().count(keto::cli::Constants::VALUE)) {
+            std::cerr << "Please provide the value [" <<
+                      keto::cli::Constants::VALUE << "]" << std::endl;
+            std::cout << optionDescription << std::endl;
+            return -1;
+        }
+        long value = config->getVariablesMap()[keto::cli::Constants::VALUE].as<long>();
+
+
+        std::shared_ptr<keto::chain_common::TransactionBuilder> transactionPtr = buildTransaction(
+                action, parentHash, sourceAccount, targetAccount, value);
+
+        keto::asn1::PrivateKeyHelper privateKeyHelper;
+        privateKeyHelper.setKey(
+                Botan::PKCS8::BER_encode(*keyLoader.getPrivateKey()));
+
+        std::shared_ptr<keto::chain_common::SignedTransactionBuilder> signedTransBuild =
+                keto::chain_common::SignedTransactionBuilder::createTransaction(
+                        privateKeyHelper);
+
+
+        signedTransBuild->setTransaction(transactionPtr);
+        signedTransBuild->sign();
+
+        keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelperPtr(
+                new keto::transaction_common::TransactionWrapperHelper(
+                        *signedTransBuild, keto::asn1::HashHelper(sourceAccount,
+                                                                  keto::common::HEX),
+                        keto::asn1::HashHelper(targetAccount,
+                                               keto::common::HEX)));
+
+        transactionWrapperHelperPtr->addTransactionTrace(
+                *keto::transaction_common::TransactionTraceBuilder::createTransactionTrace(sourceAccount, keyLoader));
+
+        transactionMessageHelperPtr = keto::transaction_common::TransactionMessageHelperPtr(
+                new keto::transaction_common::TransactionMessageHelper(
+                        transactionWrapperHelperPtr));
+
+
+
     }
-    std::string action = config->getVariablesMap()[keto::cli::Constants::ACTION].as<std::string>();
-    if (config->getVariablesMap().count(action)) {
-        action = config->getVariablesMap()[action].as<std::string>();
-    }
-
-    // retrieve the parent hash
-    if (!config->getVariablesMap().count(keto::cli::Constants::PARENT)) {
-        std::cerr << "Please provide the parent hash [" << 
-                keto::cli::Constants::PARENT << "]" << std::endl;
-        std::cout <<  optionDescription << std::endl;
-        return -1;
-    }
-    std::string parentHash = config->getVariablesMap()[keto::cli::Constants::PARENT].as<std::string>();
-
-    // retrieve source account hash
-    if (!config->getVariablesMap().count(keto::cli::Constants::SOURCE_ACCOUNT)) {
-        std::cerr << "Please provide the source account [" << 
-                keto::cli::Constants::SOURCE_ACCOUNT << "]" << std::endl;
-        std::cout <<  optionDescription << std::endl;
-        return -1;
-    }
-    std::string sourceAccount = config->getVariablesMap()[keto::cli::Constants::SOURCE_ACCOUNT].as<std::string>();
-
-    // retrieve target account hash
-    if (!config->getVariablesMap().count(keto::cli::Constants::TARGET_ACCOUNT)) {
-        std::cerr << "Please provide the target account [" << 
-                keto::cli::Constants::TARGET_ACCOUNT << "]" << std::endl;
-        std::cout <<  optionDescription << std::endl;
-        return -1;
-    }
-    std::string targetAccount = config->getVariablesMap()[keto::cli::Constants::TARGET_ACCOUNT].as<std::string>();
-    
-    // retrieve transaction value
-    if (!config->getVariablesMap().count(keto::cli::Constants::VALUE)) {
-        std::cerr << "Please provide the value [" << 
-                keto::cli::Constants::VALUE << "]" << std::endl;
-        std::cout <<  optionDescription << std::endl;
-        return -1;
-    }
-    long value = config->getVariablesMap()[keto::cli::Constants::VALUE].as<long>();
-
-
-    std::shared_ptr<keto::chain_common::TransactionBuilder> transactionPtr = buildTransaction(
-        action, parentHash,sourceAccount, targetAccount,value);
-
-    keto::asn1::PrivateKeyHelper privateKeyHelper;
-    privateKeyHelper.setKey(
-        Botan::PKCS8::BER_encode( *keyLoader.getPrivateKey() ));
-
-    std::shared_ptr<keto::chain_common::SignedTransactionBuilder> signedTransBuild = 
-        keto::chain_common::SignedTransactionBuilder::createTransaction(
-            privateKeyHelper);
-    
-    
-    signedTransBuild->setTransaction(transactionPtr);
-    signedTransBuild->sign();
-
-    keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelperPtr(
-            new keto::transaction_common::TransactionWrapperHelper(
-                    *signedTransBuild,keto::asn1::HashHelper(sourceAccount,
-                                                             keto::common::HEX),keto::asn1::HashHelper(targetAccount,
-                                                             keto::common::HEX)));
-
-    transactionWrapperHelperPtr->addTransactionTrace(
-            *keto::transaction_common::TransactionTraceBuilder::createTransactionTrace(sourceAccount,keyLoader));
-
-    keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr(
-        new keto::transaction_common::TransactionMessageHelper(
-                transactionWrapperHelperPtr));
-
 
     // The io_context is required for all I/O
     boost::asio::io_context ioc;
@@ -210,11 +228,11 @@ int generateTransaction(std::shared_ptr<ketoEnv::Config> config,
     // This holds the root certificate used for verification
     keto::ssl::load_root_certificates(ctx);
 
-    keto::session::HttpSession session(ioc,ctx,
-            privateKey,publicKey);
-    std::string result= 
+    keto::session::HttpSession session(ioc, ctx,
+                                       privateKey, publicKey);
+    std::string result =
             session.setHost(host).setPort(port).handShake().makeRequest(
-            transactionMessageHelperPtr);
+                    transactionMessageHelperPtr);
 
     // Write the message to standard out
     std::cout << result << std::endl;

@@ -24,6 +24,7 @@
 
 #include "keto/block/ConsensusService.hpp"
 #include "keto/block/BlockProducer.hpp"
+#include "keto/block/NetworkFeeManager.hpp"
 
 
 namespace keto{
@@ -76,6 +77,7 @@ keto::event::Event ConsensusService::setModuleSession(const keto::event::Event& 
     keto::software_consensus::ConsensusStateManager::getInstance()->setState(
             keto::software_consensus::ConsensusStateManager::GENERATE);
     this->consensusHashGenerator->setSession(moduleSessionHelper.getSecret());
+    NetworkFeeManager::getInstance()->clear();
     return event;
 }
 
@@ -90,6 +92,7 @@ keto::event::Event ConsensusService::consensusSessionAccepted(const keto::event:
     if (keto::server_common::ServerInfo::getInstance()->isMaster() &&
         BlockProducer::getInstance()->getState() == BlockProducer::State::inited) {
         BlockProducer::getInstance()->setState(BlockProducer::State::block_producer);
+        NetworkFeeManager::getInstance()->load();
     }
 
     return event;

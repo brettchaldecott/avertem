@@ -37,8 +37,9 @@ const char* Constants::SERVICE::BLOCK       = "block";
 const char* Constants::SERVICE::PROCESS     = "process";
 
 
-const char* Constants::CONTRACTS::BASE_ACCOUNT_CONTRACT     = "base_account_transaction";
+const char* Constants::CONTRACTS::BASE_ACCOUNT_CONTRACT     =   "base_account_transaction";
 const char* Constants::CONTRACTS::NESTED_TRANSACTION_CONTRACT = "nested_transaction";
+const char* Constants::CONTRACTS::FEE_PAYMENT_CONTRACT =        "fee_payment";
 
 const char* Constants::ACCOUNT_ACTIONS::DEBIT     = "debit";
 const char* Constants::ACCOUNT_ACTIONS::CREDIT     = "credit";
@@ -64,6 +65,8 @@ const char* Constants::RPC_COMMANDS::REQUEST_MASTER_NETWORK_KEYS = "REQUEST_MAST
 const char* Constants::RPC_COMMANDS::RESPONSE_MASTER_NETWORK_KEYS = "RESPONSE_MASTER_NETWORK_KEYS";
 const char* Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS = "REQUEST_NETWORK_KEYS";
 const char* Constants::RPC_COMMANDS::RESPONSE_NETWORK_KEYS = "RESPONSE_NETWORK_KEYS";
+const char* Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES = "REQUEST_NETWORK_FEES";
+const char* Constants::RPC_COMMANDS::RESPONSE_NETWORK_FEES = "RESPONSE_NETWORK_FEES";
 
 }
 }

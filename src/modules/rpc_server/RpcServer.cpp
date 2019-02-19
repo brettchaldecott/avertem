@@ -297,6 +297,9 @@ public:
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS) == 0) {
                 handleRequestNetworkKeys(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS, payload);
                 return;
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES) == 0) {
+                handleRequestNetworkFees(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES, payload);
+                return;
             }
 
             transactionPtr->commit();
@@ -556,6 +559,20 @@ public:
         boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_KEYS
                                        << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
     }
+
+
+    void handleRequestNetworkFees(const std::string& command, const std::string& payload) {
+        keto::proto::FeeInfoMsg feeInfoMsg;
+        feeInfoMsg =
+                keto::server_common::fromEvent<keto::proto::FeeInfoMsg>(
+                        keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::FeeInfoMsg>(
+                                keto::server_common::Events::NETWORK_FEE_INFO::GET_NETWORK_FEE,feeInfoMsg)));
+
+        std::string result = feeInfoMsg.SerializeAsString();
+        boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_FEES
+                                       << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
+    }
+
 };
 
 //------------------------------------------------------------------------------

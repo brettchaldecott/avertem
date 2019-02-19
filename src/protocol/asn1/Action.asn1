@@ -8,6 +8,7 @@ Action ::= SEQUENCE {
     version         Version,
     date            UTCTime,
     contract        Hash,
+    contractName    UTF8String,
     parent          Hash,
     model           ANY
 }

@@ -14,6 +14,7 @@
 #include "keto/chain_common/ActionBuilder.hpp"
 #include "keto/common/MetaInfo.hpp"
 #include "keto/asn1/TimeHelper.hpp"
+#include "keto/asn1/StringUtils.hpp"
 
 
 namespace keto {
@@ -62,6 +63,17 @@ keto::asn1::HashHelper ActionBuilder::getContract() {
 
 ActionBuilder& ActionBuilder::setContract(const keto::asn1::HashHelper& contract) {
     this->action->contract = contract;
+    return (*this);
+}
+
+std::string ActionBuilder::getContractName() {
+    return keto::asn1::StringUtils::copyBuffer(this->action->contractName);
+}
+
+
+ActionBuilder& ActionBuilder::setContractName(const std::string& contractName) {
+    OCTET_STRING_fromBuf(&this->action->contractName,
+            contractName.c_str(),contractName.size());
     return (*this);
 }
 

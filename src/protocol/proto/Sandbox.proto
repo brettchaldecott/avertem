@@ -10,4 +10,7 @@ message SandboxCommandMessage {
     bytes model = 2;
     bytes transaction = 3;
     bytes changes = 4;
+    int64 available_time = 5;
+    int64 elapsed_time = 6;
+    int64 fee_ratio = 7;
 }

@@ -30,18 +30,24 @@ std::string TransactionMessageHelper::getSourceVersion() {
 TransactionMessageHelper::TransactionMessageHelper() {
     this->transactionMessage = (TransactionMessage_t*)calloc(1, sizeof *transactionMessage);
     this->transactionMessage->version = keto::common::MetaInfo::PROTOCOL_VERSION;
+    this->transactionMessage->availableTime = 0;
+    this->transactionMessage->elapsedTime = 0;
 }
 
 
 TransactionMessageHelper::TransactionMessageHelper(const TransactionWrapperHelperPtr& transactionWrapper) {
     this->transactionMessage = (TransactionMessage_t*)calloc(1, sizeof *transactionMessage);
     this->transactionMessage->version = keto::common::MetaInfo::PROTOCOL_VERSION;
+    this->transactionMessage->availableTime = 0;
+    this->transactionMessage->elapsedTime = 0;
     this->transactionMessage->transaction = *transactionWrapper->operator TransactionWrapper_t*();
 }
 
 TransactionMessageHelper::TransactionMessageHelper(TransactionWrapper_t* transactionWrapper) {
     this->transactionMessage = (TransactionMessage_t*)calloc(1, sizeof *transactionMessage);
     this->transactionMessage->version = keto::common::MetaInfo::PROTOCOL_VERSION;
+    this->transactionMessage->availableTime = 0;
+    this->transactionMessage->elapsedTime = 0;
     this->transactionMessage->transaction = *transactionWrapper;
 }
 
@@ -176,6 +182,24 @@ TransactionMessageHelperPtr TransactionMessageHelper::decryptMessage(Transaction
 
 bool TransactionMessageHelper::isEncrypted() {
     return this->transactionMessage->transaction.signedTransaction.transaction.encrypted;
+}
+
+time_t TransactionMessageHelper::getAvailableTime() {
+    return this->transactionMessage->availableTime;
+}
+
+TransactionMessageHelper& TransactionMessageHelper::setAvailableTime(time_t availableTime) {
+    this->transactionMessage->availableTime = availableTime;
+    return *this;
+}
+
+time_t TransactionMessageHelper::getElapsedTime() {
+    return this->transactionMessage->elapsedTime;
+}
+
+TransactionMessageHelper& TransactionMessageHelper::setElapsedTime(time_t elapsedTime) {
+    this->transactionMessage->elapsedTime = elapsedTime;
+    return *this;
 }
 
 void TransactionMessageHelper::getMessage(TransactionEncryptionHandler& 

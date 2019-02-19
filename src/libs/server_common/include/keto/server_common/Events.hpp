@@ -150,6 +150,11 @@ public:
 
     };
 
+    class NETWORK_FEE_INFO {
+        static const char* GET_NETWORK_FEE;
+        static const char* SET_NETWORK_FEE;
+    };
+
 
     static const char* GET_SOFTWARE_CONSENSUS_MESSAGE;
     static const char* VALIDATE_SOFTWARE_CONSENSUS_MESSAGE;

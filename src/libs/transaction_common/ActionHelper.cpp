@@ -31,10 +31,17 @@ keto::asn1::TimeHelper ActionHelper::getDate() {
 }
 
 keto::asn1::HashHelper ActionHelper::getContract() {
-    if (action->contract.buf) {
+    if (action->contract.size) {
         return action->contract;
     }
     return keto::asn1::HashHelper(); 
+}
+
+std::string ActionHelper::getContractName() {
+    if (action->contractName.size) {
+        return keto::asn1::StringUtils::copyBuffer(action->contractName);
+    }
+    return std::string;
 }
 
 keto::asn1::HashHelper ActionHelper::getParent() {

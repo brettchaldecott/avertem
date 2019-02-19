@@ -19,6 +19,8 @@
 
 #ifndef _WIN32
 #include <sys/uio.h>
+#include <keto/server_common/ServerInfo.hpp>
+
 #endif
 
 namespace keto {
@@ -469,6 +471,18 @@ namespace keto {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
             std::string msgString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,msg);
             return;
+        }
+
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"getFeeAccount",I32,typescript_getFeeAccount)
+        {
+            Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
+            std::string accountHash = keto::server_common::ServerInfo::getInstance()->getFeeAccountHashHex();
+            std::vector<char> typescriptString = keto::wavm_common::WavmUtils::buildTypeScriptString(accountHash);
+            I32 base = coerce32bitAddress(allocateMemory(memory,typescriptString.size()));
+            memcpy(Runtime::memoryArrayPtr<U8>(memory,base,typescriptString.size()),typescriptString.data(),
+                   typescriptString.size());
+
+            return base;
         }
 
         DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"getAccount",I32,typescript_getAccount)

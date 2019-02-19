@@ -47,6 +47,7 @@ public:
     
     keto::asn1::TimeHelper getDate();
     keto::asn1::HashHelper getContract();
+    std::string getContractName();
     keto::asn1::HashHelper getParent();
     keto::asn1::AnyHelper  getModel();
     

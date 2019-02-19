@@ -16,6 +16,7 @@
 
 #include "RDFChange.h"
 
+#include "keto/environment/Units.hpp"
 #include "keto/asn1/StatusUtils.hpp"
 #include "keto/server_common/Constants.hpp"
 #include "keto/wavm_common/WavmSession.hpp"
@@ -45,6 +46,9 @@ WavmSession::WavmSession(const keto::proto::SandboxCommandMessage& sandboxComman
         const keto::crypto::KeyLoaderPtr& keyLoaderPtr) : 
     sandboxCommandMessage(sandboxCommandMessage) , modelHelper(RDFChange_persist),
         keyLoaderPtr(keyLoaderPtr) {
+
+    this->startTime = std::chrono::high_resolution_clock::now();
+
     transactionProtoHelper.setTransaction(sandboxCommandMessage.transaction());
     transactionMessageHelperPtr = transactionProtoHelper.getTransactionMessageHelper();
     rdfSessionPtr = std::make_shared<RDFMemorySession>();
@@ -93,7 +97,7 @@ keto::asn1::NumberHelper WavmSession::getTransactionValue() {
 }
 
 keto::asn1::NumberHelper WavmSession::getTransactionFee() {
-    keto::asn1::NumberHelper numberHelper((const long)0);
+    keto::asn1::NumberHelper numberHelper((sandboxCommandMessage.elapsed_time() / keto::environment::Units::TIME::MILLISECONDS) * sandboxCommandMessage.fee_ratio());
     return numberHelper;
 }
 
@@ -220,6 +224,12 @@ keto::proto::SandboxCommandMessage WavmSession::getSandboxCommandMessage() {
     keto::transaction_common::TransactionProtoHelper transactionProtoHelper(
                 transactionMessageHelperPtr);
     sandboxCommandMessage.set_transaction(transactionProtoHelper.operator std::string());
+
+    // calculate the elapsed time
+    std::chrono::high_resolution_clock::time_point endTime = std::chrono::high_resolution_clock::now();
+    std::chrono::milliseconds elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+
+    sandboxCommandMessage.set_elapsed_time(sandboxCommandMessage.elapsed_time() + (endTime.count()));
     
     return this->sandboxCommandMessage;
 }

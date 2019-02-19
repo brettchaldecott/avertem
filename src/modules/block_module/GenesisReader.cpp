@@ -17,7 +17,6 @@
 
 #include "keto/environment/EnvironmentManager.hpp"
 #include "keto/environment/Config.hpp"
-#include "include/keto/block/GenesisReader.hpp"
 
 
 namespace keto {
@@ -29,7 +28,6 @@ std::string GenesisReader::getSourceVersion() {
 
 GenesisReader::GenesisReader(const boost::filesystem::path& path) {
     std::ifstream ifs(path.string());
-    nlohmann::json jsonData;
     ifs >> this->jsonData;
 }
 

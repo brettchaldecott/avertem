@@ -13,9 +13,15 @@
 
 #include <condition_variable>
 #include <iostream>
+#include <keto/block/Constants.hpp>
 
+#include "keto/environment/Units.hpp"
 #include "keto/block/TransactionProcessor.hpp"
+#include "keto/block/Exception.hpp"
 
+#include "keto/transaction_common/FeeInfoMsgProtoHelper.hpp"
+
+#include "keto/block/NetworkFeeManager.hpp"
 
 #include "keto/server_common/EventUtils.hpp"
 #include "keto/server_common/Events.hpp"
@@ -30,6 +36,32 @@ static TransactionProcessorPtr singleton;
 
 std::string TransactionProcessor::getSourceVersion() {
     return OBFUSCATED("$Id$");
+}
+
+TransactionProcessor::TransactionTracker::TransactionTracker(long availableTime, long elapsedTime, long feeRatio) {
+    this->availableTime = availableTime;
+    this->elapsedTime = elapsedTime;
+    this->feeRatio = feeRatio;
+}
+
+TransactionProcessor::TransactionTracker::~TransactionTracker() {
+
+}
+
+long TransactionProcessor::TransactionTracker::getAvailableTime() {
+    return this->availableTime;
+}
+
+long TransactionProcessor::TransactionTracker::getElapsedTime() {
+    return this->elapsedTime;
+}
+
+long TransactionProcessor::TransactionTracker::incrementElapsedTime(int increase) {
+    return this->elapsedTime += increase;
+}
+
+long TransactionProcessor::TransactionTracker::getFeeRatio() {
+    return this->feeRatio;
 }
 
 TransactionProcessor::TransactionProcessor() {
@@ -52,62 +84,40 @@ TransactionProcessorPtr TransactionProcessor::getInstance() {
 
 keto::proto::Transaction TransactionProcessor::processTransaction(keto::proto::Transaction& transaction) {
     keto::transaction_common::TransactionProtoHelper transactionProtoHelper(transaction);
-    
-    // get the transaction from the account store
-    transactionProtoHelper.setTransaction(executeContract(
-            getContractByName(transaction.active_account(),
-            keto::server_common::Constants::CONTRACTS::BASE_ACCOUNT_CONTRACT),
-            transactionProtoHelper).transaction());
 
-
-    std::cout << "Before looping through the actions" << std::endl;
-    keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr = 
-            transactionProtoHelper.getTransactionMessageHelper();
-    keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelperPtr = 
-            transactionMessageHelperPtr->getTransactionWrapper();
-    if (transactionWrapperHelperPtr->getSignedTransaction() &&
-            transactionWrapperHelperPtr->getSignedTransaction()->getTransaction()) {
-        std::vector<keto::transaction_common::ActionHelperPtr> actions = 
-            transactionWrapperHelperPtr->getSignedTransaction()->getTransaction()->getActions();    
-        for (keto::transaction_common::ActionHelperPtr action : actions) {
-            std::cout << "The action is contract : " << action->getContract().getHash(keto::common::HEX) << std::endl;
-            keto::asn1::AnyHelper anyHelper(*transactionMessageHelperPtr);
-            transactionProtoHelper.setTransaction(executeContract(getContractByHash(transaction.active_account(),
-                    action->getContract()),transactionProtoHelper,action->getModel()).transaction());
+    // calculate the available time based
+    TransactionTrackerPtr transactionTrackerPtr;
+    keto::transaction_common::FeeInfoMsgProtoHelperPtr feeInfoMsgProtoHelperPtr = NetworkFeeManager::getInstance()->getFeeInfo();
+    if (transactionProtoHelper.getTransactionMessageHelper()->getAvailableTime() == 0) {
+        long amount = transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getSignedTransaction()->getTransaction()->getValue();
+        if (amount > feeInfoMsgProtoHelperPtr->getMaxFee()) {
+            transactionProtoHelper.getTransactionMessageHelper()->setAvailableTime(Constants::MAX_RUN_TIME);
+        } else {
+            transactionProtoHelper.getTransactionMessageHelper()->setAvailableTime(
+                    feeInfoMsgProtoHelperPtr->getFeeRatio() * amount);
         }
-        
     }
+    // setup a transaction tacker using milly seconds
+    TransactionTracker transactionTracker((transactionProtoHelper.getTransactionMessageHelper()->getAvailableTime() -
+                                          transactionProtoHelper.getTransactionMessageHelper()->getElapsedTime()) * keto::environment::Units::TIME::MILLISECONDS,
+                                          0,
+                                          feeInfoMsgProtoHelperPtr->getFeeRatio());
 
-    std::cout << "Nested transactions" << std::endl;
+    transactionProtoHelper = processTransaction(transactionProtoHelper,true,transactionTracker);
 
-    for (keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr :
-        transactionProtoHelper.getTransactionMessageHelper()->getNestedTransactions()) {
-        std::cout << "Loop through the nested transactions" << std::endl;
-        keto::transaction_common::TransactionProtoHelper nestedTransaction(transactionMessageHelperPtr);
-        nestedTransaction = processTransaction(nestedTransaction);
-        transactionMessageHelperPtr->setTransactionWrapper(
-                nestedTransaction.getTransactionMessageHelper()->getTransactionWrapper());
-
-
-        keto::asn1::AnyHelper anyHelper(*transactionMessageHelperPtr);
-        transactionProtoHelper.setTransaction(executeContract(getContractByName(transaction.active_account(),
-                                          keto::server_common::Constants::CONTRACTS::NESTED_TRANSACTION_CONTRACT),
-                                                  transactionProtoHelper,anyHelper).transaction());
-
-    }
     std::cout << "Return the resulting transactions" << std::endl;
 
     return transactionProtoHelper;
 }
 
-std::string TransactionProcessor::getContractByName(const std::string& account, const std::string& name) {
+std::string TransactionProcessor::getContractByName(const keto::asn1::HashHelper& account, const std::string& name) {
     keto::proto::ContractMessage contractMessage;
-    contractMessage.set_account_hash(account);
+    contractMessage.set_account_hash(account.getHash(keto::common::StringEncoding::HEX));
     contractMessage.set_contract_name(name);
     return getContract(contractMessage).contract();
 }
 
-std::string TransactionProcessor::getContractByHash(const std::string& account, const std::string& hash) {
+std::string TransactionProcessor::getContractByHash(const keto::asn1::HashHelper& account, const std::string& hash) {
     keto::proto::ContractMessage contractMessage;
     contractMessage.set_account_hash(account);
     contractMessage.set_contract_hash(hash);
@@ -121,29 +131,127 @@ keto::proto::ContractMessage TransactionProcessor::getContract(keto::proto::Cont
 }
 
 keto::proto::SandboxCommandMessage TransactionProcessor::executeContract(const std::string& contract,
-        const keto::transaction_common::TransactionProtoHelper& transactionProtoHelper) {
+        const keto::transaction_common::TransactionProtoHelper& transactionProtoHelper,
+        TransactionTracker& transactionTracker) {
 
     keto::proto::SandboxCommandMessage sandboxCommandMessage;
     sandboxCommandMessage.set_contract(contract);
     sandboxCommandMessage.set_transaction((const std::string)transactionProtoHelper);
+    sandboxCommandMessage.set_available_time(transactionTracker.getAvailableTime());
+    sandboxCommandMessage.set_elapsed_time(transactionTracker.getElapsedTime());
+    sandboxCommandMessage.set_fee_ratio(transactionTracker.getFeeRatio());
 
-    return keto::server_common::fromEvent<keto::proto::SandboxCommandMessage>(
+    sandboxCommandMessage = keto::server_common::fromEvent<keto::proto::SandboxCommandMessage>(
             keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SandboxCommandMessage>(
                     keto::server_common::Events::EXECUTE_ACTION_MESSAGE,sandboxCommandMessage)));
+    transactionTracker.incrementElapsedTime(sandboxCommandMessage.get_elapsed_time() - transactionTracker.getElapsedTime());
+    return sandboxCommandMessage;
 }
 
 keto::proto::SandboxCommandMessage TransactionProcessor::executeContract(const std::string& contract,
         const keto::transaction_common::TransactionProtoHelper& transactionProtoHelper,
-        keto::asn1::AnyHelper model) {
+        keto::asn1::AnyHelper model,
+        TransactionTracker& transactionTracker) {
 
     keto::proto::SandboxCommandMessage sandboxCommandMessage;
     sandboxCommandMessage.set_contract(contract);
     sandboxCommandMessage.set_transaction((const std::string)transactionProtoHelper);
     sandboxCommandMessage.set_model(model);
+    sandboxCommandMessage.set_available_time(transactionTracker.getAvailableTime());
+    sandboxCommandMessage.set_elapsed_time(transactionTracker.getElapsedTime());
+    sandboxCommandMessage.set_fee_ratio(transactionTracker.getFeeRatio());
 
-    return keto::server_common::fromEvent<keto::proto::SandboxCommandMessage>(
+    sandboxCommandMessage = keto::server_common::fromEvent<keto::proto::SandboxCommandMessage>(
                     keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SandboxCommandMessage>(
                             keto::server_common::Events::EXECUTE_ACTION_MESSAGE,sandboxCommandMessage)));
+    transactionTracker.incrementElapsedTime(sandboxCommandMessage.get_elapsed_time() - transactionTracker.getElapsedTime());
+    return sandboxCommandMessage;
+}
+
+keto::transaction_common::TransactionProtoHelper TransactionProcessor::processTransaction(
+        keto::transaction_common::TransactionProtoHelper& transactionProtoHelper,
+        bool master, TransactionTracker& transactionTracker) {
+
+
+
+    // get the transaction from the account store
+    keto::asn1::HashHelper activeAccount;
+    if (transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getStatus() == Status_debit) {
+        activeAccount = transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getSourceAccount();
+        transactionProtoHelper.setTransaction(executeContract(
+                getContractByName(activeAccount, keto::server_common::Constants::CONTRACTS::BASE_ACCOUNT_CONTRACT),
+                transactionProtoHelper,transactionTracker).transaction());
+    } else if (transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getStatus() == Status_credit) {
+        activeAccount = transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getTargetAccount();
+    } else {
+        BOOST_THROW_EXCEPTION(keto::block::UnsupportedTransactionStatusException());
+    }
+
+
+    std::cout << "Before looping through the actions" << std::endl;
+    keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr =
+            transactionProtoHelper.getTransactionMessageHelper();
+    keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelperPtr =
+            transactionMessageHelperPtr->getTransactionWrapper();
+    if (transactionWrapperHelperPtr->getSignedTransaction() &&
+        transactionWrapperHelperPtr->getSignedTransaction()->getTransaction()) {
+        std::vector<keto::transaction_common::ActionHelperPtr> actions =
+                transactionWrapperHelperPtr->getSignedTransaction()->getTransaction()->getActions();
+        for (keto::transaction_common::ActionHelperPtr action : actions) {
+            std::cout << "The action is contract : " << action->getContract().getHash(keto::common::HEX) << std::endl;
+            keto::asn1::AnyHelper anyHelper(*transactionMessageHelperPtr);
+            if (action->getContract().empty()) {
+                transactionProtoHelper.setTransaction(executeContract(
+                        getContractByHash(activeAccount,action->getContract()),transactionProtoHelper,action->getModel(),transactionTracker)
+                        .transaction());
+            } else {
+                transactionProtoHelper.setTransaction(executeContract(getContractByName(activeAccount,
+                        action->getContractName()),transactionProtoHelper,action->getModel(),transactionTracker).transaction());
+            }
+        }
+
+    }
+
+    std::cout << "Nested transactions" << std::endl;
+
+    for (keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr :
+            transactionProtoHelper.getTransactionMessageHelper()->getNestedTransactions()) {
+        std::cout << "Loop through the nested transactions" << std::endl;
+        keto::transaction_common::TransactionProtoHelper nestedTransaction(transactionMessageHelperPtr);
+        nestedTransaction = processTransaction(nestedTransaction,false,transactionTracker);
+        transactionMessageHelperPtr->setTransactionWrapper(
+                nestedTransaction.getTransactionMessageHelper()->getTransactionWrapper());
+        transactionMessageHelperPtr->getTransactionWrapper()->setStatus(
+                transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getStatus());
+
+        keto::asn1::AnyHelper anyHelper(*transactionMessageHelperPtr);
+        transactionProtoHelper.setTransaction(executeContract(getContractByName(activeAccount,
+                keto::server_common::Constants::CONTRACTS::NESTED_TRANSACTION_CONTRACT),
+                        transactionProtoHelper,anyHelper,transactionTracker).transaction());
+
+    }
+
+    if (master) {
+        // set the elapsed time on the transaction
+        transactionProtoHelper.getTransactionMessageHelper()->setElapsedTime(
+                transactionProtoHelper.getTransactionMessageHelper()->getElapsedTime() +
+                        (transactionTracker.getElapsedTime() / keto::environment::Units::TIME::MILLISECONDS));
+
+        // set the transaction
+        transactionProtoHelper.setTransaction(executeContract(
+                getContractByName(activeAccount,
+                                  keto::server_common::Constants::CONTRACTS::FEE_PAYMENT_CONTRACT),
+                transactionProtoHelper,transactionTracker).transaction());
+
+    }
+
+    if (transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getStatus() == Status_credit) {
+        transactionProtoHelper.setTransaction(executeContract(
+                getContractByName(activeAccount, keto::server_common::Constants::CONTRACTS::BASE_ACCOUNT_CONTRACT),
+                transactionProtoHelper,transactionTracker).transaction());
+    }
+
+
 }
 
 }

@@ -41,6 +41,23 @@ public:
     
     static std::string getSourceVersion();
 
+    class TransactionTracker {
+    public:
+        TransactionTracker(long availableTime, long elapsedTime, long feeRatio);
+        TransactionTracker(const TransactionTracker& orig) = default;
+        virtual ~TransactionTracker();
+
+        long getAvailableTime();
+        long getElapsedTime();
+        long incrementElapsedTime(int increase);
+        long getFeeRatio();
+    private:
+        long availableTime;
+        long elapsedTime;
+        long feeRatio;
+    };
+    typedef std::shared_ptr<TransactionTracker> TransactionTrackerPtr;
+
     TransactionProcessor();
     TransactionProcessor(const TransactionProcessor& orig) = delete;
     virtual ~TransactionProcessor();
@@ -53,15 +70,20 @@ public:
     
 private:
 
-    std::string getContractByName(const std::string& account, const std::string& name);
-    std::string getContractByHash(const std::string& account, const std::string& hash);
+    std::string getContractByName(const keto::asn1::HashHelper& account, const std::string& name);
+    std::string getContractByHash(const keto::asn1::HashHelper& account, const std::string& hash);
     keto::proto::ContractMessage getContract(keto::proto::ContractMessage& contractMessage);
 
     keto::proto::SandboxCommandMessage executeContract(const std::string& contract,
-            const keto::transaction_common::TransactionProtoHelper& transactionProtoHelper);
+            const keto::transaction_common::TransactionProtoHelper& transactionProtoHelper,
+            TransactionTracker& transactionTracker);
     keto::proto::SandboxCommandMessage executeContract(const std::string& contract,
             const keto::transaction_common::TransactionProtoHelper& transactionProtoHelper,
-            keto::asn1::AnyHelper model);
+            keto::asn1::AnyHelper model, TransactionTracker& transactionTracker);
+
+    keto::transaction_common::TransactionProtoHelper processTransaction(
+            keto::transaction_common::TransactionProtoHelper& transactionProtoHelper,
+            bool master, TransactionTracker& transactionTracker);
 };
 
 

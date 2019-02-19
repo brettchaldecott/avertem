@@ -31,6 +31,7 @@
 #include "keto/block/BlockProducer.hpp"
 #include "keto/block/ConsensusService.hpp"
 #include "include/keto/block/ConsensusService.hpp"
+#include "include/keto/block/NetworkFeeManager.hpp"
 
 namespace keto {
 namespace block {
@@ -66,6 +67,7 @@ void BlockModuleManager::start() {
     StorageManager::init();
     modules["blockModule"] = std::make_shared<BlockModule>();
     BlockService::init();
+    NetworkFeeManager::init();
     ConsensusService::init(getConsensusHash());
     EventRegistry::registerEventHandlers();
     KETO_LOG_INFO << "[BlockModuleManager] Started the BlockModuleManager";
@@ -86,6 +88,7 @@ void BlockModuleManager::postStart() {
 void BlockModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
     ConsensusService::fin();
+    NetworkFeeManager::fin();
     BlockService::fin();
     modules.clear();
     TransactionProcessor::fin();

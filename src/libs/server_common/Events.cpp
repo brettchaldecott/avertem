@@ -124,6 +124,8 @@ const char* Events::MEMORY_VAULT::GET_ENTRY     = "GET_ENTRY";
 const char* Events::MEMORY_VAULT::SET_ENTRY     = "SET_ENTRY";
 const char* Events::MEMORY_VAULT::REMOVE_ENTRY  = "REMOVE_ENTRY";
 
+const char* Events::NETWORK_FEE_INFO::GET_NETWORK_FEE   ="GET_NETWORK_FEE";
+const char* Events::NETWORK_FEE_INFO::SET_NETWORK_FEE   ="SET_NETWORK_FEE";
 
 const char* Events::GET_SOFTWARE_CONSENSUS_MESSAGE
                                             = "GET_SOFTWARE_CONSENSUS_MESSAGE";

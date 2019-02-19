@@ -53,6 +53,7 @@ public:
     public:
         static const char* BASE_ACCOUNT_CONTRACT;
         static const char* NESTED_TRANSACTION_CONTRACT;
+        static const char* FEE_PAYMENT_CONTRACT;
         
     };
     
@@ -84,6 +85,8 @@ public:
         static const char* RESPONSE_MASTER_NETWORK_KEYS;
         static const char* REQUEST_NETWORK_KEYS;
         static const char* RESPONSE_NETWORK_KEYS;
+        static const char* REQUEST_NETWORK_FEES;
+        static const char* RESPONSE_NETWORK_FEES;
     };
     
 private:

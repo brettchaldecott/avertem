@@ -30,6 +30,9 @@ KETO_DECLARE_DERIVED_EXCEPTION (BlockException, PublicKeyNotConfiguredException 
 KETO_DECLARE_DERIVED_EXCEPTION (BlockException, BlockProducerTerminatedException , "The block producer has been terminated.");
 KETO_DECLARE_DERIVED_EXCEPTION (BlockException, NotBlockProducerException , "Not enabled as a block producer.");
 KETO_DECLARE_DERIVED_EXCEPTION (BlockException, BlockProducerNotAcceptedByNetworkException , "Block producer not accepted by network.");
+KETO_DECLARE_DERIVED_EXCEPTION (BlockException, NetworkFeeRatioNotSetException , "The master node network fee ratio was not set.");
+KETO_DECLARE_DERIVED_EXCEPTION (BlockException, UnsupportedTransactionStatusException , "The transaction status is unsupported.");
+
 
     
 }

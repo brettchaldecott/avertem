@@ -59,7 +59,7 @@ public:
     TransactionProtoHelper& operator = (const keto::proto::Transaction& transaction);
     
     TransactionMessageHelperPtr getTransactionMessageHelper();
-    
+
 private:
     keto::proto::Transaction transaction;
 };

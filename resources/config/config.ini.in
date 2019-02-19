@@ -43,3 +43,4 @@ is_network_session_generator=true
 master_password=123456
 master-public-key=keys/ketod/master/public_key.pem
 master-private-key=keys/ketod/master/private_key.pem
+network_fee_ratio=1

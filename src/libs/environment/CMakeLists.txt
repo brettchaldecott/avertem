@@ -7,7 +7,7 @@ add_library( keto_environment
             Config.cpp
             LogManager.cpp
             EnvironmentManager.cpp
-            
+            include/keto/environment/Units.hpp
             
              ${HEADERS}
            )

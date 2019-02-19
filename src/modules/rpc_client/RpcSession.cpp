@@ -52,6 +52,8 @@
 #include "keto/rpc_protocol/PeerResponseHelper.hpp"
 #include "keto/rpc_protocol/NetworkKeysWrapperHelper.hpp"
 
+#include "keto/transaction_common/FeeInfoMsgProtoHelper.hpp"
+
 #include "keto/software_consensus/ConsensusBuilder.hpp"
 #include "keto/software_consensus/ConsensusSessionManager.hpp"
 #include "keto/software_consensus/ModuleConsensusHelper.hpp"
@@ -298,6 +300,10 @@ RpcSession::on_read(
             return;
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_KEYS) == 0) {
             requestNetworkKeysResponse(command,stringVector[1]);
+            transactionPtr->commit();
+            return
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_FEES) == 0) {
+            requestNetworkFeesResponse(command,stringVector[1]);
             transactionPtr->commit();
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ROUTE) == 0) {
 
@@ -560,11 +566,11 @@ void RpcSession::requestNetworkSessionKeysResponse(const std::string& command, c
     keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(
             Botan::hex_decode(message));
 
-    keto::proto::NetworkKeysWrapper rpcPeer = networkKeysWrapperHelper;
-    rpcPeer = keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(
+    keto::proto::NetworkKeysWrapper networkKeysWrapper = networkKeysWrapperHelper;
+    networkKeysWrapper = keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(
             keto::server_common::processEvent(
                     keto::server_common::toEvent<keto::proto::NetworkKeysWrapper>(
-                            keto::server_common::Events::SET_NETWORK_SESSION_KEYS,rpcPeer)));
+                            keto::server_common::Events::SET_NETWORK_SESSION_KEYS,networkKeysWrapper)));
 
     serverRequest(keto::server_common::Constants::RPC_COMMANDS::REQUEST_MASTER_NETWORK_KEYS,
                   keto::server_common::Constants::RPC_COMMANDS::REQUEST_MASTER_NETWORK_KEYS);
@@ -575,11 +581,11 @@ void RpcSession::requestNetworkMasterKeyResponse(const std::string& command, con
     keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(
             Botan::hex_decode(message));
 
-    keto::proto::NetworkKeysWrapper rpcPeer = networkKeysWrapperHelper;
-    rpcPeer = keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(
+    keto::proto::NetworkKeysWrapper networkKeysWrapper = networkKeysWrapperHelper;
+    networkKeysWrapper = keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(
             keto::server_common::processEvent(
                     keto::server_common::toEvent<keto::proto::NetworkKeysWrapper>(
-                            keto::server_common::Events::SET_MASTER_NETWORK_KEYS,rpcPeer)));
+                            keto::server_common::Events::SET_MASTER_NETWORK_KEYS,networkKeysWrapper)));
 
     serverRequest(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS,
                   keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS);
@@ -589,14 +595,27 @@ void RpcSession::requestNetworkKeysResponse(const std::string& command, const st
     keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(
             Botan::hex_decode(message));
 
-    keto::proto::NetworkKeysWrapper rpcPeer = networkKeysWrapperHelper;
-    rpcPeer = keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(
+    keto::proto::NetworkKeysWrapper networkKeysWrapper = networkKeysWrapperHelper;
+    networkKeysWrapper = keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(
             keto::server_common::processEvent(
                     keto::server_common::toEvent<keto::proto::NetworkKeysWrapper>(
-                            keto::server_common::Events::SET_NETWORK_KEYS,rpcPeer)));
+                            keto::server_common::Events::SET_NETWORK_KEYS,networkKeysWrapper)));
 
+    serverRequest(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_FEES,
+                  keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_FEES);
 }
 
+void RpcSession::requestNetworkFeesResponse(const std::string& command, const std::string& message) {
+    keto:transaction_common::FeeInfoMsgProtoHelper feeInfoMsgProtoHelper(
+            Botan::hex_decode(message));
+
+    keto::proto::FeeInfoMsg feeInfoMsg = feeInfoMsgProtoHelper;
+    feeInfoMsg = keto::server_common::fromEvent<keto::proto::FeeInfoMsg>(
+            keto::server_common::processEvent(
+                    keto::server_common::toEvent<keto::proto::FeeInfoMsg>(
+                            keto::server_common::Events::NETWORK_FEE_INFO::GET_NETWORK_FEE,feeInfoMsg)));
+
+}
 
 void RpcSession::routeTransaction(keto::proto::MessageWrapper&  messageWrapper) {
     std::string messageWrapperStr = messageWrapper.SerializeAsString();

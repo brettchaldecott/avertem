@@ -163,7 +163,7 @@ void GenesisLoader::load() {
         
         
         // create a change set set
-        KETO_LOG_INFO << "Setup the change set" << std::endl;
+        KETO_LOG_INFO << "Setup the change set";
         keto::transaction_common::ChangeSetBuilderPtr changeSetBuilder(
             new keto::transaction_common::ChangeSetBuilder(
                 transactionWrapperHelper->getHash(),
@@ -175,7 +175,7 @@ void GenesisLoader::load() {
         
         transactionWrapperHelper->addChangeSet(*signedChangeSetBuilder);
 
-        KETO_LOG_INFO << "Setup the transaction message" << std::endl;
+        KETO_LOG_INFO << "Setup the transaction message";
         keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelper(
             new keto::transaction_common::TransactionMessageHelper(transactionWrapperHelper));
         
@@ -191,7 +191,7 @@ void GenesisLoader::load() {
         blockBuilderPtr->addTransactionMessage(transactionMessageHelper);
     }
 
-    KETO_LOG_INFO << "Sign the block" << std::endl;
+    KETO_LOG_INFO << "Sign the block";
     keto::block_db::SignedBlockBuilderPtr signedBlockBuilderPtr(new keto::block_db::SignedBlockBuilder(
             blockBuilderPtr,
             keyLoaderPtr));

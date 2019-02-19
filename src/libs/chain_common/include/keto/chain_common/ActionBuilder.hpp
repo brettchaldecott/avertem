@@ -56,6 +56,9 @@ public:
     
     keto::asn1::HashHelper getContract();
     ActionBuilder& setContract(const keto::asn1::HashHelper& contract);
+
+    std::string getContractName();
+    ActionBuilder& setContractName(const std::string& contractName);
     /*
      * Removed these methods as at the current point in time
      * it would appear impossible to determine who along the line

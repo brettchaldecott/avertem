@@ -1,5 +1,5 @@
 TransactionModule DEFINITIONS AUTOMATIC TAGS ::= BEGIN
-    IMPORTS Number, Hash, Version, Key, Signature, Status, EncryptedData, Boolean
+    IMPORTS Number, Hash, Version, Key, Signature, Status, EncryptedData, Boolean, Int
         FROM BasicModule
         Action
         FROM ActionModule
@@ -59,9 +59,11 @@ EncryptedDataWrapper ::= SEQUENCE {
 
 
 TransactionMessage ::= SEQUENCE {
-    version             Version,
+    version              Version,
     -- transaction header information
-    transaction         TransactionWrapper,
+    transaction          TransactionWrapper,
+    availableTime        Int,
+    elapsedTime          Int,
     nestedTransactions   SEQUENCE OF CHOICE {
         sideTransaction  TransactionMessage,
         -- the data that is encrypted this will be an encrypted transaction message

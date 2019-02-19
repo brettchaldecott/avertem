@@ -29,6 +29,7 @@ message Transaction {
     bytes active_account = 3;
     TransactionStatus status = 4;
     bytes asn1_transaction_message = 5;
+    int64 seconds = 6;
 }
 
 message AccountTransactionInfo {
@@ -49,4 +50,11 @@ message ChangeSet {
     bytes asn1_change_set = 1;
 }
 
+
+message FeeInfoMsg {
+    uint32 version = 1;
+    int64 fee_ratio = 2;
+    int64 max_fee = 3;
+    google.protobuf.Timestamp expiry_time = 4;
+}
 

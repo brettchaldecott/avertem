@@ -51,7 +51,16 @@ public:
      * @return The hash bytes
      */
     std::vector<uint8_t> getFeeAccountHash();
-    
+
+
+    /**
+     * This method returns the account hash as hex
+     *
+     * @return The account has fee
+     */
+    std::string getFeeAccountHashHex();
+
+
     /**
      * This method returns the public key directory path. This contains all the
      * public keys registered with the keto server.

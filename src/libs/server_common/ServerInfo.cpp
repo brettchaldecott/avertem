@@ -98,6 +98,10 @@ std::vector<uint8_t> ServerInfo::getFeeAccountHash() {
     return this->feeAccountHash;
 }
 
+std::string ServerInfo::getFeeAccountHashHex() {
+    return Botan::hex_encode(this->feeAccountHash);
+}
+
 boost::filesystem::path ServerInfo::getPublicKeyPath() {
     return this->publicKeyPath;
 }
