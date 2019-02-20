@@ -52,11 +52,13 @@ public:
     virtual ~WavmSession();
     
     // the contract facade methods
+    std::string getFeeAccount();
     std::string getAccount();
     std::string getTransaction();
     Status getStatus();
     keto::asn1::NumberHelper getTransactionValue();
     keto::asn1::NumberHelper getTransactionFee();
+    keto::asn1::NumberHelper getTotalTransactionFee();
     
     // request methods
     long getRequestModelTransactionValue(
@@ -70,9 +72,9 @@ public:
     
     
     // the common methods used on the session
-    void createDebitEntry(const std::string& accountModel, const std::string& transactionValueModel,
+    void createDebitEntry(const std::string& accountId, const std::string& name, const std::string& description, const std::string& accountModel, const std::string& transactionValueModel,
             const keto::asn1::NumberHelper& value);
-    void createCreditEntry(const std::string& accountModel, const std::string& transactionValueModel,
+    void createCreditEntry(const std::string& accountId, const std::string& name, const std::string& description, const std::string& accountModel, const std::string& transactionValueModel,
             const keto::asn1::NumberHelper& value);
     void setResponseStringValue(const std::string& subject, const std::string& predicate,
             const std::string& value);

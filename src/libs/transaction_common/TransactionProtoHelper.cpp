@@ -60,8 +60,6 @@ TransactionProtoHelper::TransactionProtoHelper(
         transaction.set_status(keto::proto::TransactionStatus::DEBIT);
     } else if (transactionWrapperHelperPtr->getStatus() == Status_processing) {
         transaction.set_status(keto::proto::TransactionStatus::PROCESS);
-    } else if (transactionWrapperHelperPtr->getStatus() == Status_fee) {
-        transaction.set_status(keto::proto::TransactionStatus::FEE);
     } else if (transactionWrapperHelperPtr->getStatus() == Status_credit) {
         transaction.set_status(keto::proto::TransactionStatus::CREDIT);
     } else if (transactionWrapperHelperPtr->getStatus() == Status_complete) {
@@ -98,8 +96,6 @@ TransactionProtoHelper::TransactionProtoHelper(const TransactionMessageHelperPtr
         transaction.set_status(keto::proto::TransactionStatus::DEBIT);
     } else if (transactionWrapperHelperPtr->getStatus() == Status_processing) {
         transaction.set_status(keto::proto::TransactionStatus::PROCESS);
-    } else if (transactionWrapperHelperPtr->getStatus() == Status_fee) {
-        transaction.set_status(keto::proto::TransactionStatus::FEE);
     } else if (transactionWrapperHelperPtr->getStatus() == Status_credit) {
         transaction.set_status(keto::proto::TransactionStatus::CREDIT);
     } else if (transactionWrapperHelperPtr->getStatus() == Status_complete) {
@@ -143,8 +139,6 @@ TransactionProtoHelper& TransactionProtoHelper::setTransaction(
         transaction.set_status(keto::proto::TransactionStatus::PROCESS);
     } else if (transactionWrapperHelperPtr->getStatus() == Status_nested) {
         transaction.set_status(keto::proto::TransactionStatus::NESTED);
-    } else if (transactionWrapperHelperPtr->getStatus() == Status_fee) {
-        transaction.set_status(keto::proto::TransactionStatus::FEE);
     } else if (transactionWrapperHelperPtr->getStatus() == Status_credit) {
         transaction.set_status(keto::proto::TransactionStatus::CREDIT);
     } else if (transactionWrapperHelperPtr->getStatus() == Status_complete) {
@@ -186,8 +180,6 @@ TransactionProtoHelper& TransactionProtoHelper::setTransaction(
         transaction.set_status(keto::proto::TransactionStatus::PROCESS);
     } else if (transactionWrapperHelperPtr->getStatus() == Status_nested) {
         transaction.set_status(keto::proto::TransactionStatus::NESTED);
-    } else if (transactionWrapperHelperPtr->getStatus() == Status_fee) {
-        transaction.set_status(keto::proto::TransactionStatus::FEE);
     } else if (transactionWrapperHelperPtr->getStatus() == Status_credit) {
         transaction.set_status(keto::proto::TransactionStatus::CREDIT);
     } else if (transactionWrapperHelperPtr->getStatus() == Status_complete) {

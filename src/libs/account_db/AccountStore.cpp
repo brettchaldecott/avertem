@@ -92,16 +92,8 @@ void AccountStore::applyTransaction(
     AccountResourcePtr resource = accountResourceManagerPtr->getResource();
     keto::proto::AccountInfo accountInfo;
     AccountRDFStatementBuilderPtr accountRDFStatementBuilder;
-    keto::asn1::HashHelper accountHash;
+    keto::asn1::HashHelper accountHash = transactionWrapperHelperPtr->getCurrentAccount();
 
-    if ((transactionWrapperHelperPtr->getStatus() == Status_debit) || (transactionWrapperHelperPtr->getStatus() == Status_init)) {
-        accountHash = transactionWrapperHelperPtr->getSourceAccount();
-    } else if (transactionWrapperHelperPtr->getStatus() == Status_fee) {
-        accountHash = transactionWrapperHelperPtr->getFeeAccount();
-    } else if ((transactionWrapperHelperPtr->getStatus() == Status_credit) || (transactionWrapperHelperPtr->getStatus() == Status_complete)) {
-        accountHash = transactionWrapperHelperPtr->getTargetAccount();
-    }
-    
     if (!getAccountInfo(accountHash,accountInfo)) {
         accountRDFStatementBuilder =  AccountRDFStatementBuilderPtr(
                 new AccountRDFStatementBuilder(chainId,blockId,

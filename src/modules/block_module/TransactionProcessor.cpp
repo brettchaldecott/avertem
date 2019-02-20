@@ -11,6 +11,7 @@
  * Created on April 2, 2018, 9:00 AM
  */
 
+#include <math.h>
 #include <condition_variable>
 #include <iostream>
 #include <keto/block/Constants.hpp>
@@ -175,17 +176,13 @@ keto::transaction_common::TransactionProtoHelper TransactionProcessor::processTr
 
 
     // get the transaction from the account store
-    keto::asn1::HashHelper activeAccount;
+    keto::asn1::HashHelper currentAccount = transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getCurrentAccount();
+
     if ((transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getStatus() == Status_init) ||
         (transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getStatus() == Status_debit)) {
-        activeAccount = transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getSourceAccount();
         transactionProtoHelper.setTransaction(executeContract(
-                getContractByName(activeAccount, keto::server_common::Constants::CONTRACTS::BASE_ACCOUNT_CONTRACT),
+                getContractByName(currentAccount, keto::server_common::Constants::CONTRACTS::BASE_ACCOUNT_CONTRACT),
                 transactionProtoHelper,transactionTracker).transaction());
-    } else if (transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getStatus() == Status_credit) {
-        activeAccount = transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getTargetAccount();
-    } else {
-        BOOST_THROW_EXCEPTION(keto::block::UnsupportedTransactionStatusException());
     }
 
 
@@ -203,10 +200,10 @@ keto::transaction_common::TransactionProtoHelper TransactionProcessor::processTr
             keto::asn1::AnyHelper anyHelper(*transactionMessageHelperPtr);
             if (action->getContract().empty()) {
                 transactionProtoHelper.setTransaction(executeContract(
-                        getContractByHash(activeAccount,action->getContract()),transactionProtoHelper,action->getModel(),transactionTracker)
+                        getContractByHash(currentAccount,action->getContract()),transactionProtoHelper,action->getModel(),transactionTracker)
                         .transaction());
             } else {
-                transactionProtoHelper.setTransaction(executeContract(getContractByName(activeAccount,
+                transactionProtoHelper.setTransaction(executeContract(getContractByName(currentAccount,
                         action->getContractName()),transactionProtoHelper,action->getModel(),transactionTracker).transaction());
             }
         }
@@ -226,7 +223,7 @@ keto::transaction_common::TransactionProtoHelper TransactionProcessor::processTr
                 transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getStatus());
 
         keto::asn1::AnyHelper anyHelper(*transactionMessageHelperPtr);
-        transactionProtoHelper.setTransaction(executeContract(getContractByName(activeAccount,
+        transactionProtoHelper.setTransaction(executeContract(getContractByName(currentAccount,
                 keto::server_common::Constants::CONTRACTS::NESTED_TRANSACTION_CONTRACT),
                         transactionProtoHelper,anyHelper,transactionTracker).transaction());
 
@@ -236,11 +233,11 @@ keto::transaction_common::TransactionProtoHelper TransactionProcessor::processTr
         // set the elapsed time on the transaction
         transactionProtoHelper.getTransactionMessageHelper()->setElapsedTime(
                 transactionProtoHelper.getTransactionMessageHelper()->getElapsedTime() +
-                        (transactionTracker.getElapsedTime() / keto::environment::Units::TIME::MILLISECONDS));
+                        round(transactionTracker.getElapsedTime() / keto::environment::Units::TIME::MILLISECONDS));
 
         // set the transaction
         transactionProtoHelper.setTransaction(executeContract(
-                getContractByName(activeAccount,
+                getContractByName(currentAccount,
                                   keto::server_common::Constants::CONTRACTS::FEE_PAYMENT_CONTRACT),
                 transactionProtoHelper,transactionTracker).transaction());
 
@@ -248,7 +245,7 @@ keto::transaction_common::TransactionProtoHelper TransactionProcessor::processTr
 
     if (transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getStatus() == Status_credit) {
         transactionProtoHelper.setTransaction(executeContract(
-                getContractByName(activeAccount, keto::server_common::Constants::CONTRACTS::BASE_ACCOUNT_CONTRACT),
+                getContractByName(currentAccount, keto::server_common::Constants::CONTRACTS::BASE_ACCOUNT_CONTRACT),
                 transactionProtoHelper,transactionTracker).transaction());
     }
 

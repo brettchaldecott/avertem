@@ -166,10 +166,13 @@ void WavmEngineWrapper::execute() {
     // Allow atomics on unshared memories to accomodate atomics on the Emscripten memory.
     module.featureSpec.requireSharedFlagForAtomicOperators = false;
 
+	loadModule("",module);
+
     // Load the module.
     if(!loadTextModule(wast,module)) {
         BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidContractException());
     }
+
     // Link the module with the intrinsic modules.
     Compartment* compartment = Runtime::createCompartment();
     Context* context = Runtime::createContext(compartment);
@@ -218,9 +221,7 @@ void WavmEngineWrapper::execute() {
         functionInstance = asFunctionNullable(getInstanceExport(moduleInstance,"debit"));
     } else if (currentStatus == Status_credit) {
         functionInstance = asFunctionNullable(getInstanceExport(moduleInstance,"credit"));
-    } else if (currentStatus == Status_fee) {      
-        functionInstance = asFunctionNullable(getInstanceExport(moduleInstance,"fee"));
-    } else if (currentStatus == Status_processing) {      
+    } else if (currentStatus == Status_processing) {
         functionInstance = asFunctionNullable(getInstanceExport(moduleInstance,"process"));
     }
     

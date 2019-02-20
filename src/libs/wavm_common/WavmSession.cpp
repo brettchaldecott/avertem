@@ -13,17 +13,18 @@
 
 #include <cstdlib>
 #include <sstream>
+#include <math.h>
 
 #include "RDFChange.h"
 
 #include "keto/environment/Units.hpp"
 #include "keto/asn1/StatusUtils.hpp"
 #include "keto/server_common/Constants.hpp"
+#include "keto/server_common/ServerInfo.hpp"
+
 #include "keto/wavm_common/WavmSession.hpp"
 #include "keto/wavm_common/RDFURLUtils.hpp"
 #include "keto/wavm_common/RDFConstants.hpp"
-#include "include/keto/wavm_common/RDFConstants.hpp"
-#include "include/keto/wavm_common/RDFURLUtils.hpp"
 #include "keto/wavm_common/Exception.hpp"
 
 #include "keto/environment/EnvironmentManager.hpp"
@@ -77,6 +78,11 @@ WavmSession::~WavmSession() {
 }
 
 // the contract facade methods
+std::string WavmSession::getFeeAccount() {
+    return keto::server_common::ServerInfo::getInstance()->getFeeAccountHashHex();
+}
+
+// the contract facade methods
 std::string WavmSession::getAccount() {
     return getCurrentAccountHash().getHash(keto::common::StringEncoding::HEX);
 }
@@ -96,8 +102,16 @@ keto::asn1::NumberHelper WavmSession::getTransactionValue() {
     return transactionMessageHelperPtr->getTransactionWrapper()->getSignedTransaction()->getTransaction()->getValue();
 }
 
+keto::asn1::NumberHelper WavmSession::getTotalTransactionFee() {
+    keto::asn1::NumberHelper numberHelper(transactionMessageHelperPtr->getElapsedTime() * sandboxCommandMessage.fee_ratio());
+    return numberHelper;
+}
+
 keto::asn1::NumberHelper WavmSession::getTransactionFee() {
-    keto::asn1::NumberHelper numberHelper((sandboxCommandMessage.elapsed_time() / keto::environment::Units::TIME::MILLISECONDS) * sandboxCommandMessage.fee_ratio());
+    keto::asn1::NumberHelper numberHelper(
+            round(
+                    (sandboxCommandMessage.elapsed_time() / keto::environment::Units::TIME::MILLISECONDS) *
+                    sandboxCommandMessage.fee_ratio()));
     return numberHelper;
 }
 
@@ -133,12 +147,12 @@ bool WavmSession::getRequestBooleanValue(const std::string& subject,
 
 
 
-void WavmSession::createDebitEntry(const std::string& accountModel, const std::string& transactionValueModel,
+void WavmSession::createDebitEntry(const std::string& accountId, const std::string& name, const std::string& description, const std::string& accountModel, const std::string& transactionValueModel,
         const keto::asn1::NumberHelper& value) {
     keto::wavm_common::RDFURLUtils accountUrl(accountModel);
     keto::wavm_common::RDFURLUtils transactionUrl(transactionValueModel);
     std::string id = this->getTransaction();
-    std::string hash = this->getAccount();
+    std::string hash = accountId;
     
     std::stringstream ss;
     ss << "debit_" << hash << "_" << id;
@@ -151,6 +165,12 @@ void WavmSession::createDebitEntry(const std::string& accountModel, const std::s
         subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::TYPE),
             keto::server_common::Constants::Constants::ACCOUNT_ACTIONS::DEBIT);
     this->addModelEntry(
+            subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::NAME),
+            name);
+    this->addModelEntry(
+            subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::DESCRIPTION),
+            description);
+    this->addModelEntry(
         subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::ACCOUNT_HASH),
             hash);
     this->addModelEntry(
@@ -159,12 +179,12 @@ void WavmSession::createDebitEntry(const std::string& accountModel, const std::s
     
 }
 
-void WavmSession::createCreditEntry(const std::string& accountModel, const std::string& transactionValueModel,
+void WavmSession::createCreditEntry(const std::string& accountId, const std::string& name, const std::string& description, const std::string& accountModel, const std::string& transactionValueModel,
         const keto::asn1::NumberHelper& value) {
     keto::wavm_common::RDFURLUtils accountUrl(accountModel);
     keto::wavm_common::RDFURLUtils transactionUrl(transactionValueModel);
     std::string id = this->getTransaction();
-    std::string hash = this->getAccount();
+    std::string hash = accountId;
     std::stringstream ss;
     ss << "credit_" << hash << "_" << id;
     std::string subjectUrl = transactionUrl.buildSubjectUrl(ss.str());
@@ -179,10 +199,17 @@ void WavmSession::createCreditEntry(const std::string& accountModel, const std::
         subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::ACCOUNT_HASH),
             hash);
     this->addModelEntry(
+            subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::NAME),
+            name);
+    this->addModelEntry(
+            subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::DESCRIPTION),
+            description);
+    this->addModelEntry(
         subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::VALUE),
             value.operator long());
     
 }
+
 
 void WavmSession::setResponseStringValue(const std::string& subject, const std::string& predicate,
         const std::string& value) {

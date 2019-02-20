@@ -170,10 +170,6 @@ keto::event::Event RouterService::updateStateRouteMessage(const keto::event::Eve
             transactionMessageHelper->getTransactionWrapper();
     if (transactionWrapperHelperPtr->incrementStatus() == Status_processing) {
         transactionWrapperHelperPtr->incrementStatus();
-    } else if (transactionWrapperHelperPtr->incrementStatus() == Status_fee) {
-        keto::asn1::HashHelper hashHelper(keto::crypto::SecureVectorUtils().copyToSecure(
-            keto::server_common::ServerInfo::getInstance()->getFeeAccountHash()));
-        transactionWrapperHelperPtr->setFeeAccount(hashHelper);
     }
     
     transactionProtoHelper->setTransaction(transactionMessageHelper);

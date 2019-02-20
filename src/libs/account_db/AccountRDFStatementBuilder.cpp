@@ -44,14 +44,7 @@ AccountRDFStatementBuilder::AccountRDFStatementBuilder(
 
     this->accountInfo.set_version(keto::common::MetaInfo::PROTOCOL_VERSION);
     
-    keto::asn1::HashHelper accountHash;
-    if ((transactionWrapperHelperPtr->getStatus() == Status_debit) || (transactionWrapperHelperPtr->getStatus() == Status_init)) {
-        accountHash = transactionWrapperHelperPtr->getSourceAccount();
-    } else if (transactionWrapperHelperPtr->getStatus() == Status_fee) {
-        accountHash = transactionWrapperHelperPtr->getFeeAccount();
-    } else if ((transactionWrapperHelperPtr->getStatus() == Status_credit) || (transactionWrapperHelperPtr->getStatus() == Status_complete)) {
-        accountHash = transactionWrapperHelperPtr->getTargetAccount();
-    }
+    keto::asn1::HashHelper accountHash = transactionWrapperHelperPtr->getCurrentAccount();
 
     // build the block chain rdf statement
     this->rdfModelHelperPtr = keto::asn1::RDFModelHelperPtr(new keto::asn1::RDFModelHelper());

@@ -15,8 +15,6 @@ std::string StatusUtils::statusToString(Status_t status) {
         return "DEBIT";
     } else if (status == Status_credit) {
         return "CREDIT";
-    } else if (status == Status_fee) {
-        return "FEE";
     } else if (status == Status_processing) {
         return "PROCESSING";
     } else {

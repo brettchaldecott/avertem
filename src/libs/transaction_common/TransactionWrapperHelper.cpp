@@ -248,9 +248,6 @@ keto::asn1::HashHelper TransactionWrapperHelper::getCurrentAccount() {
         return getSourceAccount();
     } else if (getStatus() == Status_credit || getStatus() == Status_complete) {
         return getTargetAccount();
-    } else if (getStatus() == Status_fee) {
-        std::cout << "Get the fee account : " << std::endl;
-        return getFeeAccount();
     }
     std::stringstream ss;
     ss << "Unrecognised status [" << getStatus() << "]";
@@ -266,8 +263,6 @@ Status TransactionWrapperHelper::incrementStatus() {
     } else if (this->transactionWrapper->currentStatus == Status_processing) {
         this->transactionWrapper->currentStatus = Status_credit;
     } else if (this->transactionWrapper->currentStatus == Status_credit) {
-        this->transactionWrapper->currentStatus = Status_fee;
-    } else if (this->transactionWrapper->currentStatus == Status_fee) {      
         this->transactionWrapper->currentStatus = Status_complete;
     }
     return (Status)this->transactionWrapper->currentStatus;

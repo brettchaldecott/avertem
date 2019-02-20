@@ -16,10 +16,9 @@ Status ::= ENUMERATED {
     debit   (1),
     processing   (2),
     waiting   (3),
-    fee     (4),
-    credit  (5),
-    complete (6),
-    nested      (7)
+    credit  (4),
+    complete (5),
+    nested      (6)
     
 }
 
