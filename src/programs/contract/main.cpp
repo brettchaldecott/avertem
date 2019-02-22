@@ -52,7 +52,7 @@ boost::program_options::options_description generateOptionDescriptions() {
     optionDescripion.add_options()
             ("help,h", "Print this help message and exit.")
             ("version,v", "Print version information.")
-            ("encodeWast,e", "Encode a wast file as hexadecimal.")
+            ("encodeWastOrWavm,e", "Encode a wast file as hexadecimal.")
             ("generateHash,g", "Generate a contract hash code.")
             ("source,s", po::value<std::string>(),"Source file.")
             ("target,t",po::value<std::string>(), "Target file.");
@@ -60,7 +60,7 @@ boost::program_options::options_description generateOptionDescriptions() {
     return optionDescripion;
 }
 
-void encodeWastFile(std::shared_ptr<ketoEnv::Config> config,
+void encodeWastOrWavmFile(std::shared_ptr<ketoEnv::Config> config,
         boost::program_options::options_description optionDescription) {
     std::cout <<  "Encode a wast file" << std::endl;
     
@@ -87,18 +87,11 @@ void encodeWastFile(std::shared_ptr<ketoEnv::Config> config,
     }
     boost::filesystem::path targetFile = config->getVariablesMap()[keto::contract::Constants::TARGET_FILE].as<std::string>();
     
-    std::ifstream in(sourceFile.string());
-    std::stringstream ss;
-    char character = in.get();
-    while (!in.eof()) {
-        ss << character;
-        character = in.get();
-    }
-    in.close();
-    std::cout << "The line is : " <<ss.str() << std::endl;
+    std::ifstream file(sourceFile.string());
+    std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(file)),
+                      std::istreambuf_iterator<char>());
     std::ofstream out(targetFile.string());
-    out << Botan::hex_encode(
-            keto::server_common::VectorUtils().copyStringToVector(ss.str()));
+    out << Botan::hex_encode(bytes);
     out.close();
 }
 
@@ -135,8 +128,8 @@ int main(int argc, char** argv) {
             return 0;
         }
         
-        if (config->getVariablesMap().count(keto::contract::Constants::ENCODE_WAST)) {
-            encodeWastFile(config,optionDescription);
+        if (config->getVariablesMap().count(keto::contract::Constants::ENCODE_WAST_OR_WAVM)) {
+            encodeWastOrWavmFile(config,optionDescription);
             return 0;
         }else if (config->getVariablesMap().count(keto::contract::Constants::GENERATE_HASH)) {
             generateHash(config,optionDescription);

@@ -20,7 +20,7 @@ namespace contract {
 
 class Constants {
 public:
-    static constexpr const char* ENCODE_WAST = "encodeWast";
+    static constexpr const char* ENCODE_WAST_OR_WAVM = "encodeWastOrWavm";
     static constexpr const char* GENERATE_HASH = "generateHash";
     static constexpr const char* SOURCE_FILE = "source";
     static constexpr const char* TARGET_FILE = "target";

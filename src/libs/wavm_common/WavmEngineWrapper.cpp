@@ -32,6 +32,7 @@
 #include "Runtime/Intrinsics.h"
 #include "ThreadTest/ThreadTest.h"
 #include "WAST/WAST.h"
+#include "WASM/WASM.h"
 
 #include "keto/wavm_common/WavmEngineWrapper.hpp"
 #include "keto/wavm_common/Exception.hpp"
@@ -47,6 +48,36 @@ using namespace Runtime;
 
 namespace keto {
 namespace wavm_common {
+
+
+bool loadBinaryModule(const std::string& wasmBytes,IR::Module& outModule)
+{
+    // Load the module from a binary WebAssembly file.
+    try
+    {
+        Serialization::MemoryInputStream stream((const U8*)wasmBytes.data(),wasmBytes.size());
+        WASM::serialize(stream,outModule);
+    }
+    catch(Serialization::FatalSerializationException exception)
+    {
+        KETO_LOG_ERROR <<  "[WavmEngineWrapper][loadBinaryModule]Error deserializing WebAssembly binary file:";
+        KETO_LOG_ERROR <<  exception.message << std::endl;
+        return false;
+    }
+    catch(IR::ValidationException exception)
+    {
+        KETO_LOG_ERROR <<  "[WavmEngineWrapper][loadBinaryModule]Error validating WebAssembly binary file:";
+        KETO_LOG_ERROR <<  exception.message;
+        return false;
+    }
+    catch(std::bad_alloc)
+    {
+        KETO_LOG_ERROR <<  "[WavmEngineWrapper][loadBinaryModule]Memory allocation failed: input is likely malformed";
+        return false;
+    }
+
+    return true;
+}
     
 bool loadTextModule(const std::string& wastString,IR::Module& outModule)
 {
@@ -166,10 +197,12 @@ void WavmEngineWrapper::execute() {
     // Allow atomics on unshared memories to accomodate atomics on the Emscripten memory.
     module.featureSpec.requireSharedFlagForAtomicOperators = false;
 
-	loadModule("",module);
-
-    // Load the module.
-    if(!loadTextModule(wast,module)) {
+    // check if we are dealing with a binary contract or not
+    if(*(U32*)wast.data() == 0x6d736100) {
+        if (!loadBinaryModule(wast,module)) {
+            BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidContractException());
+        }
+    } else if(!loadTextModule(wast,module)) {
         BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidContractException());
     }
 
@@ -185,6 +218,7 @@ void WavmEngineWrapper::execute() {
     rootResolver.moduleNameToInstanceMap["asm2wasm"] = emscriptenInstance->asm2wasm;
     rootResolver.moduleNameToInstanceMap["global"] = emscriptenInstance->global;
     rootResolver.moduleNameToInstanceMap["Keto"] = emscriptenInstance->keto;
+    rootResolver.moduleNameToInstanceMap["keto"] = emscriptenInstance->keto;
 
     LinkResult linkResult = linkModule(module,rootResolver);
     if(!linkResult.success)
@@ -223,6 +257,8 @@ void WavmEngineWrapper::execute() {
         functionInstance = asFunctionNullable(getInstanceExport(moduleInstance,"credit"));
     } else if (currentStatus == Status_processing) {
         functionInstance = asFunctionNullable(getInstanceExport(moduleInstance,"process"));
+    } else {
+        BOOST_THROW_EXCEPTION(keto::wavm_common::UnsupportedInvocationStatusException());
     }
     
     if(!functionInstance) { functionInstance = asFunctionNullable(getInstanceExport(moduleInstance,"_main")); }
@@ -238,7 +274,8 @@ void WavmEngineWrapper::execute() {
     Runtime::catchRuntimeExceptions(                                                                                           
         [&]
         {
-            Result functionResult = invokeFunctionChecked(context,functionInstance,invokeArgs);
+            // invoke the function
+            invokeFunctionChecked(context,functionInstance,invokeArgs);
 
             // collect the garbage
             Runtime::collectGarbage();

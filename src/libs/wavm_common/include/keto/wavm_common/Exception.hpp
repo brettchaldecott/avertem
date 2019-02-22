@@ -35,6 +35,7 @@ KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, UnrecognisedTransactionStat
 KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, PrivateKeyNotFoundException , "The private key for this node was not found.");
 KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, PublicKeyNotFoundException , "The public key for this node was not found.");
 KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, InvalidTransactionReferenceException , "Invalid transaction reference exception.");
+KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, UnsupportedInvocationStatusException , "Unsupported invocation status.");
 
 }
 }
