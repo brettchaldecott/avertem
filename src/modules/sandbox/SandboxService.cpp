@@ -84,7 +84,7 @@ keto::event::Event SandboxService::executeActionMessage(const keto::event::Event
         std::string code = keto::server_common::VectorUtils().copyVectorToString(Botan::hex_decode(
                 buffer,true));
         keto::wavm_common::WavmEngineManager::getInstance()->getEngine(code)->execute();
-        
+
         sandboxCommandMessage = wavmSessionScope.getSession()->getSandboxCommandMessage();
         
     } catch (keto::common::Exception& ex) {

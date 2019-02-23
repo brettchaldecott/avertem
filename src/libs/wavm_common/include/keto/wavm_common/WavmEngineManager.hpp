@@ -21,7 +21,19 @@
 
 #include "keto/obfuscate/MetaString.hpp"
 
+namespace Runtime {
+    struct Compartment;
+    struct Resolver;
+
+
+};
+
+
 namespace keto {
+    namespace Emscripten {
+        struct Instance;
+    }
+    
 namespace wavm_common {
 
 class WavmEngineManager;
@@ -45,9 +57,14 @@ public:
     static WavmEngineManagerPtr getInstance();
     
     WavmEngineWrapperPtr getEngine(const std::string& wast);
-    
-private:
 
+    Runtime::Compartment* getCompartment();
+    keto::Emscripten::Instance* getEmscriptenInstance();
+    Runtime::Resolver* getResolver();
+private:
+    Runtime::Compartment* compartment;
+    keto::Emscripten::Instance *emscriptenInstance;
+    Runtime::Resolver* resolver;
 };
 
 

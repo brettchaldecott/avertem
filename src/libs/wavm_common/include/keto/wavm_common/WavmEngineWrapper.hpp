@@ -19,10 +19,15 @@
 
 #include "keto/obfuscate/MetaString.hpp"
 
+namespace Runtime {
+    struct Compartment;
+    struct Context;
+}
 
 namespace keto {
 namespace wavm_common {
 
+class WavmEngineManager;
 class WavmEngineWrapper;
 typedef std::shared_ptr<WavmEngineWrapper> WavmEngineWrapperPtr;
 
@@ -34,15 +39,16 @@ public:
     
     static std::string getSourceVersion();
 
-    WavmEngineWrapper(const std::string& wast);
+    WavmEngineWrapper(WavmEngineManager& wavmEngineManager, const std::string& wast);
     WavmEngineWrapper(const WavmEngineWrapper& orig) = delete;
     virtual ~WavmEngineWrapper();
     
     void execute();
     
 private:
+    WavmEngineManager& wavmEngineManager;
     std::string wast;
-    
+
 };
 
 

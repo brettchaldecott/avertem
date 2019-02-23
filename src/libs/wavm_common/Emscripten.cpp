@@ -495,14 +495,14 @@ namespace keto {
             return (I64)(long)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getTransactionValue();
         }
 
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getTotalFeeValue",I64,typescript_getTotalFeeValue)
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getTotalFeeValue",I64,typescript_getTotalFeeValue, I64 minimum)
         {
-            return (I64)(long)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getTotalTransactionFee();
+            return (I64)(long)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getTotalTransactionFee(minimum);
         }
 
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getFeeValue",I64,typescript_getFeeValue)
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getFeeValue",I64,typescript_getFeeValue, I64 minimum)
         {
-            return (I64)(long)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getTransactionFee();
+            return (I64)(long)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getTransactionFee(minimum);
         }
         
         DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getRequestModelTransactionValue",I64,typescript_getRequestModelTransactionValue,I32 accountModel,I32 transactionValueModel)

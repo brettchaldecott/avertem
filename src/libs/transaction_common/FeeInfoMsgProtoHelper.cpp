@@ -94,6 +94,7 @@ FeeInfoMsgProtoHelper& FeeInfoMsgProtoHelper::setExpiryTime(const std::time_t& e
     expiryTime.set_seconds(expiry);
     expiryTime.set_nanos(0);
     *this->feeInfoMsg.mutable_expiry_time() = expiryTime;
+    return *this;
 }
 
 bool FeeInfoMsgProtoHelper::isExpired() {

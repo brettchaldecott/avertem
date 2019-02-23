@@ -57,8 +57,8 @@ public:
     std::string getTransaction();
     Status getStatus();
     keto::asn1::NumberHelper getTransactionValue();
-    keto::asn1::NumberHelper getTransactionFee();
-    keto::asn1::NumberHelper getTotalTransactionFee();
+    keto::asn1::NumberHelper getTransactionFee(long minimimFee);
+    keto::asn1::NumberHelper getTotalTransactionFee(long minimimFee);
     
     // request methods
     long getRequestModelTransactionValue(

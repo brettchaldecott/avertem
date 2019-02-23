@@ -13,14 +13,121 @@
 
 #include <condition_variable>
 
+#include "Platform/Platform.h"
+#include "Inline/BasicTypes.h"
+#include "Inline/Floats.h"
+#include "Inline/Timing.h"
+#include "keto/wavm_common/Emscripten.hpp"
+#include "Inline/BasicTypes.h"
+#include "Inline/Timing.h"
+#include "IR/Module.h"
+#include "IR/Operators.h"
+#include "IR/Validate.h"
+#include "Runtime/Linker.h"
+#include "Runtime/Intrinsics.h"
+#include "Runtime/Runtime.h"
+#include "Runtime/RuntimePrivate.h"
+#include "ThreadTest/ThreadTest.h"
+#include "WAST/WAST.h"
+#include "WASM/WASM.h"
+
 #include "keto/wavm_common/WavmEngineManager.hpp"
 #include "keto/wavm_common/WavmEngineWrapper.hpp"
 #include "keto/wavm_common/WavmSessionManager.hpp"
 #include "include/keto/wavm_common/WavmSessionManager.hpp"
 
+
+using namespace IR;
+using namespace Runtime;
+
 namespace keto {
 namespace wavm_common {
-    
+
+    struct RootResolver : Resolver
+    {
+        Compartment* compartment;
+        std::map<std::string,ModuleInstance*> moduleNameToInstanceMap;
+
+        RootResolver(Compartment* inCompartment): compartment(inCompartment) {}
+
+        bool resolve(const std::string& moduleName,const std::string& exportName,ObjectType type,Object*& outObject) override
+        {
+            auto namedInstanceIt = moduleNameToInstanceMap.find(moduleName);
+            if(namedInstanceIt != moduleNameToInstanceMap.end())
+            {
+                outObject = getInstanceExport(namedInstanceIt->second,exportName);
+                if(outObject)
+                {
+                    if(isA(outObject,type)) { return true; }
+                    else
+                    {
+                        Log::printf(Log::Category::error,"Resolved import %s.%s to a %s, but was expecting %s",
+                                    moduleName.c_str(),
+                                    exportName.c_str(),
+                                    asString(getObjectType(outObject)).c_str(),
+                                    asString(type).c_str());
+                        return false;
+                    }
+                }
+            }
+
+            Log::printf(Log::Category::error,"Generated stub for missing import %s.%s : %s\n",moduleName.c_str(),exportName.c_str(),asString(type).c_str());
+            outObject = getStubObject(type);
+            return true;
+        }
+
+        Object* getStubObject(ObjectType type) const
+        {
+            // If the import couldn't be resolved, stub it in.
+            switch(type.kind)
+            {
+                case IR::ObjectKind::function:
+                {
+                    // Generate a function body that just uses the unreachable op to fault if called.
+                    Serialization::ArrayOutputStream codeStream;
+                    OperatorEncoderStream encoder(codeStream);
+                    encoder.unreachable();
+                    encoder.end();
+
+                    // Generate a module for the stub function.
+                    Module stubModule;
+                    DisassemblyNames stubModuleNames;
+                    stubModule.types.push_back(asFunctionType(type));
+                    stubModule.functions.defs.push_back({{0},{},std::move(codeStream.getBytes()),{}});
+                    stubModule.exports.push_back({"importStub",IR::ObjectKind::function,0});
+                    stubModuleNames.functions.push_back({"importStub <" + asString(type) + ">",{},{}});
+                    IR::setDisassemblyNames(stubModule,stubModuleNames);
+                    IR::validateDefinitions(stubModule);
+
+                    // Instantiate the module and return the stub function instance.
+                    auto stubModuleInstance = instantiateModule(compartment,stubModule,{});
+                    return getInstanceExport(stubModuleInstance,"importStub");
+                }
+                case IR::ObjectKind::memory:
+                {
+                    return asObject(Runtime::createMemory(compartment,asMemoryType(type)));
+                }
+                case IR::ObjectKind::table:
+                {
+                    return asObject(Runtime::createTable(compartment,asTableType(type)));
+                }
+                case IR::ObjectKind::global:
+                {
+                    return asObject(Runtime::createGlobal(
+                            compartment,
+                            asGlobalType(type),
+                            Runtime::Value(asGlobalType(type).valueType,Runtime::UntaggedValue())));
+                }
+                case IR::ObjectKind::exceptionType:
+                {
+                    return asObject(Runtime::createExceptionTypeInstance(asExceptionTypeType(type)));
+                }
+                default: Errors::unreachable();
+            };
+        }
+    };
+
+
 static WavmEngineManagerPtr singleton;
 
 std::string WavmEngineManager::getSourceVersion() {
@@ -28,6 +135,22 @@ std::string WavmEngineManager::getSourceVersion() {
 }
 
 WavmEngineManager::WavmEngineManager() {
+    std::cout << "Instanciate the server." << std::endl;
+
+    this->compartment = Runtime::createCompartment();
+    this->emscriptenInstance = keto::Emscripten::instantiate(compartment);
+
+    RootResolver* rootResolver = new RootResolver(compartment);
+
+    std::cout << "After getting the instance." << std::endl;
+    rootResolver->moduleNameToInstanceMap["env"] = emscriptenInstance->env;
+    rootResolver->moduleNameToInstanceMap["asm2wasm"] = emscriptenInstance->asm2wasm;
+    rootResolver->moduleNameToInstanceMap["global"] = emscriptenInstance->global;
+    rootResolver->moduleNameToInstanceMap["Keto"] = emscriptenInstance->keto;
+    rootResolver->moduleNameToInstanceMap["keto"] = emscriptenInstance->keto;
+
+    this->resolver = rootResolver;
+
 }
 
 WavmEngineManager::~WavmEngineManager() {
@@ -52,9 +175,21 @@ WavmEngineManagerPtr WavmEngineManager::getInstance() {
 
 
 WavmEngineWrapperPtr WavmEngineManager::getEngine(const std::string& wast) {
-    return WavmEngineWrapperPtr(new WavmEngineWrapper(wast)); 
+    return WavmEngineWrapperPtr(new WavmEngineWrapper(*this,wast));
 }
 
+
+Runtime::Compartment* WavmEngineManager::getCompartment() {
+    return this->compartment;
+}
+
+keto::Emscripten::Instance* WavmEngineManager::getEmscriptenInstance() {
+    return this->emscriptenInstance;
+}
+
+Runtime::Resolver* WavmEngineManager::getResolver() {
+    return this->resolver;
+}
 
 }
 }

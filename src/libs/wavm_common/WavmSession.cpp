@@ -102,16 +102,17 @@ keto::asn1::NumberHelper WavmSession::getTransactionValue() {
     return transactionMessageHelperPtr->getTransactionWrapper()->getSignedTransaction()->getTransaction()->getValue();
 }
 
-keto::asn1::NumberHelper WavmSession::getTotalTransactionFee() {
-    keto::asn1::NumberHelper numberHelper(transactionMessageHelperPtr->getElapsedTime() * sandboxCommandMessage.fee_ratio());
+keto::asn1::NumberHelper WavmSession::getTotalTransactionFee(long minimimFee) {
+    keto::asn1::NumberHelper numberHelper(
+            ((minimimFee * 2 ) + transactionMessageHelperPtr->getElapsedTime()) * sandboxCommandMessage.fee_ratio());
     return numberHelper;
 }
 
-keto::asn1::NumberHelper WavmSession::getTransactionFee() {
+keto::asn1::NumberHelper WavmSession::getTransactionFee(long minimimFee) {
     keto::asn1::NumberHelper numberHelper(
             round(
-                    (sandboxCommandMessage.elapsed_time() / keto::environment::Units::TIME::MILLISECONDS) *
-                    sandboxCommandMessage.fee_ratio()));
+                    ((minimimFee + (sandboxCommandMessage.elapsed_time() / keto::environment::Units::TIME::MILLISECONDS)) *
+                    sandboxCommandMessage.fee_ratio())));
     return numberHelper;
 }
 
