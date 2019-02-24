@@ -25,7 +25,6 @@ namespace Runtime {
     struct Compartment;
     struct Resolver;
 
-
 };
 
 
@@ -62,7 +61,6 @@ public:
     keto::Emscripten::Instance* getEmscriptenInstance();
     Runtime::Resolver* getResolver();
 private:
-    Runtime::Compartment* compartment;
     keto::Emscripten::Instance *emscriptenInstance;
     Runtime::Resolver* resolver;
 };

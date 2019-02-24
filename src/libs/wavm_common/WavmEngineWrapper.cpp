@@ -31,7 +31,6 @@
 #include "Runtime/Linker.h"
 #include "Runtime/Intrinsics.h"
 #include "Runtime/Runtime.h"
-#include "Runtime/RuntimePrivate.h"
 #include "ThreadTest/ThreadTest.h"
 #include "WAST/WAST.h"
 #include "WASM/WASM.h"
@@ -109,28 +108,29 @@ WavmEngineWrapper::~WavmEngineWrapper() {
 
 
 void WavmEngineWrapper::execute() {
-    Module module;
+    // place object in a scope
+    try {
+        Module module;
 
-    // Enable some additional "features" in WAVM that are disabled by default.
-    module.featureSpec.importExportMutableGlobals = true;
-    module.featureSpec.sharedTables = true;
-    // Allow atomics on unshared memories to accomodate atomics on the Emscripten memory.
-    module.featureSpec.requireSharedFlagForAtomicOperators = false;
+        // Enable some additional "features" in WAVM that are disabled by default.
+        module.featureSpec.importExportMutableGlobals = true;
+        module.featureSpec.sharedTables = true;
+        // Allow atomics on unshared memories to accomodate atomics on the Emscripten memory.
+        module.featureSpec.requireSharedFlagForAtomicOperators = false;
 
-    // check if we are dealing with a binary contract or not
-    if(*(U32*)wast.data() == 0x6d736100) {
-        if (!loadBinaryModule(wast,module)) {
+        // check if we are dealing with a binary contract or not
+        if(*(U32*)wast.data() == 0x6d736100) {
+            if (!loadBinaryModule(wast,module)) {
+                BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidContractException());
+            }
+        } else if(!loadTextModule(wast,module)) {
             BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidContractException());
         }
-    } else if(!loadTextModule(wast,module)) {
-        BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidContractException());
-    }
 
-    // Link the module with the intrinsic modules.
-    Compartment* compartment = Runtime::cloneCompartment(
-            this->wavmEngineManager.getCompartment());
-    Context* context = Runtime::createContext(compartment);
-    try {
+        // Link the module with the intrinsic modules.
+        Runtime::GCPointer<Compartment> compartment = Runtime::cloneCompartment(
+                this->wavmEngineManager.getCompartment());
+        Runtime::GCPointer<Context> context = Runtime::createContext(compartment);
 
 
         LinkResult linkResult = linkModule(module, *this->wavmEngineManager.getResolver());
@@ -145,13 +145,12 @@ void WavmEngineWrapper::execute() {
             BOOST_THROW_EXCEPTION(keto::wavm_common::LinkingFailedException(ss.str()));
         }
 
-        // Instantiate the module.
-        ModuleInstance *moduleInstance = instantiateModule(compartment, module,
-                                                           std::move(linkResult.resolvedImports));
+        Runtime::GCPointer<ModuleInstance> moduleInstance =
+                instantiateModule(compartment, module, std::move(linkResult.resolvedImports));
         if (!moduleInstance) { BOOST_THROW_EXCEPTION(keto::wavm_common::LinkingFailedException()); }
 
         // Call the module start function, if it has one.
-        FunctionInstance *startFunction = getStartFunction(moduleInstance);
+        Runtime::GCPointer<FunctionInstance> startFunction = getStartFunction(moduleInstance);
         if (startFunction) {
             invokeFunctionChecked(context, startFunction, {});
         }
@@ -159,7 +158,7 @@ void WavmEngineWrapper::execute() {
         keto::Emscripten::initializeGlobals(context, module, moduleInstance);
 
         // Look up the function export to call.
-        FunctionInstance *functionInstance;
+        Runtime::GCPointer<FunctionInstance> functionInstance;
         Status currentStatus = WavmSessionManager::getInstance()->getWavmSession()->getStatus();
         if ((currentStatus == Status_init) ||
             (currentStatus == Status_debit)) {
@@ -187,49 +186,19 @@ void WavmEngineWrapper::execute() {
                 [&] {
                     // invoke the function
                     invokeFunctionChecked(context, functionInstance, invokeArgs);
-
-                    // collect the garbage
-                    Runtime::collectGarbage();
                 },
                 [&](Runtime::Exception &&exception) {
                     std::stringstream ss;
                     ss << "Failed to handle the exception : " << describeException(exception).c_str();
 
-                    // collect the garbage
-                    try {
-                        Runtime::collectGarbage();
-                    } catch (...) {
-                        KETO_LOG_INFO << "[WavmEngineWrapper][execute] failed to garbage collect";
-                    }
-
                     std::cout << ss.str() << std::endl;
                     BOOST_THROW_EXCEPTION(keto::wavm_common::ContactExecutionFailedException(ss.str()));
                 });
-        // free memory
-        std::cout << "function instance" << std::endl;
-        Runtime::removeGCRoot((Object*)functionInstance);
-        std::cout << "release the module instance" << std::endl;
-        Runtime::removeGCRoot((Object*)moduleInstance);
-        std::cout << "release the context" << std::endl;
-        Runtime::removeGCRoot((Object*)context);
-        std::cout << "remove the compartment" << std::endl;
-        Runtime::removeGCRoot((Object*)compartment);
-        std::cout << "collect the garbage" << std::endl;
-        Runtime::collectGarbage();
-        std::cout << "after collect garbage" << std::endl;
-        //delete emscriptenInstance;
-        //std::cout << "delete the emscript" << std::endl;
-        //delete moduleInstance;
-
     } catch (...) {
-
-        //context->finalize();
-        //Runtime::removeGCRoot((Object*)context);
-        //Runtime::removeGCRoot((Object*)compartment);
         Runtime::collectGarbage();
         throw;
     }
-
+    Runtime::collectGarbage();
 }
 
 }

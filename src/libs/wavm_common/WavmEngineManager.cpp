@@ -130,17 +130,19 @@ namespace wavm_common {
 
 static WavmEngineManagerPtr singleton;
 
+Runtime::GCPointer<Runtime::Compartment>* compartment;
+
 std::string WavmEngineManager::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
 WavmEngineManager::WavmEngineManager() {
     std::cout << "Instanciate the server." << std::endl;
+    compartment = new Runtime::GCPointer<Runtime::Compartment>();
+    *compartment = Runtime::createCompartment();
+    this->emscriptenInstance = keto::Emscripten::instantiate(*compartment);
 
-    this->compartment = Runtime::createCompartment();
-    this->emscriptenInstance = keto::Emscripten::instantiate(compartment);
-
-    RootResolver* rootResolver = new RootResolver(compartment);
+    RootResolver* rootResolver = new RootResolver(*compartment);
 
     std::cout << "After getting the instance." << std::endl;
     rootResolver->moduleNameToInstanceMap["env"] = emscriptenInstance->env;
@@ -154,7 +156,7 @@ WavmEngineManager::WavmEngineManager() {
 }
 
 WavmEngineManager::~WavmEngineManager() {
-    
+    delete compartment;
 }
 
 WavmEngineManagerPtr WavmEngineManager::init() {
@@ -180,7 +182,7 @@ WavmEngineWrapperPtr WavmEngineManager::getEngine(const std::string& wast) {
 
 
 Runtime::Compartment* WavmEngineManager::getCompartment() {
-    return this->compartment;
+    return *compartment;
 }
 
 keto::Emscripten::Instance* WavmEngineManager::getEmscriptenInstance() {

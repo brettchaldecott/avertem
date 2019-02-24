@@ -51,7 +51,7 @@ MemoryVaultEncryptor::MemoryVaultEncryptor() {
             //std::cout << "The random id length : " << randomId.size() << std::endl;
         }
         while ( randomId.size() == 0 || this->bytesCiphers.count(randomId));
-        std::cout << "The random id length : " << randomId.size() << std::endl;
+        //std::cout << "The random id length : " << randomId.size() << std::endl;
         memoryVaultCipherPtr->setId(randomId);
         this->bytesCiphers[randomId] = memoryVaultCipherPtr;
     }
