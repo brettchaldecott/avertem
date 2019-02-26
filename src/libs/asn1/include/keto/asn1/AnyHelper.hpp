@@ -94,7 +94,7 @@ public:
      */
     operator ANY_t();
 
-    operator std::string();
+    operator std::string() const;
     
 private: 
     AnyInterface* anyInterface;

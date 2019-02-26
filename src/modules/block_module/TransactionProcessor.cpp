@@ -151,7 +151,7 @@ keto::proto::SandboxCommandMessage TransactionProcessor::executeContract(const s
 
 keto::proto::SandboxCommandMessage TransactionProcessor::executeContract(const std::string& contract,
         const keto::transaction_common::TransactionProtoHelper& transactionProtoHelper,
-        keto::asn1::AnyHelper model,
+        const keto::asn1::AnyHelper& model,
         TransactionTracker& transactionTracker) {
 
     keto::proto::SandboxCommandMessage sandboxCommandMessage;
@@ -176,8 +176,9 @@ keto::transaction_common::TransactionProtoHelper TransactionProcessor::processTr
 
 
     // get the transaction from the account store
+    std::cout << "The accout" << std::endl;
     keto::asn1::HashHelper currentAccount = transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getCurrentAccount();
-
+    std::cout << "The status : " << transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getStatus() << std::endl;
     if ((transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getStatus() == Status_init) ||
         (transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getStatus() == Status_debit)) {
         transactionProtoHelper.setTransaction(executeContract(
@@ -215,17 +216,22 @@ keto::transaction_common::TransactionProtoHelper TransactionProcessor::processTr
     for (keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr :
             transactionProtoHelper.getTransactionMessageHelper()->getNestedTransactions()) {
         std::cout << "Loop through the nested transactions" << std::endl;
-        keto::transaction_common::TransactionProtoHelper nestedTransaction(transactionMessageHelperPtr);
-        nestedTransaction = processTransaction(nestedTransaction,false,transactionTracker);
-        transactionMessageHelperPtr->setTransactionWrapper(
-                nestedTransaction.getTransactionMessageHelper()->getTransactionWrapper());
         transactionMessageHelperPtr->getTransactionWrapper()->setStatus(
                 transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getStatus());
+        keto::transaction_common::TransactionProtoHelper nestedTransaction(transactionMessageHelperPtr);
+        std::cout << "Current the status : " << nestedTransaction.getTransactionMessageHelper()->getTransactionWrapper()->getStatus() << std::endl;
+        nestedTransaction = processTransaction(nestedTransaction,false,transactionTracker);
+        std::cout << "Copy the transaction" << std::endl;
+        transactionMessageHelperPtr->setTransactionWrapper(
+                nestedTransaction.getTransactionMessageHelper()->getTransactionWrapper());
 
+        std::cout << "Copy the any helper" << std::endl;
         keto::asn1::AnyHelper anyHelper(*transactionMessageHelperPtr);
+        std::cout << "The process the transaction" << std::endl;
         transactionProtoHelper.setTransaction(executeContract(getContractByName(currentAccount,
                 keto::server_common::Constants::CONTRACTS::NESTED_TRANSACTION_CONTRACT),
                         transactionProtoHelper,anyHelper,transactionTracker).transaction());
+        std::cout << "After the transaction" << std::endl;
 
     }
 

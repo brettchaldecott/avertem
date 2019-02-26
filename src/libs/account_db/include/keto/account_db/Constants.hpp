@@ -36,6 +36,7 @@ public:
     static const char* ACCOUNTS_MAPPING;
     static const char* BASE_GRAPH;
     static const char* GRAPH_BASE_DIR;
+    static const char* BASE_MASTER_ACCOUNT_HASH;
     
     static const std::vector<std::string> DB_LIST;
     

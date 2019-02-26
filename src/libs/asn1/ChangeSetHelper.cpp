@@ -63,6 +63,10 @@ ChangeSetHelper& ChangeSetHelper::setStatus(const Status_t status) {
     return (*this);
 }
 
+Status_t ChangeSetHelper::getStatus() {
+    return this->changeSet->status;
+}
+
 ChangeSetHelper& ChangeSetHelper::addChange(const ANY_t& change) {
     ChangeData_t* changeData = (ChangeData_t*)calloc(1, sizeof *changeSet);
     changeData->choice.asn1Change = change;

@@ -79,7 +79,7 @@ private:
             TransactionTracker& transactionTracker);
     keto::proto::SandboxCommandMessage executeContract(const std::string& contract,
             const keto::transaction_common::TransactionProtoHelper& transactionProtoHelper,
-            keto::asn1::AnyHelper model, TransactionTracker& transactionTracker);
+            const keto::asn1::AnyHelper& model, TransactionTracker& transactionTracker);
 
     keto::transaction_common::TransactionProtoHelper processTransaction(
             keto::transaction_common::TransactionProtoHelper& transactionProtoHelper,

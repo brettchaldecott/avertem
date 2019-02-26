@@ -618,6 +618,9 @@ namespace keto {
             
             keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->setResponseBooleanValue(subjectString,predicateString,(bool)value);
         }
+
+
+        //
         
         // C/CPP method mappings
         DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(env,"console",void,c_console,I32 msg)

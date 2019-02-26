@@ -24,6 +24,7 @@
 #include "keto/server_common/EventServiceHelpers.hpp"
 #include "keto/account/AccountService.hpp"
 #include "keto/account_db/AccountStore.hpp"
+#include "keto/account_db/Constants.hpp"
 #include "keto/transaction_common/TransactionProtoHelper.hpp"
 #include "keto/transaction_common/AccountTransactionInfoProtoHelper.hpp"
 #include "keto/crypto/SecureVectorUtils.hpp"
@@ -123,6 +124,12 @@ keto::event::Event AccountService::getContract(const keto::event::Event& event) 
     keto::asn1::HashHelper accountHashHelper(contractMessage.account_hash());
     if (keto::account_db::AccountStore::getInstance()->getAccountInfo(accountHashHelper,
             accountInfo)) {
+        keto::account_db::AccountStore::getInstance()->getContract(accountInfo,contractMessage);
+    } else {
+        // fall back to the master hash
+        accountHashHelper.setHash(keto::account_db::Constants::BASE_MASTER_ACCOUNT_HASH,keto::common::HEX);
+        accountInfo.set_account_hash(accountHashHelper);
+        accountInfo.set_graph_name(keto::account_db::Constants::BASE_GRAPH);
         keto::account_db::AccountStore::getInstance()->getContract(accountInfo,contractMessage);
     }
     

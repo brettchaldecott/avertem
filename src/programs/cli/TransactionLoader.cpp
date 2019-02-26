@@ -53,13 +53,14 @@ keto::transaction_common::TransactionMessageHelperPtr TransactionLoader::load(nl
     keto::asn1::HashHelper parentHash(transaction["parent"],keto::common::HEX);
 
     keto::asn1::HashHelper sourceAccount(transaction["account_hash"].get<std::string>().c_str(),keto::common::HEX);
+    keto::asn1::HashHelper targetAccount(transaction["target_account_hash"].get<std::string>().c_str(),keto::common::HEX);
     KETO_LOG_INFO << "Account hash : " << sourceAccount.getHash(keto::common::HEX);
     keto::asn1::NumberHelper numberHelper(
             atol(transaction["value"].get<std::string>().c_str()));
     std::shared_ptr<keto::chain_common::TransactionBuilder> transactionPtr =
             keto::chain_common::TransactionBuilder::createTransaction();
     transactionPtr->setParent(parentHash).setSourceAccount(sourceAccount)
-            .setTargetAccount(sourceAccount).setValue(numberHelper);
+            .setTargetAccount(targetAccount).setValue(numberHelper);
 
     //std::cout << element << '\n';
     //std::cout << "Account hash : "  << element["account_hash"] << std::endl;
@@ -119,8 +120,16 @@ keto::transaction_common::TransactionMessageHelperPtr TransactionLoader::load(nl
 
 
     KETO_LOG_INFO << "Setup the transaction message";
-    return keto::transaction_common::TransactionMessageHelperPtr(
+    keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr(
             new keto::transaction_common::TransactionMessageHelper(transactionWrapperHelper));
+
+    // load the nested transactions
+    for (nlohmann::json& currentTransactions : transaction["transactions"]) {
+        std::cout << "add the transactions" << std::endl;
+        transactionMessageHelperPtr->addNestedTransaction(load(currentTransactions));
+    }
+
+    return transactionMessageHelperPtr;
 }
 
 }

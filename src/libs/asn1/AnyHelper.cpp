@@ -84,7 +84,7 @@ AnyHelper::operator ANY_t() {
     return result;
 }
 
-AnyHelper::operator std::string() {
+AnyHelper::operator std::string() const {
     std::vector<uint8_t> bytes;
     if (any) {
         // duplicate the any

@@ -82,6 +82,9 @@ TransactionMessageHelper& TransactionMessageHelper::setTransactionWrapper(
 }
 
 TransactionMessageHelper& TransactionMessageHelper::setTransactionWrapper(const TransactionWrapperHelperPtr& transactionWrapper) {
+    TransactionWrapper_t* transactionWrapper1 = (TransactionWrapper_t*)calloc(1, sizeof *transactionWrapper1);
+    *transactionWrapper1 = this->transactionMessage->transaction;
+    ASN_STRUCT_FREE(asn_DEF_TransactionWrapper, transactionWrapper1);
     this->transactionMessage->transaction = *(transactionWrapper->operator TransactionWrapper_t*());
     return *this;
 }
@@ -111,6 +114,16 @@ TransactionMessageHelper& TransactionMessageHelper::addNestedTransaction(
 }
 
 std::vector<TransactionMessageHelperPtr> TransactionMessageHelper::getNestedTransactions() {
+    if (!this->nestedTransactions.size()) {
+        for (int index = 0; index < this->transactionMessage->nestedTransactions.list.count; index++) {
+            TransactionMessage__nestedTransactions__Member* nestedTransaction =
+                    this->transactionMessage->nestedTransactions.list.array[index];
+            if (nestedTransaction->present == TransactionMessage__nestedTransactions__Member_PR_sideTransaction) {
+                this->nestedTransactions.push_back(TransactionMessageHelperPtr(new TransactionMessageHelper(
+                        keto::asn1::clone<TransactionMessage_t>(nestedTransaction->choice.sideTransaction,&asn_DEF_TransactionMessage))));
+            }
+        }
+    }
     return this->nestedTransactions;
 }
 

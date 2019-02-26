@@ -407,7 +407,7 @@ void WavmSession::addTransaction(keto::transaction_common::TransactionMessageHel
                             changeSetHelperPtr->getStatus()));
 
         }
-
+        std::cout << "Loop through the changes" << std::endl;
         for (keto::asn1::ChangeSetDataHelperPtr changeSetDataHelperPtr:
                 changeSetHelperPtr->getChanges()) {
             if (!changeSetDataHelperPtr->isASN1()) {
@@ -425,7 +425,9 @@ void WavmSession::addTransaction(keto::transaction_common::TransactionMessageHel
                 }
             }
         }
+        std::cout << "End of loop" << std::endl;
     }
+    std::cout << "Finished with the transaction" << std::endl;
 }
 
 }

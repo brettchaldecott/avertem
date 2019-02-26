@@ -184,9 +184,10 @@ TransactionWrapperHelper::operator TransactionWrapper_t&() {
 }
 
 TransactionWrapperHelper::operator TransactionWrapper_t*() {
-    TransactionWrapper_t* result = this->transactionWrapper;
-    this->transactionWrapper = 0;
-    return result;
+    return keto::asn1::clone<TransactionWrapper_t>(transactionWrapper,&asn_DEF_TransactionWrapper);
+    //TransactionWrapper_t* result = this->transactionWrapper;
+    //this->transactionWrapper = 0;
+    //return result;
 }
 
 TransactionWrapperHelper::operator std::vector<uint8_t>() {
