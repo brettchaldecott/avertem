@@ -29,6 +29,7 @@ public:
     static constexpr size_t BASE_SIZE = 6;
     static constexpr size_t MODULAS_SIZE = 4;
     static constexpr size_t ITERATION_BITS_SIZE = 16;
+    static constexpr size_t ONINON_WRAPPING = 5;
     
 private:
 };

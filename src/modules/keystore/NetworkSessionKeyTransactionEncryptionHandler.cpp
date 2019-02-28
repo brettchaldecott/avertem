@@ -32,7 +32,9 @@ EncryptedDataWrapper_t* NetworkSessionKeyTransactionEncryptionHandler::encrypt(
             keto::asn1::SerializationHelper<TransactionMessage>(&transaction,
                                                                 &asn_DEF_TransactionMessage);
 
+    std::cout << "The number of bytes is : " <<  bytes.size() << std::endl;
     std::vector<uint8_t> ct = NetworkSessionKeyManager::getInstance()->getEncryptor()->encrypt(bytes);
+    std::cout << "After encryption the bytes are : " <<  ct.size() << std::endl;
 
     keto::asn1::HashHelper hash(
             keto::crypto::HashGenerator().generateHash(bytes));
@@ -40,7 +42,7 @@ EncryptedDataWrapper_t* NetworkSessionKeyTransactionEncryptionHandler::encrypt(
     ASN_SEQUENCE_ADD(&result->hash.list,new Hash_t(hashT));
 
     EncryptedData_t* encryptedData = OCTET_STRING_new_fromBuf(&asn_DEF_EncryptedData,
-                                                              (const char *)bytes.data(),bytes.size());
+                                                              (const char *)ct.data(),ct.size());
     result->transaction = *encryptedData;
     free(encryptedData);
 
@@ -51,7 +53,7 @@ TransactionMessage_t* NetworkSessionKeyTransactionEncryptionHandler::decrypt(
         const EncryptedDataWrapper_t& encrypt) {
     return keto::asn1::DeserializationHelper<TransactionMessage_t>(
             NetworkSessionKeyManager::getInstance()->getDecryptor()->decrypt(
-                    copyEncryptedToVector(encrypt)),&asn_DEF_TransactionMessage);
+                    copyEncryptedToVector(encrypt)),&asn_DEF_TransactionMessage).takePtr();
 
 }
 
@@ -62,6 +64,7 @@ std::vector<uint8_t> NetworkSessionKeyTransactionEncryptionHandler::copyEncrypte
     for (int index = 0; index < encrypt.transaction.size; index++) {
         result.push_back(encrypt.transaction.buf[index]);
     }
+    std::cout << "The data to be processed is : " << result.size() << std::endl;
     return result;
 }
 

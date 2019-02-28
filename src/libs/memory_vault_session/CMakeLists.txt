@@ -1,7 +1,12 @@
 file(GLOB HEADERS "include/keto/memory_vault_session/*.hpp")
 
+SET(MEMORY_VAULT_SESSION_SEED_HASH "memoryVaultSeedHash")
+
+
 include_directories(${PROTOBUF_INCLUDE_DIR})
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+configure_file(include/keto/memory_vault_session/PasswordCache.hpp.in include/keto/memory_vault_session/PasswordCache.hpp)
 
 ## SORT .cpp by most likely to change / break compile
 add_library( keto_memory_vault_session

@@ -20,11 +20,8 @@ MemoryVaultManager::MemoryVaultWrapper::MemoryVaultWrapper(const keto::crypto::S
                                                            const keto::crypto::SecureVector& sessionId,
                                                            const MemoryVaultPtr& memoryVaultPtr)
                                                            : sessionId(sessionId), memoryVaultPtr(memoryVaultPtr) {
-    //std::cout << "Create vault with password : " << Botan::hex_encode(password) << std::endl;
-
-    std::string strPassword(password.begin(),password.end());
-    std::shared_ptr<Botan::AutoSeeded_RNG> generator(new Botan::AutoSeeded_RNG());
-    this->hash = Botan::generate_bcrypt(strPassword,*generator);
+    this->passwordPipeLinePtr = keto::crypto::PasswordPipeLinePtr(new keto::crypto::PasswordPipeLine());
+    this->hash = this->passwordPipeLinePtr->generatePassword(password);
 }
 
 MemoryVaultManager::MemoryVaultWrapper::~MemoryVaultWrapper() {
@@ -36,9 +33,7 @@ keto::crypto::SecureVector MemoryVaultManager::MemoryVaultWrapper::getSessionId(
 }
 
 MemoryVaultPtr MemoryVaultManager::MemoryVaultWrapper::getMemoryVault(const keto::crypto::SecureVector& password) {
-    //std::cout << "Get vault with the password : " << Botan::hex_encode(password) << std::endl;
-    std::string strPassword(password.begin(),password.end());
-    if (!Botan::check_bcrypt(strPassword,this->hash)) {
+    if (!(this->hash == this->passwordPipeLinePtr->generatePassword(password))) {
         BOOST_THROW_EXCEPTION(InvalidPasswordException());
     }
     return memoryVaultPtr;

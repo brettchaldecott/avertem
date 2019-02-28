@@ -84,7 +84,18 @@ public:
             const float value);
     void setResponseBooleanValue(const std::string& subject, const std::string& predicate,
             const bool value);
-    
+
+    // session queries
+    long executeQuery(const std::string& query);
+    long getQueryHeaderCount(long id);
+    std::string getQueryHeader(long id, long headerNumber);
+    std::string getQueryStringValue(long id, long row, long headerNumber);
+    std::string getQueryStringValue(long id, long row, const std::string& header);
+    long getQueryLongValue(long id, long row, long headerNumber);
+    long getQueryLongValue(long id, long row, const std::string& header);
+    float getQueryFloatValue(long id, long row, long headerNumber);
+    float getQueryFloatValue(long id, long row, const std::string& header);
+    long getRowCount(long id);
     
     // the methods used at the end of call to get the change set and sandbox
     keto::proto::SandboxCommandMessage getSandboxCommandMessage();
@@ -97,6 +108,7 @@ private:
     keto::asn1::RDFModelHelper modelHelper;
     keto::crypto::KeyLoaderPtr keyLoaderPtr;
     std::chrono::high_resolution_clock::time_point startTime;
+    std::vector<ResultVectorMap> queryResults;
     
     
     keto::asn1::RDFSubjectHelperPtr getSubject(const std::string& subjectUrl);
@@ -116,7 +128,11 @@ private:
     keto::asn1::HashHelper getCurrentAccountHash();
     void addTransaction(keto::transaction_common::TransactionMessageHelperPtr& transactionMessageHelperPtr,
             bool rdfChangeSet);
-    
+
+
+    std::vector<std::string> getKeys(ResultVectorMap& resultVectorMap);
+
+
 };
 
 

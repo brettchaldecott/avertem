@@ -67,14 +67,15 @@ public:
     
     TransactionMessageHelper& operator =(const std::string& transactionMessage);
     operator TransactionMessage_t&();
-    operator TransactionMessage_t*();
+    operator TransactionMessage_t*() const;
     operator ANY_t*();
     
     operator std::vector<uint8_t>();
     
     std::vector<uint8_t> serializeTransaction(TransactionEncryptionHandler& 
             transactionEncryptionHandler);
-    
+
+    TransactionMessage_t* getMessage() const;
     TransactionMessage_t* getMessage(TransactionEncryptionHandler& 
             transactionEncryptionHandler);
     
@@ -92,15 +93,16 @@ public:
     
 private:
     TransactionMessage_t* transactionMessage;
-    std::vector<TransactionMessageHelperPtr> nestedTransactions;
-    
-    
-    void getMessage(TransactionEncryptionHandler& 
-            transactionEncryptionHandler,TransactionMessage_t* transactionMessage);
-    
+
+    TransactionMessageHelper(const TransactionMessage_t& transactionMessage);
+
+
     void decryptMessage(TransactionEncryptionHandler&
         transactionEncryptionHandler, TransactionMessageHelperPtr transactionMessageHelperPtr, 
         TransactionMessage__nestedTransactions__Member* transactionMessage);
+
+    TransactionMessage_t* cloneTransaction(TransactionMessage_t* source);
+
 };
 
 

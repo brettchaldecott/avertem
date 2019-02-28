@@ -99,21 +99,31 @@ keto::event::Event MemoryVaultModuleService::setEntry(const keto::event::Event &
 }
 
 keto::event::Event MemoryVaultModuleService::getEntry(const keto::event::Event &event) {
+    //auto start = std::chrono::steady_clock::now();
+
+    //std::cout << "[MemoryVaultModuleService::getEntry][" <<
+    //          std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "]get the event info" << std::endl;
+
     keto::proto::MemoryVaultGetEntryRequest memoryVaultGetEntryRequest =
             keto::server_common::fromEvent<keto::proto::MemoryVaultGetEntryRequest>(event);
 
+    //std::cout << "[MemoryVaultModuleService::getEntry][" <<
+    //          std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "]get the value" << std::endl;
     keto::memory_vault::MemoryVaultPtr memoryVaultPtr =
             keto::memory_vault::MemoryVaultManager::getInstance()->getVault(
                     memoryVaultGetEntryRequest.vault(),
                     keto::crypto::SecureVectorUtils().copyStringToSecure(memoryVaultGetEntryRequest.password()));
 
-
+    //std::cout << "[MemoryVaultModuleService::getEntry][" <<
+    //          std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "]get the value" << std::endl;
     keto::proto::MemoryVaultGetEntryResponse memoryVaultGetEntryResponse;
     memoryVaultGetEntryResponse.set_entry_id(memoryVaultGetEntryRequest.entry_id());
     memoryVaultGetEntryResponse.set_value(keto::crypto::SecureVectorUtils().copySecureToString(memoryVaultPtr->getValue(
             keto::crypto::SecureVectorUtils().copyStringToSecure(memoryVaultGetEntryRequest.entry_id()),
             keto::crypto::SecureVectorUtils().copyStringToSecure(memoryVaultGetEntryRequest.password()))));
     memoryVaultGetEntryResponse.set_result("success");
+    //std::cout << "[MemoryVaultModuleService::getEntry][" <<
+    //          std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "]retrieved the value" << std::endl;
     return keto::server_common::toEvent<keto::proto::MemoryVaultGetEntryResponse>(memoryVaultGetEntryResponse);
 }
 

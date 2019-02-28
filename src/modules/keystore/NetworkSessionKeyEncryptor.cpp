@@ -33,24 +33,38 @@ std::vector<uint8_t> NetworkSessionKeyEncryptor::encrypt(const keto::crypto::Sec
     std::default_random_engine stdGenerator;
     stdGenerator.seed(std::chrono::system_clock::now().time_since_epoch().count());
     std::uniform_int_distribution<int> distribution(0,numKeys-1);
+    // pre init the value
+    distribution(stdGenerator);
 
     keto::crypto::SecureVector content = value;
 
     for (int level = 0; level < Constants::ONION_LEVELS; level++) {
+        auto start = std::chrono::steady_clock::now();
+
         uint8_t baseIndex = distribution(stdGenerator);
         uint8_t pIndex = distribution(stdGenerator);
         keto::crypto::SecureVector indexes;
         indexes.push_back(baseIndex);
         indexes.push_back(pIndex);
 
-
+        std::cout << "[NetworkSessionKeyDecryptor::encrypt][" <<
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] get base index [" << (int)baseIndex << "]" << std::endl;
         keto::crypto::CipherBuilder cipherBuilder(this->networkSessionKeyManager->getKey(baseIndex)->getPrivateKey());
+        std::cout << "[NetworkSessionKeyDecryptor::encrypt][" <<
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] create the cipher stream" << std::endl;
         std::unique_ptr<Botan::StreamCipher> cipher(Botan::StreamCipher::create(keto::crypto::Constants::CIPHER_STREAM));
+        std::cout << "[NetworkSessionKeyDecryptor::encrypt][" <<
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] pIndex [" << (int)pIndex << "]" << std::endl;
         cipher->set_key(cipherBuilder.derive(32,this->networkSessionKeyManager->getKey(pIndex)->getPrivateKey()));
         cipher->set_iv(NULL,0);
+        std::cout << "[NetworkSessionKeyDecryptor::encrypt][" <<
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] before encryption" << std::endl;
         cipher->encrypt(content);
+        std::cout << "[NetworkSessionKeyDecryptor::encrypt][" <<
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] after encryption" << std::endl;
         content.insert(content.begin(),indexes.begin(),indexes.end());
     }
+    std::cout << "The encypted content is : " << content.size() << std::endl;
     return keto::crypto::SecureVectorUtils().copyFromSecure(content);
 }
 

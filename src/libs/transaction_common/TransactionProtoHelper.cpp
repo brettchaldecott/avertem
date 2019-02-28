@@ -67,7 +67,7 @@ TransactionProtoHelper::TransactionProtoHelper(
     }
     
     std::vector<uint8_t> serializedTransaction = 
-        transactionMessageHelper->operator std::vector<uint8_t>();
+        *transactionMessageHelper;
     transaction.set_asn1_transaction_message(
         serializedTransaction.data(),serializedTransaction.size());
 }
@@ -145,8 +145,7 @@ TransactionProtoHelper& TransactionProtoHelper::setTransaction(
         transaction.set_status(keto::proto::TransactionStatus::COMPLETE);
     }
     
-    std::vector<uint8_t> serializedTransaction = 
-        transactionMessageHelper->operator std::vector<uint8_t>();
+    std::vector<uint8_t> serializedTransaction = *transactionMessageHelper;
     transaction.set_asn1_transaction_message(
         serializedTransaction.data(),serializedTransaction.size());
     

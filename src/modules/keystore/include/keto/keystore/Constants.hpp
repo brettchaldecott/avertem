@@ -29,7 +29,7 @@ public:
     static constexpr const char* IS_NETWORK_SESSION_GENERATOR = "is_network_session_generator";
     static constexpr const char* IS_NETWORK_SESSION_GENERATOR_TRUE = "TRUE";
     static constexpr const char* NETWORK_SESSION_GENERATOR_KEYS = "network_session_generator_keys";
-    static constexpr const int NETWORK_SESSION_GENERATOR_KEYS_DEFAULT = 6;
+    static constexpr const int NETWORK_SESSION_GENERATOR_KEYS_DEFAULT = 20;
     static constexpr const int ONION_LEVELS = 3;
 
     static const char* KEY_HASH;

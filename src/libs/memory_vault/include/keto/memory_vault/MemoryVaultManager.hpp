@@ -13,6 +13,7 @@
 
 #include "keto/obfuscate/MetaString.hpp"
 #include "keto/crypto/Containers.hpp"
+#include "keto/crypto/PasswordPipeLine.hpp"
 
 #include "keto/memory_vault/MemoryVaultEncryptor.hpp"
 #include "keto/memory_vault/MemoryVaultStorage.hpp"
@@ -41,7 +42,8 @@ public:
     private:
         keto::crypto::SecureVector sessionId;
         MemoryVaultPtr memoryVaultPtr;
-        std::string hash;
+        keto::crypto::PasswordPipeLinePtr passwordPipeLinePtr;
+        keto::crypto::SecureVector hash;
 
     };
     typedef std::shared_ptr<MemoryVaultWrapper> MemoryVaultWrapperPtr;

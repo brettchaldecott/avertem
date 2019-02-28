@@ -12,12 +12,17 @@
 
 #include "keto/memory_vault_session/MemoryVaultSession.hpp"
 #include "keto/memory_vault_session/Exception.hpp"
+#include "keto/memory_vault_session/PasswordCache.hpp"
 #include "keto/crypto/HashGenerator.hpp"
 
 namespace keto {
 namespace memory_vault_session {
 
 static MemoryVaultSessionPtr singleton;
+
+
+PasswordCachePtr passwordCachePtr;
+
 
 std::string MemoryVaultSession::getSourceVersion() {
     return OBFUSCATED("$Id:");
@@ -31,7 +36,7 @@ MemoryVaultSession::MemoryVaultSession(
 }
 
 MemoryVaultSession::~MemoryVaultSession() {
-
+    passwordCachePtr.reset();
 }
 
 MemoryVaultSessionPtr MemoryVaultSession::init(
@@ -99,17 +104,21 @@ MemoryVaultSessionEntryPtr MemoryVaultSession::getEntry(const std::string& name)
 
 void MemoryVaultSession::removeEntry(const std::string& name) {
     if (!this->sessionEntries.count(name)) {
-        BOOST_THROW_EXCEPTION(UnknownMemoryVaultSessionException());
+        //BOOST_THROW_EXCEPTION(UnknownMemoryVaultSessionException());
+        // ignore if the entry is not found
+        return;
     }
     this->sessionEntries.erase(name);
 }
 
 keto::crypto::SecureVector MemoryVaultSession::generatePassword() {
-    keto::crypto::SecureVector seed = keto::crypto::SecureVectorUtils().copyStringToSecure(this->vaultName);
-    keto::crypto::SecureVector key = this->consensusHashGenerator->getCurrentSoftwareHash();
-    seed.insert(seed.begin(),key.begin(),key.begin());
-
-    return this->passwordPipeLinePtr->generatePassword(this->consensusHashGenerator->generateSessionHash(seed));
+    if (!passwordCachePtr || passwordCachePtr->isExpired()) {
+        keto::crypto::SecureVector seed = keto::crypto::SecureVectorUtils().copyStringToSecure(this->vaultName);
+        keto::crypto::SecureVector key = this->consensusHashGenerator->getCurrentSoftwareHash();
+        seed.insert(seed.begin(), key.begin(), key.begin());
+        passwordCachePtr = PasswordCachePtr(new PasswordCache(this->consensusHashGenerator->generateSessionHash(seed)));
+    }
+    return this->passwordPipeLinePtr->generatePassword(passwordCachePtr->getSeedHash());
 }
 
 std::string MemoryVaultSession::getVaultName() {

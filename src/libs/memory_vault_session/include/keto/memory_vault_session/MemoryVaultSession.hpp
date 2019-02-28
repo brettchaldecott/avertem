@@ -67,6 +67,7 @@ private:
     keto::crypto::PasswordPipeLinePtr passwordPipeLinePtr;
     std::map<std::string,MemoryVaultSessionEntryPtr> sessionEntries;
 
+
 };
 
 

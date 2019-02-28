@@ -75,8 +75,10 @@ keto::event::Event TransactionEncryptionService::reencryptTransaction(const keto
             messageWrapperProtoHelper.getTransaction()->getTransactionMessageHelper()->decryptMessage(decryptor);
 
     std::cout << "Re-incrypt the transaction using the network session key transaction encryptor" << std::endl;
-    messageWrapperProtoHelper.getTransaction()->setTransaction(transactionMessageHelperPtr,encryptor);
+    messageWrapperProtoHelper.setTransaction(
+            messageWrapperProtoHelper.getTransaction()->setTransaction(transactionMessageHelperPtr,encryptor));
 
+    std::cout << "Return the encrypted transactions" << std::endl;
     keto::proto::MessageWrapper messageWrapper = messageWrapperProtoHelper;
     return keto::server_common::toEvent<keto::proto::MessageWrapper>(messageWrapper);
 }
@@ -92,7 +94,8 @@ keto::event::Event TransactionEncryptionService::encryptTransaction(const keto::
             messageWrapperProtoHelper.getTransaction()->getTransactionMessageHelper();
 
     std::cout << "Encrypt the transaction using the network session key transaction encryptor" << std::endl;
-    messageWrapperProtoHelper.getTransaction()->setTransaction(transactionMessageHelperPtr,encryptor);
+    messageWrapperProtoHelper.setTransaction(
+            messageWrapperProtoHelper.getTransaction()->setTransaction(transactionMessageHelperPtr,encryptor));
 
     keto::proto::MessageWrapper messageWrapper = messageWrapperProtoHelper;
     return keto::server_common::toEvent<keto::proto::MessageWrapper>(messageWrapper);
@@ -109,7 +112,9 @@ keto::event::Event TransactionEncryptionService::decryptTransaction(const keto::
     keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr =
             messageWrapperProtoHelper.getTransaction()->getTransactionMessageHelper()->decryptMessage(decryptor);
 
-    messageWrapperProtoHelper.getTransaction()->setTransaction(transactionMessageHelperPtr);
+    std::cout << "Set the transaction after decryption" << std::endl;
+    messageWrapperProtoHelper.setTransaction(
+            messageWrapperProtoHelper.getTransaction()->setTransaction(transactionMessageHelperPtr));
 
     keto::proto::MessageWrapper messageWrapper = messageWrapperProtoHelper;
     return keto::server_common::toEvent<keto::proto::MessageWrapper>(messageWrapper);

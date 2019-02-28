@@ -53,18 +53,25 @@ TransactionMessage_t* KeyStoreReEncryptTransactionMessageHelper::decrypt(
 
     keto::crypto::SecureVector encrypted = copyEncryptedToVector(encrypt);
 
-    keto::crypto::SecureVector encryptedCipher(&encrypted[0],&encrypted[privateKey->key_length()]);
-    keto::crypto::SecureVector encryptedValue(&encrypted[privateKey->key_length()],&encrypted[encrypted.size()]);
 
+    std::cout << "The encrypted data :" << encrypted.size() << std::endl;
+    std::cout << "Retrieve the necessary data : " << (privateKey->key_length() / 8) << std::endl;
+    int messageSize = (privateKey->key_length() / 8);
+    keto::crypto::SecureVector encryptedCipher(&encrypted[0],&encrypted[messageSize]);
+    keto::crypto::SecureVector encryptedValue(&encrypted[messageSize],&encrypted[encrypted.size()]);
+
+    std::cout << "decrypt" << std::endl;
     keto::crypto::SecureVector cipherVector = dec.decrypt(encryptedCipher);
 
+    std::cout << "encrypt" << std::endl;
     std::unique_ptr<Botan::StreamCipher> cipher = Botan::StreamCipher::create(keto::crypto::Constants::CIPHER_STREAM);
     cipher->set_key(Botan::SymmetricKey(cipherVector));
     cipher->set_iv(NULL,0);
     cipher->encrypt(encryptedValue);
-    
+
+    std::cout << "Deserialize the transaction" << std::endl;
     return keto::asn1::DeserializationHelper<TransactionMessage_t>(
-                encryptedValue,&asn_DEF_TransactionMessage);
+                encryptedValue,&asn_DEF_TransactionMessage).takePtr();
 }
 
 

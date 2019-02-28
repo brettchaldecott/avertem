@@ -44,6 +44,8 @@ MemoryVaultSessionKeyWrapper::~MemoryVaultSessionKeyWrapper() {
 
 
 std::shared_ptr<Botan::Private_Key> MemoryVaultSessionKeyWrapper::getPrivateKey() {
+
+
     keto::crypto::SecureVector bytes = this->memoryVaultSessionEntryPtr->getValue();
     Botan::DataSource_Memory memoryDatasource(bytes);
     std::shared_ptr<Botan::Private_Key> privateKey =

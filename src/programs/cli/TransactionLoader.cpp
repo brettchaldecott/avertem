@@ -61,6 +61,9 @@ keto::transaction_common::TransactionMessageHelperPtr TransactionLoader::load(nl
             keto::chain_common::TransactionBuilder::createTransaction();
     transactionPtr->setParent(parentHash).setSourceAccount(sourceAccount)
             .setTargetAccount(targetAccount).setValue(numberHelper);
+    if (transaction.count("encrypted")) {
+        transactionPtr->setEncrypted(true);
+    }
 
     //std::cout << element << '\n';
     //std::cout << "Account hash : "  << element["account_hash"] << std::endl;

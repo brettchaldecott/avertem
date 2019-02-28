@@ -232,6 +232,57 @@ void WavmSession::setResponseBooleanValue(const std::string& subject, const std:
     this->addBooleanModelEntry(subject,predicate,value);
 }
 
+long WavmSession::executeQuery(const std::string& query) {
+    ResultVectorMap resultVectorMap = this->rdfSessionPtr->executeQuery(query);
+    this->queryResults.push_back(resultVectorMap);
+    return this->queryResults.size() -1;
+}
+
+long WavmSession::getQueryHeaderCount(long id) {
+    ResultVectorMap resultVectorMap = this->queryResults[id];
+    return getKeys(resultVectorMap).size();
+}
+
+std::string WavmSession::getQueryHeader(long id, long headerNumber) {
+    ResultVectorMap& resultVectorMap = this->queryResults[id];
+    return getKeys(resultVectorMap)[headerNumber];
+}
+
+std::string WavmSession::getQueryStringValue(long id, long row, long headerNumber) {
+    ResultVectorMap& resultVectorMap = this->queryResults[id];
+    return resultVectorMap[row][getKeys(resultVectorMap)[headerNumber]];
+}
+
+std::string WavmSession::getQueryStringValue(long id, long row, const std::string& header) {
+    ResultVectorMap& resultVectorMap = this->queryResults[id];
+    return resultVectorMap[row][header];
+}
+
+long WavmSession::getQueryLongValue(long id, long row, long headerNumber) {
+    ResultVectorMap& resultVectorMap = this->queryResults[id];
+    return std::stol(resultVectorMap[row][getKeys(resultVectorMap)[headerNumber]]);
+}
+
+long WavmSession::getQueryLongValue(long id, long row, const std::string& header) {
+    ResultVectorMap& resultVectorMap = this->queryResults[id];
+    return std::stol(resultVectorMap[row][header]);
+}
+
+float WavmSession::getQueryFloatValue(long id, long row, long headerNumber) {
+    ResultVectorMap& resultVectorMap = this->queryResults[id];
+    return std::stol(resultVectorMap[row][getKeys(resultVectorMap)[headerNumber]]);
+}
+
+float WavmSession::getQueryFloatValue(long id, long row, const std::string& header) {
+    ResultVectorMap& resultVectorMap = this->queryResults[id];
+    return std::stol(resultVectorMap[row][header]);
+}
+
+long WavmSession::getRowCount(long id) {
+    ResultVectorMap& resultVectorMap = this->queryResults[id];
+    return resultVectorMap.size();
+}
+
 
 keto::proto::SandboxCommandMessage WavmSession::getSandboxCommandMessage() {
     // create a change and add it to the transaction
@@ -428,6 +479,16 @@ void WavmSession::addTransaction(keto::transaction_common::TransactionMessageHel
         std::cout << "End of loop" << std::endl;
     }
     std::cout << "Finished with the transaction" << std::endl;
+}
+
+
+std::vector<std::string> WavmSession::getKeys(ResultVectorMap& resultVectorMap) {
+    std::vector<std::string> keys;
+    ResultMap& resultMap = resultVectorMap[0];
+    for(std::map<std::string,std::string>::iterator it = resultMap.begin(); it != resultMap.end(); ++it) {
+        keys.push_back(it->first);
+    }
+    return keys;
 }
 
 }

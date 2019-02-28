@@ -17,6 +17,7 @@
 #include <botan/p11_randomgenerator.h>
 #include <botan/auto_rng.h>
 #include <botan/pkcs8.h>
+#include <botan/x509_key.h>
 #include <botan/hex.h>
 
 
@@ -52,7 +53,7 @@ keto::event::Event SessionKeyManager::requestKey(const keto::event::Event& event
         Botan::RSA_PrivateKey privateKey(*rng.get(), 2048);
         Botan::RSA_PublicKey publicKey(privateKey);
         this->sessionKeys[sessionHash] = Botan::PKCS8::BER_encode( privateKey );
-        this->sessionPublicKeys[sessionHash] = publicKey.public_key_bits();
+        this->sessionPublicKeys[sessionHash] = Botan::X509::BER_encode(publicKey);
     }
     
     keto::proto::SessionKeyResponse response;
