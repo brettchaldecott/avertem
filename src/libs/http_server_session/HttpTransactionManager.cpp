@@ -74,13 +74,13 @@ std::string HttpTransactionManager::processTransaction(
     keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper;
     messageWrapperProtoHelper.setSessionHash(hashHelper).setTransaction(transaction);
     
-    std::cout << "Before re-encrypting the transaction" << std::endl;
+    //std::cout << "Before re-encrypting the transaction" << std::endl;
     keto::proto::MessageWrapper messageWrapper = messageWrapperProtoHelper;
     messageWrapper = keto::server_common::fromEvent<keto::proto::MessageWrapper>(
                 keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
                 keto::key_store_utils::Events::TRANSACTION::REENCRYPT_TRANSACTION,messageWrapper)));
     
-    std::cout << "After re-encryhpting the transaction" << std::endl;
+    //std::cout << "After re-encryhpting the transaction" << std::endl;
     keto::proto::MessageWrapperResponse  messageWrapperResponse = 
             keto::server_common::fromEvent<keto::proto::MessageWrapperResponse>(
             keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(

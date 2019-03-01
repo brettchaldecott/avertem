@@ -39,7 +39,7 @@ std::vector<uint8_t> NetworkSessionKeyEncryptor::encrypt(const keto::crypto::Sec
     keto::crypto::SecureVector content = value;
 
     for (int level = 0; level < Constants::ONION_LEVELS; level++) {
-        auto start = std::chrono::steady_clock::now();
+        //auto start = std::chrono::steady_clock::now();
 
         uint8_t baseIndex = distribution(stdGenerator);
         uint8_t pIndex = distribution(stdGenerator);
@@ -47,24 +47,24 @@ std::vector<uint8_t> NetworkSessionKeyEncryptor::encrypt(const keto::crypto::Sec
         indexes.push_back(baseIndex);
         indexes.push_back(pIndex);
 
-        std::cout << "[NetworkSessionKeyDecryptor::encrypt][" <<
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] get base index [" << (int)baseIndex << "]" << std::endl;
+        //std::cout << "[NetworkSessionKeyDecryptor::encrypt][" <<
+        //    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] get base index [" << (int)baseIndex << "]" << std::endl;
         keto::crypto::CipherBuilder cipherBuilder(this->networkSessionKeyManager->getKey(baseIndex)->getPrivateKey());
-        std::cout << "[NetworkSessionKeyDecryptor::encrypt][" <<
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] create the cipher stream" << std::endl;
+        //std::cout << "[NetworkSessionKeyDecryptor::encrypt][" <<
+        //    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] create the cipher stream" << std::endl;
         std::unique_ptr<Botan::StreamCipher> cipher(Botan::StreamCipher::create(keto::crypto::Constants::CIPHER_STREAM));
-        std::cout << "[NetworkSessionKeyDecryptor::encrypt][" <<
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] pIndex [" << (int)pIndex << "]" << std::endl;
+        //std::cout << "[NetworkSessionKeyDecryptor::encrypt][" <<
+        //    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] pIndex [" << (int)pIndex << "]" << std::endl;
         cipher->set_key(cipherBuilder.derive(32,this->networkSessionKeyManager->getKey(pIndex)->getPrivateKey()));
         cipher->set_iv(NULL,0);
-        std::cout << "[NetworkSessionKeyDecryptor::encrypt][" <<
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] before encryption" << std::endl;
+        //std::cout << "[NetworkSessionKeyDecryptor::encrypt][" <<
+        //    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] before encryption" << std::endl;
         cipher->encrypt(content);
-        std::cout << "[NetworkSessionKeyDecryptor::encrypt][" <<
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] after encryption" << std::endl;
+        //std::cout << "[NetworkSessionKeyDecryptor::encrypt][" <<
+        //    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] after encryption" << std::endl;
         content.insert(content.begin(),indexes.begin(),indexes.end());
     }
-    std::cout << "The encypted content is : " << content.size() << std::endl;
+    //std::cout << "The encypted content is : " << content.size() << std::endl;
     return keto::crypto::SecureVectorUtils().copyFromSecure(content);
 }
 
