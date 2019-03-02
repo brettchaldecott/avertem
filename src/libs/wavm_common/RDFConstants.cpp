@@ -28,6 +28,8 @@ const char* RDFConstants::CHANGE_SET_PREDICATES::CHANGE_SET_HASH    = "changeSet
 const char* RDFConstants::CHANGE_SET_PREDICATES::TYPE               = "type";
 const char* RDFConstants::CHANGE_SET_PREDICATES::DATE_TIME          = "dateTime";
 const char* RDFConstants::CHANGE_SET_PREDICATES::URI                = "uri";
+const char* RDFConstants::CHANGE_SET_PREDICATES::SIGNATURE          = "signature";
+const char* RDFConstants::CHANGE_SET_PREDICATES::TRANSACTION_HASH   = "transactionHash";
 
 const char* RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::ID = "id";
 const char* RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::ACCOUNT_HASH = "accountHash";

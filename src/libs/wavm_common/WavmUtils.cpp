@@ -39,14 +39,19 @@ std::string WavmUtils::readCString(Runtime::MemoryInstance* memory,I32 stringAdd
 }
 
 
-std::string WavmUtils::readTypeScriptString(Runtime::MemoryInstance* memory,I32 stringAddress) {
+/*std::string WavmUtils::readTypeScriptString(Runtime::MemoryInstance* memory,I32 stringAddress) {
     // Validate the path name and make a local copy of it.
     std::string returnString;
     int size = Runtime::memoryRef<char>(memory,stringAddress);
+    std::cout << "1 Size is : " << size << std::endl;
     size += Runtime::memoryRef<char>(memory,stringAddress+1) * 100;
+    std::cout << "2 Size is : " << size << std::endl;
     size += Runtime::memoryRef<char>(memory,stringAddress+2) * 10000;
+    std::cout << "3 Size is : " << size << std::endl;
+
     for (int index = 0; index < (size * 2); index++) {
         if ((int)Runtime::memoryRef<char>(memory,stringAddress + 4 + index) != 0) {
+            std::cout << "[" << (int)Runtime::memoryRef<char>(memory,stringAddress + 4 + index) << "]" << std::endl;
             returnString += (int)Runtime::memoryRef<char>(memory,stringAddress + 4 + index);
         }
     }
@@ -61,13 +66,13 @@ std::vector<char> WavmUtils::buildTypeScriptString(const std::string& value) {
         result.push_back((char)mod);
         currentValue = currentValue / 100;
     }
-    
+
     for (const char character : value) {
         result.push_back(character);
         result.push_back(0);
     }
     return result;
-}
+}*/
 
 
 void WavmUtils::log(uint32_t intLevel,const std::string& msg) {

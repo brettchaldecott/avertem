@@ -31,6 +31,7 @@ KETO_DECLARE_DERIVED_EXCEPTION (TransactionCommonException, SignedChangeSetSeque
 KETO_DECLARE_DERIVED_EXCEPTION (TransactionCommonException, ANYSerializationFailedException , "Failed to serialize object.");
 KETO_DECLARE_DERIVED_EXCEPTION (TransactionCommonException, UnrecognisedTransactionStatusException , "The transaction is in an unrecognised state.");
 KETO_DECLARE_DERIVED_EXCEPTION (TransactionCommonException, InvalidTransactionDataException , "The transaction data is invalid.");
+KETO_DECLARE_DERIVED_EXCEPTION (TransactionCommonException, UninitializedSignedChangeSet , "The signed changeset is uninitialized.");
 
 }
 }

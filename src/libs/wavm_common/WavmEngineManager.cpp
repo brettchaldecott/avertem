@@ -61,23 +61,21 @@ namespace wavm_common {
                     if(isA(outObject,type)) { return true; }
                     else
                     {
-                        Log::printf(Log::Category::error,"Resolved import %s.%s to a %s, but was expecting %s",
-                                    moduleName.c_str(),
-                                    exportName.c_str(),
-                                    asString(getObjectType(outObject)).c_str(),
-                                    asString(type).c_str());
+                        KETO_LOG_ERROR << "Resolved import " << moduleName << "." << exportName << " to a " << asString(getObjectType(outObject))
+                            << " but was expecting " << asString(type);
                         return false;
                     }
                 }
             }
 
-            Log::printf(Log::Category::error,"Generated stub for missing import %s.%s : %s\n",moduleName.c_str(),exportName.c_str(),asString(type).c_str());
+            KETO_LOG_ERROR << "Generated stub for missing import " << moduleName << "." << moduleName << " : " << asString(type);
             outObject = getStubObject(type);
             return true;
         }
 
         Object* getStubObject(ObjectType type) const
         {
+            std::cout << "Find the stub object" << std::endl;
             // If the import couldn't be resolved, stub it in.
             switch(type.kind)
             {
@@ -122,7 +120,11 @@ namespace wavm_common {
                 {
                     return asObject(Runtime::createExceptionTypeInstance(asExceptionTypeType(type)));
                 }
-                default: Errors::unreachable();
+                default: {
+                    KETO_LOG_ERROR << "Reached the unreachable";
+
+                    Errors::unreachable();
+                }
             };
         }
     };

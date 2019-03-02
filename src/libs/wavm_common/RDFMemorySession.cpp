@@ -85,13 +85,18 @@ ResultVectorMap RDFMemorySession::executeQuery(const std::string& queryStr) {
     ResultVectorMap resultVectorMap;
     if (!results) {
         librdf_free_query(query);
-        return resultVectorMap;
+        std::stringstream ss;
+        ss << "The sparql query failed [" << queryStr << "]";
+        BOOST_THROW_EXCEPTION(keto::wavm_common::SparqlQueryFailed(
+                ss.str()));
     }
     const char **names=NULL;
     
     if(!librdf_query_results_get_bindings(results, &names, NULL)) {
         int bindingCount = librdf_query_results_get_bindings_count(results);
+        //std::cout << "Query results" << std::endl;
         while (!librdf_query_results_finished(results)) {
+            //std::cout << "Loop through the results" << std::endl;
             ResultMap resultMap;
             for (int index = 0; index < bindingCount; index++) {
                 librdf_node* node = librdf_query_results_get_binding_value_by_name(results,
@@ -231,6 +236,7 @@ time_t RDFMemorySession::getDateTimeValue(const std::string& subject, const std:
 // set method
 void RDFMemorySession::setStringValue(const std::string& subject, const std::string& predicate,
         const std::string& value) {
+    //std::cout << subject << ":" << predicate << ":" << value << std::endl;
     librdf_statement* statement = librdf_new_statement_from_nodes(this->world, 
                         librdf_new_node_from_uri_string(this->world, (const unsigned char*)subject.c_str()),
                         librdf_new_node_from_uri_string(this->world, (const unsigned char*)predicate.c_str()),

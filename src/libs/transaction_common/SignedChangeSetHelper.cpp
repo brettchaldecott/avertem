@@ -2,8 +2,10 @@
 // Created by Brett Chaldecott on 2019/02/13.
 //
 
+#include "keto/transaction_common/Exception.hpp"
 #include "keto/transaction_common/SignedChangeSetHelper.hpp"
-#include "../../../ide_build/src/protocol/asn1/SignedChangeSet.h"
+#include "SignedChangeSet.h"
+
 
 namespace keto {
 namespace transaction_common {
@@ -33,12 +35,19 @@ keto::asn1::ChangeSetHelperPtr SignedChangeSetHelper::getChangeSetHelper() {
 }
 
 keto::asn1::HashHelper SignedChangeSetHelper::getHash() {
-    if (this->signedChangedSet) {
-
+    if (!this->signedChangedSet) {
+        BOOST_THROW_EXCEPTION(keto::transaction_common::UninitializedSignedChangeSet());
     }
     return this->signedChangedSet->changeSetHash;
 }
 
+
+keto::asn1::SignatureHelper SignedChangeSetHelper::getSignature() {
+    if (!this->signedChangedSet) {
+        BOOST_THROW_EXCEPTION(keto::transaction_common::UninitializedSignedChangeSet());
+    }
+    return this->signedChangedSet->signature;
+}
 
 }
 }

@@ -41,6 +41,8 @@ public:
         static const char* TYPE;
         static const char* DATE_TIME;
         static const char* URI;
+        static const char* SIGNATURE;
+        static const char* TRANSACTION_HASH;
     };
 
     class ACCOUNT_TRANSACTION_PREDICATES {

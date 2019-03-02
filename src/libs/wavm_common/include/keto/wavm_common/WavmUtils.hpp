@@ -33,8 +33,8 @@ public:
     virtual ~WavmUtils() = delete;
     
     static std::string readCString(Runtime::MemoryInstance* memory,I32 stringAddress);
-    static std::string readTypeScriptString(Runtime::MemoryInstance* memory,I32 stringAddress);
-    static std::vector<char> buildTypeScriptString(const std::string& string);
+    //static std::string readTypeScriptString(Runtime::MemoryInstance* memory,I32 stringAddress);
+    //static std::vector<char> buildTypeScriptString(const std::string& string);
     static void log(uint32_t intLevel,const std::string& msg);
 private:
 

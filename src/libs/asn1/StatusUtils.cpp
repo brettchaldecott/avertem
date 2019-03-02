@@ -10,7 +10,7 @@ namespace asn1 {
 
 std::string StatusUtils::statusToString(Status_t status) {
     if (status == Status_init) {
-        return "INIT";
+        return "DEBIT";
     } else if (status == Status_debit) {
         return "DEBIT";
     } else if (status == Status_credit) {

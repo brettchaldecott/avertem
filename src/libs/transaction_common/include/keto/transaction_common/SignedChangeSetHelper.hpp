@@ -38,6 +38,7 @@ public:
     keto::asn1::ChangeSetHelperPtr getChangeSetHelper();
 
     keto::asn1::HashHelper getHash();
+    keto::asn1::SignatureHelper getSignature();
 
 private:
     SignedChangeSet_t* signedChangedSet;

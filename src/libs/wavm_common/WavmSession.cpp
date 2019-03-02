@@ -233,52 +233,99 @@ void WavmSession::setResponseBooleanValue(const std::string& subject, const std:
 }
 
 long WavmSession::executeQuery(const std::string& query) {
+    std::cout << "The query : " << query << std::endl;
     ResultVectorMap resultVectorMap = this->rdfSessionPtr->executeQuery(query);
+    std::cout << "The vector : " << resultVectorMap.size() << std::endl;
     this->queryResults.push_back(resultVectorMap);
     return this->queryResults.size() -1;
 }
 
 long WavmSession::getQueryHeaderCount(long id) {
-    ResultVectorMap resultVectorMap = this->queryResults[id];
+    if (id >= this->queryResults.size()) {
+        std::stringstream ss;
+        ss << "The requested index is out of range [" << id << "] currently have [" << this->queryResults.size() << "]";
+        BOOST_THROW_EXCEPTION(keto::wavm_common::RdfIndexOutOfRangeException(ss.str()));
+    }
+    ResultVectorMap& resultVectorMap = this->queryResults[id];
     return getKeys(resultVectorMap).size();
 }
 
 std::string WavmSession::getQueryHeader(long id, long headerNumber) {
+    if (id >= this->queryResults.size()) {
+        std::stringstream ss;
+        ss << "The requested index is out of range [" << id << "] currently have [" << this->queryResults.size() << "]";
+        BOOST_THROW_EXCEPTION(keto::wavm_common::RdfIndexOutOfRangeException(ss.str()));
+    }
     ResultVectorMap& resultVectorMap = this->queryResults[id];
     return getKeys(resultVectorMap)[headerNumber];
 }
 
 std::string WavmSession::getQueryStringValue(long id, long row, long headerNumber) {
+    if (id >= this->queryResults.size()) {
+        std::stringstream ss;
+        ss << "The requested index is out of range [" << id << "] currently have [" << this->queryResults.size() << "]";
+        BOOST_THROW_EXCEPTION(keto::wavm_common::RdfIndexOutOfRangeException(ss.str()));
+    }
     ResultVectorMap& resultVectorMap = this->queryResults[id];
     return resultVectorMap[row][getKeys(resultVectorMap)[headerNumber]];
 }
 
 std::string WavmSession::getQueryStringValue(long id, long row, const std::string& header) {
+    if (id >= this->queryResults.size()) {
+        std::stringstream ss;
+        ss << "The requested index is out of range [" << id << "] currently have [" << this->queryResults.size() << "]";
+        BOOST_THROW_EXCEPTION(keto::wavm_common::RdfIndexOutOfRangeException(ss.str()));
+    }
     ResultVectorMap& resultVectorMap = this->queryResults[id];
     return resultVectorMap[row][header];
 }
 
 long WavmSession::getQueryLongValue(long id, long row, long headerNumber) {
+    if (id >= this->queryResults.size()) {
+        std::stringstream ss;
+        ss << "The requested index is out of range [" << id << "] currently have [" << this->queryResults.size() << "]";
+        BOOST_THROW_EXCEPTION(keto::wavm_common::RdfIndexOutOfRangeException(ss.str()));
+    }
     ResultVectorMap& resultVectorMap = this->queryResults[id];
     return std::stol(resultVectorMap[row][getKeys(resultVectorMap)[headerNumber]]);
 }
 
 long WavmSession::getQueryLongValue(long id, long row, const std::string& header) {
+    if (id >= this->queryResults.size()) {
+        std::stringstream ss;
+        ss << "The requested index is out of range [" << id << "] currently have [" << this->queryResults.size() << "]";
+        BOOST_THROW_EXCEPTION(keto::wavm_common::RdfIndexOutOfRangeException(ss.str()));
+    }
     ResultVectorMap& resultVectorMap = this->queryResults[id];
     return std::stol(resultVectorMap[row][header]);
 }
 
 float WavmSession::getQueryFloatValue(long id, long row, long headerNumber) {
+    if (id >= this->queryResults.size()) {
+        std::stringstream ss;
+        ss << "The requested index is out of range [" << id << "] currently have [" << this->queryResults.size() << "]";
+        BOOST_THROW_EXCEPTION(keto::wavm_common::RdfIndexOutOfRangeException(ss.str()));
+    }
     ResultVectorMap& resultVectorMap = this->queryResults[id];
     return std::stol(resultVectorMap[row][getKeys(resultVectorMap)[headerNumber]]);
 }
 
 float WavmSession::getQueryFloatValue(long id, long row, const std::string& header) {
+    if (id >= this->queryResults.size()) {
+        std::stringstream ss;
+        ss << "The requested index is out of range [" << id << "] currently have [" << this->queryResults.size() << "]";
+        BOOST_THROW_EXCEPTION(keto::wavm_common::RdfIndexOutOfRangeException(ss.str()));
+    }
     ResultVectorMap& resultVectorMap = this->queryResults[id];
     return std::stol(resultVectorMap[row][header]);
 }
 
 long WavmSession::getRowCount(long id) {
+    if (id >= this->queryResults.size()) {
+        std::stringstream ss;
+        ss << "The requested index is out of range [" << id << "] currently have [" << this->queryResults.size() << "]";
+        BOOST_THROW_EXCEPTION(keto::wavm_common::RdfIndexOutOfRangeException(ss.str()));
+    }
     ResultVectorMap& resultVectorMap = this->queryResults[id];
     return resultVectorMap.size();
 }
@@ -446,17 +493,23 @@ void WavmSession::addTransaction(keto::transaction_common::TransactionMessageHel
         std::string hash = signedChangeSetHelperPtr->getHash().getHash(keto::common::StringEncoding::HEX);
 
         if (defineRdfChangeSet) {
+            std::cout << "set the values" << std::endl;
             rdfSessionPtr->setStringValue(
-                    rdfurlUtils.buildSubjectUrl(hash), rdfurlUtils.buildSubjectUrl(RDFConstants::CHANGE_SET_PREDICATES::ID), hash);
+                    rdfurlUtils.buildSubjectUrl(hash), rdfurlUtils.buildPredicateUrl(RDFConstants::CHANGE_SET_PREDICATES::ID), hash);
             rdfSessionPtr->setStringValue(
-                    rdfurlUtils.buildSubjectUrl(hash), rdfurlUtils.buildSubjectUrl(RDFConstants::CHANGE_SET_PREDICATES::CHANGE_SET_HASH), hash);
+                    rdfurlUtils.buildSubjectUrl(hash), rdfurlUtils.buildPredicateUrl(RDFConstants::CHANGE_SET_PREDICATES::CHANGE_SET_HASH), hash);
             rdfSessionPtr->setDateTimeValue(
-                    rdfurlUtils.buildSubjectUrl(hash), rdfurlUtils.buildSubjectUrl(RDFConstants::CHANGE_SET_PREDICATES::DATE_TIME), time(0));
+                    rdfurlUtils.buildSubjectUrl(hash), rdfurlUtils.buildPredicateUrl(RDFConstants::CHANGE_SET_PREDICATES::DATE_TIME), time(0));
             rdfSessionPtr->setStringValue(
-                    rdfurlUtils.buildSubjectUrl(hash), rdfurlUtils.buildSubjectUrl(RDFConstants::CHANGE_SET_PREDICATES::TYPE),
+                    rdfurlUtils.buildSubjectUrl(hash), rdfurlUtils.buildPredicateUrl(RDFConstants::CHANGE_SET_PREDICATES::TYPE),
                     keto::asn1::StatusUtils::statusToString(
                             changeSetHelperPtr->getStatus()));
-
+            rdfSessionPtr->setStringValue(
+                    rdfurlUtils.buildSubjectUrl(hash), rdfurlUtils.buildPredicateUrl(RDFConstants::CHANGE_SET_PREDICATES::SIGNATURE),
+                            signedChangeSetHelperPtr->getSignature().getSignature(keto::common::HEX));
+            rdfSessionPtr->setStringValue(
+                    rdfurlUtils.buildSubjectUrl(hash), rdfurlUtils.buildPredicateUrl(RDFConstants::CHANGE_SET_PREDICATES::TRANSACTION_HASH),
+                    transactionMessageHelperPtr->getTransactionWrapper()->getHash().getHash(keto::common::HEX));
         }
         std::cout << "Loop through the changes" << std::endl;
         for (keto::asn1::ChangeSetDataHelperPtr changeSetDataHelperPtr:
@@ -471,7 +524,7 @@ void WavmSession::addTransaction(keto::transaction_common::TransactionMessageHel
                 rdfSessionPtr->persist(subject);
                 if (defineRdfChangeSet) {
                     rdfSessionPtr->setStringValue(
-                            rdfurlUtils.buildSubjectUrl(hash), rdfurlUtils.buildSubjectUrl(RDFConstants::CHANGE_SET_PREDICATES::URI),
+                            rdfurlUtils.buildSubjectUrl(hash), rdfurlUtils.buildPredicateUrl(RDFConstants::CHANGE_SET_PREDICATES::URI),
                             subject->getSubject());
                 }
             }
@@ -484,8 +537,13 @@ void WavmSession::addTransaction(keto::transaction_common::TransactionMessageHel
 
 std::vector<std::string> WavmSession::getKeys(ResultVectorMap& resultVectorMap) {
     std::vector<std::string> keys;
+    if (!resultVectorMap.size()) {
+        return std::vector<std::string>();
+    }
     ResultMap& resultMap = resultVectorMap[0];
+    std::cout << "Get the keys" << std::endl;
     for(std::map<std::string,std::string>::iterator it = resultMap.begin(); it != resultMap.end(); ++it) {
+        std::cout << "add the key :" << it->first << std::endl;
         keys.push_back(it->first);
     }
     return keys;

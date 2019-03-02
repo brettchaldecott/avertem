@@ -451,273 +451,269 @@ namespace keto {
         // Keto method definitions
         //-------------------------------------------------------------------------------
         // type script method mappings
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__console",void,typescript_console,I32 msg)
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__console",void,keto_console,I32 msg)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
-            std::string msgString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,msg);
+            std::string msgString = keto::wavm_common::WavmUtils::readCString(memory,msg);
             return;
         }
 
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__log",void,typescript_log,I32 level,I32 msg)
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__log",void,keto_log,I32 level,I32 msg)
         {
+            std::cout << "Log has been called" << std::endl;
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
-            std::string msgString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,msg);
+            std::string msgString = keto::wavm_common::WavmUtils::readCString(memory,msg);
             keto::wavm_common::WavmUtils::log(U32(level),msgString);
             return;
         }
-        
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getFeeAccount",I32,typescript_getFeeAccount)
+
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getFeeAccount",I32,keto_getFeeAccount)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
             std::string accountHash = keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getFeeAccount();
-            std::vector<char> typescriptString = keto::wavm_common::WavmUtils::buildTypeScriptString(accountHash);
-            I32 base = coerce32bitAddress(allocateMemory(memory,typescriptString.size()));
-            memcpy(Runtime::memoryArrayPtr<U8>(memory,base,typescriptString.size()),typescriptString.data(),
-                   typescriptString.size());
+            I32 base = coerce32bitAddress(allocateMemory(memory,accountHash.size()));
+            memcpy(Runtime::memoryArrayPtr<U8>(memory,base,accountHash.size()),accountHash.data(),
+                   accountHash.size());
 
             return base;
         }
 
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getAccount",I32,typescript_getAccount)
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getAccount",I32,keto_getAccount)
         {
+            std::cout << "Get the account information" << std::endl;
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
             std::string account = keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getAccount();
-            std::vector<char> typescriptString = keto::wavm_common::WavmUtils::buildTypeScriptString(account);
-            I32 base = coerce32bitAddress(allocateMemory(memory,typescriptString.size()));
-            memcpy(Runtime::memoryArrayPtr<U8>(memory,base,typescriptString.size()),typescriptString.data(),
-                typescriptString.size());
-
+            I32 base = coerce32bitAddress(allocateMemory(memory,account.size()));
+            memcpy(Runtime::memoryArrayPtr<U8>(memory,base,account.size()),account.data(),
+                   account.size());
+            std::cout << "Return the account" << std::endl;
             return base;
         }
 
         // rdf methods
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_executeQuery",I64,typescript_rdf_executeQuery,I32 query)
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_executeQuery",I64,keto_rdf_executeQuery,I32 query)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
-            std::string queryStr = keto::wavm_common::WavmUtils::readTypeScriptString(memory,query);
+            std::string queryStr = keto::wavm_common::WavmUtils::readCString(memory,query);
 
             return (I64)(long)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->executeQuery(queryStr);
         }
 
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_getQueryHeaderCount",I64,typescript_rdf_getQueryHeaderCount,I64 id)
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_getQueryHeaderCount",I64,keto_rdf_getQueryHeaderCount,I64 id)
         {
             return (I64)(long)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getQueryHeaderCount(id);
         }
 
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_getQueryHeader",I64,typescript_rdf_getQueryHeader,I64 id, I64 index)
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_getQueryHeader",I32,keto_rdf_getQueryHeader,I64 id, I64 index)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
             std::string header = keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getQueryHeader(id,index);
-            std::vector<char> typescriptString = keto::wavm_common::WavmUtils::buildTypeScriptString(header);
-            I32 base = coerce32bitAddress(allocateMemory(memory,typescriptString.size()));
-            memcpy(Runtime::memoryArrayPtr<U8>(memory,base,typescriptString.size()),typescriptString.data(),
-                   typescriptString.size());
+            I32 base = coerce32bitAddress(allocateMemory(memory,header.size()));
+            memcpy(Runtime::memoryArrayPtr<U8>(memory,base,header.size()),header.data(),
+                   header.size());
 
             return base;
         }
 
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_getQueryString",I64,typescript_rdf_getQueryStringValue,I64 id, I64 index, I64 headerNumber)
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_getQueryString",I32,keto_rdf_getQueryStringValue,I64 id, I64 index, I64 headerNumber)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
             std::string value = keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getQueryStringValue(id,index,headerNumber);
-            std::vector<char> typescriptString = keto::wavm_common::WavmUtils::buildTypeScriptString(value);
-            I32 base = coerce32bitAddress(allocateMemory(memory,typescriptString.size()));
-            memcpy(Runtime::memoryArrayPtr<U8>(memory,base,typescriptString.size()),typescriptString.data(),
-                   typescriptString.size());
+            I32 base = coerce32bitAddress(allocateMemory(memory,value.size()));
+            memcpy(Runtime::memoryArrayPtr<U8>(memory,base,value.size()),value.data(),
+                   value.size());
 
             return base;
         }
 
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_getQueryStringByKey",I64,typescript_rdf_getQueryStringByKey,I64 id, I64 index, I32 name)
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_getQueryStringByKey",I32,keto_rdf_getQueryStringByKey,I64 id, I64 index, I32 name)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
-            std::string nameString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,name);
+            std::string nameString = keto::wavm_common::WavmUtils::readCString(memory,name);
             std::string value = keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getQueryStringValue(id,index,nameString);
-            std::vector<char> typescriptString = keto::wavm_common::WavmUtils::buildTypeScriptString(value);
-            I32 base = coerce32bitAddress(allocateMemory(memory,typescriptString.size()));
-            memcpy(Runtime::memoryArrayPtr<U8>(memory,base,typescriptString.size()),typescriptString.data(),
-                   typescriptString.size());
+            I32 base = coerce32bitAddress(allocateMemory(memory,value.size()));
+            memcpy(Runtime::memoryArrayPtr<U8>(memory,base,value.size()),value.data(),
+                   value.size());
 
             return base;
         }
 
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_getQueryLong",I64,typescript_rdf_getQueryLong,I64 id, I64 index, I64 headerNumber)
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_getQueryLong",I64,keto_rdf_getQueryLong,I64 id, I64 index, I64 headerNumber)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
             return (I64)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getQueryLongValue(id,index,headerNumber);
         }
 
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_getQueryLongByKey",I64,typescript_rdf_getQueryLongByKey,I64 id, I64 index, I32 name)
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_getQueryLongByKey",I64,keto_rdf_getQueryLongByKey,I64 id, I64 index, I32 name)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
-            std::string nameString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,name);
+            std::string nameString = keto::wavm_common::WavmUtils::readCString(memory,name);
             return (I64)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getQueryLongValue(id,index,nameString);
         }
 
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_getQueryFloat",I64,typescript_rdf_getQueryFloat,I64 id, I64 index, I64 headerNumber)
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_getQueryFloat",I32,keto_rdf_getQueryFloat,I64 id, I64 index, I64 headerNumber)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
             return (I32)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getQueryFloatValue(id,index,headerNumber);
         }
 
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_getQueryFloatByKey",I64,typescript_rdf_getQueryFloatByKey,I64 id, I64 index, I32 name)
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_getQueryFloatByKey",I32,keto_rdf_getQueryFloatByKey,I64 id, I64 index, I32 name)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
-            std::string nameString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,name);
+            std::string nameString = keto::wavm_common::WavmUtils::readCString(memory,name);
             return (I32)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getQueryFloatValue(id,index,nameString);
         }
 
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_getRowCount",I64,typescript_rdf_getRowCount,I64 id)
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_getRowCount",I64,keto_rdf_getRowCount,I64 id)
         {
             return (I64)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getRowCount(id);
         }
 
 
         // transaction methods
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getTransactionValue",I64,typescript_getTransactionValue)
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getTransactionValue",I64,keto_getTransactionValue)
         {
             return (I64)(long)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getTransactionValue();
         }
 
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getTotalFeeValue",I64,typescript_getTotalFeeValue, I64 minimum)
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getTotalFeeValue",I64,keto_getTotalFeeValue, I64 minimum)
         {
             return (I64)(long)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getTotalTransactionFee(minimum);
         }
 
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getFeeValue",I64,typescript_getFeeValue, I64 minimum)
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getFeeValue",I64,keto_getFeeValue, I64 minimum)
         {
             return (I64)(long)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getTransactionFee(minimum);
         }
-        
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getRequestModelTransactionValue",I64,typescript_getRequestModelTransactionValue,I32 accountModel,I32 transactionValueModel)
+
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getRequestModelTransactionValue",I64,keto_getRequestModelTransactionValue,I32 accountModel,I32 transactionValueModel)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
-            std::string accountModelString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,accountModel);
-            std::string transactionValueModelString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,transactionValueModel);
-            
+            std::string accountModelString = keto::wavm_common::WavmUtils::readCString(memory,accountModel);
+            std::string transactionValueModelString = keto::wavm_common::WavmUtils::readCString(memory,transactionValueModel);
+
             return (I64)(long)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getRequestModelTransactionValue(accountModelString,transactionValueModelString);
         }
-        
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__createDebitEntry",void,typescript_createDebitEntry,I32 accountId, I32 name, I32 description, I32 accountModel,I32 transactionValueModel,I64 value)
+
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__createDebitEntry",void,keto_createDebitEntry,I32 accountId, I32 name, I32 description, I32 accountModel,I32 transactionValueModel,I64 value)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
-            std::string accountIdString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,accountId);
-            std::string nameString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,name);
-            std::string descriptionString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,description);
-            std::string accountModelString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,accountModel);
-            std::string transactionValueModelString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,transactionValueModel);
-            
+            std::string accountIdString = keto::wavm_common::WavmUtils::readCString(memory,accountId);
+            std::string nameString = keto::wavm_common::WavmUtils::readCString(memory,name);
+            std::string descriptionString = keto::wavm_common::WavmUtils::readCString(memory,description);
+            std::string accountModelString = keto::wavm_common::WavmUtils::readCString(memory,accountModel);
+            std::string transactionValueModelString = keto::wavm_common::WavmUtils::readCString(memory,transactionValueModel);
+
             keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->createDebitEntry(accountIdString, nameString, descriptionString, accountModelString,transactionValueModelString,(U64)value);
         }
-        
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__createCreditEntry",void,typescript_createCreditEntry, I32 accountId, I32 name, I32 description, I32 accountModel,I32 transactionValueModel,I64 value)
+
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__createCreditEntry",void,keto_createCreditEntry, I32 accountId, I32 name, I32 description, I32 accountModel,I32 transactionValueModel,I64 value)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
-            std::string accountIdString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,accountId);
-            std::string nameString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,name);
-            std::string descriptionString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,description);
-            std::string accountModelString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,accountModel);
-            std::string transactionValueModelString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,transactionValueModel);
-            
+            std::string accountIdString = keto::wavm_common::WavmUtils::readCString(memory,accountId);
+            std::string nameString = keto::wavm_common::WavmUtils::readCString(memory,name);
+            std::string descriptionString = keto::wavm_common::WavmUtils::readCString(memory,description);
+            std::string accountModelString = keto::wavm_common::WavmUtils::readCString(memory,accountModel);
+            std::string transactionValueModelString = keto::wavm_common::WavmUtils::readCString(memory,transactionValueModel);
+
             keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->createCreditEntry(accountIdString, nameString, descriptionString, accountModelString,transactionValueModelString,(U64)value);
         }
 
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getRequestStringValue",I32,typescript_getRequestStringValue,I32 subject,I32 predicate)
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getRequestStringValue",I32,keto_getRequestStringValue,I32 subject,I32 predicate)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
-            std::string subjectString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,subject);
-            std::string predicateString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,predicate);
-            
+            std::string subjectString = keto::wavm_common::WavmUtils::readCString(memory,subject);
+            std::string predicateString = keto::wavm_common::WavmUtils::readCString(memory,predicate);
+
             std::string requestString = keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getRequestStringValue(subjectString,predicateString);
-            
-            std::vector<char> typescriptString = keto::wavm_common::WavmUtils::buildTypeScriptString(requestString);
-            I32 base = coerce32bitAddress(allocateMemory(memory,typescriptString.size()));
-            memcpy(Runtime::memoryArrayPtr<U8>(memory,base,typescriptString.size()),typescriptString.data(),
-                typescriptString.size());
+
+            I32 base = coerce32bitAddress(allocateMemory(memory,requestString.size()));
+            memcpy(Runtime::memoryArrayPtr<U8>(memory,base,requestString.size()),requestString.data(),
+                   requestString.size());
 
             return base;
         }
-        
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__setResponseStringValue",void,typescript_setResponseStringValue,I32 subject,I32 predicate,I32 value)
+
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__setResponseStringValue",void,keto_setResponseStringValue,I32 subject,I32 predicate,I32 value)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
-            std::string subjectString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,subject);
-            std::string predicateString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,predicate);
-            std::string valueString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,value);
-            
+            std::string subjectString = keto::wavm_common::WavmUtils::readCString(memory,subject);
+            std::string predicateString = keto::wavm_common::WavmUtils::readCString(memory,predicate);
+            std::string valueString = keto::wavm_common::WavmUtils::readCString(memory,value);
+
             keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->setResponseStringValue(subjectString,predicateString,valueString);
         }
-        
-        
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getRequestLongValue",I64,typescript_getRequestLongValue,I32 subject,I32 predicate)
+
+
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getRequestLongValue",I64,keto_getRequestLongValue,I32 subject,I32 predicate)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
-            std::string subjectString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,subject);
-            std::string predicateString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,predicate);
-            
+            std::string subjectString = keto::wavm_common::WavmUtils::readCString(memory,subject);
+            std::string predicateString = keto::wavm_common::WavmUtils::readCString(memory,predicate);
+
             return (I64) keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getRequestLongValue(subjectString,predicateString);
         }
-        
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__setResponseLongValue",void,typescript_setResponseLongValue,I32 subject,I32 predicate, I64 value)
+
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__setResponseLongValue",void,keto_setResponseLongValue,I32 subject,I32 predicate, I64 value)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
-            std::string subjectString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,subject);
-            std::string predicateString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,predicate);
-            
+            std::string subjectString = keto::wavm_common::WavmUtils::readCString(memory,subject);
+            std::string predicateString = keto::wavm_common::WavmUtils::readCString(memory,predicate);
+
             keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->setResponseLongValue(subjectString,predicateString,(U64)value);
         }
-        
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getResponseFloatValue",I32,typescript_getRequestFloatValue,I32 subject,I32 predicate)
+
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getResponseFloatValue",I32,keto_getRequestFloatValue,I32 subject,I32 predicate)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
-            std::string subjectString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,subject);
-            std::string predicateString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,predicate);
-            
+            std::string subjectString = keto::wavm_common::WavmUtils::readCString(memory,subject);
+            std::string predicateString = keto::wavm_common::WavmUtils::readCString(memory,predicate);
+
             return (I32)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getRequestFloatValue(subjectString,predicateString);
         }
-        
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__setResponseFloatValue",void,typescript_setResponseFloatValue,I32 subject,I32 predicate,I32 value)
+
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__setResponseFloatValue",void,keto_setResponseFloatValue,I32 subject,I32 predicate,I32 value)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
-            std::string subjectString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,subject);
-            std::string predicateString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,predicate);
-            
+            std::string subjectString = keto::wavm_common::WavmUtils::readCString(memory,subject);
+            std::string predicateString = keto::wavm_common::WavmUtils::readCString(memory,predicate);
+
             keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->setResponseFloatValue(subjectString,predicateString,(U32)value);
         }
-        
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getRequestBooleanValue",I32,typescript_getRequestBooleanValue,I32 subject,I32 predicate)
+
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getRequestBooleanValue",I32,keto_getRequestBooleanValue,I32 subject,I32 predicate)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
-            std::string subjectString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,subject);
-            std::string predicateString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,predicate);
-            
+            std::string subjectString = keto::wavm_common::WavmUtils::readCString(memory,subject);
+            std::string predicateString = keto::wavm_common::WavmUtils::readCString(memory,predicate);
+
             return (bool) keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getRequestBooleanValue(subjectString,predicateString);
         }
-        
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__setResponseBooleanValue",void,typescript_setResponseBooleanValue,I32 subject,I32 predicate,I32 value)
+
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__setResponseBooleanValue",void,keto_setResponseBooleanValue,I32 subject,I32 predicate,I32 value)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
-            std::string subjectString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,subject);
-            std::string predicateString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,predicate);
-            
+            std::string subjectString = keto::wavm_common::WavmUtils::readCString(memory,subject);
+            std::string predicateString = keto::wavm_common::WavmUtils::readCString(memory,predicate);
+
             keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->setResponseBooleanValue(subjectString,predicateString,(bool)value);
         }
 
 
         //
-        
+
         // C/CPP method mappings
         DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(env,"console",void,c_console,I32 msg)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
-            std::string msgString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,msg);
+            std::string msgString = keto::wavm_common::WavmUtils::readCString(memory,msg);
             return;
         }
 
         DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(env,"log",void,c_log,I64 level,I32 msg)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
-            std::string msgString = keto::wavm_common::WavmUtils::readTypeScriptString(memory,msg);
+            std::string msgString = keto::wavm_common::WavmUtils::readCString(memory,msg);
             keto::wavm_common::WavmUtils::log(U32(level),msgString);
             return;
         }
