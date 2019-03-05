@@ -194,7 +194,9 @@ keto::event::Event MasterKeyManager::MasterSession::setWrappingKeys(const keto::
     onionKeys.push_back(this->masterKeyLock->getPrivateKey());
     keto::rpc_protocol::NetworkKeysHelper networkKeysHelper;
     this->loadKeys(this->masterWrapperKeyList,networkKeysHelper,onionKeys);
-    KeyStoreWrapIndexManager::getInstance()->setMasterKey(networkKeysHelper);
+    //std::cout << "Set the wrapping keys" << std::endl;
+    KeyStoreWrapIndexManager::getInstance()->setWrappingKeys(networkKeysHelper);
+    //std::cout << "After setting the wrapping keys" << std::endl;
     return event;
 }
 
@@ -220,13 +222,13 @@ void MasterKeyManager::MasterSession::initMasterKeys() {
         //std::cout << "Load the wrapper keys" << std::endl;
 
         if (!this->keyStoreDBPtr->getValue(Constants::KEY_STORE_DB::KEY_STORE_WRAPPER_ENTRY, onionKeys, value)) {
-            //std::cout << "Generate the wrapper keys" << std::endl;
+            std::cout << "Generate the wrapper keys" << std::endl;
             this->masterWrapperKeyList = generateKeys(Constants::KEY_STORE_DB::KEY_STORE_WRAPPER_SIZE, onionKeys);
-            //std::cout << "Set the wrapper values" << std::endl;
+            std::cout << "Set the wrapper values" << std::endl;
             this->keyStoreDBPtr->setValue(Constants::KEY_STORE_DB::KEY_STORE_WRAPPER_ENTRY,
                                           this->masterWrapperKeyList->getJson(), onionKeys);
         } else {
-            //std::cout << "Load the wrapper values" << std::endl;
+            std::cout << "Load the wrapper values" << std::endl;
             this->masterWrapperKeyList = MasterKeyListEntryPtr(new MasterKeyListEntry(value));
         }
         //std::cout << "Finished initing the keys" << std::endl;

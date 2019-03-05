@@ -217,50 +217,62 @@ std::deque<keto::proto::Transaction> BlockProducer::getTransactions() {
 
 void BlockProducer::generateBlock(std::deque<keto::proto::Transaction> transactions) {
 
+    try {
 
-    // create a new transaction
-    keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
-    
-    keto::asn1::HashHelper parentHash = keto::block_db::BlockChainStore::getInstance()->getParentHash();
-    if (parentHash.empty()) {
-        KETO_LOG_INFO << "The block producer is not initialized";
-        return;
+        // create a new transaction
+        keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
+
+        keto::asn1::HashHelper parentHash = keto::block_db::BlockChainStore::getInstance()->getParentHash();
+        if (parentHash.empty()) {
+            KETO_LOG_INFO << "The block producer is not initialized";
+            return;
+        }
+        keto::block_db::BlockBuilderPtr blockBuilderPtr =
+                std::make_shared<keto::block_db::BlockBuilder>(parentHash);
+
+        for (keto::proto::Transaction &transaction : transactions) {
+            keto::transaction_common::TransactionProtoHelper transactionProtoHelper(transaction);
+            blockBuilderPtr->addTransactionMessage(transactionProtoHelper.getTransactionMessageHelper());
+        }
+        blockBuilderPtr->setAcceptedCheck(this->consensusMessageHelper.getMsg());
+
+        // build the block consensus based on the software consensus
+        keto::block_db::MerkleUtils merkleUtils(blockBuilderPtr->getCurrentHashs());
+        keto::software_consensus::ModuleHashMessageHelper moduleHashMessageHelper;
+        keto::asn1::HashHelper consensusMerkelHash = merkleUtils.computation();
+        moduleHashMessageHelper.setHash(consensusMerkelHash);
+        keto::proto::ModuleHashMessage moduleHashMessage = moduleHashMessageHelper.getModuleHashMessage();
+        keto::software_consensus::ConsensusMessageHelper consensusMessageHelper(
+                keto::server_common::fromEvent<keto::proto::ConsensusMessage>(
+                        keto::server_common::processEvent(
+                                keto::server_common::toEvent<keto::proto::ModuleHashMessage>(
+                                        keto::server_common::Events::GET_SOFTWARE_CONSENSUS_MESSAGE,
+                                        moduleHashMessage))));
+        blockBuilderPtr->setValidateCheck(consensusMessageHelper.getMsg());
+
+        keto::block_db::SignedBlockBuilderPtr signedBlockBuilderPtr(new keto::block_db::SignedBlockBuilder(
+                blockBuilderPtr,
+                keyLoaderPtr));
+        signedBlockBuilderPtr->sign();
+
+        KETO_LOG_INFO << "Write a block";
+        keto::block_db::BlockChain::clearCache();
+        keto::block_db::BlockChainStore::getInstance()->writeBlock(signedBlockBuilderPtr, BlockChainCallbackImpl());
+        KETO_LOG_INFO << "Wrote a block [" <<
+                      signedBlockBuilderPtr->getHash().getHash(keto::common::StringEncoding::HEX)
+                      << "]";
+
+        transactionPtr->commit();
+    } catch (keto::common::Exception& ex) {
+        KETO_LOG_ERROR << "[BlockProducer::generateBlock]Failed to create a new block: " << ex.what();
+        KETO_LOG_ERROR << "[BlockProducer::generateBlock]Cause: " << boost::diagnostic_information(ex,true);
+    } catch (boost::exception& ex) {
+        KETO_LOG_ERROR << "[BlockProducer::generateBlock]Failed to create a new block: " << boost::diagnostic_information(ex,true);
+    } catch (std::exception& ex) {
+        KETO_LOG_ERROR << "[BlockProducer::generateBlock]Failed to create a new block: " << ex.what();
+    } catch (...) {
+        KETO_LOG_ERROR << "[BlockProducer::generateBlock]Failed to create a new block: unknown cause";
     }
-    keto::block_db::BlockBuilderPtr blockBuilderPtr = 
-            std::make_shared<keto::block_db::BlockBuilder>(parentHash);
-
-    for (keto::proto::Transaction& transaction : transactions) {
-        keto::transaction_common::TransactionProtoHelper transactionProtoHelper(transaction);
-        blockBuilderPtr->addTransactionMessage(transactionProtoHelper.getTransactionMessageHelper());
-    }
-    blockBuilderPtr->setAcceptedCheck(this->consensusMessageHelper.getMsg());
-
-    // build the block consensus based on the software consensus
-    keto::block_db::MerkleUtils merkleUtils(blockBuilderPtr->getCurrentHashs());
-    keto::software_consensus::ModuleHashMessageHelper moduleHashMessageHelper;
-    keto::asn1::HashHelper consensusMerkelHash = merkleUtils.computation();
-    moduleHashMessageHelper.setHash(consensusMerkelHash);
-    keto::proto::ModuleHashMessage moduleHashMessage = moduleHashMessageHelper.getModuleHashMessage();
-    keto::software_consensus::ConsensusMessageHelper consensusMessageHelper(
-            keto::server_common::fromEvent<keto::proto::ConsensusMessage>(
-                    keto::server_common::processEvent(
-                            keto::server_common::toEvent<keto::proto::ModuleHashMessage>(
-                                    keto::server_common::Events::GET_SOFTWARE_CONSENSUS_MESSAGE,moduleHashMessage))));
-    blockBuilderPtr->setValidateCheck(consensusMessageHelper.getMsg());
-
-    keto::block_db::SignedBlockBuilderPtr signedBlockBuilderPtr(new keto::block_db::SignedBlockBuilder(
-            blockBuilderPtr,
-            keyLoaderPtr));
-    signedBlockBuilderPtr->sign();
-    
-    KETO_LOG_INFO << "Write a block";
-    keto::block_db::BlockChain::clearCache();
-    keto::block_db::BlockChainStore::getInstance()->writeBlock(signedBlockBuilderPtr,BlockChainCallbackImpl());
-    KETO_LOG_INFO << "Wrote a block [" <<
-            signedBlockBuilderPtr->getHash().getHash(keto::common::StringEncoding::HEX)
-            << "]";
-    
-    transactionPtr->commit();
     
 }
 

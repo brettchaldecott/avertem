@@ -3,6 +3,7 @@
 //
 
 #include <math.h>
+#include <sstream>
 
 #include "keto/crypto/CipherBuilder.hpp"
 
@@ -22,10 +23,15 @@ CipherBuilder::CipherBuilder(const PrivateKeyPtr& privateKeyPtr) : grp("modp/iet
     if (privateKeyPtr->algo_name() == "RSA") {
         std::shared_ptr<Botan::RSA_PrivateKey> rsaPrivateKeyPtr = std::dynamic_pointer_cast<Botan::RSA_PrivateKey>(privateKeyPtr);
         this->privateKeyPtr = std::shared_ptr<Botan::Private_Key>(new Botan::DH_PrivateKey(*rng, grp,rsaPrivateKeyPtr->get_d()));
+    } else if (privateKeyPtr->algo_name() == "ElGamal") {
+        std::shared_ptr<Botan::ElGamal_PrivateKey> elgamalPrivateKeyPtr = std::dynamic_pointer_cast<Botan::ElGamal_PrivateKey>(privateKeyPtr);
+        this->privateKeyPtr = std::shared_ptr<Botan::Private_Key>(new Botan::DH_PrivateKey(*rng, grp,elgamalPrivateKeyPtr->get_x()));
     } else if (privateKeyPtr->algo_name() == "DSA" || privateKeyPtr->algo_name() == "DH") {
         this->privateKeyPtr = privateKeyPtr;
     } else {
-        BOOST_THROW_EXCEPTION(keto::crypto::UnsupportKeyFormat());
+        std::stringstream ss;
+        ss << "Unsupported key format : " << privateKeyPtr->algo_name();
+        BOOST_THROW_EXCEPTION(keto::crypto::UnsupportKeyFormat(ss.str()));
     }
 }
 

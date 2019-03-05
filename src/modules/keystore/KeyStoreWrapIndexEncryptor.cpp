@@ -7,6 +7,7 @@
 
 #include "keto/keystore/KeyStoreWrapIndexEncryptor.hpp"
 #include "keto/keystore/KeyStoreWrapIndexManager.hpp"
+#include "keto/keystore/Exception.hpp"
 #include "keto/crypto/CipherBuilder.hpp"
 #include "keto/crypto/SecureVectorUtils.hpp"
 
@@ -22,10 +23,14 @@ KeyStoreWrapIndexEncryptor::~KeyStoreWrapIndexEncryptor() {
 
 std::vector<uint8_t> KeyStoreWrapIndexEncryptor::encrypt(const keto::crypto::SecureVector& value) const {
     size_t numKeys = this->keyStoreWrapIndexManager->getNumberOfKeys();
-
+    std::cout << "The number of keys is : " << numKeys << std::endl;
+    if (numKeys == 0) {
+        BOOST_THROW_EXCEPTION(keto::keystore::KeyStoreWrapIndexContainsNoKeysConfigured());
+    }
     std::default_random_engine stdGenerator;
     stdGenerator.seed(std::chrono::system_clock::now().time_since_epoch().count());
     std::uniform_int_distribution<int> distribution(0,numKeys-1);
+    distribution(stdGenerator);
 
     keto::crypto::SecureVector content = value;
 
