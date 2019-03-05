@@ -28,6 +28,7 @@
 #include "keto/common/MetaInfo.hpp"
 #include "keto/event/Event.hpp"
 #include "keto/software_consensus/ConsensusMessageHelper.hpp"
+#include "keto/transaction_common/TransactionProtoHelper.hpp"
 
 
 namespace keto {
@@ -70,7 +71,7 @@ public:
 
     keto::event::Event setupNodeConsensusSession(const keto::event::Event& event);
     
-    void addTransaction(keto::proto::Transaction transaction);
+    void addTransaction(keto::transaction_common::TransactionProtoHelperPtr& transactionProtoHelperPtr);
     
     bool isEnabled();
     

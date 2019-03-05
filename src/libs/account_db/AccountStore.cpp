@@ -30,6 +30,7 @@
 #include "keto/asn1/RDFSubjectHelper.hpp"
 #include "include/keto/account_db/AccountRDFStatement.hpp"
 #include "include/keto/account_db/AccountGraphSession.hpp"
+#include "include/keto/account_db/AccountGraphDirtySessionManager.hpp"
 
 namespace keto {
 namespace account_db {
@@ -41,6 +42,7 @@ std::string AccountStore::getSourceVersion() {
 }
 
 AccountStore::AccountStore() {
+    AccountGraphDirtySessionManager::init();
     dbManagerPtr = std::shared_ptr<keto::rocks_db::DBManager>(
             new keto::rocks_db::DBManager(Constants::DB_LIST));
     accountGraphStoreManagerPtr = AccountGraphStoreManagerPtr(new AccountGraphStoreManager());
@@ -53,6 +55,7 @@ AccountStore::~AccountStore() {
     accountResourceManagerPtr.reset();
     accountGraphStoreManagerPtr.reset();
     dbManagerPtr.reset();
+    AccountGraphDirtySessionManager::fin();
 }
 
 std::shared_ptr<AccountStore> AccountStore::init() {
@@ -84,6 +87,38 @@ bool AccountStore::getAccountInfo(const keto::asn1::HashHelper& accountHash,
     }
     result.ParseFromString(value);
     return true;
+}
+
+void AccountStore::applyDirtyTransaction(
+        const keto::asn1::HashHelper& chainId,
+        const keto::transaction_common::TransactionWrapperHelperPtr& transactionWrapperHelperPtr) {
+    AccountResourcePtr resource = accountResourceManagerPtr->getResource();
+    keto::proto::AccountInfo accountInfo;
+    AccountRDFStatementBuilderPtr accountRDFStatementBuilder;
+    keto::asn1::HashHelper accountHash = transactionWrapperHelperPtr->getCurrentAccount();
+
+    if (!getAccountInfo(accountHash,accountInfo)) {
+        accountRDFStatementBuilder =  AccountRDFStatementBuilderPtr(
+                new AccountRDFStatementBuilder(chainId,
+                                               transactionWrapperHelperPtr,false));
+        createAccount(chainId, accountHash,transactionWrapperHelperPtr,accountRDFStatementBuilder,accountInfo);
+    } else {
+        accountRDFStatementBuilder =  AccountRDFStatementBuilderPtr(
+                new AccountRDFStatementBuilder(chainId,
+                                               transactionWrapperHelperPtr,true));
+    }
+    AccountGraphSessionPtr sessionPtr = resource->getGraphSession(accountInfo.graph_name());
+
+
+    for (AccountRDFStatementPtr accountRDFStatement : accountRDFStatementBuilder->getStatements()) {
+        keto::asn1::RDFModelHelperPtr rdfModel = accountRDFStatement->getModel();
+        for (keto::asn1::RDFSubjectHelperPtr rdfSubject : rdfModel->getSubjects()) {
+            if (accountRDFStatement->getOperation() == PERSIST) {
+                std::cout << "This is an attempt to persist the subject" << std::endl;
+                sessionPtr->persistDirty(rdfSubject);
+            }
+        }
+    }
 }
 
 
@@ -127,6 +162,34 @@ void AccountStore::sparqlQuery(
     AccountResourcePtr resource = accountResourceManagerPtr->getResource();
     AccountGraphSessionPtr sessionPtr = resource->getGraphSession(accountInfo.graph_name());
     sparlQuery.set_result(sessionPtr->query(sparlQuery.query()));
+}
+
+keto::proto::SparqlResultSet AccountStore::sparqlQueryWithResultSet(
+        const keto::proto::AccountInfo& accountInfo,
+        keto::proto::SparqlResultSetQuery& sparqlResultSetQuery) {
+    AccountResourcePtr resource = accountResourceManagerPtr->getResource();
+    AccountGraphSessionPtr sessionPtr = resource->getGraphSession(accountInfo.graph_name());
+
+
+    keto::proto::SparqlResultSet sparqlResultSet;
+    ResultVectorMap resultVectorMap = sessionPtr->executeDirtyQuery(sparqlResultSetQuery.query());
+    copyResultSet(resultVectorMap,sparqlResultSet);
+
+    return sparqlResultSet;
+}
+
+keto::proto::SparqlResultSet AccountStore::dirtySparqlQueryWithResultSet(
+        const keto::proto::AccountInfo& accountInfo,
+        keto::proto::SparqlResultSetQuery& sparqlResultSetQuery) {
+    AccountResourcePtr resource = accountResourceManagerPtr->getResource();
+    AccountGraphSessionPtr sessionPtr = resource->getGraphSession(accountInfo.graph_name());
+
+
+    keto::proto::SparqlResultSet sparqlResultSet;
+    ResultVectorMap resultVectorMap = sessionPtr->executeDirtyQuery(sparqlResultSetQuery.query());
+    copyResultSet(resultVectorMap,sparqlResultSet);
+
+    return sparqlResultSet;
 }
 
 void AccountStore::getContract(
@@ -267,6 +330,23 @@ void AccountStore::buildNodeAccountRouting(const std::string& accountHash,
     
 }
 
+
+void AccountStore::copyResultSet(
+        ResultVectorMap& resultVectorMap,
+        keto::proto::SparqlResultSet& sparqlResultSet) {
+
+    for (ResultMap resultMap : resultVectorMap) {
+        keto::proto::SparqlRow row;
+        for (auto const& column : resultMap) {
+            keto::proto::SparqlRowEntry entry;
+            entry.set_key(column.first);
+            entry.set_key(column.second);
+            *row.add_entries() = entry;
+        }
+
+        *sparqlResultSet.add_rows() = row;
+    }
+}
 
 }
 }

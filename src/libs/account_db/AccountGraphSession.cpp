@@ -17,8 +17,9 @@
 #include "keto/asn1/Constants.hpp"
 #include "keto/account_db/AccountGraphSession.hpp"
 #include "keto/account_db/Exception.hpp"
-#include "include/keto/account_db/AccountGraphStore.hpp"
-#include "include/keto/account_db/AccountGraphSession.hpp"
+#include "keto/account_db/AccountGraphStore.hpp"
+#include "keto/account_db/AccountGraphSession.hpp"
+#include "keto/account_db/AccountGraphDirtySessionManager.hpp"
 #include "keto/common/Log.hpp"
 
 namespace keto {
@@ -37,6 +38,10 @@ AccountGraphSession::~AccountGraphSession() {
         // rollback if active still at this point
         this->rollback();
     }
+}
+
+void AccountGraphSession::persistDirty(keto::asn1::RDFSubjectHelperPtr& subject) {
+    AccountGraphDirtySessionManager::getInstance()->getDirtySession(this->accountGraphStore->dbName)->persistDirty(subject);
 }
 
 void AccountGraphSession::persist(keto::asn1::RDFSubjectHelperPtr& subject) {
@@ -111,6 +116,7 @@ void AccountGraphSession::remove(keto::asn1::RDFSubjectHelperPtr& subject) {
     }
 }
 
+
 std::string AccountGraphSession::query(const std::string& queryStr) {
     librdf_query* query;
     librdf_query_results* results;
@@ -135,6 +141,45 @@ std::string AccountGraphSession::query(const std::string& queryStr) {
     
     return strResult;
 }
+
+ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryStr) {
+    librdf_query* query;
+    librdf_query_results* results;
+    query = librdf_new_query(this->accountGraphStore->getWorld(), "sparql",
+                             NULL, (const unsigned char *)queryStr.c_str(), NULL);
+    librdf_model_add_submodel(this->accountGraphStore->getModel(),
+            AccountGraphDirtySessionManager::getInstance()->getDirtySession(this->accountGraphStore->dbName)->getDirtyModel());
+    results = librdf_model_query_execute(this->accountGraphStore->getModel(), query);
+    ResultVectorMap resultVectorMap;
+    if (!results) {
+        librdf_free_query(query);
+        return resultVectorMap;
+    }
+    const char **names=NULL;
+
+    if(!librdf_query_results_get_bindings(results, &names, NULL)) {
+        int bindingCount = librdf_query_results_get_bindings_count(results);
+        while (!librdf_query_results_finished(results)) {
+            ResultMap resultMap;
+            for (int index = 0; index < bindingCount; index++) {
+                librdf_node* node = librdf_query_results_get_binding_value_by_name(results,
+                                                                                   names[index]);
+                unsigned char* value = librdf_node_get_literal_value(node);
+                resultMap[names[index]] = std::string((const char*)value);
+                librdf_free_node(node);
+            }
+            resultVectorMap.push_back(resultMap);
+            librdf_query_results_next(results);
+        }
+    }
+    librdf_free_query_results(results);
+    librdf_free_query(query);
+    librdf_model_remove_submodel(this->accountGraphStore->getModel(),
+                              AccountGraphDirtySessionManager::getInstance()->getDirtySession(this->accountGraphStore->dbName)->getDirtyModel());
+
+    return resultVectorMap;
+}
+
 
 ResultVectorMap AccountGraphSession::executeQuery(const std::string& queryStr) {
     librdf_query* query;

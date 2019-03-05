@@ -43,7 +43,12 @@ public:
         return OBFUSCATED("$Id$");
     };
     static std::string getSourceVersion();
-    
+
+    AccountRDFStatementBuilder(
+            const keto::asn1::HashHelper& chainId,
+            const keto::transaction_common::TransactionWrapperHelperPtr& transactionWrapperHelperPtr,
+            bool existingAccount);
+
     AccountRDFStatementBuilder(
             const keto::asn1::HashHelper& chainId,
             const keto::asn1::HashHelper& blockId,

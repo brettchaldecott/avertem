@@ -38,6 +38,8 @@ KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, PublicKeyNotFoundException 
 KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, InvalidTransactionReferenceException , "Invalid transaction reference exception.");
 KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, UnsupportedInvocationStatusException , "Unsupported invocation status.");
 KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, RdfIndexOutOfRangeException , "Unsupported invocation status.");
+KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, ContractExecutionFailedException , "Contract execution failed.");
+KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, ContractUnsupportedResultException , "Contract return an unsupported result.");
 
 }
 }

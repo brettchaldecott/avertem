@@ -134,6 +134,12 @@ keto::asn1::HashHelper SignedBlockBuilder::getHash() {
     return this->signedBlock->hash;
 }
 
+keto::asn1::HashHelper SignedBlockBuilder::getFirstTransactionHash() {
+    if(this->signedBlock->block.transactions.list.count) {
+        return this->signedBlock->block.transactions.list.array[0]->transactionHash;
+    }
+    return getHash();
+}
 
 SignedBlockBuilder::operator keto::proto::SignedBlockWrapper() const {
     keto::proto::SignedBlockWrapper signedBlockWrapper;

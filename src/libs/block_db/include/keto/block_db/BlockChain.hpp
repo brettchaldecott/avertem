@@ -30,6 +30,28 @@ typedef std::shared_ptr<BlockChain> BlockChainPtr;
 class BlockChain {
 public:
 
+    class BlockChainCache;
+    typedef std::shared_ptr<BlockChainCache> BlockChainCachePtr;
+    class BlockChainCache {
+    public:
+        BlockChainCache();
+        BlockChainCache(const BlockChainCache& orig) = delete;
+        virtual ~BlockChainCache();
+
+        static BlockChainCachePtr createInstance();
+        static BlockChainCachePtr getInstance();
+        static void clear();
+        static void fin();
+
+        BlockChainPtr getBlockChain(const keto::asn1::HashHelper& parentHash);
+        void addBlockChain(const keto::asn1::HashHelper& transactionHash, const BlockChainPtr& blockChainPtr);
+
+    private:
+        std::map<std::string,BlockChainPtr> transactionIdBlockChainMap;
+
+        void clearCache();
+    };
+
     friend class BlockChainStore;
 
     static std::string getHeaderVersion() {
@@ -41,11 +63,17 @@ public:
     virtual ~BlockChain();
 
     bool requireGenesis();
+    void applyDirtyTransaction(keto::transaction_common::TransactionMessageHelperPtr& transactionMessageHelperPtr, const BlockChainCallback& callback);
     void writeBlock(const SignedBlockBuilderPtr& signedBlock, const BlockChainCallback& callback);
     keto::asn1::HashHelper getParentHash();
     keto::asn1::HashHelper getParentHash(const keto::asn1::HashHelper& transactionHash);
     BlockChainMetaPtr getBlockChainMeta();
 
+
+    // block chain cache
+    static void initCache();
+    static void clearCache();
+    static void finCache();
 
 private:
     bool inited;
@@ -69,6 +97,7 @@ private:
     void persist();
 
     BlockChainPtr getChildPtr(const keto::asn1::HashHelper& parentHash);
+    BlockChainPtr getChildByTransactionId(const keto::asn1::HashHelper& parentHash);
 
 };
 

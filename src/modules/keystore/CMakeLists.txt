@@ -39,6 +39,7 @@ add_library( 0010_keto_keystore_module
             KeyStoreWrapIndexEncryptor.cpp
             KeyStoreWrapEntry.cpp
             MasterKeyManager.cpp
+            EncryptionService.cpp
 
              ${HEADERS} )
 

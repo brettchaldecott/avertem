@@ -116,9 +116,11 @@ keto::event::Event BlockService::blockMessage(const keto::event::Event& event) {
         *transactionProtoHelperPtr =
             TransactionProcessor::getInstance()->processTransaction(
             *transactionProtoHelperPtr);
+        // dirty store in the block producer
+
         //std::cout << "###### add the transaction" << std::endl;
         BlockProducer::getInstance()->addTransaction(
-            *transactionProtoHelperPtr);
+            transactionProtoHelperPtr);
     }
 
 

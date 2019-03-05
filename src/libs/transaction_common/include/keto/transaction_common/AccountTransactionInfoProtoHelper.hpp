@@ -27,6 +27,10 @@ public:
     static std::string getSourceVersion();
 
     AccountTransactionInfoProtoHelper();
+    AccountTransactionInfoProtoHelper(const keto::asn1::HashHelper& blockchainId,
+                                      const TransactionWrapper_t& transactionWrapper);
+    AccountTransactionInfoProtoHelper(const keto::asn1::HashHelper& blockchainId,
+                                      const keto::transaction_common::TransactionWrapperHelperPtr& transactionWrapperHelperPtr);
     AccountTransactionInfoProtoHelper(const keto::asn1::HashHelper& blockchainId, const keto::asn1::HashHelper& blockId,
                                       const keto::transaction_common::TransactionWrapperHelperPtr& transactionWrapperHelperPtr);
     AccountTransactionInfoProtoHelper(const keto::asn1::HashHelper& blockchainId, const keto::asn1::HashHelper& blockId,

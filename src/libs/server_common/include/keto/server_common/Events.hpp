@@ -43,6 +43,7 @@ public:
     // account events
     static const char* CHECK_ACCOUNT_MESSAGE;
     static const char* GET_NODE_ACCOUNT_ROUTING;
+    static const char* APPLY_ACCOUNT_DIRTY_TRANSACTION_MESSAGE;
     static const char* APPLY_ACCOUNT_TRANSACTION_MESSAGE;
     
     // rpc client route transaction
@@ -68,10 +69,21 @@ public:
     
     // retrieve the contract
     static const char* GET_CONTRACT;
+
+    // retrieve the contract
+    static const char* CLEAR_DIRTY_CACHE;
     
     // sparql events
     static const char* SPARQL_QUERY_MESSAGE;
-    
+    static const char* DIRTY_SPARQL_QUERY_WITH_RESULTSET_MESSAGE;
+    static const char* SPARQL_QUERY_WITH_RESULTSET_MESSAGE;
+
+    class ENCRYPT_ASN1 {
+    public:
+        static const char* ENCRYPT;
+        static const char* DECRYPT;
+    };
+
     // consensus events
     class CONSENSUS {
     public:

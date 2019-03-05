@@ -34,6 +34,7 @@
 #include "ThreadTest/ThreadTest.h"
 #include "WAST/WAST.h"
 #include "WASM/WASM.h"
+#include "IR/Types.h"
 
 #include "keto/wavm_common/WavmEngineWrapper.hpp"
 #include "keto/wavm_common/Exception.hpp"
@@ -181,11 +182,12 @@ void WavmEngineWrapper::execute() {
 
         // Set up the arguments for the invoke.
         std::vector<Value> invokeArgs;
+        Result functionResult;
         //Timing::Timer executionTimer;
         Runtime::catchRuntimeExceptions(
                 [&] {
                     // invoke the function
-                    invokeFunctionChecked(context, functionInstance, invokeArgs);
+                    functionResult = invokeFunctionChecked(context, functionInstance, invokeArgs);
                 },
                 [&](Runtime::Exception &&exception) {
                     std::stringstream ss;
@@ -194,6 +196,33 @@ void WavmEngineWrapper::execute() {
                     std::cout << ss.str() << std::endl;
                     BOOST_THROW_EXCEPTION(keto::wavm_common::ContactExecutionFailedException(ss.str()));
                 });
+
+        // validate the result
+        if ((currentStatus == Status_init) ||
+            (currentStatus == Status_debit)) {
+            bool result = false;
+            switch (functionResult.type) {
+                case IR::ResultType::i32:
+                    result = (functionResult.i32);
+                    break;
+                case IR::ResultType::i64:
+                    result = (functionResult.i64);
+                    break;
+                case IR::ResultType::f32:
+                    result = (functionResult.f32);
+                    break;
+                case IR::ResultType::f64:
+                    result = (functionResult.f64);
+                    break;
+                default:
+                    BOOST_THROW_EXCEPTION(keto::wavm_common::ContractUnsupportedResultException(
+                            "Contract returned an unsupported result."));
+            }
+            if (!result) {
+                BOOST_THROW_EXCEPTION(
+                        keto::wavm_common::ContractExecutionFailedException("Contract execution failed."));
+            }
+        }
     } catch (...) {
         Runtime::collectGarbage();
         throw;

@@ -19,6 +19,7 @@
 #include <vector>
 #include <map>
 
+
 #include <librdf.h>
 #include <redland.h>
 #include <rdf_storage.h>
@@ -47,10 +48,12 @@ public:
     friend class AccountResource;
     AccountGraphSession(const AccountGraphSession& orig) = delete;
     virtual ~AccountGraphSession();
-    
+
+    void persistDirty(keto::asn1::RDFSubjectHelperPtr& subject);
     void persist(keto::asn1::RDFSubjectHelperPtr& subject);
     void remove(keto::asn1::RDFSubjectHelperPtr& subject);
     std::string query(const std::string& query);
+    ResultVectorMap executeDirtyQuery(const std::string& queryStr);
     ResultVectorMap executeQuery(const std::string& queryStr);
     
 protected:

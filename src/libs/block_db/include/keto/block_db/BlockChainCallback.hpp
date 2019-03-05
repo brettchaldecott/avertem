@@ -25,6 +25,7 @@ public:
     };
 
 
+    virtual void applyDirtyTransaction(const keto::asn1::HashHelper chainId, const TransactionWrapper_t& transactionWrapper) const {};
     virtual void prePersistBlock(const keto::asn1::HashHelper chainId, const SignedBlock& signedBlock) const {};
     virtual void prePersistTransaction(const keto::asn1::HashHelper chainId, const SignedBlock& signedBlock, const TransactionWrapper_t& transactionWrapper) const {};
     virtual void postPersistTransaction(const keto::asn1::HashHelper chainId, const SignedBlock& signedBlock, const TransactionWrapper_t& transactionWrapper) const {};

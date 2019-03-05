@@ -37,7 +37,7 @@ namespace keto {
 namespace keystore {
 
 class KeyStoreWrapIndexManager;
-typedef std::shared_ptr<KeyStoreWrapIndexManager> KeyStoreKeyIndexManagerPtr;
+typedef std::shared_ptr<KeyStoreWrapIndexManager> KeyStoreWrapIndexManagerPtr;
 
 class KeyStoreWrapIndexManager {
 public:
@@ -55,9 +55,9 @@ public:
     virtual ~KeyStoreWrapIndexManager();
 
     // instance methods
-    static KeyStoreKeyIndexManagerPtr init();
+    static KeyStoreWrapIndexManagerPtr init();
     static void fin();
-    static KeyStoreKeyIndexManagerPtr getInstance();
+    static KeyStoreWrapIndexManagerPtr getInstance();
 
     // init the store
     void initSession();

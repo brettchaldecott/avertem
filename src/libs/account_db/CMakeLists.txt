@@ -16,6 +16,8 @@ add_library( keto_account_db
             AccountRDFStatement.cpp
             AccountRDFStatementBuilder.cpp
             AccountSystemOntologyTypes.cpp
+            AccountGraphDirtySession.cpp
+            AccountGraphDirtySessionManager.cpp
 
             ${HEADERS}
            )

@@ -34,6 +34,7 @@ const char* Events::REGISTER_RPC_PEER = "REGISTER_RPC_PEER";
 // account events
 const char* Events::CHECK_ACCOUNT_MESSAGE = "CHECK_ACCOUNT_MESSAGE";
 const char* Events::GET_NODE_ACCOUNT_ROUTING = "GET_NODE_ACCOUNT_ROUTING";
+const char* Events::APPLY_ACCOUNT_DIRTY_TRANSACTION_MESSAGE = "APPLY_ACCOUNT_DIRTY_TRANSACTION_MESSAGE";
 const char* Events::APPLY_ACCOUNT_TRANSACTION_MESSAGE = "APPLY_ACCOUNT_TRANSACTION_MESSAGE";
 
 // rpc client route transaction
@@ -59,8 +60,17 @@ const char* Events::RPC_SEND_MESSAGE    = "RPC_SEND_MESSAGE";
 // request the contract by name or hash
 const char* Events::GET_CONTRACT  = "GET_CONTRACT";
 
+// clear dirty cache
+const char* Events::CLEAR_DIRTY_CACHE = "CLEAR_DIRTY_CACHE";
+
 // sparql events
-const char* Events::SPARQL_QUERY_MESSAGE = "SPARQL_QUERY_MESSAGE";
+const char* Events::SPARQL_QUERY_MESSAGE                        = "SPARQL_QUERY_MESSAGE";
+const char* Events::DIRTY_SPARQL_QUERY_WITH_RESULTSET_MESSAGE   = "DIRTY_SPARQL_QUERY_WITH_RESULTSET_MESSAGE";
+const char* Events::SPARQL_QUERY_WITH_RESULTSET_MESSAGE         = "SPARQL_QUERY_WITH_RESULTSET_MESSAGE";
+
+
+const char* Events::ENCRYPT_ASN1::ENCRYPT                       = "SIGNED_BLOCK_ENCRYPT";
+const char* Events::ENCRYPT_ASN1::DECRYPT                       = "SIGNED_BLOCK_DECRYPT";
 
 // the test consensus method cannot be called as it is loaded before the event
 // registry
@@ -72,7 +82,7 @@ const char* Events::CONSENSUS::ROUTER       = "CONSENSUS_ROUTER";
 const char* Events::CONSENSUS::HTTPD        = "CONSENSUS_HTTPD";
 const char* Events::CONSENSUS::EVENT        = "CONSENSUS_EVENT";
 const char* Events::CONSENSUS::BLOCK        = "CONSENSUS_BLOCK";
-const char* Events::CONSENSUS::SANDBOX       = "CONSENSUS_SANDBOX";
+const char* Events::CONSENSUS::SANDBOX      = "CONSENSUS_SANDBOX";
 const char* Events::CONSENSUS::VERSION      = "CONSENSUS_VERSION";
 const char* Events::CONSENSUS::KEYSTORE     = "CONSENSUS_KEY_STORE";
 const char* Events::CONSENSUS::BALANCER     = "CONSENSUS_BALANCER";

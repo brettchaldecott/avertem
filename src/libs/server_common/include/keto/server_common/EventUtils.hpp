@@ -35,7 +35,7 @@ public:
 
     
 template<class PbType>
-keto::event::Event toEvent(PbType& type) {
+keto::event::Event toEvent(const PbType& type) {
     std::string pbValue;
     if (!type.SerializeToString(&pbValue)) {
         BOOST_THROW_EXCEPTION(keto::server_common::ProtobuffSerializationException());
@@ -44,7 +44,7 @@ keto::event::Event toEvent(PbType& type) {
 }
     
 template<class PbType>
-keto::event::Event toEvent(const std::string& event, PbType& type) {
+keto::event::Event toEvent(const std::string& event, const PbType& type) {
     std::string pbValue;
     if (!type.SerializeToString(&pbValue)) {
         BOOST_THROW_EXCEPTION(keto::server_common::ProtobuffSerializationException());

@@ -22,7 +22,7 @@ std::string AccountResource::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
-AccountResource::       AccountResource(std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr,
+AccountResource::AccountResource(std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr,
         const AccountGraphStoreManagerPtr& accountGraphStoreManagerPtr) : 
 dbManagerPtr(dbManagerPtr),accountGraphStoreManagerPtr(accountGraphStoreManagerPtr)  {
 }

@@ -44,6 +44,9 @@ public:
     static keto::event::Event encryptTransaction(const keto::event::Event& event);
     static keto::event::Event decryptTransaction(const keto::event::Event& event);
 
+    static keto::event::Event encryptAsn1(const keto::event::Event& event);
+    static keto::event::Event decryptAsn1(const keto::event::Event& event);
+
     static keto::event::Event getNetworkSessionKeys(const keto::event::Event& event);
     static keto::event::Event setNetworkSessionKeys(const keto::event::Event& event);
 

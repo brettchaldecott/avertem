@@ -26,6 +26,7 @@
 #include "keto/keystore/TransactionEncryptionService.hpp"
 #include "keto/keystore/KeyStoreStorageManager.hpp"
 #include "keto/keystore/MasterKeyManager.hpp"
+#include "keto/keystore/EncryptionService.hpp"
 
 
 namespace keto {
@@ -77,6 +78,14 @@ keto::event::Event EventRegistry::decryptTransaction(const keto::event::Event& e
     return TransactionEncryptionService::getInstance()->decryptTransaction(event);
 }
 
+keto::event::Event EventRegistry::encryptAsn1(const keto::event::Event& event) {
+    return EncryptionService::getInstance()->encryptAsn1(event);
+}
+
+keto::event::Event EventRegistry::decryptAsn1(const keto::event::Event& event) {
+    return EncryptionService::getInstance()->decryptAsn1(event);
+}
+
 keto::event::Event EventRegistry::getNetworkSessionKeys(const keto::event::Event& event) {
     return NetworkSessionKeyManager::getInstance()->getNetworkSessionKeys(event);
 }
@@ -122,6 +131,13 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler(
             keto::key_store_utils::Events::TRANSACTION::DECRYPT_TRANSACTION,
             &EventRegistry::decryptTransaction);
+
+    keto::server_common::registerEventHandler(
+            keto::server_common::Events::ENCRYPT_ASN1::ENCRYPT,
+            &EventRegistry::encryptAsn1);
+    keto::server_common::registerEventHandler(
+            keto::server_common::Events::ENCRYPT_ASN1::DECRYPT,
+            &EventRegistry::decryptAsn1);
     
     keto::server_common::registerEventHandler(
             keto::server_common::Events::CONSENSUS::KEYSTORE,
@@ -188,7 +204,12 @@ void EventRegistry::deregisterEventHandlers() {
             keto::server_common::Events::CONSENSUS_SESSION::KEYSTORE);
     keto::server_common::deregisterEventHandler(
             keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::KEYSTORE);
-    
+
+    keto::server_common::deregisterEventHandler(
+            keto::server_common::Events::ENCRYPT_ASN1::DECRYPT);
+    keto::server_common::deregisterEventHandler(
+            keto::server_common::Events::ENCRYPT_ASN1::ENCRYPT);
+
     keto::server_common::deregisterEventHandler(
             keto::key_store_utils::Events::TRANSACTION::REENCRYPT_TRANSACTION);
     keto::server_common::deregisterEventHandler(

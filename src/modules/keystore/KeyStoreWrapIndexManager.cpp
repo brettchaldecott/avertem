@@ -10,7 +10,7 @@
 namespace keto {
 namespace keystore {
 
-static KeyStoreKeyIndexManagerPtr singleton;
+static KeyStoreWrapIndexManagerPtr singleton;
 
 std::string KeyStoreWrapIndexManager::getSourceVersion() {
     return OBFUSCATED("$Id$");
@@ -25,15 +25,15 @@ KeyStoreWrapIndexManager::~KeyStoreWrapIndexManager() {
 
 }
 
-KeyStoreKeyIndexManagerPtr KeyStoreWrapIndexManager::init() {
-    return singleton =  KeyStoreKeyIndexManagerPtr(new KeyStoreWrapIndexManager());
+KeyStoreWrapIndexManagerPtr KeyStoreWrapIndexManager::init() {
+    return singleton =  KeyStoreWrapIndexManagerPtr(new KeyStoreWrapIndexManager());
 }
 
 void KeyStoreWrapIndexManager::fin() {
     singleton.reset();
 }
 
-KeyStoreKeyIndexManagerPtr KeyStoreWrapIndexManager::getInstance() {
+KeyStoreWrapIndexManagerPtr KeyStoreWrapIndexManager::getInstance() {
     return singleton;
 }
 

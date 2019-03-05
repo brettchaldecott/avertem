@@ -49,6 +49,9 @@ public:
     
     bool getAccountInfo(const keto::asn1::HashHelper& accountHash,
         keto::proto::AccountInfo& result);
+    void applyDirtyTransaction(
+            const keto::asn1::HashHelper& chainId,
+            const keto::transaction_common::TransactionWrapperHelperPtr& transactionWrapperHelperPtr);
     void applyTransaction(
             const keto::asn1::HashHelper& chainId,
             const keto::asn1::HashHelper& blockId,
@@ -56,6 +59,12 @@ public:
     void sparqlQuery(
         const keto::proto::AccountInfo& accountInfo,
         keto::proto::SparqlQuery& sparlQuery);
+    keto::proto::SparqlResultSet sparqlQueryWithResultSet(
+            const keto::proto::AccountInfo& accountInfo,
+            keto::proto::SparqlResultSetQuery& sparqlResultSetQuery);
+    keto::proto::SparqlResultSet dirtySparqlQueryWithResultSet(
+            const keto::proto::AccountInfo& accountInfo,
+            keto::proto::SparqlResultSetQuery& sparqlResultSetQuery);
     void getContract(
         const keto::proto::AccountInfo& accountInfo,
         keto::proto::ContractMessage& contractMessage);
@@ -82,6 +91,10 @@ private:
     void buildNodeAccountRouting(const std::string& accountHash,
             const std::vector<keto::proto::AccountInfo>& accountInfoVector,
             keto::router_utils::PushAccountHelper& pushAccountHelper);
+
+    void copyResultSet(
+            ResultVectorMap& resultVectorMap,
+            keto::proto::SparqlResultSet& sparqlResultSet);
 };
 
 

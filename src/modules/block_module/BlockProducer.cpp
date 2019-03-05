@@ -12,6 +12,9 @@
  */
 
 #include <iostream>
+
+#include "Account.pb.h"
+
 #include <keto/block_db/MerkleUtils.hpp>
 
 #include "keto/block/BlockProducer.hpp"
@@ -166,7 +169,7 @@ BlockProducer::State BlockProducer::getState() {
     return this->currentState;
 }
 
-void BlockProducer::addTransaction(keto::proto::Transaction transaction) {
+void BlockProducer::addTransaction(keto::transaction_common::TransactionProtoHelperPtr& transactionProtoHelperPtr) {
     std::lock_guard<std::mutex> uniqueLock(this->classMutex);
     if (this->currentState == State::terminated) {
         BOOST_THROW_EXCEPTION(keto::block::BlockProducerTerminatedException());
@@ -174,7 +177,13 @@ void BlockProducer::addTransaction(keto::proto::Transaction transaction) {
     if (this->currentState != State::block_producer) {
         BOOST_THROW_EXCEPTION(keto::block::NotBlockProducerException());
     }
-    this->transactions.push_back(transaction);
+    // apply the transaction dirty so that sequential transactions on this account can get the data before a block closes.
+    keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr =transactionProtoHelperPtr->getTransactionMessageHelper();
+    keto::block_db::BlockChainStore::getInstance()->applyDirtyTransaction(transactionMessageHelperPtr,
+            BlockChainCallbackImpl());
+
+    // add a processed transaction
+    this->transactions.push_back(*transactionProtoHelperPtr);
 }
 
 bool BlockProducer::isEnabled() {
@@ -191,13 +200,24 @@ BlockProducer::State BlockProducer::checkState() {
 
 std::deque<keto::proto::Transaction> BlockProducer::getTransactions() {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+
+    // clear the account cache
+    keto::proto::ClearDirtyCache clearDirtyCache;
+    keto::server_common::triggerEvent(
+            keto::server_common::toEvent<keto::proto::ClearDirtyCache>(
+                    keto::server_common::Events::CLEAR_DIRTY_CACHE,clearDirtyCache));
+
+
     std::deque<keto::proto::Transaction> transactions = this->transactions;
     this->transactions.clear();
+
     return transactions;
 }
 
 
 void BlockProducer::generateBlock(std::deque<keto::proto::Transaction> transactions) {
+
+
     // create a new transaction
     keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
     
@@ -234,6 +254,7 @@ void BlockProducer::generateBlock(std::deque<keto::proto::Transaction> transacti
     signedBlockBuilderPtr->sign();
     
     KETO_LOG_INFO << "Write a block";
+    keto::block_db::BlockChain::clearCache();
     keto::block_db::BlockChainStore::getInstance()->writeBlock(signedBlockBuilderPtr,BlockChainCallbackImpl());
     KETO_LOG_INFO << "Wrote a block [" <<
             signedBlockBuilderPtr->getHash().getHash(keto::common::StringEncoding::HEX)

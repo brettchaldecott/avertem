@@ -38,6 +38,7 @@ std::string BlockChainStore::getSourceVersion() {
 static std::shared_ptr<BlockChainStore> singleton;
     
 BlockChainStore::BlockChainStore() {
+    BlockChain::initCache();
     dbManagerPtr = std::shared_ptr<keto::rocks_db::DBManager>(
             new keto::rocks_db::DBManager(Constants::DB_LIST));
     blockResourceManagerPtr  =  BlockResourceManagerPtr(
@@ -48,6 +49,7 @@ BlockChainStore::~BlockChainStore() {
     this->masterChain.reset();
     blockResourceManagerPtr.reset();
     dbManagerPtr.reset();
+    BlockChain::finCache();
 }
 
 std::shared_ptr<BlockChainStore> BlockChainStore::init() {
@@ -94,6 +96,10 @@ bool BlockChainStore::requireGenesis() {
     this->getParentHash();
     return false; */
     return this->masterChain->requireGenesis();
+}
+
+void BlockChainStore::applyDirtyTransaction(keto::transaction_common::TransactionMessageHelperPtr& transactionMessageHelperPtr, const BlockChainCallback& callback) {
+    return this->masterChain->applyDirtyTransaction(transactionMessageHelperPtr, callback);
 }
 
 void BlockChainStore::writeBlock(const SignedBlockBuilderPtr& signedBlock, const BlockChainCallback& callback) {

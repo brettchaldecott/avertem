@@ -19,5 +19,9 @@ message AccountInfo {
     string graph_name = 5;
 }
 
+message ClearDirtyCache {
+    uint32 version = 1;
+}
+
 
 

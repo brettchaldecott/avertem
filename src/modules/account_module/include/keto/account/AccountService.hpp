@@ -40,9 +40,13 @@ public:
     // account methods
     keto::event::Event checkAccount(const keto::event::Event& event);
     keto::event::Event getNodeAccountRouting(const keto::event::Event& event);
+    keto::event::Event applyDirtyTransaction(const keto::event::Event& event);
     keto::event::Event applyTransaction(const keto::event::Event& event);
     keto::event::Event sparqlQuery(const keto::event::Event& event);
+    keto::event::Event sparqlQueryWithResultSet(const keto::event::Event& event);
+    keto::event::Event dirtySparqlQueryWithResultSet(const keto::event::Event& event);
     keto::event::Event getContract(const keto::event::Event& event);
+    keto::event::Event clearDirty(const keto::event::Event& event);
     
 private:
     AccountService();

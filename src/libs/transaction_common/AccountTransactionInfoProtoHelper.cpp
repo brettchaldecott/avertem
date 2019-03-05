@@ -17,6 +17,18 @@ AccountTransactionInfoProtoHelper::AccountTransactionInfoProtoHelper() {
 
 }
 
+AccountTransactionInfoProtoHelper::AccountTransactionInfoProtoHelper(const keto::asn1::HashHelper& blockchainId,
+                              const TransactionWrapper_t& transactionWrapper) :
+        blockchainId(blockchainId), transaction(new keto::transaction_common::TransactionWrapperHelper(transactionWrapper)){
+
+}
+
+AccountTransactionInfoProtoHelper::AccountTransactionInfoProtoHelper(const keto::asn1::HashHelper& blockchainId,
+                                                                     const keto::transaction_common::TransactionWrapperHelperPtr& transactionWrapperHelperPtr) :
+        blockchainId(blockchainId), transaction(transactionWrapperHelperPtr) {
+
+}
+
 AccountTransactionInfoProtoHelper::AccountTransactionInfoProtoHelper(const keto::asn1::HashHelper& blockchainId, const keto::asn1::HashHelper& blockId,
                               const keto::transaction_common::TransactionWrapperHelperPtr& transactionWrapperHelperPtr) :
                               blockchainId(blockchainId), blockId(blockId), transaction(transactionWrapperHelperPtr) {

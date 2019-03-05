@@ -25,6 +25,7 @@
 #include "keto/block_db/BlockChain.hpp"
 #include "keto/block_db/SignedBlockBuilder.hpp"
 #include "keto/block_db/BlockChainCallback.hpp"
+#include "keto/transaction_common/TransactionMessageHelper.hpp"
 
 #include "keto/obfuscate/MetaString.hpp"
 
@@ -50,6 +51,7 @@ public:
 
     void load();
     bool requireGenesis();
+    void applyDirtyTransaction(keto::transaction_common::TransactionMessageHelperPtr& transactionMessageHelperPtr, const BlockChainCallback& callback);
     void writeBlock(const SignedBlockBuilderPtr& signedBlock, const BlockChainCallback& callback);
     keto::asn1::HashHelper getParentHash();
     keto::asn1::HashHelper getParentHash(const keto::asn1::HashHelper& transactionHash);

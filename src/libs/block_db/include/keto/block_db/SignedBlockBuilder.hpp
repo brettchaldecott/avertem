@@ -57,6 +57,7 @@ public:
     
     std::vector<SignedBlockBuilderPtr> getNestedBlocks();
     keto::asn1::HashHelper getHash();
+    keto::asn1::HashHelper getFirstTransactionHash();
     keto::asn1::HashHelper getParentHash();
     operator keto::proto::SignedBlockWrapper() const;
     

@@ -144,7 +144,7 @@ std::string HashHelper::getHash(keto::common::StringEncoding stringEncoding)  co
     }
 }
 
-bool HashHelper::empty() {
+bool HashHelper::empty() const {
     return this->hash.size() == 0;
 }
 

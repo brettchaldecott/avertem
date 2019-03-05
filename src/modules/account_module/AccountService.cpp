@@ -27,6 +27,7 @@
 #include "keto/account_db/Constants.hpp"
 #include "keto/transaction_common/TransactionProtoHelper.hpp"
 #include "keto/transaction_common/AccountTransactionInfoProtoHelper.hpp"
+#include "keto/account_db/AccountGraphDirtySessionManager.hpp"
 #include "keto/crypto/SecureVectorUtils.hpp"
 
 namespace keto {
@@ -58,6 +59,17 @@ void AccountService::fin() {
 
 std::shared_ptr<AccountService> AccountService::getInstance() {
     return singleton;
+}
+
+keto::event::Event AccountService::applyDirtyTransaction(const keto::event::Event& event) {
+    keto::proto::AccountTransactionInfo transaction =
+            keto::server_common::fromEvent<keto::proto::AccountTransactionInfo>(event);
+    keto::transaction_common::AccountTransactionInfoProtoHelper accountTransactionInfoProtoHelper(transaction);
+    keto::account_db::AccountStore::getInstance()->applyDirtyTransaction(
+            accountTransactionInfoProtoHelper.getBlockChainId(),
+            accountTransactionInfoProtoHelper.getTransaction());
+
+    return keto::server_common::toEvent<keto::proto::AccountTransactionInfo>(transaction);
 }
 
 keto::event::Event AccountService::applyTransaction(const keto::event::Event& event) {
@@ -117,6 +129,37 @@ keto::event::Event AccountService::sparqlQuery(const keto::event::Event& event) 
     return keto::server_common::toEvent<keto::proto::SparqlQuery>(sparqlQuery);
 }
 
+keto::event::Event AccountService::sparqlQueryWithResultSet(const keto::event::Event& event) {
+    keto::proto::SparqlResultSetQuery  sparqlQuery =
+            keto::server_common::fromEvent<keto::proto::SparqlResultSetQuery>(event);
+
+    keto::proto::AccountInfo accountInfo;
+    keto::asn1::HashHelper accountHashHelper(sparqlQuery.account_hash());
+    keto::proto::SparqlResultSet sparqlResultSet;
+    if (keto::account_db::AccountStore::getInstance()->getAccountInfo(accountHashHelper,
+                                                                      accountInfo)) {
+        sparqlResultSet =
+                keto::account_db::AccountStore::getInstance()->sparqlQueryWithResultSet(accountInfo,sparqlQuery);
+    }
+
+    return keto::server_common::toEvent<keto::proto::SparqlResultSet>(sparqlResultSet);
+}
+
+keto::event::Event AccountService::dirtySparqlQueryWithResultSet(const keto::event::Event& event) {
+    keto::proto::SparqlResultSetQuery  sparqlQuery =
+            keto::server_common::fromEvent<keto::proto::SparqlResultSetQuery>(event);
+
+    keto::proto::AccountInfo accountInfo;
+    keto::asn1::HashHelper accountHashHelper(sparqlQuery.account_hash());
+    keto::proto::SparqlResultSet sparqlResultSet;
+    if (keto::account_db::AccountStore::getInstance()->getAccountInfo(accountHashHelper,
+                                                                      accountInfo)) {
+        sparqlResultSet = keto::account_db::AccountStore::getInstance()->dirtySparqlQueryWithResultSet(accountInfo,sparqlQuery);
+
+    }
+    return keto::server_common::toEvent<keto::proto::SparqlResultSet>(sparqlResultSet);
+}
+
 keto::event::Event AccountService::getContract(const keto::event::Event& event) {
     keto::proto::ContractMessage  contractMessage = 
             keto::server_common::fromEvent<keto::proto::ContractMessage>(event);
@@ -134,6 +177,11 @@ keto::event::Event AccountService::getContract(const keto::event::Event& event) 
     }
     
     return keto::server_common::toEvent<keto::proto::ContractMessage>(contractMessage);
+}
+
+keto::event::Event AccountService::clearDirty(const keto::event::Event& event) {
+    keto::account_db::AccountGraphDirtySessionManager::getInstance()->clearSessions();
+    return event;
 }
 
 }

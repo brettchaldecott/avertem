@@ -10,3 +10,22 @@ message SparqlQuery {
     string query = 2;
     string result = 3;
 }
+
+message SparqlResultSetQuery {
+    bytes account_hash = 1;
+    string query = 2;
+}
+
+message SparqlRowEntry {
+    string key = 1;
+    string value = 2;
+}
+
+message SparqlRow {
+    repeated SparqlRowEntry entries = 1;
+}
+
+message SparqlResultSet {
+    bytes account_hash = 1;
+    repeated SparqlRow rows = 2;
+}

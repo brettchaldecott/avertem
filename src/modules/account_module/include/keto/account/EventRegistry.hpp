@@ -34,9 +34,13 @@ public:
     
     static keto::event::Event checkAccount(const keto::event::Event& event);
     static keto::event::Event getNodeAccountRouting(const keto::event::Event& event);
+    static keto::event::Event applyDirtyTransaction(const keto::event::Event& event);
     static keto::event::Event applyTransaction(const keto::event::Event& event);
     static keto::event::Event sparqlQuery(const keto::event::Event& event);
+    static keto::event::Event dirtySparqlQueryWithResultSet(const keto::event::Event& event);
+    static keto::event::Event sparqlQueryWithResultSet(const keto::event::Event& event);
     static keto::event::Event getContract(const keto::event::Event& event);
+    static keto::event::Event clearDirty(const keto::event::Event& event);
     
     static keto::event::Event generateSoftwareHash(const keto::event::Event& event);
     static keto::event::Event setModuleSession(const keto::event::Event& event);

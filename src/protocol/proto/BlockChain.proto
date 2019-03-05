@@ -56,4 +56,3 @@ message FeeInfoMsg {
     int64 max_fee = 3;
     google.protobuf.Timestamp expiry_time = 4;
 }
-

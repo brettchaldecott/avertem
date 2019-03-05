@@ -29,6 +29,7 @@
 #include "keto/server_common/EventServiceHelpers.hpp"
 #include "keto/server_common/Constants.hpp"
 
+#include "keto/transaction_common/AccountTransactionInfoProtoHelper.hpp"
 
 namespace keto {
 namespace block {
@@ -254,6 +255,7 @@ keto::transaction_common::TransactionProtoHelper TransactionProcessor::processTr
                 getContractByName(currentAccount, keto::server_common::Constants::CONTRACTS::BASE_ACCOUNT_CONTRACT),
                 transactionProtoHelper,transactionTracker).transaction());
     }
+
 
     return transactionProtoHelper;
 }
