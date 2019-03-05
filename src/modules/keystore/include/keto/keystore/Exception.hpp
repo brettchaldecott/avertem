@@ -30,6 +30,7 @@ KETO_DECLARE_DERIVED_EXCEPTION (KeyStoreModuleException, IndexOutOfBoundsExcepti
 KETO_DECLARE_DERIVED_EXCEPTION (KeyStoreModuleException, InvalidPasswordForMasterException , "Invalid password supplied for master.");
 KETO_DECLARE_DERIVED_EXCEPTION (KeyStoreModuleException, UnknownKeyException , "The key was not found.");
 KETO_DECLARE_DERIVED_EXCEPTION (KeyStoreModuleException, KeyStoreWrapIndexContainsNoKeysConfigured , "There are no keys in the key store wrap index");
+KETO_DECLARE_DERIVED_EXCEPTION (KeyStoreModuleException, InvalidKeyIndexConfigured , "There are no keys in the key store wrap index");
 
 }
 }

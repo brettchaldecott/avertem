@@ -6,6 +6,7 @@
 #include "keto/keystore/KeyStoreStorageManager.hpp"
 #include "keto/rpc_protocol/NetworkKeysHelper.hpp"
 #include "keto/crypto/KeyBuilder.hpp"
+#include "keto/keystore/Exception.hpp"
 
 namespace keto {
 namespace keystore {
@@ -99,7 +100,12 @@ int KeyStoreWrapIndexManager::getNumberOfKeys() {
 }
 
 keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr KeyStoreWrapIndexManager::getKey(int index) {
-    return this->networkKeys[this->index[index]]->getDerivedKey();
+    KeyStoreWrapEntryPtr keyStoreWrapEntryPtr = this->networkKeys[this->index[index]];
+    if (!keyStoreWrapEntryPtr) {
+        BOOST_THROW_EXCEPTION(keto::keystore::InvalidKeyIndexConfigured(
+                                      "The session key identifier is invalid."));
+    }
+    return keyStoreWrapEntryPtr->getDerivedKey();
 }
 
 
