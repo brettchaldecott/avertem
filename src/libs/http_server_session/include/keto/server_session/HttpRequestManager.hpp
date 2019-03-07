@@ -26,6 +26,7 @@
 #include "keto/server_session/HttpSessionManager.hpp"
 #include "keto/server_session/HttpTransactionManager.hpp"
 #include "keto/server_session/HttpSparqlManager.hpp"
+#include "keto/server_session/HttpContractManager.hpp"
 
 #include "keto/obfuscate/MetaString.hpp"
 
@@ -57,6 +58,7 @@ private:
     std::shared_ptr<HttpSessionManager> httpSessionManagerPtr;
     std::shared_ptr<HttpTransactionManager> httpTransactionManagerPtr;
     std::shared_ptr<HttpSparqlManager> httpSparqlManagerPtr;
+    std::shared_ptr<HttpContractManager> httpContractManagerPtr;
     
     HttpRequestManager();
     

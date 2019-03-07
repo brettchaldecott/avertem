@@ -17,6 +17,8 @@
 #include "keto/environment/Config.hpp"
 
 #include "keto/wavm_common/WavmSessionManager.hpp"
+#include "keto/wavm_common/WavmSessionTransaction.hpp"
+#include "keto/wavm_common/WavmSessionHttp.hpp"
 #include "keto/server_common/Constants.hpp"
 #include "keto/wavm_common/Exception.hpp"
 
@@ -68,8 +70,14 @@ WavmSessionManagerPtr WavmSessionManager::getInstance() {
 
 WavmSessionPtr WavmSessionManager::initWavmSession(
     const keto::proto::SandboxCommandMessage& sandboxCommandMessage) {
-    return wavmSessionPtr = WavmSessionPtr(new WavmSession(sandboxCommandMessage,
+    return wavmSessionPtr = WavmSessionPtr(new WavmSessionTransaction(sandboxCommandMessage,
             this->keyLoaderPtr));
+}
+
+WavmSessionPtr WavmSessionManager::initHttpWavmSession(
+        const keto::proto::HttpRequestMessage& httpRequestMessage) {
+    return wavmSessionPtr = WavmSessionPtr(new WavmSessionHttp(httpRequestMessage,
+                                                           this->keyLoaderPtr));
 }
 
 

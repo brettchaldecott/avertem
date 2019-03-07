@@ -29,7 +29,11 @@ public:
     Constants() = delete;
     Constants(const Constants& orig) = delete;
     virtual ~Constants() = delete;
-    
+
+    //
+    static constexpr const char* CERT_PATH = "http_certificate_path";
+    static constexpr const char* CERT_KEY_PATH = "http_certificate_key_path";
+
     // document root
     static constexpr const char* DOCUMENT_ROOT = "document-root";
     static constexpr const char* DOCUMENT_ROOT_DEFAULT = "document_root";

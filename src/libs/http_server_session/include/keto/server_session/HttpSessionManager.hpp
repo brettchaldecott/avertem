@@ -52,6 +52,7 @@ public:
 protected:
     
 private:
+    std::vector<uint8_t> sessionAccount;
     std::map<std::vector<uint8_t>,std::shared_ptr<HttpSession>> clientHashMap;
     std::map<std::vector<uint8_t>,std::shared_ptr<HttpSession>> clientSessionMap;
     

@@ -16,6 +16,9 @@
 #include <boost/asio/ssl/context.hpp>
 #include <cstddef>
 #include <memory>
+#include <string>
+#include <fstream>
+#include <streambuf>
 
 /*  Load a signed certificate into the ssl context, and configure
     the context for use with a server.
@@ -28,7 +31,7 @@
 */
 inline
 void
-load_server_certificate(boost::asio::ssl::context& ctx)
+load_server_certificate(boost::asio::ssl::context& ctx, const std::string& certPath, const std::string& keyPath)
 {
     /*
         The certificate was generated from CMD.EXE on Windows 10 using:
@@ -37,7 +40,7 @@ load_server_certificate(boost::asio::ssl::context& ctx)
         winpty openssl req -newkey rsa:2048 -nodes -keyout key.pem -x509 -days 10000 -out cert.pem -subj "//C=US\ST=CA\L=Los Angeles\O=Beast\CN=www.example.com"
     */
 
-    std::string const cert =
+    std::string cert =
         "-----BEGIN CERTIFICATE-----\n"
         "MIIDaDCCAlCgAwIBAgIJAO8vBu8i8exWMA0GCSqGSIb3DQEBCwUAMEkxCzAJBgNV\n"
         "BAYTAlVTMQswCQYDVQQIDAJDQTEtMCsGA1UEBwwkTG9zIEFuZ2VsZXNPPUJlYXN0\n"
@@ -60,7 +63,7 @@ load_server_certificate(boost::asio::ssl::context& ctx)
         "UEVbkhd5qstF6qWK\n"
         "-----END CERTIFICATE-----\n";
 
-    std::string const key =
+    std::string key =
         "-----BEGIN PRIVATE KEY-----\n"
         "MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDJ7BRKFO8fqmsE\n"
         "Xw8v9YOVXyrQVsVbjSSGEs4Vzs4cJgcFxqGitbnLIrOgiJpRAPLy5MNcAXE1strV\n"
@@ -89,6 +92,17 @@ load_server_certificate(boost::asio::ssl::context& ctx)
         "k5cZd6pdJZa4/vhEwrYYSuEjMCnRb0lUsm7TsHxQrUd6Fi/mUuFU/haC0o0chLq7\n"
         "pVOUFq5mW8p0zbtfHbjkgxyF\n"
         "-----END PRIVATE KEY-----\n";
+
+    if (!certPath.empty() && !keyPath.empty()) {
+        std::ifstream certStream(certPath);
+        cert = std::string((std::istreambuf_iterator<char>(certStream)),
+                        std::istreambuf_iterator<char>());
+
+        std::ifstream keyStream(keyPath);
+        key = std::string((std::istreambuf_iterator<char>(keyStream)),
+                           std::istreambuf_iterator<char>());
+    }
+
 
     std::string const dh =
         "-----BEGIN DH PARAMETERS-----\n"

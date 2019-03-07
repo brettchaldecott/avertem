@@ -32,7 +32,8 @@ HttpRequestManager::HttpRequestManager() {
             httpSessionManagerPtr);
     this->httpSparqlManagerPtr = std::make_shared<HttpSparqlManager>(
             httpSessionManagerPtr);
-    
+    this->httpContractManagerPtr = std::make_shared<HttpContractManager>(
+            httpSessionManagerPtr);
 }
 
 HttpRequestManager::~HttpRequestManager() {
@@ -66,7 +67,9 @@ HttpRequestManager::handle_request(
     boost::beast::string_view path = req.target();
     std::string target = path.to_string();
     std::string result;
-    if (0 == target.compare(keto::common::HttpEndPoints::HAND_SHAKE)) {
+    if (0 == target.compare(0,strlen(keto::common::HttpEndPoints::AUTHENTICATE),keto::common::HttpEndPoints::AUTHENTICATE)) {
+        result = this->httpSessionManagerPtr->processHello(req.body());
+    } else if (0 == target.compare(keto::common::HttpEndPoints::HAND_SHAKE)) {
         result = this->httpSessionManagerPtr->processHello(req.body());
     } else if (0 == target.compare(keto::common::HttpEndPoints::TRANSACTION)) {
         result = this->httpTransactionManagerPtr->processTransaction(req,req.body());
@@ -82,6 +85,8 @@ HttpRequestManager::handle_request(
         response.body() = result;
         response.content_length(result.size());
         return response;
+    } else if (0 == target.compare(0,strlen(keto::common::HttpEndPoints::CONTRACT),keto::common::HttpEndPoints::CONTRACT)) {
+        return this->httpContractManagerPtr->processQuery(req,req.body());
     }
     boost::beast::http::response<boost::beast::http::string_body> response;
     response.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);

@@ -63,6 +63,7 @@ public:
     
     // action messages
     static const char* EXECUTE_ACTION_MESSAGE;
+    static const char* EXECUTE_HTTP_CONTRACT_MESSAGE;
     
     // rpc messages
     static const char* RPC_SEND_MESSAGE;

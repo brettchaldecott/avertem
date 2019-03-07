@@ -14,12 +14,16 @@
 #include "keto/wavm_common/Emscripten.hpp"
 #include "keto/wavm_common/WavmUtils.hpp"
 #include "keto/wavm_common/WavmSession.hpp"
+#include "keto/wavm_common/WavmSessionTransaction.hpp"
+#include "keto/wavm_common/WavmSessionHttp.hpp"
 #include "keto/wavm_common/WavmSessionManager.hpp"
+#include "keto/wavm_common/Exception.hpp"
 
 
 #ifndef _WIN32
 #include <sys/uio.h>
 #include <keto/server_common/ServerInfo.hpp>
+#include <keto/wavm_common/Constants.hpp>
 
 #endif
 
@@ -450,6 +454,20 @@ namespace keto {
         //-------------------------------------------------------------------------------
         // Keto method definitions
         //-------------------------------------------------------------------------------
+        keto::wavm_common::WavmSessionTransactionPtr castToTransactionSession(keto::wavm_common::WavmSessionPtr wavmSessionPtr) {
+            if (wavmSessionPtr->getSessionType() == keto::wavm_common::Constants::SESSION_TYPES::TRANSACTION)  {
+                return std::dynamic_pointer_cast<keto::wavm_common::WavmSessionTransaction>(wavmSessionPtr);
+            }
+            BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidWavmSessionTypeException());
+        }
+
+        keto::wavm_common::WavmSessionHttpPtr castToTHttpSession(keto::wavm_common::WavmSessionPtr wavmSessionPtr) {
+            if (wavmSessionPtr->getSessionType() == keto::wavm_common::Constants::SESSION_TYPES::HTTP)  {
+                return std::dynamic_pointer_cast<keto::wavm_common::WavmSessionHttp>(wavmSessionPtr);
+            }
+            BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidWavmSessionTypeException());
+        }
+
         // type script method mappings
         DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__console",void,keto_console,I32 msg)
         {
@@ -470,7 +488,8 @@ namespace keto {
         DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getFeeAccount",I32,keto_getFeeAccount)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
-            std::string accountHash = keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getFeeAccount();
+            std::string accountHash = castToTransactionSession(
+                    keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getFeeAccount();
             I32 base = coerce32bitAddress(allocateMemory(memory,accountHash.size()));
             memcpy(Runtime::memoryArrayPtr<U8>(memory,base,accountHash.size()),accountHash.data(),
                    accountHash.size());
@@ -490,13 +509,28 @@ namespace keto {
             return base;
         }
 
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getTransaction",I32,keto_getTransaction)
+        {
+            std::cout << "Get the account information" << std::endl;
+            Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
+            std::string transaction = castToTransactionSession(
+                    keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getTransaction();
+            I32 base = coerce32bitAddress(allocateMemory(memory,transaction.size()));
+            memcpy(Runtime::memoryArrayPtr<U8>(memory,base,transaction.size()),transaction.data(),
+                   transaction.size());
+            std::cout << "Return the account" << std::endl;
+            return base;
+        }
+
         // rdf methods
-        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_executeQuery",I64,keto_rdf_executeQuery,I32 query)
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_executeQuery",I64,keto_rdf_executeQuery,I32 type, I32 query)
         {
             Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
             std::string queryStr = keto::wavm_common::WavmUtils::readCString(memory,query);
+            std::string typeStr = keto::wavm_common::WavmUtils::readCString(memory,type);
 
-            return (I64)(long)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->executeQuery(queryStr);
+            return (I64)(long)
+                    keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->executeQuery(typeStr,queryStr);
         }
 
         DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_getQueryHeaderCount",I64,keto_rdf_getQueryHeaderCount,I64 id)
@@ -573,17 +607,20 @@ namespace keto {
         // transaction methods
         DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getTransactionValue",I64,keto_getTransactionValue)
         {
-            return (I64)(long)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getTransactionValue();
+            return (I64)(long)castToTransactionSession(
+                    keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getTransactionValue();
         }
 
         DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getTotalFeeValue",I64,keto_getTotalFeeValue, I64 minimum)
         {
-            return (I64)(long)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getTotalTransactionFee(minimum);
+            return (I64)(long)castToTransactionSession(
+                    keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getTotalTransactionFee(minimum);
         }
 
         DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getFeeValue",I64,keto_getFeeValue, I64 minimum)
         {
-            return (I64)(long)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getTransactionFee(minimum);
+            return (I64)(long)castToTransactionSession(
+                    keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getTransactionFee(minimum);
         }
 
         DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getRequestModelTransactionValue",I64,keto_getRequestModelTransactionValue,I32 accountModel,I32 transactionValueModel)
@@ -592,7 +629,9 @@ namespace keto {
             std::string accountModelString = keto::wavm_common::WavmUtils::readCString(memory,accountModel);
             std::string transactionValueModelString = keto::wavm_common::WavmUtils::readCString(memory,transactionValueModel);
 
-            return (I64)(long)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getRequestModelTransactionValue(accountModelString,transactionValueModelString);
+            return (I64)(long)castToTransactionSession(
+                    keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->
+                    getRequestModelTransactionValue(accountModelString,transactionValueModelString);
         }
 
         DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__createDebitEntry",void,keto_createDebitEntry,I32 accountId, I32 name, I32 description, I32 accountModel,I32 transactionValueModel,I64 value)
@@ -604,7 +643,8 @@ namespace keto {
             std::string accountModelString = keto::wavm_common::WavmUtils::readCString(memory,accountModel);
             std::string transactionValueModelString = keto::wavm_common::WavmUtils::readCString(memory,transactionValueModel);
 
-            keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->createDebitEntry(accountIdString, nameString, descriptionString, accountModelString,transactionValueModelString,(U64)value);
+            castToTransactionSession(keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->
+            createDebitEntry(accountIdString, nameString, descriptionString, accountModelString,transactionValueModelString,(U64)value);
         }
 
         DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__createCreditEntry",void,keto_createCreditEntry, I32 accountId, I32 name, I32 description, I32 accountModel,I32 transactionValueModel,I64 value)
@@ -616,7 +656,8 @@ namespace keto {
             std::string accountModelString = keto::wavm_common::WavmUtils::readCString(memory,accountModel);
             std::string transactionValueModelString = keto::wavm_common::WavmUtils::readCString(memory,transactionValueModel);
 
-            keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->createCreditEntry(accountIdString, nameString, descriptionString, accountModelString,transactionValueModelString,(U64)value);
+            castToTransactionSession(keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->
+            createCreditEntry(accountIdString, nameString, descriptionString, accountModelString,transactionValueModelString,(U64)value);
         }
 
         DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getRequestStringValue",I32,keto_getRequestStringValue,I32 subject,I32 predicate)
@@ -625,7 +666,8 @@ namespace keto {
             std::string subjectString = keto::wavm_common::WavmUtils::readCString(memory,subject);
             std::string predicateString = keto::wavm_common::WavmUtils::readCString(memory,predicate);
 
-            std::string requestString = keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getRequestStringValue(subjectString,predicateString);
+            std::string requestString = castToTransactionSession(
+                    keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getRequestStringValue(subjectString,predicateString);
 
             I32 base = coerce32bitAddress(allocateMemory(memory,requestString.size()));
             memcpy(Runtime::memoryArrayPtr<U8>(memory,base,requestString.size()),requestString.data(),
@@ -641,7 +683,8 @@ namespace keto {
             std::string predicateString = keto::wavm_common::WavmUtils::readCString(memory,predicate);
             std::string valueString = keto::wavm_common::WavmUtils::readCString(memory,value);
 
-            keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->setResponseStringValue(subjectString,predicateString,valueString);
+            castToTransactionSession(keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->
+               setResponseStringValue(subjectString,predicateString,valueString);
         }
 
 
@@ -651,7 +694,8 @@ namespace keto {
             std::string subjectString = keto::wavm_common::WavmUtils::readCString(memory,subject);
             std::string predicateString = keto::wavm_common::WavmUtils::readCString(memory,predicate);
 
-            return (I64) keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getRequestLongValue(subjectString,predicateString);
+            return (I64) castToTransactionSession(keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->
+            getRequestLongValue(subjectString,predicateString);
         }
 
         DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__setResponseLongValue",void,keto_setResponseLongValue,I32 subject,I32 predicate, I64 value)
@@ -660,7 +704,8 @@ namespace keto {
             std::string subjectString = keto::wavm_common::WavmUtils::readCString(memory,subject);
             std::string predicateString = keto::wavm_common::WavmUtils::readCString(memory,predicate);
 
-            keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->setResponseLongValue(subjectString,predicateString,(U64)value);
+            castToTransactionSession(keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->
+            setResponseLongValue(subjectString,predicateString,(U64)value);
         }
 
         DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getResponseFloatValue",I32,keto_getRequestFloatValue,I32 subject,I32 predicate)
@@ -669,7 +714,9 @@ namespace keto {
             std::string subjectString = keto::wavm_common::WavmUtils::readCString(memory,subject);
             std::string predicateString = keto::wavm_common::WavmUtils::readCString(memory,predicate);
 
-            return (I32)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getRequestFloatValue(subjectString,predicateString);
+            return (I32)castToTransactionSession(
+                    keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->
+                    getRequestFloatValue(subjectString,predicateString);
         }
 
         DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__setResponseFloatValue",void,keto_setResponseFloatValue,I32 subject,I32 predicate,I32 value)
@@ -678,7 +725,9 @@ namespace keto {
             std::string subjectString = keto::wavm_common::WavmUtils::readCString(memory,subject);
             std::string predicateString = keto::wavm_common::WavmUtils::readCString(memory,predicate);
 
-            keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->setResponseFloatValue(subjectString,predicateString,(U32)value);
+            castToTransactionSession(
+                    keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->
+                    setResponseFloatValue(subjectString,predicateString,(U32)value);
         }
 
         DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__getRequestBooleanValue",I32,keto_getRequestBooleanValue,I32 subject,I32 predicate)
@@ -687,7 +736,8 @@ namespace keto {
             std::string subjectString = keto::wavm_common::WavmUtils::readCString(memory,subject);
             std::string predicateString = keto::wavm_common::WavmUtils::readCString(memory,predicate);
 
-            return (bool) keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getRequestBooleanValue(subjectString,predicateString);
+            return (bool) castToTransactionSession(
+                    keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getRequestBooleanValue(subjectString,predicateString);
         }
 
         DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__setResponseBooleanValue",void,keto_setResponseBooleanValue,I32 subject,I32 predicate,I32 value)
@@ -696,7 +746,9 @@ namespace keto {
             std::string subjectString = keto::wavm_common::WavmUtils::readCString(memory,subject);
             std::string predicateString = keto::wavm_common::WavmUtils::readCString(memory,predicate);
 
-            keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->setResponseBooleanValue(subjectString,predicateString,(bool)value);
+            castToTransactionSession(
+                    keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->
+                    setResponseBooleanValue(subjectString,predicateString,(bool)value);
         }
 
 
@@ -787,5 +839,8 @@ namespace keto {
             argvOffsets[argStrings.size()] = 0;
             outInvokeArgs = {(U32)argStrings.size(), (U32)((U8*)argvOffsets - emscriptenMemoryBaseAdress) };
         }
+
+
+
     }
 }

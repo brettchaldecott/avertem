@@ -42,6 +42,9 @@ void EventRegistry::registerEventHandlers() {
             keto::server_common::Events::EXECUTE_ACTION_MESSAGE,
             &keto::sandbox::EventRegistry::executeActionMessage);
     keto::server_common::registerEventHandler (
+            keto::server_common::Events::EXECUTE_HTTP_CONTRACT_MESSAGE,
+            &keto::sandbox::EventRegistry::executeHttpActionMessage);
+    keto::server_common::registerEventHandler (
             keto::server_common::Events::CONSENSUS::SANDBOX,
             &keto::sandbox::EventRegistry::generateSoftwareHash);
     keto::server_common::registerEventHandler (
@@ -62,10 +65,16 @@ void EventRegistry::deregisterEventHandlers() {
             keto::server_common::Events::CONSENSUS_SESSION::SANDBOX);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::EXECUTE_ACTION_MESSAGE);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::EXECUTE_HTTP_CONTRACT_MESSAGE);
 }
 
 keto::event::Event EventRegistry::executeActionMessage(const keto::event::Event& event) {
     return SandboxService::getInstance()->executeActionMessage(event);
+}
+
+keto::event::Event EventRegistry::executeHttpActionMessage(const keto::event::Event& event) {
+    return SandboxService::getInstance()->executeHttpActionMessage(event);
 }
 
 keto::event::Event EventRegistry::generateSoftwareHash(const keto::event::Event& event) {

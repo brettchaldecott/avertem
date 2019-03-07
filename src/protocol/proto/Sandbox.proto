@@ -20,22 +20,19 @@ message HttpRequestEntry {
     string value = 2;
 }
 
-message HttpRequestProperties {
-    repeated HttpRequestEntry entries = 1;
-}
-
 message HttpRequestMessage {
     string contract = 1;
     bytes account_hash = 2;
-    string method = 3;
-    string uri = 4;
-    string query = 5;
-    HttpRequestProperties request_properties = 6;
-    string body = 7;
+    repeated bytes roles = 3;
+    string method = 4;
+    string uri = 5;
+    string query = 6;
+    repeated HttpRequestEntry request_properties = 7;
+    string body = 8;
 }
 
 message HttpResponseMessage {
-    string status = 1;
+    int64 status = 1;
     int64 content_length = 2;
     string content_type = 3;
     string body = 4;

@@ -43,6 +43,7 @@ public:
     static SandboxServicePtr getInstance();
     
     keto::event::Event executeActionMessage(const keto::event::Event& event);
+    keto::event::Event executeHttpActionMessage(const keto::event::Event& event);
 private:
     std::string code;
 };

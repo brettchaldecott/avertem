@@ -1,0 +1,18 @@
+FileModelModule DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+    IMPORTS Version, BinaryData
+        FROM BasicModule;
+
+
+FileModel ::= SEQUENCE {
+    version         Version,
+    date            UTCTime,
+    id              Hash,
+    fileData        BinaryData
+}
+
+
+END
+
+
+
+

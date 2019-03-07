@@ -65,6 +65,8 @@ private:
     boost::asio::ip::address serverIp;
     unsigned short serverPort;
     int threads;
+    std::string certPath;
+    std::string keyPath;
     std::shared_ptr<ssl::context> contextPtr;
     std::shared_ptr<boost::asio::io_context> ioc;
     std::vector<std::thread> threadsVector;

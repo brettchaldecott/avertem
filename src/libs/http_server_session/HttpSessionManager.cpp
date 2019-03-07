@@ -20,6 +20,8 @@
 
 #include <botan/hex.h>
 
+#include "keto/environment/Config.hpp"
+#include "keto/environment/EnvironmentManager.hpp"
 #include "keto/server_session/HttpSessionManager.hpp"
 
 #include "keto/server_common/VectorUtils.hpp"
@@ -28,6 +30,7 @@
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
 #include "keto/server_session/Exception.hpp"
+#include "keto/server_session/Constants.hpp"
 #include "keto/crypto/KeyLoader.hpp"
 #include "keto/crypto/SignatureVerification.hpp"
 #include "keto/crypto/SecureVectorUtils.hpp"
@@ -42,7 +45,14 @@ std::string HttpSessionManager::getSourceVersion() {
 }
 
 HttpSessionManager::HttpSessionManager() {
-    
+    // retrieve the configuration
+    std::shared_ptr<keto::environment::Config> config = keto::environment::EnvironmentManager::getInstance()->getConfig();
+
+    if (config->getVariablesMap().count(Constants::HTTP_SESSION_ACCOUNT)) {
+        sessionAccount = Botan::hex_decode(config->getVariablesMap()[Constants::HTTP_SESSION_ACCOUNT].as<std::string>(),true);
+    } else {
+        sessionAccount = keto::server_common::ServerInfo::getInstance()->getAccountHash();
+    }
     
 }
 
@@ -75,7 +85,7 @@ std::string HttpSessionManager::processHello(const std::string& hello) {
     if (this->clientHashMap.count(clientHash)) {
         ptr = this->clientHashMap[clientHash];
     } else {
-        ptr = std::shared_ptr<HttpSession>(new HttpSession(clientHash));
+        ptr = std::shared_ptr<HttpSession>(new HttpSession(clientHash,this->sessionAccount));
         this->clientHashMap[ptr->getClientHash()] = ptr;
         this->clientSessionMap[ptr->getSessionHash()] = ptr;
     }

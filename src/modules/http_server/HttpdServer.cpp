@@ -579,6 +579,14 @@ HttpdServer::HttpdServer() {
     if (config->getVariablesMap().count(Constants::HTTP_THREADS)) {
         threads = std::max<int>(1,atoi(config->getVariablesMap()[Constants::HTTP_THREADS].as<std::string>().c_str()));
     }
+
+    // load the cert path and key path
+    if (config->getVariablesMap().count(Constants::CERT_PATH)) {
+        certPath = config->getVariablesMap()[Constants::CERT_PATH].as<std::string>();
+    }
+    if (config->getVariablesMap().count(Constants::CERT_KEY_PATH)) {
+        keyPath = config->getVariablesMap()[Constants::CERT_KEY_PATH].as<std::string>();
+    }
 }
 
 HttpdServer::~HttpdServer() {
@@ -592,7 +600,7 @@ void HttpdServer::start() {
     this->contextPtr = std::make_shared<ssl::context>(ssl::context::sslv23);
 
     // This holds the self-signed certificate used by the server
-    load_server_certificate(*(this->contextPtr));
+    load_server_certificate(*(this->contextPtr),certPath,keyPath);
 
     // Create and launch a listening port
     listenerPtr = std::make_shared<listener>(

@@ -32,6 +32,8 @@
 #include "keto/wavm_common/WavmEngineManager.hpp"
 #include "keto/wavm_common/WavmSessionManager.hpp"
 #include "keto/wavm_common/WavmSessionScope.hpp"
+#include "keto/wavm_common/WavmSessionTransaction.hpp"
+#include "keto/wavm_common/WavmSessionHttp.hpp"
 #include "keto/environment/EnvironmentManager.hpp"
 #include "keto/server_common/VectorUtils.hpp"
 
@@ -85,7 +87,7 @@ keto::event::Event SandboxService::executeActionMessage(const keto::event::Event
                 buffer,true));
         keto::wavm_common::WavmEngineManager::getInstance()->getEngine(code)->execute();
 
-        sandboxCommandMessage = wavmSessionScope.getSession()->getSandboxCommandMessage();
+        sandboxCommandMessage = std::dynamic_pointer_cast<keto::wavm_common::WavmSessionTransaction>(wavmSessionScope.getSession())->getSandboxCommandMessage();
         
     } catch (keto::common::Exception& ex) {
         KETO_LOG_ERROR << "Failed to process the contract : " << ex.what();
@@ -102,6 +104,36 @@ keto::event::Event SandboxService::executeActionMessage(const keto::event::Event
         throw;
     }
     return keto::server_common::toEvent<keto::proto::SandboxCommandMessage>(sandboxCommandMessage);
+}
+
+keto::event::Event SandboxService::executeHttpActionMessage(const keto::event::Event& event) {
+    keto::proto::HttpRequestMessage httpRequestMessage =
+            keto::server_common::fromEvent<keto::proto::HttpRequestMessage>(event);
+
+    try {
+        keto::wavm_common::WavmSessionScope wavmSessionScope(httpRequestMessage);
+        std::string buffer = httpRequestMessage.contract();
+        std::string code = keto::server_common::VectorUtils().copyVectorToString(Botan::hex_decode(
+                buffer,true));
+        keto::wavm_common::WavmEngineManager::getInstance()->getEngine(code)->execute();
+
+        return keto::server_common::toEvent<keto::proto::HttpResponseMessage>(
+                std::dynamic_pointer_cast<keto::wavm_common::WavmSessionHttp>(wavmSessionScope.getSession())->getHttpResponse());
+    } catch (keto::common::Exception& ex) {
+        KETO_LOG_ERROR << "Failed to process the contract : " << ex.what();
+        KETO_LOG_ERROR << "Cause: " << boost::diagnostic_information(ex,true);
+        throw ex;
+    } catch (boost::exception& ex) {
+        KETO_LOG_ERROR << "Failed to process the contract : " << boost::diagnostic_information(ex,true);
+        throw;
+    } catch (std::exception& ex) {
+        KETO_LOG_ERROR << "Failed to process the contract : " << ex.what();
+        throw ex;
+    } catch (...) {
+        KETO_LOG_INFO << "Failed to process the contract";
+        throw;
+    }
+
 }
 
 }

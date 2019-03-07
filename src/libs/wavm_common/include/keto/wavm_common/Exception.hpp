@@ -40,6 +40,9 @@ KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, UnsupportedInvocationStatus
 KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, RdfIndexOutOfRangeException , "Unsupported invocation status.");
 KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, ContractExecutionFailedException , "Contract execution failed.");
 KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, ContractUnsupportedResultException , "Contract return an unsupported result.");
+KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, InvalidWavmSessionTypeException , "Trying to perform invalid operation on session type.");
+KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, RoleIndexOutOfBoundsException , "The role index is out of bounds.");
+
 
 }
 }

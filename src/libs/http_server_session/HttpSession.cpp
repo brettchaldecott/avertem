@@ -33,11 +33,15 @@ std::string HttpSession::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
     
-HttpSession::HttpSession(const std::vector<uint8_t>& clientHash) :
-    clientHash(clientHash) {
+HttpSession::HttpSession(const std::vector<uint8_t>& clientHash, const std::vector<uint8_t>& accountHash) :
+    clientHash(clientHash), accountHash(accountHash) {
+    if (accountHash.empty()) {
+        this->accountHash = keto::server_common::ServerInfo::getInstance()->getAccountHash();
+    }
     keto::crypto::SessionHashGenerator hashGenerator(
             clientHash,
-            keto::server_common::ServerInfo::getInstance()->getAccountHash());
+            this->accountHash);
+
     this->sessionHash = hashGenerator.getHash();
     
     // create a session key
@@ -58,6 +62,31 @@ HttpSession::HttpSession(const std::vector<uint8_t>& clientHash) :
     
 }
 
+HttpSession::HttpSession(const std::vector<uint8_t>& accountHash,std::vector<std::vector<uint8_t>> roles) :
+    clientHash(accountHash),accountHash(accountHash), roles(roles) {
+    keto::crypto::SessionHashGenerator hashGenerator(
+            accountHash,
+            keto::server_common::ServerInfo::getInstance()->getAccountHash());
+    this->sessionHash = hashGenerator.getHash();
+
+    // create a session key
+    keto::proto::SessionKeyRequest sessionKeyRequest;
+    sessionKeyRequest.set_session_hash(
+            keto::server_common::VectorUtils().copyVectorToString(this->sessionHash));
+
+    keto::proto::SessionKeyResponse sessionKeyResponse =
+            keto::server_common::fromEvent<keto::proto::SessionKeyResponse>(keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SessionKeyRequest>(
+                    keto::server_common::Events::REQUEST_SESSION_KEY,sessionKeyRequest)));
+
+    this->sessionKey = keto::crypto::SecureVectorUtils().copyToSecure(
+            keto::server_common::VectorUtils().copyStringToVector(
+                    sessionKeyResponse.session_key()));
+
+
+    this->createTime = std::chrono::system_clock::now();
+}
+
+
 HttpSession::~HttpSession() {
     keto::proto::SessionKeyExpireRequest sessionKeyExpireRequest;
     sessionKeyExpireRequest.set_session_hash(
@@ -71,6 +100,17 @@ std::vector<uint8_t> HttpSession::getClientHash() {
     return this->clientHash;
 }
 
+
+std::vector<uint8_t> HttpSession::getAccountHash() {
+    this->touch();
+    return this->accountHash;
+}
+
+
+std::vector<std::vector<uint8_t>> HttpSession::getRoles() {
+    this->touch();
+    return this->roles;
+}
 
 std::vector<uint8_t> HttpSession::getSessionHash() {
     this->touch();

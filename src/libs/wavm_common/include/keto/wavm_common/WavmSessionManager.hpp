@@ -48,6 +48,7 @@ public:
     static WavmSessionManagerPtr getInstance();
     
     WavmSessionPtr initWavmSession(const keto::proto::SandboxCommandMessage& sandboxCommandMessage);
+    WavmSessionPtr initHttpWavmSession(const keto::proto::HttpRequestMessage& httpRequestMessage);
     WavmSessionPtr getWavmSession();
     void finWavmSession();
     

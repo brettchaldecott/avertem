@@ -35,12 +35,15 @@ public:
     static std::string getSourceVersion();
 
     
-    HttpSession(const std::vector<uint8_t>& clientHash);
+    HttpSession(const std::vector<uint8_t>& clientHash, const std::vector<uint8_t>& accountHash);
+    HttpSession(const std::vector<uint8_t>& accountHash,std::vector<std::vector<uint8_t>> roles);
     HttpSession(const HttpSession& orig) = delete;
     virtual ~HttpSession();
     
     std::vector<uint8_t> getClientHash();
     std::vector<uint8_t> getSessionHash();
+    std::vector<uint8_t> getAccountHash();
+    std::vector<std::vector<uint8_t>> getRoles();
     keto::crypto::SecureVector getSessionKey();
     
     std::chrono::system_clock::time_point getCreateTime();
@@ -50,6 +53,8 @@ public:
 private:
     std::vector<uint8_t> clientHash;
     std::vector<uint8_t> sessionHash;
+    std::vector<uint8_t> accountHash;
+    std::vector<std::vector<uint8_t>> roles;
     keto::crypto::SecureVector sessionKey;
     std::chrono::system_clock::time_point createTime;
     std::chrono::system_clock::time_point touchTime;

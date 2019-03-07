@@ -53,6 +53,7 @@ const char* Events::ENABLE_BLOCK_PRODUCER = "ENABLE_BLOCK_PRODUCER";
 
 // block message
 const char* Events::EXECUTE_ACTION_MESSAGE  = "EXECUTE_ACTION_MESSAGE";
+const char* Events::EXECUTE_HTTP_CONTRACT_MESSAGE = "EXECUTE_HTTP_CONTRACT_MESSAGE";
 
 // rpc messages
 const char* Events::RPC_SEND_MESSAGE    = "RPC_SEND_MESSAGE";

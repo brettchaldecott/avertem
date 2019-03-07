@@ -33,6 +33,7 @@ public:
     static std::string getSourceVersion();
 
     WavmSessionScope(keto::proto::SandboxCommandMessage& sandboxCommandMessage);
+    WavmSessionScope(keto::proto::HttpRequestMessage& httpRequestMessage);
     WavmSessionScope(const WavmSessionScope& orig) = default;
     virtual ~WavmSessionScope();
     

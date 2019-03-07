@@ -21,10 +21,14 @@ add_library( keto_wavm_common
             WavmUtils.cpp
             RDFMemorySession.cpp
             WavmSession.cpp
+            WavmSessionTransaction.cpp
+            WavmSessionHttp.cpp
             WavmSessionManager.cpp
             WavmSessionScope.cpp
             RDFURLUtils.cpp
             RDFConstants.cpp
+            Constants.cpp
+            AccountSparqlQueryHelper.cpp
             
              ${HEADERS}
            )

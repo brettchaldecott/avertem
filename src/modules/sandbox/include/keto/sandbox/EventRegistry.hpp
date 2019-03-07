@@ -36,6 +36,7 @@ public:
     static void deregisterEventHandlers();
     
     static keto::event::Event executeActionMessage(const keto::event::Event& event);
+    static keto::event::Event executeHttpActionMessage(const keto::event::Event& event);
     
     static keto::event::Event generateSoftwareHash(const keto::event::Event& event);
     static keto::event::Event setModuleSession(const keto::event::Event& event);

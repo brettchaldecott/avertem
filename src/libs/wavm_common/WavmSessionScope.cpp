@@ -25,6 +25,10 @@ WavmSessionScope::WavmSessionScope(keto::proto::SandboxCommandMessage& sandboxCo
     keto::wavm_common::WavmSessionManager::getInstance()->initWavmSession(sandboxCommandMessage);
 }
 
+WavmSessionScope::WavmSessionScope(keto::proto::HttpRequestMessage& httpRequestMessage) {
+    keto::wavm_common::WavmSessionManager::getInstance()->initHttpWavmSession(httpRequestMessage);
+}
+
 WavmSessionScope::~WavmSessionScope() {
     keto::wavm_common::WavmSessionManager::getInstance()->finWavmSession();
 }

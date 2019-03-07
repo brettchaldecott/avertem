@@ -340,7 +340,7 @@ void AccountStore::copyResultSet(
         for (auto const& column : resultMap) {
             keto::proto::SparqlRowEntry entry;
             entry.set_key(column.first);
-            entry.set_key(column.second);
+            entry.set_value(column.second);
             *row.add_entries() = entry;
         }
 
