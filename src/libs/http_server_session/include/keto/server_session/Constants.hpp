@@ -2,8 +2,8 @@
 // Created by Brett Chaldecott on 2019/03/07.
 //
 
-#ifndef KETO_CONSTANTS_HPP
-#define KETO_CONSTANTS_HPP
+#ifndef KETO_SERVER_SESSION_CONSTANTS_HPP
+#define KETO_SERVER_SESSION_CONSTANTS_HPP
 
 namespace keto {
 namespace server_session {

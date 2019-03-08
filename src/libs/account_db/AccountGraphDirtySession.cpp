@@ -28,7 +28,7 @@ AccountGraphDirtySession::~AccountGraphDirtySession() {
 }
 
 std::string AccountGraphDirtySession::getName() {
-
+    return name;
 }
 
 void AccountGraphDirtySession::persistDirty(keto::asn1::RDFSubjectHelperPtr& subject) {

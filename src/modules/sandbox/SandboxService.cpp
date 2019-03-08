@@ -115,7 +115,7 @@ keto::event::Event SandboxService::executeHttpActionMessage(const keto::event::E
         std::string buffer = httpRequestMessage.contract();
         std::string code = keto::server_common::VectorUtils().copyVectorToString(Botan::hex_decode(
                 buffer,true));
-        keto::wavm_common::WavmEngineManager::getInstance()->getEngine(code)->execute();
+        keto::wavm_common::WavmEngineManager::getInstance()->getEngine(code)->executeHttp();
 
         return keto::server_common::toEvent<keto::proto::HttpResponseMessage>(
                 std::dynamic_pointer_cast<keto::wavm_common::WavmSessionHttp>(wavmSessionScope.getSession())->getHttpResponse());

@@ -44,6 +44,7 @@ public:
     virtual ~WavmEngineWrapper();
     
     void execute();
+    void executeHttp();
     
 private:
     WavmEngineManager& wavmEngineManager;

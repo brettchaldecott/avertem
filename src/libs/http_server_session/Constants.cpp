@@ -5,8 +5,8 @@
 #include "keto/server_session/Constants.hpp"
 
 
-namespace {
-namespace keto {
+namespace keto{
+namespace server_session {
 
 const char* Constants::HTTP_SESSION_ACCOUNT = "HTTP_SESSION_ACCOUNT";
 }

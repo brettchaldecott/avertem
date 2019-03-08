@@ -50,9 +50,9 @@ std::string WavmSessionHttp::getSourceVersion() {
 
 WavmSessionHttp::WavmSessionHttp(const keto::proto::HttpRequestMessage& httpRequestMessage,
         const keto::crypto::KeyLoaderPtr& keyLoaderPtr) : httpRequestMessage(httpRequestMessage), keyLoaderPtr(keyLoaderPtr) {
-    for (int index = 0; index < httpRequestMessage.request_properties().entries_size(); index++) {
-        parameters[httpRequestMessage.request_properties().entries(index).key()] =
-                httpRequestMessage.request_properties().entries(index).value();
+    for (int index = 0; index < httpRequestMessage.request_properties_size(); index++) {
+        parameters[httpRequestMessage.request_properties(index).key()] =
+                httpRequestMessage.request_properties(index).value();
     }
 }
 
@@ -76,10 +76,10 @@ long WavmSessionHttp::getNumberOfRoles() {
 }
 
 std::string WavmSessionHttp::getRole(long index) {
-    if (index >= httpRequestMessage.roles().entries_size()) {
+    if (index >= httpRequestMessage.roles_size()) {
         BOOST_THROW_EXCEPTION(keto::wavm_common::RoleIndexOutOfBoundsException());
     }
-    keto::asn1::HashHelper hashHelper(httpRequestMessage.roles().entries(index));
+    keto::asn1::HashHelper hashHelper(httpRequestMessage.roles(index));
     return hashHelper.getHash(keto::common::StringEncoding::HEX);
 }
 
@@ -100,11 +100,11 @@ std::string WavmSessionHttp::getBody() {
 }
 
 long WavmSessionHttp::getNumberOfParameters() {
-    return httpRequestMessage.request_properties().entries_size();
+    return httpRequestMessage.request_properties_size();
 }
 
 std::string WavmSessionHttp::getParameterKey(long index) {
-    return httpRequestMessage.request_properties().entries(index).key();
+    return httpRequestMessage.request_properties(index).key();
 }
 
 std::string WavmSessionHttp::getParameter(const std::string& key) {
@@ -116,16 +116,16 @@ std::string WavmSessionHttp::getParameter(const std::string& key) {
 
 // the http response methods
 void WavmSessionHttp::setStatus(long statusCode) {
-    this->httpRequestMessage.set_status(statusCode);
+    this->httpResponseMessage.set_status(statusCode);
 }
 
 void WavmSessionHttp::setContentType(const std::string& content) {
-    this->httpRequestMessage.set_content_type(content);
+    this->httpResponseMessage.set_content_type(content);
 }
 
 void WavmSessionHttp::setBody(const std::string& body) {
-    this->httpRequestMessage.set_body(body);
-    this->httpRequestMessage.set_content_length(body.size());
+    this->httpResponseMessage.set_body(body);
+    this->httpResponseMessage.set_content_length(body.size());
 }
 
 long WavmSessionHttp::executeQuery(const std::string& type, const std::string& query) {

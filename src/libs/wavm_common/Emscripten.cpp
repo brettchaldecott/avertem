@@ -574,7 +574,6 @@ namespace keto {
 
         DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_getQueryLong",I64,keto_rdf_getQueryLong,I64 id, I64 index, I64 headerNumber)
         {
-            Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
             return (I64)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getQueryLongValue(id,index,headerNumber);
         }
 
@@ -587,7 +586,6 @@ namespace keto {
 
         DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__rdf_getQueryFloat",I32,keto_rdf_getQueryFloat,I64 id, I64 index, I64 headerNumber)
         {
-            Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
             return (I32)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getQueryFloatValue(id,index,headerNumber);
         }
 
@@ -751,8 +749,132 @@ namespace keto {
                     setResponseBooleanValue(subjectString,predicateString,(bool)value);
         }
 
-
         //
+        // http session wrapping
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__http_getNumberOfRoles",I64,keto_http_getNumberOfRoles)
+        {
+            return (I64)(long)castToTHttpSession(keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getNumberOfRoles();
+        }
+
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__http_getRole",I32,keto_http_getRole,I64 index)
+        {
+            Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
+            std::string requestString = castToTHttpSession(
+                    keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getRole(index);
+
+            I32 base = coerce32bitAddress(allocateMemory(memory,requestString.size()));
+            memcpy(Runtime::memoryArrayPtr<U8>(memory,base,requestString.size()),requestString.data(),
+                   requestString.size());
+
+            return base;
+        }
+
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__http_getTargetUri",I32,keto_http_getTargetUri)
+        {
+            Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
+            std::string requestString = castToTHttpSession(
+                    keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getTargetUri();
+
+            I32 base = coerce32bitAddress(allocateMemory(memory,requestString.size()));
+            memcpy(Runtime::memoryArrayPtr<U8>(memory,base,requestString.size()),requestString.data(),
+                   requestString.size());
+
+            return base;
+        }
+
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__http_getQuery",I32,keto_http_getQuery)
+        {
+            Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
+            std::string requestString = castToTHttpSession(
+                    keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getQuery();
+
+            I32 base = coerce32bitAddress(allocateMemory(memory,requestString.size()));
+            memcpy(Runtime::memoryArrayPtr<U8>(memory,base,requestString.size()),requestString.data(),
+                   requestString.size());
+
+            return base;
+        }
+
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__http_getMethod",I32,keto_http_getMethod)
+        {
+            Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
+            std::string requestString = castToTHttpSession(
+                    keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getMethod();
+
+            I32 base = coerce32bitAddress(allocateMemory(memory,requestString.size()));
+            memcpy(Runtime::memoryArrayPtr<U8>(memory,base,requestString.size()),requestString.data(),
+                   requestString.size());
+
+            return base;
+        }
+
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__http_getBody",I32,keto_http_getBody)
+        {
+            Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
+            std::string requestString = castToTHttpSession(
+                    keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getBody();
+
+            I32 base = coerce32bitAddress(allocateMemory(memory,requestString.size()));
+            memcpy(Runtime::memoryArrayPtr<U8>(memory,base,requestString.size()),requestString.data(),
+                   requestString.size());
+
+            return base;
+        }
+
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__http_getNumberOfParameters",I64,keto_http_getNumberOfParameters)
+        {
+            return (I64)(long)castToTHttpSession(keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getNumberOfParameters();
+        }
+
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__http_getParameterKey",I32,keto_http_getParameterKey,I64 index)
+        {
+            Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
+            std::string requestString = castToTHttpSession(
+                    keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getParameterKey(index);
+
+            I32 base = coerce32bitAddress(allocateMemory(memory,requestString.size()));
+            memcpy(Runtime::memoryArrayPtr<U8>(memory,base,requestString.size()),requestString.data(),
+                   requestString.size());
+
+            return base;
+        }
+
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__http_getParameter",I32,keto_http_getParameter,I32 key)
+        {
+            Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
+            std::string keyString = keto::wavm_common::WavmUtils::readCString(memory,key);
+            std::string requestString = castToTHttpSession(
+                    keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getParameter(keyString);
+
+            I32 base = coerce32bitAddress(allocateMemory(memory,requestString.size()));
+            memcpy(Runtime::memoryArrayPtr<U8>(memory,base,requestString.size()),requestString.data(),
+                   requestString.size());
+
+            return base;
+        }
+
+        // resposne methods
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__http_setStatus",void,keto_http_setStatus,I64 statusCode)
+        {
+            castToTHttpSession(keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->setStatus(statusCode);
+        }
+
+
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__http_setContentType",void,keto_http_setContentType,I32 contentType)
+        {
+            Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
+            std::string contentTypeString = keto::wavm_common::WavmUtils::readCString(memory,contentType);
+            castToTHttpSession(
+                    keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->setContentType(contentTypeString);
+        }
+
+        DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(keto,"__http_setBody",void,keto_http_setBody,I32 body)
+        {
+            Runtime::MemoryInstance* memory = getMemoryFromRuntimeData(contextRuntimeData,defaultMemoryId.id);
+            std::string bodyString = keto::wavm_common::WavmUtils::readCString(memory,body);
+            castToTHttpSession(
+                    keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->setBody(bodyString);
+        }
 
         // C/CPP method mappings
         DEFINE_INTRINSIC_FUNCTION_WITH_MEM_AND_TABLE(env,"console",void,c_console,I32 msg)

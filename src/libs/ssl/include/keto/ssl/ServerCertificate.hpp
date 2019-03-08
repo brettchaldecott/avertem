@@ -31,7 +31,7 @@
 */
 inline
 void
-load_server_certificate(boost::asio::ssl::context& ctx, const std::string& certPath, const std::string& keyPath)
+load_server_certificate(boost::asio::ssl::context& ctx, const std::string& certPath = "", const std::string& keyPath = "")
 {
     /*
         The certificate was generated from CMD.EXE on Windows 10 using:

@@ -73,7 +73,7 @@ boost::beast::http::response<boost::beast::http::string_body> HttpContractManage
         *httpRequestMessage.add_roles() = keto::server_common::VectorUtils().copyVectorToString(
                 role);
     }
-    httpRequestMessage.set_method(req.method_string());
+    httpRequestMessage.set_method(req.method_string().to_string());
     httpRequestMessage.set_body(req.body());
     httpRequestMessage.set_uri(uriContract.getRequestUri());
     httpRequestMessage.set_query(uriContract.getQuery());

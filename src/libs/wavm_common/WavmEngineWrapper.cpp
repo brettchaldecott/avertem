@@ -41,6 +41,7 @@
 #include "keto/wavm_common/WavmSession.hpp"
 #include "keto/wavm_common/WavmSessionManager.hpp"
 #include "keto/wavm_common/WavmEngineManager.hpp"
+#include "keto/wavm_common/WavmSessionTransaction.hpp"
 
 
 
@@ -160,7 +161,7 @@ void WavmEngineWrapper::execute() {
 
         // Look up the function export to call.
         Runtime::GCPointer<FunctionInstance> functionInstance;
-        Status currentStatus = WavmSessionManager::getInstance()->getWavmSession()->getStatus();
+        Status currentStatus = std::dynamic_pointer_cast<WavmSessionTransaction>(WavmSessionManager::getInstance()->getWavmSession())->getStatus();
         if ((currentStatus == Status_init) ||
             (currentStatus == Status_debit)) {
             functionInstance = asFunctionNullable(getInstanceExport(moduleInstance, "debit"));
@@ -178,7 +179,7 @@ void WavmEngineWrapper::execute() {
         if (!functionInstance) {
             BOOST_THROW_EXCEPTION(keto::wavm_common::MissingEntryPointException());
         }
-        const FunctionType *functionType = getFunctionType(functionInstance);
+        //const FunctionType *functionType = getFunctionType(functionInstance);
 
         // Set up the arguments for the invoke.
         std::vector<Value> invokeArgs;
@@ -230,5 +231,108 @@ void WavmEngineWrapper::execute() {
     Runtime::collectGarbage();
 }
 
+
+void WavmEngineWrapper::executeHttp() {
+    // place object in a scope
+    try {
+        Module module;
+
+        // Enable some additional "features" in WAVM that are disabled by default.
+        module.featureSpec.importExportMutableGlobals = true;
+        module.featureSpec.sharedTables = true;
+        // Allow atomics on unshared memories to accomodate atomics on the Emscripten memory.
+        module.featureSpec.requireSharedFlagForAtomicOperators = false;
+
+        // check if we are dealing with a binary contract or not
+        if(*(U32*)wast.data() == 0x6d736100) {
+            if (!loadBinaryModule(wast,module)) {
+                BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidContractException());
+            }
+        } else if(!loadTextModule(wast,module)) {
+            BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidContractException());
+        }
+
+        // Link the module with the intrinsic modules.
+        Runtime::GCPointer<Compartment> compartment = Runtime::cloneCompartment(
+                this->wavmEngineManager.getCompartment());
+        Runtime::GCPointer<Context> context = Runtime::createContext(compartment);
+
+
+        LinkResult linkResult = linkModule(module, *this->wavmEngineManager.getResolver());
+        if (!linkResult.success) {
+            std::stringstream ss;
+            ss << "Failed to link module:" << std::endl;
+            for (auto &missingImport : linkResult.missingImports) {
+                ss << "Missing import: module=\"" << missingImport.moduleName
+                   << "\" export=\"" << missingImport.exportName
+                   << "\" type=\"" << asString(missingImport.type) << "\"" << std::endl;
+            }
+            BOOST_THROW_EXCEPTION(keto::wavm_common::LinkingFailedException(ss.str()));
+        }
+
+        Runtime::GCPointer<ModuleInstance> moduleInstance =
+                instantiateModule(compartment, module, std::move(linkResult.resolvedImports));
+        if (!moduleInstance) { BOOST_THROW_EXCEPTION(keto::wavm_common::LinkingFailedException()); }
+
+        // Call the module start function, if it has one.
+        Runtime::GCPointer<FunctionInstance> startFunction = getStartFunction(moduleInstance);
+        if (startFunction) {
+            invokeFunctionChecked(context, startFunction, {});
+        }
+
+        keto::Emscripten::initializeGlobals(context, module, moduleInstance);
+
+        // Look up the function export to call.
+        Runtime::GCPointer<FunctionInstance> functionInstance;
+        functionInstance = asFunctionNullable(getInstanceExport(moduleInstance, "request"));
+
+        if (!functionInstance) {
+            BOOST_THROW_EXCEPTION(keto::wavm_common::MissingEntryPointException());
+        }
+        //const FunctionType *functionType = getFunctionType(functionInstance);
+
+        // Set up the arguments for the invoke.
+        std::vector<Value> invokeArgs;
+        Result functionResult;
+        //Timing::Timer executionTimer;
+        Runtime::catchRuntimeExceptions(
+                [&] {
+                    // invoke the function
+                    functionResult = invokeFunctionChecked(context, functionInstance, invokeArgs);
+                },
+                [&](Runtime::Exception &&exception) {
+                    std::stringstream ss;
+                    ss << "Failed to handle the exception : " << describeException(exception).c_str();
+
+                    std::cout << ss.str() << std::endl;
+                    BOOST_THROW_EXCEPTION(keto::wavm_common::ContactExecutionFailedException(ss.str()));
+                });
+
+        // validate the result
+        bool result = false;
+        switch (functionResult.type) {
+            case IR::ResultType::i32:
+                result = (functionResult.i32);
+                break;
+            case IR::ResultType::i64:
+                result = (functionResult.i64);
+                break;
+            case IR::ResultType::f32:
+                result = (functionResult.f32);
+                break;
+            case IR::ResultType::f64:
+                result = (functionResult.f64);
+                break;
+            default:
+                BOOST_THROW_EXCEPTION(keto::wavm_common::ContractUnsupportedResultException(
+                                              "Contract returned an unsupported result."));
+        }
+
+    } catch (...) {
+        Runtime::collectGarbage();
+        throw;
+    }
+    Runtime::collectGarbage();
+}
 }
 }
