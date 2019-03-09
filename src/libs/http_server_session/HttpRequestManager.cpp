@@ -14,6 +14,7 @@
 #include <string.h>
 #include <iostream>
 #include <memory>
+#include <keto/common/HttpEndPoints.hpp>
 #include "keto/server_session/HttpRequestManager.hpp"
 #include "keto/server_session/HttpTransactionManager.hpp"
 
@@ -54,7 +55,14 @@ HttpRequestManager::checkRequest(boost::beast::http::request<boost::beast::http:
         return true;
     } else if (0 == target.compare(keto::common::HttpEndPoints::TRANSACTION)) {
         return true;
-    } else if (0 == target.compare(0,strlen(keto::common::HttpEndPoints::DATA_QUERY),keto::common::HttpEndPoints::DATA_QUERY)) {
+    } else if (strlen(keto::common::HttpEndPoints::DATA_QUERY) <= target.size() &&
+        0 == target.compare(0,strlen(keto::common::HttpEndPoints::DATA_QUERY),keto::common::HttpEndPoints::DATA_QUERY)) {
+        return true;
+    } else if (strlen(keto::common::HttpEndPoints::CONTRACT) <= target.size() &&
+        0 == target.compare(0,strlen(keto::common::HttpEndPoints::CONTRACT),keto::common::HttpEndPoints::CONTRACT)) {
+        return true;
+    } else if (strlen(keto::common::HttpEndPoints::AUTHENTICATE) <= target.size() &&
+        0 == target.compare(0,strlen(keto::common::HttpEndPoints::AUTHENTICATE),keto::common::HttpEndPoints::AUTHENTICATE)) {
         return true;
     }
     
@@ -67,13 +75,15 @@ HttpRequestManager::handle_request(
     boost::beast::string_view path = req.target();
     std::string target = path.to_string();
     std::string result;
-    if (0 == target.compare(0,strlen(keto::common::HttpEndPoints::AUTHENTICATE),keto::common::HttpEndPoints::AUTHENTICATE)) {
+    if (strlen(keto::common::HttpEndPoints::AUTHENTICATE) <= target.size() &&
+        0 == target.compare(0,strlen(keto::common::HttpEndPoints::AUTHENTICATE),keto::common::HttpEndPoints::AUTHENTICATE)) {
         result = this->httpSessionManagerPtr->processHello(req.body());
     } else if (0 == target.compare(keto::common::HttpEndPoints::HAND_SHAKE)) {
         result = this->httpSessionManagerPtr->processHello(req.body());
     } else if (0 == target.compare(keto::common::HttpEndPoints::TRANSACTION)) {
         result = this->httpTransactionManagerPtr->processTransaction(req,req.body());
-    } else if (0 == target.compare(0,strlen(keto::common::HttpEndPoints::DATA_QUERY),keto::common::HttpEndPoints::DATA_QUERY)) {
+    } else if (strlen(keto::common::HttpEndPoints::DATA_QUERY) <= target.size() &&
+               0 == target.compare(0,strlen(keto::common::HttpEndPoints::DATA_QUERY),keto::common::HttpEndPoints::DATA_QUERY)) {
         result = this->httpSparqlManagerPtr->processQuery(req,req.body());
         // for the sparql queries we force the connect to close otherwise
         // the body gets appended to rather than freshly executed.
@@ -85,7 +95,8 @@ HttpRequestManager::handle_request(
         response.body() = result;
         response.content_length(result.size());
         return response;
-    } else if (0 == target.compare(0,strlen(keto::common::HttpEndPoints::CONTRACT),keto::common::HttpEndPoints::CONTRACT)) {
+    } else if (strlen(keto::common::HttpEndPoints::CONTRACT) <= target.size() &&
+               0 == target.compare(0,strlen(keto::common::HttpEndPoints::CONTRACT),keto::common::HttpEndPoints::CONTRACT)) {
         return this->httpContractManagerPtr->processQuery(req,req.body());
     }
     boost::beast::http::response<boost::beast::http::string_body> response;

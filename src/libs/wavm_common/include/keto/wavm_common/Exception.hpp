@@ -42,6 +42,7 @@ KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, ContractExecutionFailedExce
 KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, ContractUnsupportedResultException , "Contract return an unsupported result.");
 KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, InvalidWavmSessionTypeException , "Trying to perform invalid operation on session type.");
 KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, RoleIndexOutOfBoundsException , "The role index is out of bounds.");
+KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, ParameterIndexOutOfBoundsException , "The parameter index is out of bounds.");
 
 
 }

@@ -72,7 +72,7 @@ std::string WavmSessionHttp::getAccount() {
 }
 
 long WavmSessionHttp::getNumberOfRoles() {
-    return httpRequestMessage.roles().size();
+    return httpRequestMessage.roles_size();
 }
 
 std::string WavmSessionHttp::getRole(long index) {
@@ -84,6 +84,7 @@ std::string WavmSessionHttp::getRole(long index) {
 }
 
 std::string WavmSessionHttp::getTargetUri() {
+    std::cout << "The uri is [" << httpRequestMessage.uri() << "]" << std::endl;
     return httpRequestMessage.uri();
 }
 
@@ -104,6 +105,9 @@ long WavmSessionHttp::getNumberOfParameters() {
 }
 
 std::string WavmSessionHttp::getParameterKey(long index) {
+    if (index >= httpRequestMessage.roles_size()) {
+        BOOST_THROW_EXCEPTION(keto::wavm_common::RoleIndexOutOfBoundsException());
+    }
     return httpRequestMessage.request_properties(index).key();
 }
 
