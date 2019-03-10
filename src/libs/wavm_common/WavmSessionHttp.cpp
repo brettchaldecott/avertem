@@ -84,7 +84,6 @@ std::string WavmSessionHttp::getRole(long index) {
 }
 
 std::string WavmSessionHttp::getTargetUri() {
-    std::cout << "The uri is [" << httpRequestMessage.uri() << "]" << std::endl;
     return httpRequestMessage.uri();
 }
 

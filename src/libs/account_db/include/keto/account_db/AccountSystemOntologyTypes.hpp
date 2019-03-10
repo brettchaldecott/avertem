@@ -57,6 +57,7 @@ public:
         static const char* ID;
         static const char* BLOCK;
         static const char* DATE;
+        static const char* ACCOUNT;
     };
 
     static const char* ACCOUNT_ONTOLOGY_CLASS;

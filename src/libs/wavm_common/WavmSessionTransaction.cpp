@@ -67,11 +67,9 @@ WavmSessionTransaction::WavmSessionTransaction(const keto::proto::SandboxCommand
         } else if ((transactionMessage = anyHelper.extract<TransactionMessage_t>(&asn_DEF_TransactionMessage)) != NULL) {
             keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr(
                     new keto::transaction_common::TransactionMessageHelper(transactionMessage));
-            std::cout << "Set the transaction model" << std::endl;
             addTransaction(transactionMessageHelperPtr,true);
         }
     }
-    std::cout << "Setup the existing transaction" << std::endl;
     addTransaction(transactionMessageHelperPtr,false);
 }
 
@@ -239,7 +237,6 @@ void WavmSessionTransaction::setResponseBooleanValue(const std::string& subject,
 
 long WavmSessionTransaction::executeQuery(const std::string& type, const std::string& query) {
     if (type == Constants::SESSION_SPARQL_QUERY) {
-        std::cout << "The query : " << query << std::endl;
         return addResultVectorMap(this->rdfSessionPtr->executeQuery(query));
     } else {
         return addResultVectorMap(AccountSparqlQueryHelper(keto::server_common::Events::DIRTY_SPARQL_QUERY_WITH_RESULTSET_MESSAGE,
@@ -405,11 +402,9 @@ void WavmSessionTransaction::addTransaction(keto::transaction_common::Transactio
     for (keto::transaction_common::SignedChangeSetHelperPtr signedChangeSetHelperPtr :
             transactionMessageHelperPtr->getTransactionWrapper()->getChangeSets()) {
         keto::asn1::ChangeSetHelperPtr changeSetHelperPtr = signedChangeSetHelperPtr->getChangeSetHelper();
-        std::cout << "Get all the hashes for the signature" << std::endl;
         std::string hash = signedChangeSetHelperPtr->getHash().getHash(keto::common::StringEncoding::HEX);
 
         if (defineRdfChangeSet) {
-            std::cout << "set the values" << std::endl;
             rdfSessionPtr->setStringValue(
                     rdfurlUtils.buildSubjectUrl(hash), rdfurlUtils.buildPredicateUrl(RDFConstants::CHANGE_SET_PREDICATES::ID), hash);
             rdfSessionPtr->setStringValue(
@@ -427,7 +422,6 @@ void WavmSessionTransaction::addTransaction(keto::transaction_common::Transactio
                     rdfurlUtils.buildSubjectUrl(hash), rdfurlUtils.buildPredicateUrl(RDFConstants::CHANGE_SET_PREDICATES::TRANSACTION_HASH),
                     transactionMessageHelperPtr->getTransactionWrapper()->getHash().getHash(keto::common::HEX));
         }
-        std::cout << "Loop through the changes" << std::endl;
         for (keto::asn1::ChangeSetDataHelperPtr changeSetDataHelperPtr:
                 changeSetHelperPtr->getChanges()) {
             if (!changeSetDataHelperPtr->isASN1()) {
@@ -445,9 +439,7 @@ void WavmSessionTransaction::addTransaction(keto::transaction_common::Transactio
                 }
             }
         }
-        std::cout << "End of loop" << std::endl;
     }
-    std::cout << "Finished with the transaction" << std::endl;
 }
 
 
@@ -457,9 +449,7 @@ std::vector<std::string> WavmSessionTransaction::getKeys(ResultVectorMap& result
         return std::vector<std::string>();
     }
     ResultMap& resultMap = resultVectorMap[0];
-    std::cout << "Get the keys" << std::endl;
     for(std::map<std::string,std::string>::iterator it = resultMap.begin(); it != resultMap.end(); ++it) {
-        std::cout << "add the key :" << it->first << std::endl;
         keys.push_back(it->first);
     }
     return keys;

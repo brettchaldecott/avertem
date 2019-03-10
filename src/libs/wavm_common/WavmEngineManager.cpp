@@ -75,7 +75,6 @@ namespace wavm_common {
 
         Object* getStubObject(ObjectType type) const
         {
-            std::cout << "Find the stub object" << std::endl;
             // If the import couldn't be resolved, stub it in.
             switch(type.kind)
             {
@@ -139,7 +138,6 @@ std::string WavmEngineManager::getSourceVersion() {
 }
 
 WavmEngineManager::WavmEngineManager() {
-    std::cout << "Instanciate the server." << std::endl;
     compartment = new Runtime::GCPointer<Runtime::Compartment>();
     *compartment = Runtime::createCompartment();
     this->emscriptenInstance = keto::Emscripten::instantiate(*compartment);

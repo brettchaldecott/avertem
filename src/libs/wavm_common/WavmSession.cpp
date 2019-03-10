@@ -153,9 +153,7 @@ std::vector<std::string> WavmSession::getKeys(ResultVectorMap& resultVectorMap) 
         return std::vector<std::string>();
     }
     ResultMap& resultMap = resultVectorMap[0];
-    std::cout << "Get the keys" << std::endl;
     for(std::map<std::string,std::string>::iterator it = resultMap.begin(); it != resultMap.end(); ++it) {
-        std::cout << "add the key :" << it->first << std::endl;
         keys.push_back(it->first);
     }
     return keys;

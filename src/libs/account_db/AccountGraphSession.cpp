@@ -155,23 +155,31 @@ ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryS
         librdf_free_query(query);
         return resultVectorMap;
     }
-    const char **names=NULL;
 
-    if(!librdf_query_results_get_bindings(results, &names, NULL)) {
-        int bindingCount = librdf_query_results_get_bindings_count(results);
-        while (!librdf_query_results_finished(results)) {
-            ResultMap resultMap;
-            for (int index = 0; index < bindingCount; index++) {
-                librdf_node* node = librdf_query_results_get_binding_value_by_name(results,
-                                                                                   names[index]);
-                unsigned char* value = librdf_node_get_literal_value(node);
-                resultMap[names[index]] = std::string((const char*)value);
-                librdf_free_node(node);
+    while (!librdf_query_results_finished(results)) {
+        ResultMap resultMap;
+        const char **names=NULL;
+        librdf_node* nodes[librdf_query_results_get_bindings_count(results)];
+
+        if(librdf_query_results_get_bindings(results, &names, nodes))
+            break;
+        if (names) {
+            for (int index=0; names[index]; index++) {
+
+                unsigned char *value = librdf_node_get_literal_value(nodes[index]);
+                if (value) {
+                    resultMap[names[index]] = std::string((const char *) value);
+                    librdf_free_node(nodes[index]);
+                } else {
+                    resultMap[names[index]] = "";
+                }
             }
-            resultVectorMap.push_back(resultMap);
-            librdf_query_results_next(results);
         }
+        resultVectorMap.push_back(resultMap);
+        librdf_query_results_next(results);
     }
+
+
     librdf_free_query_results(results);
     librdf_free_query(query);
     librdf_model_remove_submodel(this->accountGraphStore->getModel(),
@@ -192,26 +200,30 @@ ResultVectorMap AccountGraphSession::executeQuery(const std::string& queryStr) {
         librdf_free_query(query);
         return resultVectorMap;
     }
-    const char **names=NULL;
-    
-    if(!librdf_query_results_get_bindings(results, &names, NULL)) {
-        int bindingCount = librdf_query_results_get_bindings_count(results);
-        while (!librdf_query_results_finished(results)) {
-            ResultMap resultMap;
-            for (int index = 0; index < bindingCount; index++) {
-                librdf_node* node = librdf_query_results_get_binding_value_by_name(results,
-                        names[index]);
-                unsigned char* value = librdf_node_get_literal_value(node);
-                resultMap[names[index]] = std::string((const char*)value);
-                librdf_free_node(node);
+    while (!librdf_query_results_finished(results)) {
+        ResultMap resultMap;
+        const char **names=NULL;
+        librdf_node* nodes[librdf_query_results_get_bindings_count(results)];
+
+        if(librdf_query_results_get_bindings(results, &names, nodes))
+            break;
+        if (names) {
+            for (int index=0; names[index]; index++) {
+
+                unsigned char *value = librdf_node_get_literal_value(nodes[index]);
+                if (value) {
+                    resultMap[names[index]] = std::string((const char *) value);
+                    librdf_free_node(nodes[index]);
+                } else {
+                    resultMap[names[index]] = "";
+                }
             }
-            resultVectorMap.push_back(resultMap);
-            librdf_query_results_next(results);
         }
+        resultVectorMap.push_back(resultMap);
+        librdf_query_results_next(results);
     }
     librdf_free_query_results(results);
     librdf_free_query(query);
-    
     return resultVectorMap;
 }
 

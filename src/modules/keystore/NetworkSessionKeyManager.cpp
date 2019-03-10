@@ -152,7 +152,9 @@ int NetworkSessionKeyManager::getNumberOfKeys() {
 
 keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr NetworkSessionKeyManager::getKey(int index) {
     if (index >= this->hashIndex.size()) {
-        BOOST_THROW_EXCEPTION(keto::keystore::IndexOutOfBoundsException());
+        std::stringstream ss;
+        ss << "Index out of bounds [" << index << "][" << this->hashIndex.size() << "]";
+        BOOST_THROW_EXCEPTION(keto::keystore::IndexOutOfBoundsException(ss.str()));
     }
     return this->sessionKeys[this->hashIndex[index]];
 }

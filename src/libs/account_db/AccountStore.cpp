@@ -172,7 +172,7 @@ keto::proto::SparqlResultSet AccountStore::sparqlQueryWithResultSet(
 
 
     keto::proto::SparqlResultSet sparqlResultSet;
-    ResultVectorMap resultVectorMap = sessionPtr->executeDirtyQuery(sparqlResultSetQuery.query());
+    ResultVectorMap resultVectorMap = sessionPtr->executeQuery(sparqlResultSetQuery.query());
     copyResultSet(resultVectorMap,sparqlResultSet);
 
     return sparqlResultSet;
@@ -341,6 +341,7 @@ void AccountStore::copyResultSet(
             keto::proto::SparqlRowEntry entry;
             entry.set_key(column.first);
             entry.set_value(column.second);
+            std::cout << "Key[" << column.first << "] value [" << column.second << "]" << std::endl;
             *row.add_entries() = entry;
         }
 

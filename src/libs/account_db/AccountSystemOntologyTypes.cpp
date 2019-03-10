@@ -34,9 +34,10 @@ const char* AccountSystemOntologyTypes::BLOCK_PREDICATES::CHAIN  = "http://keto-
 
 const char* AccountSystemOntologyTypes::TRANSACTION_ONTOLOGY_CLASS = "http://keto-coin.io/schema/rdf/1.0/keto/Transaction#Transaction";
 
-const char* AccountSystemOntologyTypes::TRANSACTION_PREDICATES::ID = "http://keto-coin.io/schema/rdf/1.0/keto/Block#id";
-const char* AccountSystemOntologyTypes::TRANSACTION_PREDICATES::BLOCK  = "http://keto-coin.io/schema/rdf/1.0/keto/Block#block";
-const char* AccountSystemOntologyTypes::TRANSACTION_PREDICATES::DATE = "http://keto-coin.io/schema/rdf/1.0/keto/Block#date";
+const char* AccountSystemOntologyTypes::TRANSACTION_PREDICATES::ID = "http://keto-coin.io/schema/rdf/1.0/keto/Transaction#id";
+const char* AccountSystemOntologyTypes::TRANSACTION_PREDICATES::BLOCK  = "http://keto-coin.io/schema/rdf/1.0/keto/Transaction#block";
+const char* AccountSystemOntologyTypes::TRANSACTION_PREDICATES::DATE = "http://keto-coin.io/schema/rdf/1.0/keto/Transaction#date";
+const char* AccountSystemOntologyTypes::TRANSACTION_PREDICATES::ACCOUNT = "http://keto-coin.io/schema/rdf/1.0/keto/Transaction#account";
 
 const char* AccountSystemOntologyTypes::ACCOUNT_ONTOLOGY_CLASS = "http://keto-coin.io/schema/rdf/1.0/keto/Account#Account";
 
