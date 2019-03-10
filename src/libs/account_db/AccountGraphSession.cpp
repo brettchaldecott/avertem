@@ -143,15 +143,17 @@ std::string AccountGraphSession::query(const std::string& queryStr) {
 }
 
 ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryStr) {
+    std::cout << "Execute the query : " << queryStr << std::endl;
     librdf_query* query;
     librdf_query_results* results;
     query = librdf_new_query(this->accountGraphStore->getWorld(), "sparql",
                              NULL, (const unsigned char *)queryStr.c_str(), NULL);
-    librdf_model_add_submodel(this->accountGraphStore->getModel(),
-            AccountGraphDirtySessionManager::getInstance()->getDirtySession(this->accountGraphStore->dbName)->getDirtyModel());
+    //librdf_model_add_submodel(this->accountGraphStore->getModel(),
+    //        AccountGraphDirtySessionManager::getInstance()->getDirtySession(this->accountGraphStore->dbName)->getDirtyModel());
     results = librdf_model_query_execute(this->accountGraphStore->getModel(), query);
     ResultVectorMap resultVectorMap;
     if (!results) {
+        std::cout << "Return the empty results" << std::endl;
         librdf_free_query(query);
         return resultVectorMap;
     }
@@ -161,8 +163,10 @@ ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryS
         const char **names=NULL;
         librdf_node* nodes[librdf_query_results_get_bindings_count(results)];
 
-        if(librdf_query_results_get_bindings(results, &names, nodes))
+        if(librdf_query_results_get_bindings(results, &names, nodes)) {
+            std::cout << "Break from the loop as no results where found" << std::endl;
             break;
+        }
         if (names) {
             for (int index=0; names[index]; index++) {
 
@@ -182,9 +186,10 @@ ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryS
 
     librdf_free_query_results(results);
     librdf_free_query(query);
-    librdf_model_remove_submodel(this->accountGraphStore->getModel(),
-                              AccountGraphDirtySessionManager::getInstance()->getDirtySession(this->accountGraphStore->dbName)->getDirtyModel());
+    //librdf_model_remove_submodel(this->accountGraphStore->getModel(),
+    //                          AccountGraphDirtySessionManager::getInstance()->getDirtySession(this->accountGraphStore->dbName)->getDirtyModel());
 
+    std::cout << "Return the results of the query" << std::endl;
     return resultVectorMap;
 }
 
