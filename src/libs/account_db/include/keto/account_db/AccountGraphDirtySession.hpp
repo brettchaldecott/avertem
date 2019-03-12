@@ -28,13 +28,23 @@ typedef std::shared_ptr <AccountGraphDirtySession> AccountGraphDirtySessionPtr;
 
 class AccountGraphDirtySession {
 public:
-    friend class AccountGraphSession;
-
     static std::string getHeaderVersion() {
         return OBFUSCATED("$Id$");
     };
 
     static std::string getSourceVersion();
+
+    class AccountGraphDirtySessionScope {
+    public:
+        AccountGraphDirtySessionScope(const std::string& name, librdf_model* model);
+        AccountGraphDirtySessionScope(const AccountGraphDirtySessionScope& orig) = delete;
+        virtual ~AccountGraphDirtySessionScope();
+    private:
+        std::string name;
+        librdf_model* model;
+    };
+
+    friend class AccountGraphSession;
 
     AccountGraphDirtySession(const std::string& name);
     AccountGraphDirtySession(const AccountGraphDirtySession& orig) = delete;
@@ -45,6 +55,8 @@ public:
 
 protected:
     librdf_model* getDirtyModel();
+    void addDirtyNodesToContext(librdf_model* model);
+    void removeDirtyNodesFromContext(librdf_model* model);
 
 private:
     std::string name;
@@ -52,6 +64,8 @@ private:
     librdf_storage* storage;
     librdf_model* model;
 
+
+    librdf_node* buildDirtyContext();
 };
 
 }

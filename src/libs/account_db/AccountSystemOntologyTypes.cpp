@@ -39,6 +39,8 @@ const char* AccountSystemOntologyTypes::TRANSACTION_PREDICATES::BLOCK  = "http:/
 const char* AccountSystemOntologyTypes::TRANSACTION_PREDICATES::DATE = "http://keto-coin.io/schema/rdf/1.0/keto/Transaction#date";
 const char* AccountSystemOntologyTypes::TRANSACTION_PREDICATES::ACCOUNT = "http://keto-coin.io/schema/rdf/1.0/keto/Transaction#account";
 
+
+const char* AccountSystemOntologyTypes::ACCOUNT_DIRTY_ONTOLOGY_URI = "http://keto-coin.io/schema/rdf/1.0/keto/AccountDirty#AccountDirty";
 const char* AccountSystemOntologyTypes::ACCOUNT_ONTOLOGY_CLASS = "http://keto-coin.io/schema/rdf/1.0/keto/Account#Account";
 
 const char* AccountSystemOntologyTypes::ACCOUNT_PREDICATES::STATUS = "http://keto-coin.io/schema/rdf/1.0/keto/Account#status";

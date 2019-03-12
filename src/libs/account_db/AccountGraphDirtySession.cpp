@@ -6,12 +6,23 @@
 
 #include "keto/asn1/Constants.hpp"
 #include "keto/account_db/Exception.hpp"
+#include "keto/account_db/AccountSystemOntologyTypes.hpp"
+#include "keto/account_db/AccountGraphDirtySessionManager.hpp"
 
 namespace keto {
 namespace account_db {
 
 std::string AccountGraphDirtySession::getSourceVersion() {
     return OBFUSCATED("$Id$");
+}
+
+
+AccountGraphDirtySession::AccountGraphDirtySessionScope::AccountGraphDirtySessionScope(const std::string& name, librdf_model* model) :
+    name(name), model(model) {
+    AccountGraphDirtySessionManager::getInstance()->getDirtySession(name)->addDirtyNodesToContext(model);
+}
+AccountGraphDirtySession::AccountGraphDirtySessionScope::~AccountGraphDirtySessionScope() {
+    AccountGraphDirtySessionManager::getInstance()->getDirtySession(name)->removeDirtyNodesFromContext(model);
 }
 
 AccountGraphDirtySession::AccountGraphDirtySession(const std::string& name) : name(name) {
@@ -32,6 +43,7 @@ std::string AccountGraphDirtySession::getName() {
 }
 
 void AccountGraphDirtySession::persistDirty(keto::asn1::RDFSubjectHelperPtr& subject) {
+    std::cout << "[AccountGraphDirtySession::persistDirty]Persist the dirty changes [" << name << "]" << std::endl;
     for (keto::asn1::RDFPredicateHelperPtr predicateHelper : subject->getPredicates()) {
         for (keto::asn1::RDFObjectHelperPtr objectHelper : predicateHelper->listObjects()) {
             librdf_statement* statement= 0;
@@ -68,9 +80,32 @@ void AccountGraphDirtySession::persistDirty(keto::asn1::RDFSubjectHelperPtr& sub
 }
 
 librdf_model* AccountGraphDirtySession::getDirtyModel() {
+    std::cout << "[AccountGraphDirtySession::getDirtyModel]Get the model dirty changes [" << name << "]" << std::endl;
     return this->model;
 }
 
+
+void AccountGraphDirtySession::addDirtyNodesToContext(librdf_model* model) {
+    librdf_node* context = buildDirtyContext();
+    librdf_stream* stream = librdf_model_as_stream(this->model);
+    librdf_model_context_add_statements(model,context,stream);
+
+    librdf_free_stream(stream);
+    librdf_free_node(context);
+}
+
+
+void AccountGraphDirtySession::removeDirtyNodesFromContext(librdf_model* model) {
+    librdf_node* context = buildDirtyContext();
+    librdf_model_context_remove_statements(model,context);
+}
+
+
+librdf_node* AccountGraphDirtySession::buildDirtyContext() {
+    std::stringstream ss;
+    ss << AccountSystemOntologyTypes::ACCOUNT_DIRTY_ONTOLOGY_URI << "/" << name;
+    return librdf_new_node_from_uri_string(this->world,(const unsigned char*)ss.str().c_str());
+}
 
 }
 }

@@ -143,32 +143,38 @@ std::string AccountGraphSession::query(const std::string& queryStr) {
 }
 
 ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryStr) {
-    std::cout << "Execute the query : " << queryStr << std::endl;
+    //if (librdf_model_add_submodel(this->accountGraphStore->getModel(),
+    //        AccountGraphDirtySessionManager::getInstance()->getDirtySession(this->accountGraphStore->dbName)->getDirtyModel())) {
+    //    std::cout << "Faild to add the sub models" << std::endl;
+    //    BOOST_THROW_EXCEPTION(keto::account_db::UnsupportedDataTypeTransactionException());
+    //}
+    AccountGraphDirtySession::AccountGraphDirtySessionScope accountGraphDirtySessionScope(
+            this->accountGraphStore->dbName,this->accountGraphStore->getModel());
+    std::cout << "[AccountGraphSession::executeDirtyQuery]Execute the query : " << queryStr << std::endl;
     librdf_query* query;
     librdf_query_results* results;
     query = librdf_new_query(this->accountGraphStore->getWorld(), "sparql",
                              NULL, (const unsigned char *)queryStr.c_str(), NULL);
-    //librdf_model_add_submodel(this->accountGraphStore->getModel(),
-    //        AccountGraphDirtySessionManager::getInstance()->getDirtySession(this->accountGraphStore->dbName)->getDirtyModel());
+
     results = librdf_model_query_execute(this->accountGraphStore->getModel(), query);
     ResultVectorMap resultVectorMap;
     if (!results) {
-        std::cout << "Return the empty results" << std::endl;
+        std::cout << "[AccountGraphSession::executeDirtyQuery]Return the empty results" << std::endl;
         librdf_free_query(query);
         return resultVectorMap;
     }
 
     while (!librdf_query_results_finished(results)) {
         ResultMap resultMap;
-        const char **names=NULL;
-        librdf_node* nodes[librdf_query_results_get_bindings_count(results)];
+        const char **names = NULL;
+        librdf_node *nodes[librdf_query_results_get_bindings_count(results)];
 
-        if(librdf_query_results_get_bindings(results, &names, nodes)) {
-            std::cout << "Break from the loop as no results where found" << std::endl;
+        if (librdf_query_results_get_bindings(results, &names, nodes)) {
+            std::cout << "[AccountGraphSession::executeDirtyQuery]Break from the loop as no results where found" << std::endl;
             break;
         }
         if (names) {
-            for (int index=0; names[index]; index++) {
+            for (int index = 0; names[index]; index++) {
 
                 unsigned char *value = librdf_node_get_literal_value(nodes[index]);
                 if (value) {
@@ -186,8 +192,11 @@ ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryS
 
     librdf_free_query_results(results);
     librdf_free_query(query);
-    //librdf_model_remove_submodel(this->accountGraphStore->getModel(),
-    //                          AccountGraphDirtySessionManager::getInstance()->getDirtySession(this->accountGraphStore->dbName)->getDirtyModel());
+    //if (librdf_model_remove_submodel(this->accountGraphStore->getModel(),
+    //                          AccountGraphDirtySessionManager::getInstance()->getDirtySession(this->accountGraphStore->dbName)->getDirtyModel())) {
+    //    std::cout << "Failed to remove the sub model" << std::endl;
+    //    BOOST_THROW_EXCEPTION(keto::account_db::UnsupportedDataTypeTransactionException());
+    //}
 
     std::cout << "Return the results of the query" << std::endl;
     return resultVectorMap;
@@ -251,6 +260,9 @@ void AccountGraphSession::commit() {
                     ss.str()));
         }
         this->activeTransaction = false;
+    } else {
+        // sync the changes to the store otherwise we have to wait for close
+        librdf_model_sync(this->accountGraphStore->getModel());
     }
 }
 

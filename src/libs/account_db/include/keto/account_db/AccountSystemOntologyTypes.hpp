@@ -60,6 +60,8 @@ public:
         static const char* ACCOUNT;
     };
 
+    static const char* ACCOUNT_DIRTY_ONTOLOGY_URI;
+
     static const char* ACCOUNT_ONTOLOGY_CLASS;
     
     // PREDICATE identifiers

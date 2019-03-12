@@ -61,7 +61,7 @@ AccountGraphStore::AccountGraphStore(const std::string& dbName) : dbName(dbName)
         boost::filesystem::create_directory(dbPath);
     }
     std::stringstream ss;
-    ss << "hash-type='bdb',dir='" << dbPath.c_str() << "'" ;
+    ss << "hash-type='bdb',dir='" << dbPath.c_str() << "',contexts='yes'" ;
     storage=librdf_new_storage(world, "hashes", dbName.c_str(),
                              ss.str().c_str());
     model = librdf_new_model(world,storage,NULL);
