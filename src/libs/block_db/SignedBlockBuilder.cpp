@@ -81,7 +81,7 @@ SignedBlockBuilder& SignedBlockBuilder::sign() {
     if (!this->signedBlock) {
         BOOST_THROW_EXCEPTION(keto::block_db::SignedBlockReleasedException());
     }
-    keto::crypto::SignatureGenerator generator(*keyLoaderPtr);
+    keto::crypto::SignatureGenerator generator(keyLoaderPtr);
     keto::asn1::HashHelper hashHelper(this->signedBlock->hash);
     keto::asn1::SignatureHelper signatureHelper(generator.sign(hashHelper));
     if (0 != ASN_SEQUENCE_ADD(&this->signedBlock->signatures,(Signature_t*)signatureHelper)) {
@@ -98,7 +98,7 @@ SignedBlockBuilder& SignedBlockBuilder::sign(std::shared_ptr<keto::crypto::KeyLo
     if (!this->signedBlock) {
         BOOST_THROW_EXCEPTION(keto::block_db::SignedBlockReleasedException());
     }
-    keto::crypto::SignatureGenerator generator(*keyLoaderPtr);
+    keto::crypto::SignatureGenerator generator(keyLoaderPtr);
     keto::asn1::HashHelper hashHelper(this->signedBlock->hash);
     keto::asn1::SignatureHelper signatureHelper(generator.sign(hashHelper));
     if (0 != ASN_SEQUENCE_ADD(&this->signedBlock->signatures,(Signature_t*)signatureHelper)) {

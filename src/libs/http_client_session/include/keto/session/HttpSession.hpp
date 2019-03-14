@@ -84,7 +84,7 @@ private:
     boost::asio::ssl::context& ctx;
     std::string host;
     std::string port;
-    keto::crypto::KeyLoader keyLoader;
+    keto::crypto::KeyLoaderPtr keyLoader;
     bool hasSession;
     keto::proto::ClientResponse clientResponse;
     

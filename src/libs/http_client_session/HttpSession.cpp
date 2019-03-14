@@ -43,7 +43,7 @@ std::string HttpSession::getSourceVersion() {
 HttpSession::HttpSession(
         boost::asio::io_context& ioc, boost::asio::ssl::context& ctx,
         const std::string& privateKey, const std::string& publicKey) :
-    ioc(ioc), ctx(ctx), keyLoader(privateKey,publicKey), hasSession(false) {
+    ioc(ioc), ctx(ctx), keyLoader(new keto::crypto::KeyLoader(privateKey,publicKey)), hasSession(false) {
     
     
     
@@ -78,7 +78,7 @@ HttpSession& HttpSession::handShake() {
     
     // setup the crypto
     keto::crypto::SecureVector publicKeyHashVector = keto::crypto::HashGenerator().generateHash(
-            Botan::X509::BER_encode(*this->keyLoader.getPublicKey()));
+            Botan::X509::BER_encode(*this->keyLoader->getPublicKey()));
     std::vector<uint8_t> signatureHashVector =
             keto::crypto::SignatureGenerator(this->keyLoader).sign(publicKeyHashVector);
     
@@ -112,7 +112,7 @@ std::string HttpSession::makeRequest(
     keto::transaction_common::TransactionMessageHelperPtr& request) {
     
     keto::session::HttpSessionTransactionEncryptor httpSessionTransactionEncryption(
-            keto::crypto::KeyLoaderPtr(new keto::crypto::KeyLoader(this->keyLoader)),
+            this->keyLoader,
             keto::server_common::VectorUtils().copyStringToVector(
             this->clientResponse.session_key()));
 

@@ -44,5 +44,14 @@ StringVector StringUtils::tokenize(const std::string& token) {
     return result;
 }
 
+bool StringUtils::isHexidecimal(const std::string& value) {
+    for (char character : value) {
+        if (!isxdigit(character)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 }
 }

@@ -170,7 +170,7 @@ void GenesisLoader::load() {
                 sourceAccount));
         changeSetBuilder->addChange(anyModel).setStatus(Status_complete);
         keto::transaction_common::SignedChangeSetBuilderPtr signedChangeSetBuilder(new
-            keto::transaction_common::SignedChangeSetBuilder(*changeSetBuilder,*keyLoaderPtr));
+            keto::transaction_common::SignedChangeSetBuilder(*changeSetBuilder,keyLoaderPtr));
         signedChangeSetBuilder->sign();
         
         transactionWrapperHelper->addChangeSet(*signedChangeSetBuilder);

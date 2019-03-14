@@ -41,13 +41,13 @@ public:
 
     SignedChangeSetBuilder();
     SignedChangeSetBuilder(ChangeSet_t* changeSet);
-    SignedChangeSetBuilder(ChangeSet_t* changeSet, const keto::crypto::KeyLoader& keyloader);
+    SignedChangeSetBuilder(ChangeSet_t* changeSet, const keto::crypto::KeyLoaderPtr& keyloader);
     SignedChangeSetBuilder(const SignedChangeSetBuilder& orig) = delete;
     virtual ~SignedChangeSetBuilder();
     
     
     SignedChangeSetBuilder& setChangeSet(ChangeSet_t* changeSet);
-    SignedChangeSetBuilder& setKeyLoader(const keto::crypto::KeyLoader& keyloader);
+    SignedChangeSetBuilder& setKeyLoader(const keto::crypto::KeyLoaderPtr& keyloader);
     SignedChangeSetBuilder& sign();
     
     operator SignedChangeSet_t*();
@@ -55,7 +55,7 @@ public:
     
 private:
     SignedChangeSet_t* signedChangedSet;
-    keto::crypto::KeyLoader keyLoader;
+    keto::crypto::KeyLoaderPtr keyLoader;
 };
 
 

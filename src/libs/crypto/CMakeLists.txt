@@ -25,6 +25,7 @@ target_include_directories( keto_crypto
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../common/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../environment/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../obfuscate/include"
+                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../server_common/include"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/libs/common/include/" 
                             ${Boost_INCLUDE_DIRS}
                             ${BOTAN_INCLUDE_DIR}

@@ -31,10 +31,10 @@ std::string SignatureGenerator::getSourceVersion() {
 }
 
 SignatureGenerator::SignatureGenerator(const keto::crypto::SecureVector& key) : 
-    key(key){
+    key(key) {
 }
 
-SignatureGenerator::SignatureGenerator(const keto::crypto::KeyLoader& loader) : loader(loader) {
+SignatureGenerator::SignatureGenerator(const keto::crypto::KeyLoaderPtr& loader) : loader(loader) {
     
 }
 
@@ -45,8 +45,8 @@ SignatureGenerator::~SignatureGenerator() {
 std::vector<uint8_t> SignatureGenerator::sign(std::vector<uint8_t>& value) {
     Botan::DataSource_Memory memoryDatasource(key);
     std::shared_ptr<Botan::Private_Key> privateKey;
-    if (this->loader.isInitialized()) {
-        privateKey = this->loader.getPrivateKey();
+    if (this->loader) {
+        privateKey = this->loader->getPrivateKey();
     } else {
         privateKey = 
             Botan::PKCS8::load_key(memoryDatasource);
@@ -61,8 +61,8 @@ std::vector<uint8_t> SignatureGenerator::sign(std::vector<uint8_t>& value) {
 std::vector<uint8_t> SignatureGenerator::sign(const keto::crypto::SecureVector& value) {
     Botan::DataSource_Memory memoryDatasource(key);
     std::shared_ptr< Botan::Private_Key > privateKey;
-    if (this->loader.isInitialized()) {
-        privateKey = this->loader.getPrivateKey();
+    if (this->loader) {
+        privateKey = this->loader->getPrivateKey();
     } else {
         privateKey = 
             Botan::PKCS8::load_key(memoryDatasource);

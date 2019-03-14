@@ -19,11 +19,13 @@
 #include <botan/pubkey.h>
 #include <botan/rng.h>
 #include <botan/auto_rng.h>
+#include <botan/hex.h>
 
+
+#include "keto/server_common/StringUtils.hpp"
 #include "keto/crypto/Exception.hpp"
 #include "keto/crypto/KeyLoader.hpp"
 #include "keto/environment/EnvironmentManager.hpp"
-#include "include/keto/crypto/KeyLoader.hpp"
 
 namespace keto {
 namespace crypto {
@@ -32,27 +34,28 @@ std::string KeyLoader::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
-    
-KeyLoader::KeyLoader() : initialized(false), generator(new Botan::AutoSeeded_RNG()) {
-    
-}
-
 KeyLoader::KeyLoader(const boost::filesystem::path& publicKeyPath) : initialized(true),
         publicKeyPath(publicKeyPath.string()), generator(new Botan::AutoSeeded_RNG())
 {
+
 }
 
 KeyLoader::KeyLoader(const std::string& publicKeyPath) : initialized(true),
         publicKeyPath(publicKeyPath), generator(new Botan::AutoSeeded_RNG())
 {
-    // setup the paths using the environmental variables
-    boost::filesystem::path publicPath =  
+    boost::filesystem::path publicPath =
             keto::environment::EnvironmentManager::getInstance()->getEnv()->getInstallDir() / publicKeyPath;
-    
-    if (!boost::filesystem::exists(publicPath)) {
-        BOOST_THROW_EXCEPTION(keto::crypto::InvalidKeyPathException());
+
+    if (boost::filesystem::exists(publicPath)) {
+        // setup the paths using the environmental variables
+        boost::filesystem::path publicPath =
+                keto::environment::EnvironmentManager::getInstance()->getEnv()->getInstallDir() / publicKeyPath;
+
+        if (!boost::filesystem::exists(publicPath)) {
+            BOOST_THROW_EXCEPTION(keto::crypto::InvalidKeyPathException());
+        }
+        this->publicKeyPath = publicPath.string();
     }
-    this->publicKeyPath = publicPath.string();
 }
     
     
@@ -63,20 +66,24 @@ KeyLoader::KeyLoader(const std::string& privateKeyPath,
 {
     
     // setup the paths using the environmental variables
-    boost::filesystem::path publicPath =  
-            keto::environment::EnvironmentManager::getInstance()->getEnv()->getInstallDir() / publicKeyPath;
-    if (!boost::filesystem::exists(publicPath)) {
-        BOOST_THROW_EXCEPTION(keto::crypto::InvalidKeyPathException());
+    if (!keto::server_common::StringUtils::isHexidecimal(publicKeyPath)) {
+        boost::filesystem::path publicPath =
+                keto::environment::EnvironmentManager::getInstance()->getEnv()->getInstallDir() / publicKeyPath;
+        if (!boost::filesystem::exists(publicPath)) {
+            BOOST_THROW_EXCEPTION(keto::crypto::InvalidKeyPathException());
+        }
+        this->publicKeyPath = publicPath.string();
     }
-    this->publicKeyPath = publicPath.string();
     
     // setup the paths using the environmental variables
-    boost::filesystem::path privatePath =  
-            keto::environment::EnvironmentManager::getInstance()->getEnv()->getInstallDir() / privateKeyPath;
-    if (!boost::filesystem::exists(privatePath)) {
-        BOOST_THROW_EXCEPTION(keto::crypto::InvalidKeyPathException());
+    if (!keto::server_common::StringUtils::isHexidecimal(privateKeyPath)) {
+        boost::filesystem::path privatePath =
+                keto::environment::EnvironmentManager::getInstance()->getEnv()->getInstallDir() / privateKeyPath;
+        if (!boost::filesystem::exists(privatePath)) {
+            BOOST_THROW_EXCEPTION(keto::crypto::InvalidKeyPathException());
+        }
+        this->privateKeyPath = privatePath.string();
     }
-    this->privateKeyPath = privatePath.string();
 }
 
 KeyLoader::~KeyLoader() {
@@ -89,9 +96,18 @@ std::shared_ptr<Botan::Private_Key> KeyLoader::getPrivateKey() {
     if (this->privateKeyPath.empty()) {
         BOOST_THROW_EXCEPTION(keto::crypto::PrivateKeyNotConfiguredException());
     }
-    // attempt to load the private key using the path supplied and the 
-    return std::shared_ptr<Botan::Private_Key>(
-            Botan::PKCS8::load_key(this->privateKeyPath, *generator));
+    // attempt to load the private key using the path supplied and the
+    if (!keto::server_common::StringUtils::isHexidecimal(this->privateKeyPath)) {
+        std::cout << "Load the file [" << this->privateKeyPath << "]" << std::endl;
+        return std::shared_ptr<Botan::Private_Key>(
+                Botan::PKCS8::load_key(this->privateKeyPath, *generator));
+
+    } else {
+        std::cout << "Load the hex encoded entry [" << this->privateKeyPath << "]" << std::endl;
+        Botan::DataSource_Memory derivedDatasource(Botan::hex_decode(this->privateKeyPath,true));
+        return std::shared_ptr<Botan::Private_Key>(
+                Botan::PKCS8::load_key(derivedDatasource));
+    }
 }
 
 
@@ -102,15 +118,23 @@ std::shared_ptr<Botan::Public_Key> KeyLoader::getPublicKey() {
     if (this->publicKeyPath.empty()) {
         BOOST_THROW_EXCEPTION(keto::crypto::PublicKeyNotConfiguredException());
     }
-    // attempt to load the private key using the path supplied and the 
-    return std::shared_ptr<Botan::Public_Key>(
-            Botan::X509::load_key(this->publicKeyPath));
+    // attempt to load the private key using the path supplied and the
+    if (!keto::server_common::StringUtils::isHexidecimal(this->publicKeyPath)) {
+        std::cout << "Load the public key from file [" << this->publicKeyPath << "]" << std::endl;
+        return std::shared_ptr<Botan::Public_Key>(
+                Botan::X509::load_key(this->publicKeyPath));
+    } else {
+        std::cout << "Load the public key from hex [" << this->publicKeyPath << "]" << std::endl;
+        return std::shared_ptr<Botan::Public_Key>(
+                Botan::X509::load_key(Botan::hex_decode(this->publicKeyPath,true)));
+    }
+
 }
 
 bool KeyLoader::isInitialized() {
     return this->initialized;
 }
-    
+
 
 }
 }

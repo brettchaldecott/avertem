@@ -6,8 +6,8 @@ configure_file(include/keto/common/MetaInfo.hpp.in include/keto/common/MetaInfo.
 ## SORT .cpp by most likely to change / break compile
 add_library( keto_common
             
-	      Exception.cpp
-              Constants.cpp
+	      	Exception.cpp
+			Constants.cpp
 
              ${HEADERS}
            )

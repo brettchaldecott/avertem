@@ -33,7 +33,7 @@ public:
     static std::string getSourceVersion();
     
     SignatureGenerator(const keto::crypto::SecureVector& key);
-    SignatureGenerator(const keto::crypto::KeyLoader& loader);
+    SignatureGenerator(const keto::crypto::KeyLoaderPtr& loader);
     SignatureGenerator(const SignatureGenerator& orig) = default;
     virtual ~SignatureGenerator();
     
@@ -42,7 +42,7 @@ public:
     
 private:
     keto::crypto::SecureVector key;
-    keto::crypto::KeyLoader loader;
+    keto::crypto::KeyLoaderPtr loader;
 };
 
 

@@ -43,7 +43,7 @@ SignedChangeSetBuilder::SignedChangeSetBuilder(ChangeSet_t* changeSet) {
 }
 
 SignedChangeSetBuilder::SignedChangeSetBuilder(ChangeSet_t* changeSet, 
-            const keto::crypto::KeyLoader& keyLoader) : keyLoader(keyLoader) {
+            const keto::crypto::KeyLoaderPtr& keyLoader) : keyLoader(keyLoader) {
     this->signedChangedSet = (SignedChangeSet_t*)calloc(1, sizeof *signedChangedSet);
     keto::asn1::HashHelper hashHelper(
         keto::crypto::HashGenerator().generateHash(
@@ -74,7 +74,7 @@ SignedChangeSetBuilder& SignedChangeSetBuilder::setChangeSet(ChangeSet_t* change
 }
 
 SignedChangeSetBuilder& SignedChangeSetBuilder::setKeyLoader(
-        const keto::crypto::KeyLoader& keyloader) {
+        const keto::crypto::KeyLoaderPtr& keyloader) {
     this->keyLoader = keyLoader;
     return (*this);
 }

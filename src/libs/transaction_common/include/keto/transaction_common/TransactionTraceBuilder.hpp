@@ -42,7 +42,7 @@ public:
     virtual ~TransactionTraceBuilder();
     
     static TransactionTraceBuilderPtr createTransactionTrace(
-        const keto::asn1::HashHelper& accountHash, keto::crypto::KeyLoader& keyloader);
+        const keto::asn1::HashHelper& accountHash, keto::crypto::KeyLoaderPtr& keyloader);
     
     operator TransactionTrace_t*();
     operator TransactionTrace_t&();
@@ -52,7 +52,7 @@ private:
     TransactionTrace_t* transactionTrace;
     
     TransactionTraceBuilder(
-        const keto::asn1::HashHelper& accountHash, keto::crypto::KeyLoader& keyloader);
+        const keto::asn1::HashHelper& accountHash, keto::crypto::KeyLoaderPtr& keyloader);
     
     
 };

@@ -256,7 +256,7 @@ keto::proto::SandboxCommandMessage WavmSessionTransaction::getSandboxCommandMess
             this->getCurrentAccountHash()));
     changeSetBuilder->addChange(anyModel).setStatus(transactionWrapperHelperPtr->getStatus());
     keto::transaction_common::SignedChangeSetBuilderPtr signedChangeSetBuilder(new
-        keto::transaction_common::SignedChangeSetBuilder(*changeSetBuilder,*keyLoaderPtr));
+        keto::transaction_common::SignedChangeSetBuilder(*changeSetBuilder,keyLoaderPtr));
     signedChangeSetBuilder->sign();
     transactionWrapperHelperPtr->addChangeSet(*signedChangeSetBuilder);
     

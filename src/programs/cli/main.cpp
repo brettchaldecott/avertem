@@ -124,7 +124,7 @@ int generateTransaction(std::shared_ptr<ketoEnv::Config> config,
     std::string publicKey = config->getVariablesMap()[keto::cli::Constants::PUBLIC_KEY].as<std::string>();
 
     // read in the keys
-    keto::crypto::KeyLoader keyLoader(privateKey, publicKey);
+    keto::crypto::KeyLoaderPtr keyLoader(new keto::crypto::KeyLoader(privateKey, publicKey));
 
     keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr;
 
@@ -191,7 +191,7 @@ int generateTransaction(std::shared_ptr<ketoEnv::Config> config,
 
         keto::asn1::PrivateKeyHelper privateKeyHelper;
         privateKeyHelper.setKey(
-                Botan::PKCS8::BER_encode(*keyLoader.getPrivateKey()));
+                Botan::PKCS8::BER_encode(*keyLoader->getPrivateKey()));
 
         std::shared_ptr<keto::chain_common::SignedTransactionBuilder> signedTransBuild =
                 keto::chain_common::SignedTransactionBuilder::createTransaction(

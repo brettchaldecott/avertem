@@ -57,7 +57,7 @@ std::string ServerHelloProtoHelper::getAccountHashStr() {
 }
 
 ServerHelloProtoHelper& ServerHelloProtoHelper::sign() {
-    keto::crypto::SignatureGenerator generator(*keyLoaderPtr);
+    keto::crypto::SignatureGenerator generator(keyLoaderPtr);
     std::vector<uint8_t> accountHash;
     std::string stringHash = serverHelo.account_hash();
     std::copy(stringHash.begin(), stringHash.end(), std::back_inserter(accountHash));

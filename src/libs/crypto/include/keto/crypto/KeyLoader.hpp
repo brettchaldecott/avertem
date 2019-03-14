@@ -41,7 +41,6 @@ public:
     };
     static std::string getSourceVersion();
     
-    KeyLoader();
     KeyLoader(const std::string& publicKeyPath);
     KeyLoader(const boost::filesystem::path& publicKeyPath);
     KeyLoader(const std::string& privateKeyPath, const std::string& publicKeyPath);
@@ -58,6 +57,8 @@ private:
     std::string privateKeyPath;
     std::string publicKeyPath;
     std::shared_ptr<Botan::AutoSeeded_RNG> generator;
+
+
 };
 
 }

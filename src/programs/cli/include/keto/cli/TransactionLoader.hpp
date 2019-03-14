@@ -27,7 +27,7 @@ public:
 
     static std::string getSourceVersion();
 
-    TransactionLoader(const TransactionReader& transactionReader, const keto::crypto::KeyLoader& keyLoader);
+    TransactionLoader(const TransactionReader& transactionReader, const keto::crypto::KeyLoaderPtr& keyLoaderPtr);
     TransactionLoader(const TransactionLoader& orig) = default;
     virtual ~TransactionLoader();
 
@@ -36,7 +36,7 @@ public:
 
 private:
     TransactionReader transactionReader;
-    keto::crypto::KeyLoader keyLoader;
+    keto::crypto::KeyLoaderPtr keyLoader;
 
     keto::transaction_common::TransactionMessageHelperPtr load(nlohmann::json transaction);
 };

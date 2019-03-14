@@ -125,7 +125,7 @@ SoftwareConsensusHelper& SoftwareConsensusHelper::generateMerkelRoot() {
 
 SoftwareConsensusHelper& SoftwareConsensusHelper::sign(
             const std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr) {
-    keto::crypto::SignatureGenerator generator(*keyLoaderPtr);
+    keto::crypto::SignatureGenerator generator(keyLoaderPtr);
     keto::asn1::HashHelper hashHelper(this->softwareConsensus->merkelRoot);
     keto::asn1::SignatureHelper signatureHelper(generator.sign(hashHelper));
     this->softwareConsensus->signature = signatureHelper;

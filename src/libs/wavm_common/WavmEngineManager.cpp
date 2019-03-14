@@ -26,7 +26,6 @@
 #include "Runtime/Linker.h"
 #include "Runtime/Intrinsics.h"
 #include "Runtime/Runtime.h"
-#include "Runtime/RuntimePrivate.h"
 #include "ThreadTest/ThreadTest.h"
 #include "WAST/WAST.h"
 #include "WASM/WASM.h"

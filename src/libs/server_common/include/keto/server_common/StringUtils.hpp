@@ -35,6 +35,7 @@ public:
     virtual ~StringUtils();
     
     StringVector tokenize(const std::string& token);
+    static bool isHexidecimal(const std::string& value);
 private:
     std::string value;
 };

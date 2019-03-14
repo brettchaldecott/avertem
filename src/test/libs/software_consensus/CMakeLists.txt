@@ -23,8 +23,8 @@ target_include_directories(software_consensus_test
         PUBLIC ${CHAI_SCRIPT_INCLUDE_DIR})
 
 target_link_libraries( software_consensus_test 
-        PRIVATE keto_software_consensus keto_server_common
-        PRIVATE keto_chain_common keto_asn1_common keto_crypto keto_environment keto_common keto_asn1_protocol
+        PRIVATE keto_software_consensus
+        PRIVATE keto_chain_common keto_asn1_common keto_crypto  keto_server_common keto_environment keto_common keto_asn1_protocol
         PRIVATE ${Boost_LIBRARIES} ${CMAKE_DL_LIBS} ${PLATFORM_SPECIFIC_LIBS}
         PRIVATE ${pthread_library} ${BOTAN_LIBRARIES} ${OPENSSL_LIBRARIES} )
 
@@ -34,8 +34,8 @@ target_include_directories(software_consensus_hash_test
         PUBLIC ${CHAI_SCRIPT_INCLUDE_DIR})
 
 target_link_libraries( software_consensus_hash_test 
-        PRIVATE keto_software_consensus keto_key_tools keto_server_common
-        PRIVATE keto_chain_common keto_asn1_common keto_crypto keto_environment keto_common keto_asn1_protocol
+        PRIVATE keto_software_consensus keto_key_tools
+        PRIVATE keto_chain_common keto_asn1_common keto_crypto  keto_server_common keto_environment keto_common keto_asn1_protocol
         PRIVATE ${Boost_LIBRARIES} ${CMAKE_DL_LIBS} ${PLATFORM_SPECIFIC_LIBS}
         PRIVATE ${pthread_library} ${BOTAN_LIBRARIES} ${OPENSSL_LIBRARIES} )
 

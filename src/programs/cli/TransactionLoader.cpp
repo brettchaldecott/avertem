@@ -32,8 +32,8 @@ std::string TransactionLoader::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
-TransactionLoader::TransactionLoader(const TransactionReader &transactionReader, const keto::crypto::KeyLoader &keyLoader) :
-    transactionReader(transactionReader), keyLoader(keyLoader){
+TransactionLoader::TransactionLoader(const TransactionReader &transactionReader, const keto::crypto::KeyLoaderPtr& keyLoaderPtr) :
+    transactionReader(transactionReader), keyLoader(keyLoaderPtr){
 
 }
 
