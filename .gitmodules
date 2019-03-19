@@ -1,3 +1,6 @@
 [submodule "src/web/keto-wallet"]
 	path = src/web/keto-wallet
 	url = https://github.com/brettchaldecott/keto-wallet.git
+[submodule "src/contracts/keto_standard_typscript_contracts"]
+	path = src/contracts/keto_standard_typscript_contracts
+	url = https://github.com/keto-coin/keto_standard_typscript_contracts.git
