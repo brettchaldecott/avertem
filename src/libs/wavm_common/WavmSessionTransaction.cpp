@@ -14,7 +14,9 @@
 #include <cstdlib>
 #include <sstream>
 #include <math.h>
+#include <time.h>
 #include <keto/wavm_common/Constants.hpp>
+#include <keto/crypto/HashGenerator.hpp>
 
 #include "RDFChange.h"
 
@@ -23,6 +25,7 @@
 #include "keto/server_common/Constants.hpp"
 #include "keto/server_common/ServerInfo.hpp"
 #include "keto/server_common/Events.hpp"
+#include "keto/server_common/RDFUtils.hpp"
 
 #include "keto/wavm_common/WavmSessionTransaction.hpp"
 #include "keto/wavm_common/RDFURLUtils.hpp"
@@ -157,14 +160,18 @@ void WavmSessionTransaction::createDebitEntry(const std::string& accountId, cons
     keto::wavm_common::RDFURLUtils transactionUrl(transactionValueModel);
     std::string id = this->getTransaction();
     std::string hash = accountId;
-    
+    time_t transactionTime = time(0);
+
     std::stringstream ss;
-    ss << "debit_" << hash << "_" << id;
-    std::string subjectUrl = transactionUrl.buildSubjectUrl(ss.str());
+    ss << "debit_" << accountId << name << description << accountModel << transactionValueModel << transactionTime << (long)value <<  "" << id;
+    keto::asn1::HashHelper transactionHash(keto::crypto::HashGenerator().generateHash(ss.str()));
+
+    std::string subjectUrl = transactionUrl.buildSubjectUrl(transactionHash.getHash(keto::common::StringEncoding::HEX));
+
     this->addModelEntry(
         subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::ID),id);
     this->addDateTimeModelEntry(
-        subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::DATE_TIME),time(0));
+        subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::DATE_TIME),transactionTime);
     this->addModelEntry(
         subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::TYPE),
             keto::server_common::Constants::Constants::ACCOUNT_ACTIONS::DEBIT);
@@ -189,13 +196,17 @@ void WavmSessionTransaction::createCreditEntry(const std::string& accountId, con
     keto::wavm_common::RDFURLUtils transactionUrl(transactionValueModel);
     std::string id = this->getTransaction();
     std::string hash = accountId;
+    time_t transactionTime = time(0);
+
     std::stringstream ss;
-    ss << "credit_" << hash << "_" << id;
-    std::string subjectUrl = transactionUrl.buildSubjectUrl(ss.str());
+    ss << "credit_" << accountId << name << description << accountModel << transactionValueModel << transactionTime << (long)value <<  "" << id;
+    keto::asn1::HashHelper transactionHash(keto::crypto::HashGenerator().generateHash(ss.str()));
+
+    std::string subjectUrl = transactionUrl.buildSubjectUrl(transactionHash.getHash(keto::common::StringEncoding::HEX));
     this->addModelEntry(
         subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::ID),id);
     this->addDateTimeModelEntry(
-        subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::DATE_TIME),time(0));
+        subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::DATE_TIME),transactionTime);
     this->addModelEntry(
         subjectUrl,transactionUrl.buildPredicateUrl(RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::TYPE),
             keto::server_common::Constants::Constants::ACCOUNT_ACTIONS::CREDIT);
@@ -372,18 +383,11 @@ void WavmSessionTransaction::addDateTimeModelEntry(const std::string& subjectUrl
         const time_t value) {
     keto::asn1::RDFSubjectHelperPtr subjectHelperPtr = getSubject(subjectUrl);
     keto::asn1::RDFPredicateHelperPtr predicate = getPredicate(subjectHelperPtr,predicateUrl);
-    
-    struct tm  tstruct;
-    char       buf[80];
-    struct tm result;
-    localtime_r(&value,&result);
-    strftime(buf, sizeof(buf), "%Y-%m-%dT%X", &tstruct);
-    
+
     keto::asn1::RDFObjectHelper objectHelper;
     objectHelper.setDataType(RDFConstants::TYPES::DATE_TIME).
         setType(RDFConstants::NODE_TYPES::LITERAL).
-        setValue(buf);
-    
+        setValue(keto::server_common::RDFUtils::convertTimeToRDFDateTime(value));
     predicate->addObject(objectHelper);
     
     rdfSessionPtr->setDateTimeValue(

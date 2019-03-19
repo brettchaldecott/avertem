@@ -6,15 +6,16 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 ## SORT .cpp by most likely to change / break compile
 add_library( keto_server_common
             
-	      Constants.cpp
-              ServerInfo.cpp
-              VectorUtils.cpp
-              Events.cpp
-              EventServiceHelpers.cpp
-              TransactionHelper.cpp
-              URLUtils.cpp
-              ServiceRegistryHelper.cpp
-              StringUtils.cpp
+	      		Constants.cpp
+				ServerInfo.cpp
+				VectorUtils.cpp
+				Events.cpp
+				EventServiceHelpers.cpp
+				TransactionHelper.cpp
+				URLUtils.cpp
+				ServiceRegistryHelper.cpp
+				StringUtils.cpp
+				RDFUtils.cpp
 
              ${HEADERS}
            )

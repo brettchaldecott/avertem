@@ -17,13 +17,13 @@
 #include "TransactionMessage.h"
 
 #include "keto/account_db/AccountRDFStatementBuilder.hpp"
-#include "include/keto/account_db/AccountRDFStatementBuilder.hpp"
 #include "keto/account_db/Exception.hpp"
 #include "keto/common/MetaInfo.hpp"
 #include "keto/account_db/AccountSystemOntologyTypes.hpp"
 #include "keto/transaction_common/TransactionWrapperHelper.hpp"
 #include "keto/crypto/SecureVectorUtils.hpp"
 #include "keto/asn1/Constants.hpp"
+#include "keto/server_common/RDFUtils.hpp"
 
 namespace keto {
 namespace account_db {
@@ -57,7 +57,7 @@ AccountRDFStatementBuilder::AccountRDFStatementBuilder(
                                                                            keto::asn1::Constants::RDF_NODE::LITERAL);
     transactionRDFSubject.addPredicate(transactionIdPredicate);
     keto::asn1::RDFPredicateHelper transactionDateRDFPredicate = buildPredicate(AccountSystemOntologyTypes::TRANSACTION_PREDICATES::DATE,
-                                                                                buildTimeString(transactionWrapperHelperPtr->getSignedTransaction()->getTransaction()->getDate()),
+                                                                                keto::server_common::RDFUtils::convertTimeToRDFDateTime(transactionWrapperHelperPtr->getSignedTransaction()->getTransaction()->getDate()),
                                                                                 keto::asn1::Constants::RDF_TYPES::DATE_TIME,
                                                                                 keto::asn1::Constants::RDF_NODE::LITERAL);
     transactionRDFSubject.addPredicate(transactionDateRDFPredicate);
@@ -175,7 +175,7 @@ AccountRDFStatementBuilder::AccountRDFStatementBuilder(
             keto::asn1::Constants::RDF_NODE::URI);
     transactionRDFSubject.addPredicate(transactionBlockRDFPredicate);
     keto::asn1::RDFPredicateHelper transactionDateRDFPredicate = buildPredicate(AccountSystemOntologyTypes::TRANSACTION_PREDICATES::DATE,
-            buildTimeString(transactionWrapperHelperPtr->getSignedTransaction()->getTransaction()->getDate()),
+            keto::server_common::RDFUtils::convertTimeToRDFDateTime(transactionWrapperHelperPtr->getSignedTransaction()->getTransaction()->getDate()),
             keto::asn1::Constants::RDF_TYPES::DATE_TIME,
             keto::asn1::Constants::RDF_NODE::LITERAL);
     transactionRDFSubject.addPredicate(transactionDateRDFPredicate);
@@ -301,14 +301,7 @@ keto::asn1::RDFPredicateHelper AccountRDFStatementBuilder::buildPredicate(const 
     return rdfPredicate;
 }
 
-std::string AccountRDFStatementBuilder::buildTimeString(const std::time_t value) {
-    struct tm  tstruct;
-    char       buf[80];
-    struct tm result;
-    localtime_r(&value,&result);
-    strftime(buf, sizeof(buf), "%Y-%m-%dT%X", &tstruct);
-    return buf;
-}
+
 
 
 

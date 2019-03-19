@@ -78,7 +78,7 @@ private:
     std::string buildRdfUri(const std::string uri, const std::string id);
     keto::asn1::RDFPredicateHelper buildPredicate(const std::string& predicate,
             const std::string& value, const std::string& type, const std::string& dataType);
-    std::string buildTimeString(const std::time_t value);
+    
 };
 
 

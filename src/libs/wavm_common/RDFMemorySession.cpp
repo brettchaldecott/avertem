@@ -17,6 +17,7 @@
 
 #include "keto/wavm_common/Exception.hpp"
 #include "keto/wavm_common/RDFConstants.hpp"
+#include "keto/server_common/RDFUtils.hpp"
 #include "keto/asn1/Constants.hpp"
 
 namespace keto {
@@ -226,9 +227,7 @@ time_t RDFMemorySession::getDateTimeValue(const std::string& subject, const std:
     librdf_node* target=(librdf_node*)librdf_iterator_get_object(rdfIter);
     unsigned char* value = librdf_node_get_literal_value(target);
     std::string timeString((const char*)value);
-    struct tm tm;
-    strptime(timeString.c_str(), "%Y-%m-%dT%X", &tm);
-    time_t result = mktime(&tm);
+    time_t result = keto::server_common::RDFUtils::convertRDFDateTimeToTime(timeString);
     librdf_free_iterator(rdfIter);
     return result;
 }
