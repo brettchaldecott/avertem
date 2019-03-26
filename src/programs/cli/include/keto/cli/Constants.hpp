@@ -37,6 +37,13 @@ public:
     static constexpr const char* KETO_ACCOUNT_GEN = "accgen";
     static constexpr const char* KETO_SESSION_GEN = "sessiongen";
     static constexpr const char* KETO_ACCOUNT_KEY = "account_key";
+
+    // Mnemonic
+    static constexpr const char* MNEMONIC_WORD_LIST = "word_list";
+    static constexpr const char* MNEMONIC_PHRASE = "mnemonic_phrase";
+    static constexpr const char* MNEMONIC_PASS_PHRASE = "mnemonic_pass_phrase";
+    static constexpr const char* MNEMONIC_LANGUAGE = "mnemonic_language";
+    static constexpr const char* GENERATE_MNEMONIC_KEY = "generate_mnemonic_key";
     
     static const int HTTP_VERSION = 11;
     

@@ -61,6 +61,9 @@ export CHAI_SCRIPT_ROOT
 LIBWAVM_ROOT=${BASE_HOME}/opt/wavm/
 export LIBWAVM_ROOT
 
+LIBWALLY_ROOT=${BASE_HOME}/opt/libwally-core/
+export LIBWALLY_ROOT
+
 # Debug flags
 COMPILE_KETO=1
 COMPILE_CONTRACTS=1

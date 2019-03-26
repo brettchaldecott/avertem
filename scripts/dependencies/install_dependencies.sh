@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Install dependencies script
 
 if [ $ARCH == "ubuntu" ]; then
@@ -172,11 +173,22 @@ if [ $ARCH == "ubuntu" ]; then
     cp -rf ${TEMP_DIR}/WAVM/Include/* ${HOME}/opt/wavm/include/.
     cd ${HOME}
     rm -rf ${TEMP_DIR}/WAVM
+
+    # temp directory
+    cd ${TEMP_DIR}
+    git clone https://github.com/ElementsProject/libwally-core.git
+    cd ${TEMP_DIR}/libwally-core
+    ./tools/autogen.sh
+    ./configure --disable-shared --prefix=${HOME}/opt/libwally-core/
+    make
+    make install
     
     # install beast
     cd ${HOME}/opt
     git clone https://github.com/ChaiScript/ChaiScript.git
     cd ${HOME}/opt/ChaiScript && git checkout v6.1.0
+
+
 
     cd ${HOME}
 

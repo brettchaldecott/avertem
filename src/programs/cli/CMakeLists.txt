@@ -1,7 +1,8 @@
 add_executable( keto_cli
         main.cpp
         TransactionReader.cpp
-        TransactionLoader.cpp)
+        TransactionLoader.cpp
+        WallyScope.cpp)
 if( UNIX AND NOT APPLE )
   set(rt_library rt )
 endif()
@@ -43,6 +44,7 @@ target_include_directories(keto_cli
         PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
         PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/proto/"
         PUBLIC "${PROTO_HDRS}"
+        ${LIBWALLY_INCLUDE_DIR}
 
         ${Boost_INCLUDE_DIRS}
         ${JSON_INCLUDE_DIR})
@@ -52,7 +54,8 @@ target_link_libraries( keto_cli
         PRIVATE keto_transaction_common keto_server_common keto_environment 
         PRIVATE keto_common keto_chain_common
         PRIVATE keto_asn1_common keto_asn1_protocol
-        PRIVATE keto_proto_environment ${PROTOBUF_LIBRARIES} 
+        PRIVATE keto_proto_environment ${PROTOBUF_LIBRARIES}
+        PRIVATE ${LIBWALLY_WALLY_LIBRARY} ${LIBWALLY_SECP256K1_LIBRARY}
         PRIVATE ${BOTAN_LIBRARIES} ${Boost_LIBRARIES} 
         PRIVATE ${OPENSSL_LIBRARIES}  ${pthread_library}
         PRIVATE ${CMAKE_DL_LIBS} ${PLATFORM_SPECIFIC_LIBS} 

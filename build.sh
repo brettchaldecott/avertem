@@ -96,6 +96,9 @@ if [ $ARCH == "ubuntu" ]; then
 
     LIBWAVM_ROOT=${HOME}/opt/wavm/
     export LIBWAVM_ROOT
+
+    LIBWALLY_ROOT=${HOME}/opt/libwally-core/
+    export LIBWALLY_ROOT
 fi
 
 if [ $ARCH == "darwin" ]; then

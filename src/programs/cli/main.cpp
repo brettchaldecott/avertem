@@ -11,7 +11,14 @@
 #include <string>
 #include <boost/exception/exception.hpp>
 #include <boost/exception/diagnostic_information.hpp>
-#include <boost/exception_ptr.hpp> 
+#include <boost/exception_ptr.hpp>
+
+#include <botan/hex.h>
+#include <botan/base64.h>
+#include <botan/ecdsa.h>
+
+#include <keto/server_common/StringUtils.hpp>
+
 
 #include "keto/common/MetaInfo.hpp"
 #include "keto/common/Log.hpp"
@@ -31,8 +38,12 @@
 #include "keto/chain_common/ActionBuilder.hpp"
 #include "keto/transaction_common/TransactionMessageHelper.hpp"
 #include "keto/transaction_common/TransactionTraceBuilder.hpp"
+#include "keto/server_common/StringUtils.hpp"
 
 #include "keto/account_utils/AccountGenerator.hpp"
+#include "wally.hpp"
+#include "keto/cli/WallyScope.hpp"
+
 
 namespace ketoEnv = keto::environment;
 namespace ketoCommon = keto::common;
@@ -50,12 +61,17 @@ boost::program_options::options_description generateOptionDescriptions() {
             ("account_key,K", po::value<std::string>(),"Private key file.")
             ("transgen,T", "Generate a transaction.")
             ("sessiongen,S", "Generate a new session ID.")
+            ("word_list,W", "Word list.")
+            ("generate_mnemonic_key,G", "Generate a mnemonic key.")
             ("file,f", po::value<std::string>(),"Input file.")
             ("action,a", po::value<std::string>(),"Action Hash or Name.")
             ("parent,p", po::value<std::string>(),"Parent Transaction.")
-            ("source,s", po::value<std::string>(),"Source Account Hash.")
+            ("mnemonic_phrase,M", po::value<std::string>(),"The mnemonic phrase.")
+            ("mnemonic_pass_phrase,P", po::value<std::string>(),"The mnemonic pass phrase.")
             ("target,t",po::value<std::string>(), "Target Account Hash.")
+            ("mnemonic_language,L", po::value<std::string>(),"language [en...].")
             ("value,V", po::value<long>(), "Value of the transaction.");
+
     
     return optionDescripion;
 }
@@ -307,6 +323,144 @@ int generateAccount(std::shared_ptr<ketoEnv::Config> config,
 }
 
 
+int printWordList(std::shared_ptr<ketoEnv::Config> config,
+                    boost::program_options::options_description optionDescription) {
+
+    if (config->getVariablesMap().count(keto::cli::Constants::MNEMONIC_LANGUAGE)) {
+        keto::cli::WallyScope wallyScope;
+        std::string language = config->getVariablesMap()[keto::cli::Constants::MNEMONIC_LANGUAGE].as<std::string>();
+        words* wordsList;
+
+        bip39_get_wordlist(language.c_str(),&wordsList);
+        for (int index = 0; index < BIP39_WORDLIST_LEN; index++) {
+            char* word = NULL;
+            bip39_get_word(wordsList,index,&word);
+            std::cout << word << std::endl;
+            wally_free_string(word);
+        }
+
+
+    } else {
+        std::cout << "Must provide the language" << std::endl;
+        return -1;
+    }
+    return 0;
+}
+
+int generateMnemonicKey(std::shared_ptr<ketoEnv::Config> config,
+                 boost::program_options::options_description optionDescription) {
+    keto::cli::WallyScope wallyScope;
+
+    // get the word list
+    words* wordsList;
+    if (config->getVariablesMap().count(keto::cli::Constants::MNEMONIC_LANGUAGE)) {
+        keto::cli::WallyScope wallyScope;
+        std::string language = config->getVariablesMap()[keto::cli::Constants::MNEMONIC_LANGUAGE].as<std::string>();
+        bip39_get_wordlist(language.c_str(),&wordsList);
+    } else {
+        std::cout << "Must provide the language" << std::endl;
+        return -1;
+    }
+
+    // retrieve the phrase string
+    std::string phrase;
+    if (config->getVariablesMap().count(keto::cli::Constants::MNEMONIC_PHRASE)) {
+        phrase = config->getVariablesMap()[keto::cli::Constants::MNEMONIC_PHRASE].as<std::string>();
+    } else {
+        std::cout << "Must provide the mnemonic phrase" << std::endl;
+        return -1;
+    }
+    std::cout << "The phrase is : " << phrase << std::endl;
+    keto::server_common::StringVector stringVector = keto::server_common::StringUtils(phrase).tokenize(",");
+    phrase = "";
+    std::string sep = "";
+    for (std::string entry: stringVector) {
+        phrase += sep + entry;
+        sep = " ";
+    }
+
+    std::string passPhrase;
+    if (config->getVariablesMap().count(keto::cli::Constants::MNEMONIC_PASS_PHRASE)) {
+        passPhrase = config->getVariablesMap()[keto::cli::Constants::MNEMONIC_PASS_PHRASE].as<std::string>();
+    }
+
+    // generate the entropy bits
+
+    if (bip39_mnemonic_validate(wordsList, phrase.c_str()) != WALLY_OK) {
+        std::cout << "The newmonic phrase is invalid : " << phrase << std::endl;
+    }
+
+    unsigned char seed[BIP39_SEED_LEN_512];
+    size_t written = 0;
+    int result = 0;
+    if (passPhrase.empty()) {
+        result = bip39_mnemonic_to_seed(phrase.c_str(), NULL, seed, BIP39_SEED_LEN_512, &written);
+    } else {
+        result = bip39_mnemonic_to_seed(phrase.c_str(), passPhrase.c_str(), seed, BIP39_SEED_LEN_512, &written);
+    }
+
+    if (result != WALLY_OK) {
+        std::cout << "Failed to add the result" << std::endl;
+        return -1;
+    }
+    std::cout << "Seed : " << Botan::hex_encode(seed,written,true) << std::endl;
+
+
+    ext_key* hdKey = nullptr;
+    result = bip32_key_from_seed_alloc(seed, written, BIP32_VER_MAIN_PRIVATE, 0, &hdKey);
+    if (result != WALLY_OK) {
+        std::cout << "HD key failed : " << result << std::endl;
+        return -1;
+    }
+
+    //std::vector<unsigned char> publicBytes(hdKey->pub_key+1,hdKey->pub_key+EC_PUBLIC_KEY_LEN);
+    std::cout << "Public Key  : " << Botan::hex_encode(hdKey->pub_key,EC_PUBLIC_KEY_LEN,true) << std::endl;
+    std::cout << "Private Key : " << Botan::hex_encode(hdKey->priv_key,EC_PRIVATE_KEY_LEN,true) << std::endl;
+    std::cout << "Hash        : " << Botan::hex_encode(hdKey->hash160,20,true) << std::endl;
+
+    /*
+    Botan::BigInt bigInt(hdKey->priv_key+1,EC_PRIVATE_KEY_LEN);
+    Botan::AutoSeeded_RNG rng;
+    Botan::EC_Group ecGroup("secp256k1");
+    //ecGroup.get_curve();
+    Botan::ECDSA_PrivateKey privateKey(rng, ecGroup, bigInt);
+    Botan::ECDSA_PublicKey publicKey(privateKey);
+    Botan::ECDSA_PublicKey publicKey2(ecGroup,ecGroup.OS2ECP(hdKey->pub_key,EC_PUBLIC_KEY_LEN));
+
+    unsigned char newPublicKey[EC_PUBLIC_KEY_LEN];
+    wally_ec_public_key_from_private_key(hdKey->priv_key+1, EC_PRIVATE_KEY_LEN, newPublicKey, EC_PUBLIC_KEY_LEN);
+    std::vector<unsigned char> publicBytes2(newPublicKey+1,newPublicKey+EC_PUBLIC_KEY_LEN);
+    std::cout << "Public Key 1.1 : " << Botan::hex_encode(publicBytes2,true) << std::endl;
+    std::cout << "Public Key 5.0 : " << publicKey.public_point().get_affine_x().to_hex_string() << std::endl;
+    std::cout << "Public Key 6.0 : " << publicKey2.public_point().get_affine_x().to_hex_string() << std::endl;
+
+
+    //Botan::PointGFp pointGFp(ecGroup.get_curve(),);
+    //Botan::ECDSA_PublicKey publicKey2(ecGroup,pointGFp);*/
+
+    //std::cout << "Private Key : " << Botan::hex_encode(hdKey->priv_key,EC_PRIVATE_KEY_LEN,true) << std::endl;
+
+    //keto::crypto::SecureVector secureVector = Botan::PKCS8::BER_encode(privateKey);
+
+    //std::cout << "BER Private Encoded : " << Botan::hex_encode(secureVector,true) << std::endl;
+
+    //std::cout << "Hash : " << Botan::hex_encode(hdKey->hash160,20,true) << std::endl;
+
+    //unsigned char serializedBytes[BIP32_SERIALIZED_LEN];
+    //result = bip32_key_serialize(hdKey, BIP32_FLAG_KEY_PRIVATE, serializedBytes, BIP32_SERIALIZED_LEN);
+
+    //if (result != WALLY_OK) {
+    //    std::cout << "Failed to serialize the key" << std::endl;
+    //    return -1;
+    //}
+
+    //std::cout << "HD Private key : " << Botan::hex_encode(serializedBytes,BIP32_SERIALIZED_LEN,true) << std::endl;
+
+    return 0;
+}
+
+
+
 /**
  * The CLI main file
  * 
@@ -346,6 +500,10 @@ int main(int argc, char** argv)
             return generateAccount(config,optionDescription);
         } else if (config->getVariablesMap().count(keto::cli::Constants::KETO_SESSION_GEN)) {
             return generateSession(config);
+        } else if (config->getVariablesMap().count(keto::cli::Constants::MNEMONIC_WORD_LIST)) {
+            return printWordList(config,optionDescription);
+        } else if (config->getVariablesMap().count(keto::cli::Constants::GENERATE_MNEMONIC_KEY)) {
+            return generateMnemonicKey(config,optionDescription);
         }
         KETO_LOG_INFO << "CLI Executed";
     } catch (keto::common::Exception& ex) {

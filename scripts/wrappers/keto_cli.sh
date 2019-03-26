@@ -17,7 +17,7 @@ KETO_HOME=${SOURCE_DIR%%/bin}
 export KETO_HOME
 
 # execute ketod
-${KETO_HOME}/bin/keto_cli $@
+${KETO_HOME}/bin/keto_cli "$@"
 
 
 

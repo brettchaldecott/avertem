@@ -92,6 +92,7 @@ find_package(Librdf REQUIRED)
 find_package(Json REQUIRED)
 find_package(Chaiscript REQUIRED)
 find_package(LibWavm REQUIRED)
+find_package(LibWally REQUIRED)
 
 if( WIN32 )
 
