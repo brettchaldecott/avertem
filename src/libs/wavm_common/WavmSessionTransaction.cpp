@@ -31,7 +31,7 @@
 #include "keto/wavm_common/RDFURLUtils.hpp"
 #include "keto/wavm_common/RDFConstants.hpp"
 #include "keto/wavm_common/Exception.hpp"
-#include "keto/wavm_common/AccountSparqlQueryHelper.hpp"
+#include "keto/account_query/AccountSparqlQueryHelper.hpp"
 
 #include "keto/environment/EnvironmentManager.hpp"
 #include "keto/environment/Config.hpp"
@@ -250,7 +250,7 @@ long WavmSessionTransaction::executeQuery(const std::string& type, const std::st
     if (type == Constants::SESSION_SPARQL_QUERY) {
         return addResultVectorMap(this->rdfSessionPtr->executeQuery(query));
     } else {
-        return addResultVectorMap(AccountSparqlQueryHelper(keto::server_common::Events::DIRTY_SPARQL_QUERY_WITH_RESULTSET_MESSAGE,
+        return addResultVectorMap(keto::account_query::AccountSparqlQueryHelper(keto::server_common::Events::DIRTY_SPARQL_QUERY_WITH_RESULTSET_MESSAGE,
                 getCurrentAccountHash(),query).execute());
     }
 }

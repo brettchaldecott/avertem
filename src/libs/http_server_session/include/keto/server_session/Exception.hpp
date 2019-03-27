@@ -28,6 +28,7 @@ KETO_DECLARE_DERIVED_EXCEPTION (HttpServerSessionException, MessageSerialization
 KETO_DECLARE_DERIVED_EXCEPTION (HttpServerSessionException, MessageDeserializationException , "The server message failed deserialize.");
 KETO_DECLARE_DERIVED_EXCEPTION (HttpServerSessionException, InvalidSessionException , "Invalid client session.");
 KETO_DECLARE_DERIVED_EXCEPTION (HttpServerSessionException, InvalidSparqlRequestException , "Invalid SPARQL format exception.");
+KETO_DECLARE_DERIVED_EXCEPTION (HttpServerSessionException, InvalidAuthenticationURL , "Invalid Authentication URL.");
     
 }
 }

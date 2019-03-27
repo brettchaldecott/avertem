@@ -14,13 +14,14 @@
 
 
 namespace keto {
-namespace wavm_common {
+namespace account_query {
 
 typedef std::map<std::string,std::string> ResultMap;
 typedef std::vector<ResultMap> ResultVectorMap;
 
 class AccountSparqlQueryHelper {
 public:
+
     AccountSparqlQueryHelper(const std::string& action, const keto::asn1::HashHelper& accountHash, const std::string& query);
     AccountSparqlQueryHelper(const AccountSparqlQueryHelper& orig) = default;
     virtual ~AccountSparqlQueryHelper();

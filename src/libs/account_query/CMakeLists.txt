@@ -1,4 +1,4 @@
-file(GLOB HEADERS "include/keto/wavm_common/*.hpp")
+file(GLOB HEADERS "include/keto/account_query/*.hpp")
 
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
@@ -13,26 +13,14 @@ else()
     add_definitions(-DDLL_IMPORT=)
 endif()
 
-add_library( keto_wavm_common
+add_library( keto_account_query
             
-            WavmEngineManager.cpp
-            WavmEngineWrapper.cpp
-            Emscripten.cpp
-            WavmUtils.cpp
-            RDFMemorySession.cpp
-            WavmSession.cpp
-            WavmSessionTransaction.cpp
-            WavmSessionHttp.cpp
-            WavmSessionManager.cpp
-            WavmSessionScope.cpp
-            RDFURLUtils.cpp
-            RDFConstants.cpp
-            Constants.cpp
+            AccountSparqlQueryHelper.cpp
             
              ${HEADERS}
            )
 
-target_link_libraries( keto_wavm_common 
+target_link_libraries( keto_account_query
                     ${LIBWAVM_RUNTIME_LIBRARY}
                     ${LIBWAVM_LIBRARY}
                     ${LIBWAVM_WAST_LIBRARY}
@@ -42,7 +30,7 @@ target_link_libraries( keto_wavm_common
                     ${LIBWAVM_EXTRA_LIBRARY}
                     ${LIBWAVM_PLATFORM_LIBRARY}
                     ${LIBWAVM_LLVM_LIBS})
-target_include_directories( keto_wavm_common
+target_include_directories( keto_account_query
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../common/include"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/asn1/" 
@@ -56,7 +44,6 @@ target_include_directories( keto_wavm_common
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../transaction_common/include/"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../event_service_api/include/"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../module_manager/include/"
-                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../account_query/include/"
                             PUBLIC "${PROTO_HDRS}"
                             ${Boost_INCLUDE_DIRS}
                             ${BOTAN_INCLUDE_DIR}
@@ -72,10 +59,10 @@ target_include_directories( keto_wavm_common
 #endif(MSVC)
 
 INSTALL( TARGETS
-   keto_wavm_common
+        keto_account_query
 
    RUNTIME DESTINATION bin
    LIBRARY DESTINATION lib
    ARCHIVE DESTINATION lib
 )
-INSTALL( FILES ${HEADERS} DESTINATION "include/keto/wavm_common" )
+INSTALL( FILES ${HEADERS} DESTINATION "include/keto/account_query" )

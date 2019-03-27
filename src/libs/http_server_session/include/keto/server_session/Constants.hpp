@@ -12,6 +12,13 @@ namespace server_session {
 class Constants {
 public:
     static const char* HTTP_SESSION_ACCOUNT;
+
+    class CONTENT_TYPE {
+    public:
+        static const char* HTML;
+        static const char* JSON;
+        static const char* SPARQL;
+    };
 };
 
 

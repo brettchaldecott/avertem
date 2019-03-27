@@ -17,6 +17,7 @@
 #include <keto/common/HttpEndPoints.hpp>
 #include "keto/server_session/HttpRequestManager.hpp"
 #include "keto/server_session/HttpTransactionManager.hpp"
+#include "keto/server_session/Constants.hpp"
 
 namespace keto {
 namespace server_session {
@@ -77,9 +78,9 @@ HttpRequestManager::handle_request(
     std::string result;
     if (strlen(keto::common::HttpEndPoints::AUTHENTICATE) <= target.size() &&
         0 == target.compare(0,strlen(keto::common::HttpEndPoints::AUTHENTICATE),keto::common::HttpEndPoints::AUTHENTICATE)) {
-        result = this->httpSessionManagerPtr->processHello(req.body());
+        return this->httpSessionManagerPtr->processAuthentication(req,req.body());
     } else if (0 == target.compare(keto::common::HttpEndPoints::HAND_SHAKE)) {
-        result = this->httpSessionManagerPtr->processHello(req.body());
+        return this->httpSessionManagerPtr->processHello(req.body());
     } else if (0 == target.compare(keto::common::HttpEndPoints::TRANSACTION)) {
         result = this->httpTransactionManagerPtr->processTransaction(req,req.body());
     } else if (strlen(keto::common::HttpEndPoints::DATA_QUERY) <= target.size() &&
@@ -89,7 +90,7 @@ HttpRequestManager::handle_request(
         // the body gets appended to rather than freshly executed.
         boost::beast::http::response<boost::beast::http::string_body> response;
         response.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-        response.set(boost::beast::http::field::content_type, "application/sparql-results+json");
+        response.set(boost::beast::http::field::content_type, Constants::CONTENT_TYPE::SPARQL);
         response.keep_alive(false);
         response.chunked(false);
         response.body() = result;
@@ -101,7 +102,7 @@ HttpRequestManager::handle_request(
     }
     boost::beast::http::response<boost::beast::http::string_body> response;
     response.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-    response.set(boost::beast::http::field::content_type, "text/html");
+    response.set(boost::beast::http::field::content_type, Constants::CONTENT_TYPE::HTML);
     response.keep_alive(req.keep_alive());
     response.body() = result;
     response.content_length(result.size());

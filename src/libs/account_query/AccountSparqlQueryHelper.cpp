@@ -4,7 +4,7 @@
 
 #include "Sparql.pb.h"
 
-#include "keto/wavm_common/AccountSparqlQueryHelper.hpp"
+#include "keto/account_query/AccountSparqlQueryHelper.hpp"
 
 #include "keto/server_common/EventUtils.hpp"
 #include "keto/server_common/Events.hpp"
@@ -13,7 +13,7 @@
 
 
 namespace keto {
-namespace wavm_common {
+namespace account_query {
 
 
 AccountSparqlQueryHelper::AccountSparqlQueryHelper(const std::string& action, const keto::asn1::HashHelper& accountHash, const std::string& query) :

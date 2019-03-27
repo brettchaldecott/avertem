@@ -16,6 +16,7 @@ add_library( keto_crypto
             ConfigurableSha256.cpp
             ShaDigest.cpp
             PasswordPipeLine.cpp
+            BlockchainKeyLoader.cpp
 
         ${HEADERS})
 

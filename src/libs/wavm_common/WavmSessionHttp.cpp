@@ -29,7 +29,7 @@
 #include "keto/wavm_common/RDFURLUtils.hpp"
 #include "keto/wavm_common/RDFConstants.hpp"
 #include "keto/wavm_common/Exception.hpp"
-#include "keto/wavm_common/AccountSparqlQueryHelper.hpp"
+#include "keto/account_query/AccountSparqlQueryHelper.hpp"
 
 #include "keto/environment/EnvironmentManager.hpp"
 #include "keto/environment/Config.hpp"
@@ -132,7 +132,7 @@ void WavmSessionHttp::setBody(const std::string& body) {
 }
 
 long WavmSessionHttp::executeQuery(const std::string& type, const std::string& query) {
-    return addResultVectorMap(AccountSparqlQueryHelper(keto::server_common::Events::SPARQL_QUERY_WITH_RESULTSET_MESSAGE,
+    return addResultVectorMap(keto::account_query::AccountSparqlQueryHelper(keto::server_common::Events::SPARQL_QUERY_WITH_RESULTSET_MESSAGE,
                                                        httpRequestMessage.account_hash(),query).execute());
 }
 
