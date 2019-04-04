@@ -44,10 +44,19 @@ HttpContractManager::~HttpContractManager() {
 boost::beast::http::response<boost::beast::http::string_body> HttpContractManager::processQuery(
         boost::beast::http::request<boost::beast::http::string_body>& req,
         const std::string& body) {
-    if (!req.base().count(keto::common::HttpEndPoints::HEADER_SESSION_HASH)) {
+    boost::beast::string_view path = req.target();
+    std::string target = path.to_string();
+    URIContractParser uriContract(target);
+
+    std::string sessionHash;
+    if (req.base().count(keto::common::HttpEndPoints::HEADER_SESSION_HASH)) {
+        sessionHash = (const std::string&)req.base().at(keto::common::HttpEndPoints::HEADER_SESSION_HASH);
+    } else if (uriContract.hasSessionHash()) {
+        sessionHash = uriContract.getSessionHash();
+    } else {
         BOOST_THROW_EXCEPTION(keto::server_session::InvalidSessionException());
     }
-    std::string sessionHash = (const std::string&)req.base().at(keto::common::HttpEndPoints::HEADER_SESSION_HASH);
+
     keto::asn1::HashHelper sessionHashHelper(
             sessionHash,keto::common::HEX);
     std::vector<uint8_t> vectorHash = keto::crypto::SecureVectorUtils().copyFromSecure(sessionHashHelper);
@@ -55,11 +64,20 @@ boost::beast::http::response<boost::beast::http::string_body> HttpContractManage
         BOOST_THROW_EXCEPTION(keto::server_session::InvalidSessionException());
     }
 
-    std::shared_ptr<HttpSession> httpSession = httpSessionManagerPtr->getSession(vectorHash);
+    if( req.method() == boost::beast::http::verb::options) {
+        boost::beast::http::response<boost::beast::http::string_body> res{boost::beast::http::status::ok, req.version()};
+        res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
+        res.set(boost::beast::http::field::content_type, "text/html");
+        res.set(boost::beast::http::field::access_control_allow_origin, "*");
+        res.set(boost::beast::http::field::access_control_allow_methods, "*");
+        res.set(boost::beast::http::field::access_control_allow_headers, "*");
+        res.keep_alive(req.keep_alive());
+        res.body() = "";
+        res.prepare_payload();
+        return res;
+    }
 
-    boost::beast::string_view path = req.target();
-    std::string target = path.to_string();
-    URIContractParser uriContract(target);
+    std::shared_ptr<HttpSession> httpSession = httpSessionManagerPtr->getSession(vectorHash);
 
     std::string contract =
             getContractByHash(httpSession->getAccountHash(),
@@ -85,10 +103,17 @@ boost::beast::http::response<boost::beast::http::string_body> HttpContractManage
 
     boost::beast::http::response<boost::beast::http::string_body> response;
     response.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-    response.set(boost::beast::http::field::content_type, httpResponseMessage.content_type());
+    if (uriContract.isCors()) {
+        response.set(boost::beast::http::field::content_type, Constants::CONTENT_TYPE::TEXT);
+    } else {
+        response.set(boost::beast::http::field::content_type, httpResponseMessage.content_type());
+    }
+    //response.set(boost::beast::http::field::access_control_request_headers, "*");
+    response.set(boost::beast::http::field::access_control_allow_origin, "*");
     response.result(boost::beast::http::int_to_status(httpResponseMessage.status()));
     response.keep_alive(false);
     response.chunked(false);
+    std::cout << "The content : " << httpResponseMessage.body() << std::endl;
     response.body() = httpResponseMessage.body();
     response.content_length(httpResponseMessage.content_length());
     return response;

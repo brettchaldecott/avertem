@@ -21,6 +21,7 @@
 #include "include/keto/http/HttpdServer.hpp"
 #include "keto/common/MetaInfo.hpp"
 #include "keto/server_session/HttpRequestManager.hpp"
+#include "keto/server_common/ModuleSessionManager.hpp"
 #include "keto/http/ConsensusService.hpp"
 #include "keto/http/EventRegistry.hpp"
 #include "include/keto/http/ConsensusService.hpp"
@@ -58,12 +59,14 @@ void HttpdModuleManager::start() {
     modules["HttpdModuleManager"] = std::make_shared<HttpdModule>();
     this->httpServer->start();
     ConsensusService::init(this->getConsensusHash());
+    keto::server_common::ModuleSessionManager::init();
     EventRegistry::registerEventHandlers();
     KETO_LOG_INFO << "[HttpdModuleManager] Started the HttpdModuleManager";
 
 }
 void HttpdModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
+    keto::server_common::ModuleSessionManager::fin();
     ConsensusService::fin();
     this->httpServer->stop();
     modules.clear();

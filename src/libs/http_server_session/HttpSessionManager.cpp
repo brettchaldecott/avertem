@@ -117,6 +117,18 @@ boost::beast::http::response<boost::beast::http::string_body> HttpSessionManager
 boost::beast::http::response<boost::beast::http::string_body> HttpSessionManager::processAuthentication(
         boost::beast::http::request<boost::beast::http::string_body>& req,
         const std::string& body) {
+    if( req.method() == boost::beast::http::verb::options) {
+        boost::beast::http::response<boost::beast::http::string_body> res{boost::beast::http::status::ok, req.version()};
+        res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
+        res.set(boost::beast::http::field::content_type, "text/html");
+        res.set(boost::beast::http::field::access_control_allow_origin, "*");
+        res.set(boost::beast::http::field::access_control_allow_methods, "*");
+        res.set(boost::beast::http::field::access_control_allow_headers, "*");
+        res.keep_alive(req.keep_alive());
+        res.body() = "";
+        res.prepare_payload();
+        return res;
+    }
 
     boost::beast::string_view path = req.target();
     std::string target = path.to_string();
@@ -135,21 +147,15 @@ boost::beast::http::response<boost::beast::http::string_body> HttpSessionManager
             keto::account_query::AccountSparqlQueryHelper(keto::server_common::Events::SPARQL_QUERY_WITH_RESULTSET_MESSAGE,
                                                   uriAuthenticationParser.getAccountHash(),ss.str()).execute();
     if (resultVectorMap.size() != 1) {
-        std::string result;
-        keto::proto::ClientResponse response;
-        response.set_response(keto::proto::HelloResponse::GO_AWAY);
-        response.SerializeToString(&result);
-        return buildResponse(result,403);
+        std::cout << "Cannot find the account" << std::endl;
+        return buildResponse("Invalid account",403);
     }
 
-    keto::crypto::BlockchainPublicKeyLoader blockchainPublicKeyLoader(resultVectorMap[0]["publicKey"]);
-    if (!keto::crypto::SignatureVerification(blockchainPublicKeyLoader.getPublicKey(),
-            uriAuthenticationParser.getSourceHash()).check(uriAuthenticationParser.getSignature())) {
-        std::string result;
-        keto::proto::ClientResponse response;
-        response.set_response(keto::proto::HelloResponse::GO_AWAY);
-        response.SerializeToString(&result);
-        return buildResponse(result,403);
+    if (!keto::crypto::SignatureVerification(Botan::hex_decode(resultVectorMap[0]["publicKey"]),
+            (std::vector<uint8_t>)uriAuthenticationParser.getSourceHash()).check(uriAuthenticationParser.getSignature())) {
+        std::cout << "The signature is invalid [" << uriAuthenticationParser.getSourceHash().getHash(keto::common::HEX) << "][" <<
+            Botan::hex_encode(uriAuthenticationParser.getSignature(),true) << "]" << std::endl;
+        return buildResponse("Invalid signature",403);
     }
 
     std::shared_ptr<HttpSession> ptr;
@@ -164,8 +170,13 @@ boost::beast::http::response<boost::beast::http::string_body> HttpSessionManager
 
 
     std::stringstream json;
-    json << "{session:\"" << Botan::hex_encode(ptr->getSessionHash(),true) << "\"}";
-    return buildResponse(json.str(),200,Constants::CONTENT_TYPE::JSON);
+    json << "{\"session\":\"" << Botan::hex_encode(ptr->getSessionHash(),true) << "\"}";
+    if (uriAuthenticationParser.isCors()) {
+        return buildResponse(json.str(),200,Constants::CONTENT_TYPE::TEXT);
+    } else {
+        return buildResponse(json.str(),200,Constants::CONTENT_TYPE::JSON);
+    }
+
 }
 
 
@@ -220,6 +231,8 @@ boost::beast::http::response<boost::beast::http::string_body> HttpSessionManager
     boost::beast::http::response<boost::beast::http::string_body> response;
     response.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
     response.set(boost::beast::http::field::content_type, contentType);
+    //response.set(boost::beast::http::field::access_control_request_headers, "*");
+    response.set(boost::beast::http::field::access_control_allow_origin, "*");
     response.result(boost::beast::http::int_to_status(status));
     response.keep_alive(false);
     response.chunked(false);

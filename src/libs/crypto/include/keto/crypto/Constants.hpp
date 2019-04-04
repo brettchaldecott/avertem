@@ -29,6 +29,8 @@ public:
     
     
     static constexpr const char* SIGNATURE_TYPE = "EMSA3(SHA-256)";
+    static constexpr const char* EMSA1_SIGNATURE_TYPE = "EMSA1(SHA-256)";
+    static constexpr const char* SECP256K_SIGNATURE_TYPE = "SECP256K";
     static constexpr const char* HASH_TYPE = "SHA-256";
     static constexpr const char* ENCRYPTION_PADDING = "EME1(SHA-256)";
     static constexpr const char* CIPHER_STREAM = "ChaCha(20)";

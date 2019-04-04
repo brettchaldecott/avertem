@@ -37,6 +37,20 @@ public:
         return OBFUSCATED("$Id$");
     };
     static std::string getSourceVersion();
+
+    class SignatureVerificationType {
+    public:
+        SignatureVerificationType(const std::string& type, const Botan::Signature_Format& format);
+        SignatureVerificationType(const SignatureVerificationType& orig) = default;
+        virtual ~SignatureVerificationType();
+
+        std::string getType();
+        Botan::Signature_Format getFormat();
+
+    private:
+        std::string type;
+        Botan::Signature_Format format;
+    };
     
     SignatureVerification(std::shared_ptr<Botan::Public_Key> publicKey,
             const std::vector<uint8_t>& source);

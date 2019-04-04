@@ -27,6 +27,15 @@ BlockchainPublicKeyLoader::BlockchainPublicKeyLoader(const std::string& hexStrin
     }
 }
 
+BlockchainPublicKeyLoader::BlockchainPublicKeyLoader(const std::vector<uint8_t>& bytes) {
+    if (bytes[0] == 0x3 || bytes[0] == 0x2) {
+        Botan::EC_Group ecGroup("secp256k1");
+        this->publicKeyPtr = std::shared_ptr<Botan::Public_Key>(new Botan::ECDSA_PublicKey(ecGroup,ecGroup.OS2ECP(bytes)));
+    } else {
+        this->publicKeyPtr = std::shared_ptr<Botan::Public_Key>(Botan::X509::load_key(bytes));
+    }
+}
+
 BlockchainPublicKeyLoader::~BlockchainPublicKeyLoader() {
 
 }

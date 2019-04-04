@@ -27,12 +27,14 @@ public:
     URIAuthenticationParser(const URIAuthenticationParser& orig) = default;
     virtual ~URIAuthenticationParser();
 
+    bool isCors();
     keto::asn1::HashHelper getAccountHash();
     keto::asn1::HashHelper getSourceHash();
     std::vector<uint8_t> getSignature();
 
 
 private:
+    bool cors;
     keto::asn1::HashHelper accountHash;
     keto::asn1::HashHelper sourceHash;
     std::string signature;

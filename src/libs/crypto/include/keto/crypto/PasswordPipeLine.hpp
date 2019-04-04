@@ -33,6 +33,11 @@ typedef std::shared_ptr<PasswordPipeLine> PasswordPipeLinePtr;
 
 class PasswordPipeLine {
 public:
+    static std::string getHeaderVersion() {
+        return OBFUSCATED("$Id$");
+    };
+    static std::string getSourceVersion();
+
     PasswordPipeLine();
     PasswordPipeLine(const PasswordPipeLine& orig) = delete;
     virtual ~PasswordPipeLine();

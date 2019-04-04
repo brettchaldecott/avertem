@@ -18,6 +18,14 @@
 #include "keto/crypto/Containers.hpp"
 #include "keto/crypto/KeyLoader.hpp"
 
+#include <botan/pkcs8.h>
+#include <botan/hash.h>
+#include <botan/data_src.h>
+#include <botan/pubkey.h>
+#include <botan/rng.h>
+#include <botan/auto_rng.h>
+#include <botan/ecdsa.h>
+
 #include "keto/obfuscate/MetaString.hpp"
 
 
@@ -43,6 +51,8 @@ public:
 private:
     keto::crypto::SecureVector key;
     keto::crypto::KeyLoaderPtr loader;
+
+    std::shared_ptr<Botan::Private_Key> loadKey(std::shared_ptr<Botan::RandomNumberGenerator> rng);
 };
 
 

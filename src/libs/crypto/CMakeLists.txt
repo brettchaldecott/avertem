@@ -17,6 +17,7 @@ add_library( keto_crypto
             ShaDigest.cpp
             PasswordPipeLine.cpp
             BlockchainKeyLoader.cpp
+            Secp256K1Utils.cpp
 
         ${HEADERS})
 
@@ -27,10 +28,15 @@ target_include_directories( keto_crypto
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../environment/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../obfuscate/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../server_common/include"
+                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../module_manager/include"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/libs/common/include/" 
                             ${Boost_INCLUDE_DIRS}
                             ${BOTAN_INCLUDE_DIR}
+                            ${LIBWALLY_INCLUDE_DIR}
                             )
+
+target_link_libraries( keto_crypto
+        PRIVATE ${LIBWALLY_WALLY_LIBRARY} ${LIBWALLY_SECP256K1_LIBRARY})
 
 #if(MSVC)
 #  set_source_files_properties( db_init.cpp db_block.cpp database.cpp block_log.cpp PROPERTIES COMPILE_FLAGS "/bigobj" )

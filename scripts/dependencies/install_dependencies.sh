@@ -179,7 +179,7 @@ if [ $ARCH == "ubuntu" ]; then
     git clone https://github.com/ElementsProject/libwally-core.git
     cd ${TEMP_DIR}/libwally-core
     ./tools/autogen.sh
-    ./configure --disable-shared --prefix=${HOME}/opt/libwally-core/
+    ./configure "CFLAGS=-fPIC" "CXXFLAGS=-fPIC" --disable-shared --prefix=${HOME}/opt/libwally-core/
     make
     make install
     

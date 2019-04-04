@@ -29,6 +29,7 @@ public:
     static std::string getSourceVersion();
 
     BlockchainPublicKeyLoader(const std::string& hexString);
+    BlockchainPublicKeyLoader(const std::vector<uint8_t>& bytes);
     BlockchainPublicKeyLoader(const BlockchainPublicKeyLoader& orig) = delete;
     virtual ~BlockchainPublicKeyLoader();
 

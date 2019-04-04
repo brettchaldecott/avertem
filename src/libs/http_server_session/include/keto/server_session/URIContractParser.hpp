@@ -31,6 +31,9 @@ public:
     URIContractParser(const URIContractParser& orig) = default;
     virtual ~URIContractParser();
 
+    bool isCors();
+    bool hasSessionHash();
+    std::string getSessionHash();
     std::string getContractHash();
     std::string getQuery();
     std::string getRequestUri();
@@ -38,6 +41,8 @@ public:
 
 
 private:
+    bool cors;
+    std::string sessionHash;
     std::string contractHash;
     std::string query;
     std::string requestUri;

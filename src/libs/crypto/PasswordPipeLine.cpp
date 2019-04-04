@@ -9,6 +9,12 @@
 namespace keto {
 namespace crypto {
 
+
+std::string PasswordPipeLine::getSourceVersion() {
+    return OBFUSCATED("$Id$");
+}
+
+
 PasswordPipeLine::PasswordPipeLine() {
     std::default_random_engine stdGenerator;
     stdGenerator.seed(std::chrono::system_clock::now().time_since_epoch().count());

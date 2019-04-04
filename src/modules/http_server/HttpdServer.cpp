@@ -169,6 +169,22 @@ handle_request(
         return res;
     };
 
+    // Returns a server error response
+    auto const cors_options =
+    [&req]()
+    {
+        httpBeast::response<httpBeast::string_body> res{httpBeast::status::ok, req.version()};
+        res.set(httpBeast::field::server, BOOST_BEAST_VERSION_STRING);
+        res.set(httpBeast::field::content_type, "text/html");
+        res.set(boost::beast::http::field::access_control_allow_origin, "*");
+        res.set(boost::beast::http::field::access_control_allow_methods, "*");
+        res.set(boost::beast::http::field::access_control_allow_headers, "*");
+        res.keep_alive(req.keep_alive());
+        res.body() = "";
+        res.prepare_payload();
+        return res;
+    };
+
     // Build the path to the requested file
     if (keto::server_session::HttpRequestManager::getInstance()->checkRequest(req)) {
         keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
@@ -199,7 +215,10 @@ handle_request(
             return send(server_error("Failed to handle the request"));
         }
     } else {
-            
+
+        if( req.method() == httpBeast::verb::options)
+            return send(cors_options());
+
         // Make sure we can handle the method
         if( req.method() != httpBeast::verb::get &&
             req.method() != httpBeast::verb::head)

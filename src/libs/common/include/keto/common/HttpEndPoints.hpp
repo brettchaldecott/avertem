@@ -31,11 +31,13 @@ public:
     virtual ~HttpEndPoints() = delete;
     
     // end points
-    static constexpr const char* AUTHENTICATE = "/autenticate/";
+    static constexpr const char* AUTHENTICATE = "/authenticate/";
     static constexpr const char* HAND_SHAKE = "/hand_shake";
     static constexpr const char* TRANSACTION = "/transaction";
     static constexpr const char* DATA_QUERY = "/data/";
     static constexpr const char* CONTRACT = "/contract/";
+    static constexpr const char* CORS_ENABLED = "cors/";
+    static constexpr const char* SESSION_ID = "session_id";
     
     // headers
     static constexpr const char* HEADER_SESSION_HASH = "session_hash";

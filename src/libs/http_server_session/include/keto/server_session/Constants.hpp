@@ -16,6 +16,7 @@ public:
     class CONTENT_TYPE {
     public:
         static const char* HTML;
+        static const char* TEXT;
         static const char* JSON;
         static const char* SPARQL;
     };

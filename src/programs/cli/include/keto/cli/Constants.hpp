@@ -44,6 +44,9 @@ public:
     static constexpr const char* MNEMONIC_PASS_PHRASE = "mnemonic_pass_phrase";
     static constexpr const char* MNEMONIC_LANGUAGE = "mnemonic_language";
     static constexpr const char* GENERATE_MNEMONIC_KEY = "generate_mnemonic_key";
+    static constexpr const char* VALIDATE_SIGNATURE = "validate_signature";
+    static constexpr const char* SOURCE_HASH = "hash";
+    static constexpr const char* TARGET_SIGNATURE = "signature";
     
     static const int HTTP_VERSION = 11;
     

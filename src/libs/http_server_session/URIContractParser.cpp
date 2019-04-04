@@ -17,9 +17,26 @@ std::string URIContractParser::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
-URIContractParser::URIContractParser(const std::string &uri) {
+URIContractParser::URIContractParser(const std::string &uri) : cors(false) {
     std::string subUri = uri.substr(strlen(keto::common::HttpEndPoints::CONTRACT));
     int nextSlash = subUri.find("/");
+
+    // check if this is a cors query
+    if (subUri.compare(0,strlen(keto::common::HttpEndPoints::CORS_ENABLED),keto::common::HttpEndPoints::CORS_ENABLED) == 0) {
+        this->cors = true;
+        subUri = subUri.substr(strlen(keto::common::HttpEndPoints::CORS_ENABLED));
+        nextSlash = subUri.find("/");
+    }
+
+    // retrieve the session id
+    if (subUri.compare(0,strlen(keto::common::HttpEndPoints::SESSION_ID),keto::common::HttpEndPoints::SESSION_ID) == 0) {
+        int sessionIdLen = strlen(keto::common::HttpEndPoints::SESSION_ID);
+        this->sessionHash = subUri.substr(sessionIdLen,nextSlash - sessionIdLen);
+        std::cout << "Session hash : " << this->sessionHash << std::endl;
+        subUri = subUri.substr(nextSlash+1);
+        nextSlash = subUri.find("/");
+    }
+
     this->contractHash = subUri.substr(0,nextSlash);
     subUri = subUri.substr(nextSlash + 1);
     int queryStart = subUri.find(QUERY_START);
@@ -46,6 +63,18 @@ URIContractParser::URIContractParser(const std::string &uri) {
 
 URIContractParser::~URIContractParser() {
 
+}
+
+bool URIContractParser::isCors() {
+    return this->cors;
+}
+
+bool URIContractParser::hasSessionHash() {
+    return !this->sessionHash.empty();
+}
+
+std::string URIContractParser::getSessionHash() {
+    return this->sessionHash;
 }
 
 std::string URIContractParser::getContractHash() {
