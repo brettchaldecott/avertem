@@ -163,7 +163,7 @@ boost::beast::http::response<boost::beast::http::string_body> HttpSessionManager
     if (this->clientHashMap.count(uriAuthenticationParser.getSourceHash())) {
         ptr = this->clientHashMap[uriAuthenticationParser.getSourceHash()];
     } else {
-        ptr = std::shared_ptr<HttpSession>(new HttpSession(uriAuthenticationParser.getSourceHash(),this->sessionAccount));
+        ptr = std::shared_ptr<HttpSession>(new HttpSession(uriAuthenticationParser.getSourceHash(),uriAuthenticationParser.getAccountHash()));
         this->clientHashMap[ptr->getClientHash()] = ptr;
         this->clientSessionMap[ptr->getSessionHash()] = ptr;
     }
