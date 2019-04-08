@@ -57,9 +57,20 @@ std::vector<uint8_t> SignatureGenerator::sign(const keto::crypto::SecureVector& 
     std::shared_ptr<Botan::RandomNumberGenerator> rng(new Botan::AutoSeeded_RNG);
     std::shared_ptr<Botan::Private_Key> privateKey = loadKey(rng);
 
-    // present 
-    Botan::PK_Signer signer(*privateKey, *rng, Constants::SIGNATURE_TYPE);
-    return signer.sign_message(value, *rng);
+    // present
+    try {
+        Botan::PK_Signer signer(*privateKey, *rng, Constants::SIGNATURE_TYPE);
+        return signer.sign_message(value, *rng);
+    } catch (...) {
+        // fall back to older emsa signature
+        try {
+            Botan::PK_Signer signer(*privateKey, *rng, Constants::EMSA1_SIGNATURE_TYPE);
+            return signer.sign_message(value, *rng);
+        } catch (...) {
+            std::cout << "Failed to sign the message" << std::endl;
+            throw;
+        }
+    }
 }
 
 
@@ -69,6 +80,7 @@ std::shared_ptr<Botan::Private_Key> SignatureGenerator::loadKey(std::shared_ptr<
         return this->loader->getPrivateKey();
     } else {
         if (key[0] == 0x0 || key[0] == 0x0) {
+            std::cout << "Load the key using secp information" << std::endl;
             Botan::EC_Group ecGroup("secp256k1");
             Botan::BigInt bigInt(key.data()+1,key.size()-1);
             return std::shared_ptr<Botan::Private_Key>(new Botan::ECDSA_PrivateKey(*rng,ecGroup,bigInt));
