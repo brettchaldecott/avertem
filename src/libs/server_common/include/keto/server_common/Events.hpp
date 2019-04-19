@@ -29,7 +29,10 @@ public:
     Events() = delete;
     Events(const Events& orig) = delete;
     virtual ~Events() = delete;
-    
+
+    // events for the password
+    static const char* REQUEST_PASSWORD;
+
     // events for the key store
     static const char* REQUEST_SESSION_KEY;
     static const char* REMOVE_SESSION_KEY;

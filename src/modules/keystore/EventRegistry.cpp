@@ -43,6 +43,11 @@ EventRegistry::EventRegistry() {
 EventRegistry::~EventRegistry() {
 }
 
+keto::event::Event EventRegistry::requestPassword(
+        const keto::event::Event& event) {
+    return KeyStoreStorageManager::getInstance()->requestPassword(event);
+}
+
 keto::event::Event EventRegistry::requestSessionKey(
     const keto::event::Event& event) {
     return KeyStoreService::getInstance()->getSessionKeyManager()->requestKey(event);
@@ -115,6 +120,10 @@ keto::event::Event EventRegistry::isMaster(const keto::event::Event& event) {
 }
 
 void EventRegistry::registerEventHandlers() {
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::REQUEST_PASSWORD,
+            &keto::keystore::EventRegistry::requestPassword);
+
     keto::server_common::registerEventHandler (
             keto::server_common::Events::REQUEST_SESSION_KEY,
             &keto::keystore::EventRegistry::requestSessionKey);
@@ -219,6 +228,9 @@ void EventRegistry::deregisterEventHandlers() {
 
     keto::server_common::deregisterEventHandler(keto::server_common::Events::REMOVE_SESSION_KEY);
     keto::server_common::deregisterEventHandler(keto::server_common::Events::REQUEST_SESSION_KEY);
+
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::REQUEST_PASSWORD);
 }
 
 

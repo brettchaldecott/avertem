@@ -52,6 +52,10 @@ public:
     // get the key loader
     std::shared_ptr<keto::crypto::KeyLoader> getKeyLoader();
 
+    // get a pass
+    keto::event::Event requestPassword(const keto::event::Event& event);
+    keto::crypto::SecureVector getPassword(const std::string& entryId);
+
 private:
     keto::key_store_db::KeyStoreDBPtr keyStoreDBPtr;
     std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr;

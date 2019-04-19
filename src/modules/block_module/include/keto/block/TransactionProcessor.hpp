@@ -70,14 +70,14 @@ public:
     
 private:
 
-    std::string getContractByName(const keto::asn1::HashHelper& account, const std::string& name);
-    std::string getContractByHash(const keto::asn1::HashHelper& account, const std::string& hash);
+    keto::proto::ContractMessage getContractByName(const keto::asn1::HashHelper& account, const std::string& name);
+    keto::proto::ContractMessage getContractByHash(const keto::asn1::HashHelper& account, const std::string& hash);
     keto::proto::ContractMessage getContract(keto::proto::ContractMessage& contractMessage);
 
-    keto::proto::SandboxCommandMessage executeContract(const std::string& contract,
+    keto::proto::SandboxCommandMessage executeContract(const keto::proto::ContractMessage& contract,
             const keto::transaction_common::TransactionProtoHelper& transactionProtoHelper,
             TransactionTracker& transactionTracker);
-    keto::proto::SandboxCommandMessage executeContract(const std::string& contract,
+    keto::proto::SandboxCommandMessage executeContract(const keto::proto::ContractMessage& contract,
             const keto::transaction_common::TransactionProtoHelper& transactionProtoHelper,
             const keto::asn1::AnyHelper& model, TransactionTracker& transactionTracker);
 

@@ -52,9 +52,10 @@ public:
     void persistDirty(keto::asn1::RDFSubjectHelperPtr& subject);
     void persist(keto::asn1::RDFSubjectHelperPtr& subject);
     void remove(keto::asn1::RDFSubjectHelperPtr& subject);
-    std::string query(const std::string& query);
-    ResultVectorMap executeDirtyQuery(const std::string& queryStr);
-    ResultVectorMap executeQuery(const std::string& queryStr);
+    std::string query(const std::string& query, const std::vector<uint8_t>& accountHash);
+    ResultVectorMap executeDirtyQuery(const std::string& queryStr, const std::vector<uint8_t>& accountHash);
+    ResultVectorMap executeQuery(const std::string& queryStr, const std::vector<uint8_t>& accountHash);
+    ResultVectorMap executeQueryInternal(const std::string& queryStr);
     
 protected:
     AccountGraphSession(const AccountGraphStorePtr& accountGraphStore);

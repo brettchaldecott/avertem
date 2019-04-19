@@ -88,6 +88,24 @@ AccountRDFStatementBuilder::AccountRDFStatementBuilder(
                                        keto::asn1::Constants::RDF_NODE::URI);
                 subjectPtr->addPredicate(transactionAccountRDFPredicate);
 
+                // add the owner information
+                keto::asn1::RDFPredicateHelper transactionOwnerRDFPredicate =
+                        buildPredicate(AccountSystemOntologyTypes::ACCOUNT_PERMISSIONS::OWNER,
+                                       buildRdfUri(AccountSystemOntologyTypes::ACCOUNT_ONTOLOGY_CLASS,
+                                                   accountHash.getHash(keto::common::StringEncoding::HEX)),
+                                       keto::asn1::Constants::RDF_TYPES::STRING,
+                                       keto::asn1::Constants::RDF_NODE::URI);
+                subjectPtr->addPredicate(transactionOwnerRDFPredicate);
+
+                // add the group information
+                keto::asn1::RDFPredicateHelper transactionGroupRDFPredicate =
+                        buildPredicate(AccountSystemOntologyTypes::ACCOUNT_PERMISSIONS::GROUP,
+                                       buildRdfUri(AccountSystemOntologyTypes::GROUP_ONTOLOGY_CLASS,
+                                                   accountHash.getHash(keto::common::StringEncoding::HEX)),
+                                       keto::asn1::Constants::RDF_TYPES::STRING,
+                                       keto::asn1::Constants::RDF_NODE::URI);
+                subjectPtr->addPredicate(transactionGroupRDFPredicate);
+
                 if (!AccountSystemOntologyTypes::validateClassOperation(
                         accountHash,existingAccount,subjectPtr)) {
                     BOOST_THROW_EXCEPTION(keto::account_db::InvalidAccountOperationException());
@@ -212,6 +230,24 @@ AccountRDFStatementBuilder::AccountRDFStatementBuilder(
                                        keto::asn1::Constants::RDF_TYPES::STRING,
                                        keto::asn1::Constants::RDF_NODE::URI);
                 subjectPtr->addPredicate(transactionAccountRDFPredicate);
+
+                // add the owner information
+                keto::asn1::RDFPredicateHelper transactionOwnerRDFPredicate =
+                        buildPredicate(AccountSystemOntologyTypes::ACCOUNT_PERMISSIONS::OWNER,
+                                       buildRdfUri(AccountSystemOntologyTypes::ACCOUNT_ONTOLOGY_CLASS,
+                                                   accountHash.getHash(keto::common::StringEncoding::HEX)),
+                                       keto::asn1::Constants::RDF_TYPES::STRING,
+                                       keto::asn1::Constants::RDF_NODE::URI);
+                subjectPtr->addPredicate(transactionOwnerRDFPredicate);
+
+                // add the group information
+                keto::asn1::RDFPredicateHelper transactionGroupRDFPredicate =
+                        buildPredicate(AccountSystemOntologyTypes::ACCOUNT_PERMISSIONS::GROUP,
+                                       buildRdfUri(AccountSystemOntologyTypes::GROUP_ONTOLOGY_CLASS,
+                                                   accountHash.getHash(keto::common::StringEncoding::HEX)),
+                                       keto::asn1::Constants::RDF_TYPES::STRING,
+                                       keto::asn1::Constants::RDF_NODE::URI);
+                subjectPtr->addPredicate(transactionGroupRDFPredicate);
 
                 if (!AccountSystemOntologyTypes::validateClassOperation(
                     accountHash,existingAccount,subjectPtr)) {

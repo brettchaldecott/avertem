@@ -101,9 +101,11 @@ private:
     keto::asn1::RDFModelHelper modelHelper;
     keto::crypto::KeyLoaderPtr keyLoaderPtr;
     RDFMemorySessionPtr rdfSessionPtr;
+    keto::asn1::HashHelper contractHash;
 
 
     keto::asn1::RDFSubjectHelperPtr getSubject(const std::string& subjectUrl);
+    void validateSubject(const std::string& subjectUrl);
     keto::asn1::RDFPredicateHelperPtr getPredicate(
         keto::asn1::RDFSubjectHelperPtr subject, const std::string& predicateUrl);
     void addModelEntry(const std::string& subjectUrl, const std::string predicateUrl,

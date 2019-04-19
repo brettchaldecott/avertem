@@ -63,6 +63,7 @@ public:
     static const char* ACCOUNT_DIRTY_ONTOLOGY_URI;
 
     static const char* ACCOUNT_ONTOLOGY_CLASS;
+    static const char* GROUP_ONTOLOGY_CLASS;
     
     // PREDICATE identifiers
     class ACCOUNT_PREDICATES {
@@ -83,6 +84,13 @@ public:
         static const char* STANDARD;
         static const char* SLAVE;
         
+    };
+
+    // PREDICATE identifiers
+    class ACCOUNT_PERMISSIONS {
+    public:
+        static const char* OWNER;
+        static const char* GROUP;
     };
     
     // object literal values

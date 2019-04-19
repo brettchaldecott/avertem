@@ -126,7 +126,7 @@ if [ $ARCH == "ubuntu" ]; then
     rm -rf ${TEMP_DIR}/rasqal
     
     cd ${TEMP_DIR}
-    git clone git://github.com/dajobe/librdf.git
+    git clone https://github.com/keto-coin/librdf.git
     cd ${TEMP_DIR}/librdf
     CFLAGS=-fPIC CPPFLAGS=-fPIC PKG_CONFIG_PATH=${HOME}/opt/librdf/lib/pkgconfig ./autogen.sh --prefix=${HOME}/opt/librdf --enable-shared=no --with-bdb
     make

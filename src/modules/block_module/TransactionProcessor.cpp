@@ -112,18 +112,18 @@ keto::proto::Transaction TransactionProcessor::processTransaction(keto::proto::T
     return transactionProtoHelper;
 }
 
-std::string TransactionProcessor::getContractByName(const keto::asn1::HashHelper& account, const std::string& name) {
+keto::proto::ContractMessage TransactionProcessor::getContractByName(const keto::asn1::HashHelper& account, const std::string& name) {
     keto::proto::ContractMessage contractMessage;
     contractMessage.set_account_hash(account);
     contractMessage.set_contract_name(name);
-    return getContract(contractMessage).contract();
+    return getContract(contractMessage);
 }
 
-std::string TransactionProcessor::getContractByHash(const keto::asn1::HashHelper& account, const std::string& hash) {
+keto::proto::ContractMessage TransactionProcessor::getContractByHash(const keto::asn1::HashHelper& account, const std::string& hash) {
     keto::proto::ContractMessage contractMessage;
     contractMessage.set_account_hash(account);
     contractMessage.set_contract_hash(hash);
-    return getContract(contractMessage).contract();
+    return getContract(contractMessage);
 }
 
 keto::proto::ContractMessage TransactionProcessor::getContract(keto::proto::ContractMessage& contractMessage) {
@@ -132,12 +132,14 @@ keto::proto::ContractMessage TransactionProcessor::getContract(keto::proto::Cont
         keto::server_common::Events::GET_CONTRACT,contractMessage)));
 }
 
-keto::proto::SandboxCommandMessage TransactionProcessor::executeContract(const std::string& contract,
+keto::proto::SandboxCommandMessage TransactionProcessor::executeContract(const keto::proto::ContractMessage& contract,
         const keto::transaction_common::TransactionProtoHelper& transactionProtoHelper,
         TransactionTracker& transactionTracker) {
 
     keto::proto::SandboxCommandMessage sandboxCommandMessage;
-    sandboxCommandMessage.set_contract(contract);
+    sandboxCommandMessage.set_contract(contract.contract());
+    sandboxCommandMessage.set_contract_hash(contract.contract_hash());
+    sandboxCommandMessage.set_contract_name(contract.contract_name());
     sandboxCommandMessage.set_transaction((const std::string)transactionProtoHelper);
     sandboxCommandMessage.set_available_time(transactionTracker.getAvailableTime());
     sandboxCommandMessage.set_elapsed_time(transactionTracker.getElapsedTime());
@@ -150,13 +152,15 @@ keto::proto::SandboxCommandMessage TransactionProcessor::executeContract(const s
     return sandboxCommandMessage;
 }
 
-keto::proto::SandboxCommandMessage TransactionProcessor::executeContract(const std::string& contract,
+keto::proto::SandboxCommandMessage TransactionProcessor::executeContract(const keto::proto::ContractMessage& contract,
         const keto::transaction_common::TransactionProtoHelper& transactionProtoHelper,
         const keto::asn1::AnyHelper& model,
         TransactionTracker& transactionTracker) {
 
     keto::proto::SandboxCommandMessage sandboxCommandMessage;
-    sandboxCommandMessage.set_contract(contract);
+    sandboxCommandMessage.set_contract(contract.contract());
+    sandboxCommandMessage.set_contract_hash(contract.contract_hash());
+    sandboxCommandMessage.set_contract_name(contract.contract_name());
     sandboxCommandMessage.set_transaction((const std::string)transactionProtoHelper);
     sandboxCommandMessage.set_model(model);
     sandboxCommandMessage.set_available_time(transactionTracker.getAvailableTime());

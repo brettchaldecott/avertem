@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <keto/server_common/VectorUtils.hpp>
 
 #include "Account.pb.h"
 
@@ -161,7 +162,8 @@ void AccountStore::sparqlQuery(
         keto::proto::SparqlQuery& sparlQuery) {
     AccountResourcePtr resource = accountResourceManagerPtr->getResource();
     AccountGraphSessionPtr sessionPtr = resource->getGraphSession(accountInfo.graph_name());
-    sparlQuery.set_result(sessionPtr->query(sparlQuery.query()));
+    sparlQuery.set_result(sessionPtr->query(sparlQuery.query(),
+            keto::server_common::VectorUtils().copyStringToVector(accountInfo.account_hash())));
 }
 
 keto::proto::SparqlResultSet AccountStore::sparqlQueryWithResultSet(
@@ -172,7 +174,8 @@ keto::proto::SparqlResultSet AccountStore::sparqlQueryWithResultSet(
 
 
     keto::proto::SparqlResultSet sparqlResultSet;
-    ResultVectorMap resultVectorMap = sessionPtr->executeQuery(sparqlResultSetQuery.query());
+    ResultVectorMap resultVectorMap = sessionPtr->executeQuery(sparqlResultSetQuery.query(),
+            keto::server_common::VectorUtils().copyStringToVector(accountInfo.account_hash()));
     copyResultSet(resultVectorMap,sparqlResultSet);
 
     return sparqlResultSet;
@@ -186,7 +189,8 @@ keto::proto::SparqlResultSet AccountStore::dirtySparqlQueryWithResultSet(
 
 
     keto::proto::SparqlResultSet sparqlResultSet;
-    ResultVectorMap resultVectorMap = sessionPtr->executeDirtyQuery(sparqlResultSetQuery.query());
+    ResultVectorMap resultVectorMap = sessionPtr->executeDirtyQuery(sparqlResultSetQuery.query(),
+            keto::server_common::VectorUtils().copyStringToVector(accountInfo.account_hash()));
     copyResultSet(resultVectorMap,sparqlResultSet);
 
     return sparqlResultSet;
@@ -201,9 +205,11 @@ void AccountStore::getContract(
     keto::asn1::HashHelper accountHash(accountInfo.account_hash());
     if (!contractMessage.contract_name().empty()) {
 
-        ss << "SELECT ?code ?accountHash WHERE { " <<
+        ss << "SELECT ?code ?accountHash ?contractName ?contractHash WHERE { " <<
            "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#name> '" << contractMessage.contract_name() << "'^^<http://www.w3.org/2001/XMLSchema#string> . " <<
            "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#accountHash> ?accountHash . " <<
+           "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#name> ?contractName . " <<
+           "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#hash> ?contractHash . " <<
            "?contractVersion <http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#contract> ?contract . " <<
            "?contractVersion <http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#dateTime> ?dateTime . " <<
            "?contractVersion <http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#value> ?code . } " <<
@@ -211,17 +217,22 @@ void AccountStore::getContract(
 
     } else {
         keto::asn1::HashHelper contractHash(contractMessage.contract_hash());
-        ss << "SELECT ?code ?accountHash WHERE { " <<
+        ss << "SELECT ?code ?accountHash ?contractName ?contractHash WHERE { " <<
             "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#hash> '" << contractHash.getHash(keto::common::StringEncoding::HEX) << "'^^<http://www.w3.org/2001/XMLSchema#string> . " <<
             "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#accountHash> ?accountHash . " <<
+            "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#name> ?contractName . " <<
+            "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#hash> ?contractHash . " <<
             "?contractVersion <http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#contract> ?contract . " <<
             "?contractVersion <http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#dateTime> ?dateTime . " <<
             "?contractVersion <http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#value> ?code . } " <<
             "ORDER BY DESC (?dateTime) LIMIT 1";
     }
-    ResultVectorMap result = sessionPtr->executeQuery(ss.str());
+    ResultVectorMap result = sessionPtr->executeQueryInternal(ss.str());
     if (result.size() == 1) {
         contractMessage.set_contract(result[0]["code"]);
+        contractMessage.set_contract_name(result[0]["contractName"]);
+        keto::asn1::HashHelper contractHash(result[0]["contractHash"],keto::common::StringEncoding::HEX);
+        contractMessage.set_contract_hash(contractHash);
     } else {
         std::stringstream exceptionMsg;
         exceptionMsg << "Failed to retrieve the contract [" << contractMessage.DebugString() << "] account [" << accountInfo.DebugString() << "]";

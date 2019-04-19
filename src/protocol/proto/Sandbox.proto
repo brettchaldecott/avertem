@@ -7,12 +7,14 @@ package keto.proto;
  */
 message SandboxCommandMessage {
     string contract = 1;
-    bytes model = 2;
-    bytes transaction = 3;
-    bytes changes = 4;
-    int64 available_time = 5;
-    int64 elapsed_time = 6;
-    float fee_ratio = 7;
+    bytes contract_hash = 2;
+    string contract_name = 3;
+    bytes model = 4;
+    bytes transaction = 5;
+    bytes changes = 6;
+    int64 available_time = 7;
+    int64 elapsed_time = 8;
+    float fee_ratio = 9;
 }
 
 message HttpRequestEntry {
@@ -22,13 +24,15 @@ message HttpRequestEntry {
 
 message HttpRequestMessage {
     string contract = 1;
-    bytes account_hash = 2;
-    repeated bytes roles = 3;
-    string method = 4;
-    string uri = 5;
-    string query = 6;
-    repeated HttpRequestEntry request_properties = 7;
-    string body = 8;
+    string contract_hash = 2;
+    string contract_name = 3;
+    bytes account_hash = 4;
+    repeated bytes roles = 5;
+    string method = 6;
+    string uri = 7;
+    string query = 8;
+    repeated HttpRequestEntry request_properties = 9;
+    string body = 10;
 }
 
 message HttpResponseMessage {

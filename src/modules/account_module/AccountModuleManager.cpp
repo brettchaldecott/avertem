@@ -55,13 +55,24 @@ const std::string AccountModuleManager::getVersion() const {
 
 // lifecycle methods
 void AccountModuleManager::start() {
+    KETO_LOG_INFO << "[AccountModuleManager] Starting the AccountModuleManager";
     StorageManager::init();
+    KETO_LOG_INFO <<  "[AccountModuleManager] account service init";
     AccountService::init();
+    KETO_LOG_INFO <<  "[AccountModuleManager] The consensus service";
     ConsensusService::init(this->getConsensusHash());
+    KETO_LOG_INFO <<  "[AccountModuleManager] Account module";
     modules["accountModule"] = std::make_shared<AccountModule>();
+    KETO_LOG_INFO <<  "[AccountModuleManager] Account module";
     EventRegistry::registerEventHandlers();
     KETO_LOG_INFO << "[AccountModuleManager] Started the AccountModuleManager";
 }
+
+void AccountModuleManager::postStart() {
+    KETO_LOG_INFO << "[AccountModuleManager] Block manager post start has been called";
+    KETO_LOG_INFO << "[AccountModuleManager] After registering the services";
+}
+
 
 void AccountModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();

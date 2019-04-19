@@ -21,6 +21,7 @@
 #include "keto/account_db/AccountGraphSession.hpp"
 #include "keto/account_db/AccountGraphDirtySessionManager.hpp"
 #include "keto/common/Log.hpp"
+#include "keto/rdf_utils/RDFQueryParser.hpp"
 
 namespace keto {
 namespace account_db {
@@ -117,11 +118,16 @@ void AccountGraphSession::remove(keto::asn1::RDFSubjectHelperPtr& subject) {
 }
 
 
-std::string AccountGraphSession::query(const std::string& queryStr) {
+std::string AccountGraphSession::query(const std::string& queryStr, const std::vector<uint8_t>& accountHash) {
+    keto::rdf_utils::RDFQueryParser rdfQueryParser(queryStr);
+    if (!rdfQueryParser.isValidQuery()) {
+        BOOST_THROW_EXCEPTION(keto::account_db::InvalidQueryFormat());
+    }
     librdf_query* query;
     librdf_query_results* results;
-    query = librdf_new_query(this->accountGraphStore->getWorld(), "sparql", 
-            NULL, (const unsigned char *)queryStr.c_str(), NULL);
+    std::string formatedQuery = rdfQueryParser.getQuery();
+    query = librdf_new_query(this->accountGraphStore->getWorld(), "sparql",
+            NULL, (const unsigned char *)formatedQuery.c_str(), NULL);
     results = librdf_model_query_execute(this->accountGraphStore->getModel(), query);
     if (!results) {
         librdf_free_query(query);
@@ -142,19 +148,24 @@ std::string AccountGraphSession::query(const std::string& queryStr) {
     return strResult;
 }
 
-ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryStr) {
+ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryStr, const std::vector<uint8_t>& accountHash) {
     //if (librdf_model_add_submodel(this->accountGraphStore->getModel(),
     //        AccountGraphDirtySessionManager::getInstance()->getDirtySession(this->accountGraphStore->dbName)->getDirtyModel())) {
     //    std::cout << "Faild to add the sub models" << std::endl;
     //    BOOST_THROW_EXCEPTION(keto::account_db::UnsupportedDataTypeTransactionException());
     //}
+    keto::rdf_utils::RDFQueryParser rdfQueryParser(queryStr,accountHash);
+    if (!rdfQueryParser.isValidQuery()) {
+        BOOST_THROW_EXCEPTION(keto::account_db::InvalidQueryFormat());
+    }
     AccountGraphDirtySession::AccountGraphDirtySessionScope accountGraphDirtySessionScope(
             this->accountGraphStore->dbName,this->accountGraphStore->getModel());
-    std::cout << "[AccountGraphSession::executeDirtyQuery]Execute the query : " << queryStr << std::endl;
+    std::cout << "[AccountGraphSession::executeDirtyQuery]Execute the query [" << rdfQueryParser.getQuery() << "]" << std::endl;
+    std::string formatedQuery = rdfQueryParser.getQuery();
     librdf_query* query;
     librdf_query_results* results;
     query = librdf_new_query(this->accountGraphStore->getWorld(), "sparql",
-                             NULL, (const unsigned char *)queryStr.c_str(), NULL);
+                             NULL, (const unsigned char *)formatedQuery.c_str(), NULL);
 
     results = librdf_model_query_execute(this->accountGraphStore->getModel(), query);
     ResultVectorMap resultVectorMap;
@@ -203,11 +214,26 @@ ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryS
 }
 
 
-ResultVectorMap AccountGraphSession::executeQuery(const std::string& queryStr) {
+ResultVectorMap AccountGraphSession::executeQuery(const std::string& queryStr, const std::vector<uint8_t>& accountHash) {
+    keto::rdf_utils::RDFQueryParser rdfQueryParser(queryStr,accountHash);
+    if (!rdfQueryParser.isValidQuery()) {
+        BOOST_THROW_EXCEPTION(keto::account_db::InvalidQueryFormat());
+    }
+    std::cout << "[AccountGraphSession::executeQuery]Execute the query [" << rdfQueryParser.getQuery() << "]" << std::endl;
+    return this->executeQueryInternal(rdfQueryParser.getQuery());
+}
+
+ResultVectorMap AccountGraphSession::executeQueryInternal(const std::string& queryStr) {
+    keto::rdf_utils::RDFQueryParser rdfQueryParser(queryStr);
+    if (!rdfQueryParser.isValidQuery()) {
+        BOOST_THROW_EXCEPTION(keto::account_db::InvalidQueryFormat());
+    }
+
+    std::string formatedQuery = rdfQueryParser.getQuery();
     librdf_query* query;
     librdf_query_results* results;
-    query = librdf_new_query(this->accountGraphStore->getWorld(), "sparql", 
-            NULL, (const unsigned char *)queryStr.c_str(), NULL);
+    query = librdf_new_query(this->accountGraphStore->getWorld(), "sparql",
+                             NULL, (const unsigned char *)formatedQuery.c_str(), NULL);
     results = librdf_model_query_execute(this->accountGraphStore->getModel(), query);
     ResultVectorMap resultVectorMap;
     if (!results) {

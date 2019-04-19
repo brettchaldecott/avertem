@@ -26,6 +26,14 @@ public:
         static const char* HTTP;
         static const char* TRANSACTION;
     };
+
+    class SYSTEM_CONTRACT {
+    public:
+        static const char* BASE_ACCOUNT_TRANSACTION;
+        static const char* FEE_PAYMENT;
+        static const char* NESTED_TRANSACTION;
+    };
+    static const std::vector<const char*> SYSTEM_CONTRACTS;
 };
 
 

@@ -17,6 +17,17 @@ const char* Constants::SESSION_SPARQL_QUERY = "SESSION_SPARQL_QUERY";
 const char* Constants::SESSION_TYPES::HTTP = "http";
 const char* Constants::SESSION_TYPES::TRANSACTION = "transaction";
 
+const char* Constants::SYSTEM_CONTRACT::BASE_ACCOUNT_TRANSACTION = "base_account_transaction";
+const char* Constants::SYSTEM_CONTRACT::FEE_PAYMENT = "fee_payment";
+const char* Constants::SYSTEM_CONTRACT::NESTED_TRANSACTION = "nested_transaction";
+
+
+const std::vector<const char*> Constants::SYSTEM_CONTRACTS{
+        Constants::SYSTEM_CONTRACT::BASE_ACCOUNT_TRANSACTION,
+        Constants::SYSTEM_CONTRACT::FEE_PAYMENT,
+        Constants::SYSTEM_CONTRACT::NESTED_TRANSACTION
+};
+
 }
 }
 

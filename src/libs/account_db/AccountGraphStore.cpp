@@ -14,14 +14,25 @@
 #include <sstream>
 #include <iostream>
 
+#include "KeyStore.pb.h"
+
+#include "keto/server_common/VectorUtils.hpp"
+#include "keto/server_common/EventUtils.hpp"
+#include "keto/server_common/EventServiceHelpers.hpp"
+#include "keto/crypto/SecureVectorUtils.hpp"
+
+
 #include <boost/filesystem/path.hpp>
+#include <keto/server_common/Events.hpp>
 
 #include "keto/account_db/AccountGraphStore.hpp"
 #include "keto/account_db/Exception.hpp"
 
 #include "keto/environment/EnvironmentManager.hpp"
 #include "keto/environment/Config.hpp"
-#include "include/keto/account_db/Constants.hpp"
+#include "keto/account_db/Constants.hpp"
+
+
 
 namespace keto {
 namespace account_db {
@@ -34,7 +45,7 @@ AccountGraphStore::AccountGraphStore(const std::string& dbName) : dbName(dbName)
     // setup the world
     world = librdf_new_world();
     librdf_world_open(world);
-    
+
     
     // setup the bdb hash db
     std::shared_ptr<keto::environment::Config> config = 
@@ -53,17 +64,33 @@ AccountGraphStore::AccountGraphStore(const std::string& dbName) : dbName(dbName)
     
     if (!boost::filesystem::exists(graphBaseDir)) {
         boost::filesystem::create_directory(graphBaseDir);
-    }    
-    
-    boost::filesystem::path dbPath =  graphBaseDir / 
-        dbName;
+    }
+
+    boost::filesystem::path dbPath =  graphBaseDir /
+                                      dbName;
     if (!boost::filesystem::exists(dbPath)) {
         boost::filesystem::create_directory(dbPath);
     }
+
+    // request the database name
     std::stringstream ss;
-    ss << "hash-type='bdb',dir='" << dbPath.c_str() << "',contexts='yes'" ;
+    if (dbName == Constants::BASE_GRAPH) {
+        ss << "hash-type='bdb',dir='" << dbPath.c_str() << "',contexts='yes'";
+    } else {
+        keto::proto::PasswordRequest passwordRequest;
+        passwordRequest.set_identifier(dbName);
+        keto::proto::PasswordResponse passwordResponse = keto::server_common::fromEvent<keto::proto::PasswordResponse>(
+                keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::PasswordRequest>(
+                        keto::server_common::Events::REQUEST_PASSWORD, passwordRequest)));
+        std::cout << "The db path is : " << dbPath << std::endl;
+        ss << "hash-type='bdb',dir='" << dbPath.c_str() << "',contexts='yes',password='" << passwordResponse.password()
+           << "'";
+    }
+
+    std::cout << "The db name is : " << dbName << "[" << ss.str() << "]" << std::endl;
     storage=librdf_new_storage(world, "hashes", dbName.c_str(),
                              ss.str().c_str());
+    std::cout << "Load the model from the storage" << std::endl;
     model = librdf_new_model(world,storage,NULL);
     if (!storage || !model) {
         BOOST_THROW_EXCEPTION(keto::account_db::AccountDBInitFailureException());

@@ -15,6 +15,9 @@
 #include <sstream>
 #include <math.h>
 #include <time.h>
+
+#include <botan/hex.h>
+
 #include <keto/wavm_common/Constants.hpp>
 #include <keto/crypto/HashGenerator.hpp>
 
@@ -26,6 +29,7 @@
 #include "keto/server_common/ServerInfo.hpp"
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/RDFUtils.hpp"
+#include "keto/server_common/VectorUtils.hpp"
 
 #include "keto/wavm_common/WavmSessionTransaction.hpp"
 #include "keto/wavm_common/RDFURLUtils.hpp"
@@ -74,6 +78,8 @@ WavmSessionTransaction::WavmSessionTransaction(const keto::proto::SandboxCommand
         }
     }
     addTransaction(transactionMessageHelperPtr,false);
+    this->contractHash = keto::asn1::HashHelper(this->sandboxCommandMessage.contract_hash());
+
 }
 
 WavmSessionTransaction::~WavmSessionTransaction() {
@@ -287,10 +293,26 @@ keto::proto::SandboxCommandMessage WavmSessionTransaction::getSandboxCommandMess
 
 keto::asn1::RDFSubjectHelperPtr WavmSessionTransaction::getSubject(const std::string& subjectUrl) {
     if (!this->modelHelper.contains(subjectUrl)) {
+        validateSubject(subjectUrl);
         keto::asn1::RDFSubjectHelper subject(subjectUrl);
         this->modelHelper.addSubject(subject);
     }
     return this->modelHelper[subjectUrl];
+}
+
+void WavmSessionTransaction::validateSubject(const std::string& subjectUrl) {
+    for (const char* contractName : Constants::SYSTEM_CONTRACTS) {
+        if (this->sandboxCommandMessage.contract_name() == contractName){
+            return;
+        }
+    }
+    if (subjectUrl.find(this->sandboxCommandMessage.contract_name()) != std::string::npos) {
+        return;
+    }
+    if (subjectUrl.find(this->contractHash.getHash(keto::common::StringEncoding::HEX)) != std::string::npos) {
+        return;
+    }
+    BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidSubjectForContract());
 }
 
 keto::asn1::RDFPredicateHelperPtr WavmSessionTransaction::getPredicate(

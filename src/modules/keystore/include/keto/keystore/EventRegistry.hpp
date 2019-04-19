@@ -32,7 +32,9 @@ public:
 
     EventRegistry(const EventRegistry& orig) = delete;
     virtual ~EventRegistry();
-    
+
+    static keto::event::Event requestPassword(const keto::event::Event& event);
+
     static keto::event::Event requestSessionKey(const keto::event::Event& event);
     static keto::event::Event removeSessionKey(const keto::event::Event& event);
     

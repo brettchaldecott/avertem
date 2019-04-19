@@ -4,3 +4,7 @@ add_subdirectory( wallet )
 add_subdirectory( abi_gen )
 add_subdirectory( contract )
 add_subdirectory( tools )
+add_subdirectory( rdf_tools )
+
+
+

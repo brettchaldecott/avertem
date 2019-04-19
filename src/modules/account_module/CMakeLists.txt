@@ -31,7 +31,7 @@ add_dependencies(0015_account_module keto_tools)
 
 KetoModuleDepencencies( 0015_account_module 
                             PRIVATE keto_account_db keto_rocks_db keto_transaction_common 
-                            PRIVATE keto_software_consensus
+                            PRIVATE keto_software_consensus keto_rdf_utils
                             PRIVATE keto_server_common keto_asn1_common keto_asn1_protocol
                             PRIVATE keto_key_tools keto_proto_environment ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 

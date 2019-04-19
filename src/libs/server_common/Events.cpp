@@ -20,6 +20,8 @@ std::string Events::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
+// request the password
+const char* Events::REQUEST_PASSWORD = "REQUEST_PASSWORD";
 
 // events for the key store
 const char* Events::REQUEST_SESSION_KEY = "REQUEST_SESSION_KEY";

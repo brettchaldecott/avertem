@@ -24,6 +24,9 @@ add_library( keto_account_db
 
 target_link_libraries( keto_account_db
                         keto_router_utils )
+
+add_dependencies( keto_account_db keto_rdf_utils )
+
 target_include_directories( keto_account_db
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../common/include"
@@ -37,6 +40,7 @@ target_include_directories( keto_account_db
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../asn1/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../rocks_db/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../obfuscate/include"
+                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../rdf_utils/include"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/proto/"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/asn1/"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/libs/common/include/" 
