@@ -47,19 +47,22 @@ private:
     keto::crypto::SecureVector encodedKey;
     keto::crypto::SecureVector seed;
     keto::asn1::HashHelper previousHash;
+    CallBacks callBacks;
 public:
     ChaiScriptSession(getModuleSignature moduleSignatureRef,
             getModuleKey moduleKeyRef,
             const SourceVersionMap& sourceVersionMap,
             const keto::crypto::SecureVector& sessionKey,
             const keto::crypto::SecureVector& encodedKey,
-            const keto::asn1::HashHelper& previousHash) : 
+            const keto::asn1::HashHelper& previousHash,
+            const CallBacks& callBacks) :
         moduleSignatureRef(moduleSignatureRef),
         moduleKeyRef(moduleKeyRef),
         sourceVersionMap(sourceVersionMap),
         sessionKey(sessionKey),
         encodedKey(encodedKey),
-        previousHash(previousHash)
+        previousHash(previousHash),
+        callBacks(callBacks)
     {
     }
     
@@ -68,13 +71,15 @@ public:
             SourceVersionMap sourceVersionMap,
             keto::crypto::SecureVector sessionKey,
             keto::crypto::SecureVector encodedKey,
-            keto::crypto::SecureVector seed) : 
+            keto::crypto::SecureVector seed,
+            const CallBacks& callBacks) :
         moduleSignatureRef(moduleSignatureRef),
         moduleKeyRef(moduleKeyRef),
         sourceVersionMap(sourceVersionMap),
         sessionKey(sessionKey),
         encodedKey(encodedKey),
-        seed(seed)
+        seed(seed),
+        callBacks(callBacks)
     {
     }
     
@@ -104,6 +109,10 @@ public:
     
     keto::crypto::SecureVector getPreviousHash() {
         return this->previousHash.operator keto::crypto::SecureVector();
+    }
+
+    CallBacks getCallBacks() {
+        return this->callBacks;
     }
 };
 
@@ -154,14 +163,23 @@ keto::crypto::SecureVector chai_getPreviousHash() {
     return chaiScriptSessionPtr->getPreviousHash();
 }
 
+keto::crypto::SecureVector chai_executeCallBacks(const keto::crypto::SecureVector &value) {
+    keto::crypto::SecureVector result = value;
+    for (testCallBack callBack: chaiScriptSessionPtr->getCallBacks()) {
+        result = callBack(result);
+    }
+    return result;
+}
+
 ChaiScriptPtr initChaiScript(getModuleSignature moduleSignatureRef,
             getModuleKey moduleKeyRef,
             const SourceVersionMap& sourceVersionMap,
             const keto::crypto::SecureVector& sessionKey,
             const keto::crypto::SecureVector& encodedKey,
-            const keto::asn1::HashHelper& previousHash) {
+            const keto::asn1::HashHelper& previousHash,
+            const CallBacks& callBacks) {
     chaiScriptSessionPtr = std::make_shared<ChaiScriptSession>(
-            moduleSignatureRef,moduleKeyRef,sourceVersionMap,sessionKey,encodedKey,previousHash);
+            moduleSignatureRef,moduleKeyRef,sourceVersionMap,sessionKey,encodedKey,previousHash,callBacks);
     
     ChaiScriptPtr chaiScriptPtr = std::make_shared<chaiscript::ChaiScript>();
     
@@ -174,6 +192,7 @@ ChaiScriptPtr initChaiScript(getModuleSignature moduleSignatureRef,
     chaiScriptPtr->add(chaiscript::fun(&chai_encryptBytes), "encryptBytes");
     chaiScriptPtr->add(chaiscript::fun(&chai_decryptBytes), "decryptBytes");
     chaiScriptPtr->add(chaiscript::fun(&chai_getPreviousHash), "getPreviousHash");
+    chaiScriptPtr->add(chaiscript::fun(&chai_executeCallBacks), "executeCallBacks");
     
     return chaiScriptPtr;
 }
@@ -183,9 +202,10 @@ ChaiScriptPtr initChaiScript(getModuleSignature moduleSignatureRef,
             const SourceVersionMap& sourceVersionMap,
             const keto::crypto::SecureVector& sessionKey,
             const keto::crypto::SecureVector& encodedKey,
-            const keto::crypto::SecureVector& seed) {
+            const keto::crypto::SecureVector& seed,
+            const CallBacks& callBacks) {
     chaiScriptSessionPtr = std::make_shared<ChaiScriptSession>(
-            moduleSignatureRef,moduleKeyRef,sourceVersionMap,sessionKey,encodedKey,seed);
+            moduleSignatureRef,moduleKeyRef,sourceVersionMap,sessionKey,encodedKey,seed,callBacks);
     
     ChaiScriptPtr chaiScriptPtr = std::make_shared<chaiscript::ChaiScript>();
     
@@ -198,6 +218,7 @@ ChaiScriptPtr initChaiScript(getModuleSignature moduleSignatureRef,
     chaiScriptPtr->add(chaiscript::fun(&chai_encryptBytes), "encryptBytes");
     chaiScriptPtr->add(chaiscript::fun(&chai_decryptBytes), "decryptBytes");
     chaiScriptPtr->add(chaiscript::fun(&chai_getSeed), "getSeed");
+    chaiScriptPtr->add(chaiscript::fun(&chai_executeCallBacks), "executeCallBacks");
     
     return chaiScriptPtr;
 }
@@ -217,9 +238,10 @@ public:
             const SourceVersionMap& sourceVersionMap,
             const keto::crypto::SecureVector& sessionKey,
             const keto::crypto::SecureVector& encodedKey,
-            const keto::asn1::HashHelper& previousHash) {
+            const keto::asn1::HashHelper& previousHash,
+            const CallBacks& callBacks) {
         this->chaiScriptPtr = initChaiScript(moduleSignatureRef,moduleKeyRef,sourceVersionMap,
-                sessionKey,encodedKey,previousHash);
+                sessionKey,encodedKey,previousHash,callBacks);
     }
     
     ChaiScriptSessionScope(getModuleSignature moduleSignatureRef,
@@ -227,9 +249,10 @@ public:
             const SourceVersionMap& sourceVersionMap,
             const keto::crypto::SecureVector& sessionKey,
             const keto::crypto::SecureVector& encodedKey,
-            const keto::crypto::SecureVector& seed) {
+            const keto::crypto::SecureVector& seed,
+            const CallBacks& callBacks) {
         this->chaiScriptPtr = initChaiScript(moduleSignatureRef,moduleKeyRef,sourceVersionMap,
-                sessionKey,encodedKey,seed);
+                sessionKey,encodedKey,seed,callBacks);
     }
     
     ~ChaiScriptSessionScope() {
@@ -266,6 +289,10 @@ ConsensusHashGeneratorPtr ConsensusHashGenerator::initInstance(
             moduleSignatureRef, moduleKeyRef, sourceVersionMap));
 }
 
+void ConsensusHashGenerator::registerCallBacks(const CallBacks& callBacks) {
+    this->callBacks = callBacks;
+}
+
 // method to set the session key
 void ConsensusHashGenerator::setSession(
         const keto::crypto::SecureVector& sessionKey) {
@@ -294,7 +321,8 @@ keto::crypto::SecureVector ConsensusHashGenerator::generateSeed(const keto::asn1
     keto::key_tools::ContentDecryptor contentDecryptor(this->sessionKey,this->encodedKey,this->sessionScript);
     keto::crypto::SecureVector secureVector = contentDecryptor.getContent();
 
-    ChaiScriptSessionScope scope(moduleSignatureRef,moduleKeyRef,sourceVersionMap,sessionKey,encodedKey,previousHash);
+    ChaiScriptSessionScope scope(moduleSignatureRef,moduleKeyRef,sourceVersionMap,sessionKey,encodedKey,previousHash,
+            this->callBacks);
     ChaiScriptPtr chaiScriptPtr = scope.getChaiScriptPtr();
     
     std::string code(secureVector.begin(),secureVector.end());
@@ -306,7 +334,8 @@ keto::crypto::SecureVector ConsensusHashGenerator::generateHash(const keto::cryp
     keto::key_tools::ContentDecryptor contentDecryptor(this->sessionKey,this->encodedKey,this->sessionScript);
     keto::crypto::SecureVector secureVector = contentDecryptor.getContent();
 
-    ChaiScriptSessionScope scope(moduleSignatureRef,moduleKeyRef,sourceVersionMap,sessionKey,encodedKey,seed);
+    ChaiScriptSessionScope scope(moduleSignatureRef,moduleKeyRef,sourceVersionMap,sessionKey,encodedKey,seed,
+            this->callBacks);
     ChaiScriptPtr chaiScriptPtr = scope.getChaiScriptPtr();
     
     std::string code(secureVector.begin(),secureVector.end());
@@ -326,13 +355,13 @@ keto::crypto::SecureVector ConsensusHashGenerator::generateSessionHash(const ket
     keto::key_tools::ContentDecryptor contentDecryptor(this->sessionKey,this->encodedKey,this->sessionShortScript);
     keto::crypto::SecureVector secureVector = contentDecryptor.getContent();
 
-    ChaiScriptSessionScope scope(moduleSignatureRef,moduleKeyRef,sourceVersionMap,sessionKey,encodedKey,name);
+    ChaiScriptSessionScope scope(moduleSignatureRef,moduleKeyRef,sourceVersionMap,sessionKey,encodedKey,name,
+            this->callBacks);
     ChaiScriptPtr chaiScriptPtr = scope.getChaiScriptPtr();
 
     std::string code(secureVector.begin(),secureVector.end());
     return chaiScriptPtr->eval<keto::crypto::SecureVector>(code);
 }
-
 
 std::vector<uint8_t> ConsensusHashGenerator::encrypt(const keto::crypto::SecureVector& value) {
     keto::key_tools::ContentEncryptor contentEncryptor(this->sessionKey,this->encodedKey,value);

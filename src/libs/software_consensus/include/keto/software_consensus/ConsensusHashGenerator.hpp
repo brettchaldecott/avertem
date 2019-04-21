@@ -33,6 +33,8 @@ typedef keto::crypto::SecureVector (*getModuleSignature)();
 typedef keto::crypto::SecureVector (*getModuleKey)();
 typedef std::string (*getSourceVersion)();
 typedef std::map<std::string,getSourceVersion> SourceVersionMap;
+typedef keto::crypto::SecureVector (*testCallBack)(const keto::crypto::SecureVector&);
+typedef std::vector<testCallBack> CallBacks;
 
 
 class ConsensusHashGenerator {
@@ -53,6 +55,9 @@ public:
             getModuleSignature moduleSignatureRef,
             getModuleKey moduleKeyRef,
             SourceVersionMap sourceVersionMap);
+
+    // register callbacks
+    void registerCallBacks(const CallBacks& callBacks);
     
     // method to set the session key
     void setSession(
@@ -74,6 +79,7 @@ private:
     keto::crypto::SecureVector currentSoftwareHash;
     std::vector<uint8_t> sessionScript;
     std::vector<uint8_t> sessionShortScript;
+    CallBacks callBacks;
     
     // module configuration
     getModuleSignature moduleSignatureRef; 

@@ -11,23 +11,25 @@
  * Created on July 23, 2018, 11:35 AM
  */
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <condition_variable>
 
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
 
-
 #include "keto/software_consensus/ConsensusStateManager.hpp"
 #include "keto/software_consensus/ModuleSessionMessageHelper.hpp"
 #include "keto/software_consensus/ModuleHashMessageHelper.hpp"
 #include "keto/software_consensus/ModuleConsensusHelper.hpp"
-
+#include "keto/crypto/HashGenerator.hpp"
 
 #include "keto/test/ConsensusService.hpp"
 
+
 namespace keto{
 namespace test {
-    
+
 static ConsensusServicePtr singleton;
 
 std::string ConsensusService::getSourceVersion() {

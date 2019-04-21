@@ -4,6 +4,8 @@
  * and open the template in the editor.
  */
 
+#include <stdio.h>
+#include <sys/ptrace.h>
 #include <boost/dll/alias.hpp>
 #include <boost/dll/shared_library.hpp>
 #include <boost/shared_ptr.hpp>
@@ -15,9 +17,36 @@
 #include "keto/obfuscate/MetaString.hpp"
 #include "keto/crypto/Containers.hpp"
 #include "keto/crypto/SecureVectorUtils.hpp"
+#include "keto/crypto/HashGenerator.hpp"
 
 #include "keto/test/TestModuleManager.hpp"
 #include "keto/common/MetaInfo.hpp"
+
+extern unsigned char* _start;
+extern unsigned char* __etext;
+
+keto::crypto::SecureVector ${TEST_CONSENSUS_DETECT_BREAK_METHOD}(const keto::crypto::SecureVector& input) {
+    keto::crypto::SecureVector result = keto::crypto::HashGenerator().generateHash(input);
+    char* start = (char*)&_start;
+    char* end = (char*)&__etext;
+    while(start != end) {
+        if(((*(volatile unsigned*)start) & 0xFF) == 0xCC) {
+            result = keto::crypto::HashGenerator().generateHash(result);
+        }
+        ++start;
+    }
+    return result;
+}
+
+keto::crypto::SecureVector ${TEST_CONSENSUS_TEST_PTRACE_METHOD}(const keto::crypto::SecureVector& input) {
+    keto::crypto::SecureVector result = keto::crypto::HashGenerator().generateHash(input);
+    if (ptrace(PTRACE_TRACEME, 0, 1, 0) == 0)
+    {
+        return keto::crypto::HashGenerator().generateHash(result);
+    }
+    return result;
+}
+
 
 ${0002_keto_test_module_headerList}
 
@@ -70,6 +99,12 @@ keto::software_consensus::ConsensusHashGeneratorPtr TestModuleManager::getConsen
     return consensusHashGenerator;
 }
 
+keto::software_consensus::CallBacks TestModuleManager::getCallBacks() {
+    keto::software_consensus::CallBacks callBacks;
+    callBacks.push_back(&${TEST_CONSENSUS_DETECT_BREAK_METHOD});
+    callBacks.push_back(&${TEST_CONSENSUS_TEST_PTRACE_METHOD});
+    return callBacks;
+}
 
 }
 }

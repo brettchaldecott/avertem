@@ -57,7 +57,9 @@ const std::string TestModuleManager::getVersion() const {
 // lifecycle methods
 void TestModuleManager::start() {
     KETO_LOG_INFO << "Start has been called on the test module manager";
-    ConsensusService::init(getConsensusHash());
+    keto::software_consensus::ConsensusHashGeneratorPtr consensusHashGeneratorPtr = getConsensusHash();
+    consensusHashGeneratorPtr->registerCallBacks(getCallBacks());
+    ConsensusService::init(consensusHashGeneratorPtr);
     modules["test_module"] = std::make_shared<TestModule>();
     EventRegistry::registerEventHandlers();
     

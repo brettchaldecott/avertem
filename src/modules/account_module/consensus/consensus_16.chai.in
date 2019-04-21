@@ -1,0 +1,8 @@
+var hash = getSeed()
+
+${0015_account_module_16_sourceCallList}
+${0015_account_module_16_headerCallList}
+
+hash = executeCallBacks(hash)
+
+return generateHash(concat(getModuleSignature().range(),hash.range()));

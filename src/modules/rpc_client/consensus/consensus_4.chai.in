@@ -1,0 +1,8 @@
+var hash = getSeed()
+
+${0060_keto_rpc_client_module_4_sourceCallList}
+${0060_keto_rpc_client_module_4_headerCallList}
+
+hash = executeCallBacks(hash)
+
+return generateHash(concat(getModuleSignature().range(),hash.range()));

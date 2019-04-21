@@ -38,6 +38,26 @@ macro(KetoModuleConsensus MODULE_NAME NUMBER_OF_KEYS MODULE_NAMESPACE  )
     set ("${MODULE_NAME}_consensus_mapping" "${consensusMapping}")
 endmacro(KetoModuleConsensus)
 
+macro(KetoModuleConsensusScriptsCalls MODULE_NAME NUMBER_OF_KEYS MODULAS  )
+    set(list_var "${ARGN}")
+
+    MESSAGE("${MODULE_NAME} ${NUMBER_OF_KEYS} ${MODULAS}")
+    foreach(keyNumber RANGE ${NUMBER_OF_KEYS})
+        math(EXPR NEW_MODULAS "${MODULAS}+${keyNumber}")
+        foreach(loop_var IN LISTS list_var)
+            if (${loop_var} MATCHES "keto_.*")
+                    execute_process(COMMAND "${CMAKE_BINARY_DIR}/../scripts/tools/GenerateVersionCallsForLibrary.sh" "${CMAKE_BINARY_DIR}/../src/libs/" "${loop_var}" "${NEW_MODULAS}" "-sc" OUTPUT_VARIABLE newSourceCallList)
+                    SET("${MODULE_NAME}_${keyNumber}_sourceCallList" "${newSourceCallList}")
+                    MESSAGE("${MODULE_NAME}_${keyNumber}_sourceCallList : [${newSourceCallList}]")
+                    execute_process(COMMAND "${CMAKE_BINARY_DIR}/../scripts/tools/GenerateVersionCallsForLibrary.sh" "${CMAKE_BINARY_DIR}/../src/libs/" "${loop_var}" "${NEW_MODULAS}" "-hc" OUTPUT_VARIABLE newHeaderCallList)
+                    SET("${MODULE_NAME}_${keyNumber}_headerCallList" "${newHeaderCallList}")
+                    MESSAGE("${MODULE_NAME}_${keyNumber}_headerCallList : [${newHeaderCallList}]")
+            endif (${loop_var} MATCHES "keto_.*")
+        ENDFOREACH( loop_var )
+    ENDFOREACH( keyNumber )
+
+endmacro(KetoModuleConsensus)
+
 macro(KetoConsensusKeys NUMBER_OF_KEYS)
     
     message("${CMAKE_BINARY_DIR}/../scripts/tools/KetoConsensusKeys.sh" "${NUMBER_OF_KEYS} ${CMAKE_BINARY_DIR}/../src/resources/keys/")

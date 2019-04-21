@@ -57,7 +57,7 @@ private:
     std::map<std::string,std::shared_ptr<keto::module::ModuleInterface>> modules;
 
     keto::software_consensus::ConsensusHashGeneratorPtr getConsensusHash();
-
+    keto::software_consensus::CallBacks getCallBacks();
 
 };
 
