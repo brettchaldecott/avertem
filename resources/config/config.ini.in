@@ -18,6 +18,7 @@ transactions=data/transactions
 accounts=data/accounts
 childs=data/childs
 accounts_mapping=data/accounts_mapping
+nested=data/nested
 # key store
 key_store=data/key_store
 # graph configuration

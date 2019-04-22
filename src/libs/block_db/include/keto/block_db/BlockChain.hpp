@@ -64,7 +64,7 @@ public:
 
     bool requireGenesis();
     void applyDirtyTransaction(keto::transaction_common::TransactionMessageHelperPtr& transactionMessageHelperPtr, const BlockChainCallback& callback);
-    void writeBlock(const SignedBlockBuilderPtr& signedBlock, const BlockChainCallback& callback);
+    void writeBlock(const SignedBlockBuilderPtr& signedBlockBuilderPtr, const BlockChainCallback& callback);
     keto::asn1::HashHelper getParentHash();
     keto::asn1::HashHelper getParentHash(const keto::asn1::HashHelper& transactionHash);
     BlockChainMetaPtr getBlockChainMeta();
@@ -92,7 +92,6 @@ private:
     keto::asn1::HashHelper selectParentHash();
     keto::asn1::HashHelper selectParentHashByLastBlockHash(const keto::asn1::HashHelper& id);
 
-    void writeBlock(SignedBlock& signedBlock, const BlockChainCallback& callback);
     void load(const std::vector<uint8_t>& id);
     void persist();
 

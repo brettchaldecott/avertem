@@ -56,3 +56,11 @@ message BlockWrapper {
     BlockMeta block_meta = 1;
     bytes asn1_block = 2;
 }
+
+/**
+ *
+ */
+message NestedBlockMeta {
+    bytes block_hash = 1;
+    repeated bytes nested_hashs = 2;
+}

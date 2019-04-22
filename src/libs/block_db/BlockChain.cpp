@@ -101,21 +101,6 @@ void BlockChain::applyDirtyTransaction(keto::transaction_common::TransactionMess
 }
 
 
-void BlockChain::writeBlock(const SignedBlockBuilderPtr& signedBlock, const BlockChainCallback& callback) {
-    writeBlock(*signedBlock->signedBlock,callback);
-    for (SignedBlockBuilderPtr nestedBlock: signedBlock->nestedBlocks) {
-        BlockChainPtr childPtr;
-        if (nestedBlock->getParentHash() == keto::block_db::Constants::GENESIS_HASH) {
-            // create a new block chain using the transaction hash
-            childPtr = BlockChainPtr(new BlockChain(this->dbManagerPtr,this->blockResourceManagerPtr,
-                    nestedBlock->getFirstTransactionHash()));
-        }  else {
-            childPtr = getChildPtr(nestedBlock->getParentHash());
-        }
-        childPtr->writeBlock(nestedBlock,callback);
-    }
-}
-
 keto::asn1::HashHelper BlockChain::getParentHash() {
     if (!this->activeTangle) {
         return selectParentHash();
@@ -190,11 +175,13 @@ keto::asn1::HashHelper BlockChain::selectParentHashByLastBlockHash(const keto::a
     return this->activeTangle->getHash();
 }
 
-void BlockChain::writeBlock(SignedBlock& signedBlock, const BlockChainCallback& callback) {
+void BlockChain::writeBlock(const SignedBlockBuilderPtr& signedBlockBuilderPtr, const BlockChainCallback& callback) {
+    SignedBlock& signedBlock = *signedBlockBuilderPtr;
     BlockResourcePtr resource = blockResourceManagerPtr->getResource();
     rocksdb::Transaction* blockTransaction = resource->getTransaction(Constants::BLOCKS_INDEX);
     rocksdb::Transaction* childTransaction = resource->getTransaction(Constants::CHILD_INDEX);
     rocksdb::Transaction* transactionTransaction = resource->getTransaction(Constants::TRANSACTIONS_INDEX);
+    rocksdb::Transaction* nestedTransaction = resource->getTransaction(Constants::NESTED_INDEX);
     std::shared_ptr<keto::asn1::SerializationHelper<SignedBlock>> serializationHelperPtr =
             std::make_shared<keto::asn1::SerializationHelper<SignedBlock>>(
                     &signedBlock,&asn_DEF_SignedBlock);
@@ -285,6 +272,27 @@ void BlockChain::writeBlock(SignedBlock& signedBlock, const BlockChainCallback& 
     blockTransaction->Put(parentKeyHelper,blockHashHelper);
 
     callback.postPersistBlock(blockChainMetaPtr->getHashId(),signedBlock);
+
+    // handle the nested blocks
+    keto::proto::NestedBlockMeta nestedBlockMeta;
+    nestedBlockMeta.set_block_hash(blockChainMetaPtr->getHashId());
+    for (SignedBlockBuilderPtr nestedBlock: signedBlockBuilderPtr->getNestedBlocks()) {
+        BlockChainPtr childPtr;
+        if (nestedBlock->getParentHash() == keto::block_db::Constants::GENESIS_HASH) {
+            // create a new block chain using the transaction hash
+            childPtr = BlockChainPtr(new BlockChain(this->dbManagerPtr,this->blockResourceManagerPtr,
+                                                    nestedBlock->getFirstTransactionHash()));
+        }  else {
+            childPtr = getChildPtr(nestedBlock->getParentHash());
+        }
+        childPtr->writeBlock(nestedBlock,callback);
+        *nestedBlockMeta.add_nested_hashs() = nestedBlock->getHash();
+    }
+
+    std::string nestedBlockStr;
+    nestedBlockMeta.SerializeToString(&nestedBlockStr);
+    keto::rocks_db::SliceHelper nestedSliceHelper(nestedBlockStr);
+    nestedTransaction->Put(blockHashHelper,nestedSliceHelper);
 
     persist();
 }
