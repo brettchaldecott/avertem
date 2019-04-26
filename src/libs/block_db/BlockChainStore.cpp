@@ -106,6 +106,10 @@ void BlockChainStore::writeBlock(const SignedBlockBuilderPtr& signedBlock, const
     return this->masterChain->writeBlock(signedBlock,callback);
 }
 
+void BlockChainStore::writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlock, const BlockChainCallback& callback) {
+    return this->masterChain->writeBlock(signedBlock,callback);
+}
+
 /*
 void BlockChainStore::writeBlock(SignedBlock& signedBlock) {
     

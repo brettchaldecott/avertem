@@ -34,7 +34,8 @@ public:
     
     static void registerEventHandlers();
     static void deregisterEventHandlers();
-    
+
+    static keto::event::Event persistBlockMessage(const keto::event::Event& event);
     static keto::event::Event blockMessage(const keto::event::Event& event);
     
     static keto::event::Event generateSoftwareHash(const keto::event::Event& event);

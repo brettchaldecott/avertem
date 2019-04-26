@@ -52,9 +52,14 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::RPC_SERVER_TRANSACTION,
             &keto::rpc_server::EventRegistry::routeTransaction);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::RPC_SERVER_BLOCK,
+            &keto::rpc_server::EventRegistry::pushBlock);
 }
 
 void EventRegistry::deregisterEventHandlers() {
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::RPC_SERVER_BLOCK);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::RPC_SERVER_TRANSACTION);
     keto::server_common::deregisterEventHandler (
@@ -81,6 +86,10 @@ keto::event::Event EventRegistry::setModuleSession(const keto::event::Event& eve
 
 keto::event::Event EventRegistry::routeTransaction(const keto::event::Event& event) {
     return RpcServer::getInstance()->routeTransaction(event);
+}
+
+keto::event::Event EventRegistry::pushBlock(const keto::event::Event& event) {
+    return RpcServer::getInstance()->pushBlock(event);
 }
 
 keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Event& event) {

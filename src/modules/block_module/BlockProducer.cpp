@@ -12,6 +12,8 @@
  */
 
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 #include "Account.pb.h"
 
@@ -52,10 +54,13 @@
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
 
+
 #include "keto/software_consensus/ConsensusStateManager.hpp"
 #include "keto/software_consensus/SoftwareConsensusHelper.hpp"
 #include "keto/software_consensus/ModuleHashMessageHelper.hpp"
 
+#include "keto/block/StorageManager.hpp"
+#include "keto/block/BlockService.hpp"
 
 namespace keto {
 namespace block {
@@ -69,6 +74,7 @@ std::string BlockProducer::getSourceVersion() {
 
 BlockProducer::BlockProducer() : 
         enabled(false),
+        loaded(false),
         currentState(State::inited) {
     std::shared_ptr<keto::environment::Config> config = 
             keto::environment::EnvironmentManager::getInstance()->getConfig();
@@ -126,6 +132,7 @@ void BlockProducer::run() {
         if (currentState == BlockProducer::State::block_producer &&
         keto::software_consensus::ConsensusStateManager::getInstance()->getState()
         == keto::software_consensus::ConsensusStateManager::State::ACCEPTED) {
+            load();
             generateBlock(this->getTransactions());
         }
     }
@@ -274,6 +281,35 @@ void BlockProducer::generateBlock(std::deque<keto::proto::Transaction> transacti
         KETO_LOG_ERROR << "[BlockProducer::generateBlock]Failed to create a new block: unknown cause";
     }
     
+}
+
+
+void BlockProducer::load() {
+    if (loaded) {
+        return;
+    }
+
+    try {
+        // wait 20 seconds for consensus notifications to complete
+        std::this_thread::sleep_for(std::chrono::seconds(20));
+
+        // load the information
+        keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
+        StorageManager::getInstance()->load();
+        BlockService::getInstance()->genesis();
+        transactionPtr->commit();
+    } catch (keto::common::Exception& ex) {
+        KETO_LOG_ERROR << "[BlockProducer::load]Failed to load: " << ex.what();
+        KETO_LOG_ERROR << "[BlockProducer::load]Cause: " << boost::diagnostic_information(ex,true);
+    } catch (boost::exception& ex) {
+        KETO_LOG_ERROR << "[BlockProducer::load]Failed to create a new block: " << boost::diagnostic_information(ex,true);
+    } catch (std::exception& ex) {
+        KETO_LOG_ERROR << "[BlockProducer::load]Failed to create a new block: " << ex.what();
+    } catch (...) {
+        KETO_LOG_ERROR << "[BlockProducer::load]Failed to create a new block: unknown cause";
+    }
+
+    loaded = true;
 }
 
 }

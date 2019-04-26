@@ -38,6 +38,9 @@ public:
     keto::event::Event encryptAsn1(const keto::event::Event& event);
     keto::event::Event decryptAsn1(const keto::event::Event& event);
 
+    keto::event::Event encryptNetworkBytes(const keto::event::Event& event);
+    keto::event::Event decryptNetworkBytes(const keto::event::Event& event);
+
 
 private:
 

@@ -7,8 +7,10 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 add_library( key_store_utils
             
             Events.cpp
-            EncryptionRequestProtoHelper.cpp
-            EncryptionResponseProtoHelper.cpp
+        EncryptionRequestProtoHelper.cpp
+        EncryptionResponseProtoHelper.cpp
+        EncryptionNetworkRequestProtoHelper.cpp
+        EncryptionNetworkResponseProtoHelper.cpp
 
              ${HEADERS}
            )

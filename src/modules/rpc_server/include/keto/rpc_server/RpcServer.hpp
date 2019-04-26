@@ -73,6 +73,7 @@ public:
             const keto::crypto::SecureVector& secret);
     
     keto::event::Event routeTransaction(const keto::event::Event& event);
+    keto::event::Event pushBlock(const keto::event::Event& event);
 protected:
     keto::crypto::SecureVector getSecret();
     void setExternalIp(

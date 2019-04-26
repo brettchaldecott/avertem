@@ -71,6 +71,9 @@ public:
         static const char* REGISTER;
         static const char* TRANSACTION;
         static const char* TRANSACTION_PROCESSED;
+        static const char* BLOCK;
+        static const char* BLOCK_PROCESSED;
+        static const char* BLOCK_REQUEST;
         static const char* CONSENSUS_SESSION;
         static const char* CONSENSUS;
         static const char* ROUTE;

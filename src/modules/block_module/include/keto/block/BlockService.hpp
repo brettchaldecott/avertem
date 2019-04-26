@@ -43,7 +43,8 @@ public:
     static std::shared_ptr<BlockService> getInstance();
     
     void genesis();
-    
+
+    keto::event::Event persistBlockMessage(const keto::event::Event& event);
     keto::event::Event blockMessage(const keto::event::Event& event);
 private:
     std::mutex classMutex;

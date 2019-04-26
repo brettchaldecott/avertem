@@ -282,6 +282,12 @@ RpcSession::on_read(
             KETO_LOG_INFO << "[RpcSession] Transaction processed";
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED) == 0) {
             KETO_LOG_INFO << "The transaction has been processed : " << stringVector[1];
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK) == 0) {
+            KETO_LOG_INFO << "[RpcSession] handle a block";
+            handleBlock(command,stringVector[1]);
+            KETO_LOG_INFO << "[RpcSession] block processed";
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK_PROCESSED) == 0) {
+            KETO_LOG_INFO << "The transaction has been processed : " << stringVector[1];
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS_SESSION) == 0) {
             consensusSessionResponse(command,stringVector[1]);
             transactionPtr->commit();
@@ -541,6 +547,31 @@ void RpcSession::handleTransaction(const std::string& command, const std::string
                 shared_from_this(),
                 std::placeholders::_1,
                 std::placeholders::_2)));
+}
+
+void RpcSession::handleBlock(const std::string& command, const std::string& message) {
+    keto::proto::SignedBlockWrapperMessage signedBlockWrapperMessage;
+    signedBlockWrapperMessage.ParseFromString(keto::server_common::VectorUtils().copyVectorToString(
+            Botan::hex_decode(message)));
+
+    keto::proto::MessageWrapperResponse messageWrapperResponse =
+            keto::server_common::fromEvent<keto::proto::MessageWrapperResponse>(
+                    keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SignedBlockWrapperMessage>(
+                            keto::server_common::Events::BLOCK_PERSIST_MESSAGE,signedBlockWrapperMessage)));
+
+    std::string result = messageWrapperResponse.SerializeAsString();
+    boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::BLOCK_PROCESSED
+                                   << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
+
+    ws_.async_write(
+            buffer_.data(),
+            boost::asio::bind_executor(
+                    strand_,
+                    std::bind(
+                            &RpcSession::on_write,
+                            shared_from_this(),
+                            std::placeholders::_1,
+                            std::placeholders::_2)));
 }
 
 

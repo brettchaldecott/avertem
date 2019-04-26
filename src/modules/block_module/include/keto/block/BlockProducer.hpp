@@ -77,6 +77,7 @@ public:
     
 private:
     bool enabled;
+    bool loaded;
     State currentState;
     std::condition_variable stateCondition;
     std::mutex classMutex;
@@ -88,6 +89,8 @@ private:
     State checkState();
     std::deque<keto::proto::Transaction> getTransactions();
     void generateBlock(std::deque<keto::proto::Transaction> transactions);
+
+    void load();
 };
 
 

@@ -142,6 +142,7 @@ private:
     void requestNetworkFeesResponse(const std::string& command, const std::string& message);
     void handleRegisterRequest(const std::string& command, const std::string& message);
     void handleTransaction(const std::string& command, const std::string& message);
+    void handleBlock(const std::string& command, const std::string& message);
     
 };
 

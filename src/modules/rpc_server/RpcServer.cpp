@@ -129,6 +129,16 @@ public:
         std::lock_guard<std::mutex> guard(this->classMutex);
         return this->accountSessionMap[account];
     }
+
+    std::vector<std::string> getSessions() {
+        std::lock_guard<std::mutex> guard(classMutex);
+        std::vector<std::string> keys;
+        for(std::map<std::string,sessionPtr>::iterator it = this->accountSessionMap.begin();
+            it != this->accountSessionMap.end(); ++it) {
+            keys.push_back(it->first);
+        }
+        return keys;
+    }
     
 };
 
@@ -346,6 +356,27 @@ public:
                     std::placeholders::_1,
                     std::placeholders::_2,
                     multiBufferPtr)));
+    }
+
+    void
+    pushBlock(keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage) {
+        std::string messageWrapperStr;
+        signedBlockWrapperMessage.SerializeToString(&messageWrapperStr);
+        MultiBufferPtr multiBufferPtr(new boost::beast::multi_buffer());
+        boost::beast::ostream(*multiBufferPtr) << keto::server_common::Constants::RPC_COMMANDS::BLOCK
+                                               << " " << Botan::hex_encode((uint8_t*)messageWrapperStr.data(),messageWrapperStr.size(),true);
+
+        ws_.text(ws_.got_text());
+        ws_.async_write(
+                buffer_.data(),
+                boost::asio::bind_executor(
+                        strand_,
+                        std::bind(
+                                &session::on_outBoundWrite,
+                                shared_from_this(),
+                                std::placeholders::_1,
+                                std::placeholders::_2,
+                                multiBufferPtr)));
     }
     
     void
@@ -812,6 +843,25 @@ keto::event::Event RpcServer::routeTransaction(const keto::event::Event& event) 
     ss << "Routed to the peer [" << 
             messageWrapperProtoHelper.getAccountHash().getHash(keto::common::StringEncoding::HEX) << "]";
     response.set_result(ss.str());
+    return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
+}
+
+
+keto::event::Event RpcServer::pushBlock(const keto::event::Event& event) {
+    keto::proto::SignedBlockWrapperMessage signedBlockWrapperMessage =
+            keto::server_common::fromEvent<keto::proto::SignedBlockWrapperMessage>(event);
+
+    for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
+        AccountSessionCache::getInstance()->getSession(
+                account)->pushBlock(signedBlockWrapperMessage);
+    }
+    keto::proto::MessageWrapperResponse response;
+    response.set_success(true);
+
+    std::stringstream ss;
+    ss << "Block pushed to peers";
+    response.set_result(ss.str());
+
     return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
 }
 

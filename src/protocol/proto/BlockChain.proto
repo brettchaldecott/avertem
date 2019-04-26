@@ -42,6 +42,20 @@ message SignedBlockWrapper {
     repeated SignedBlockWrapper nested_blocks = 2;
 }
 
+message SignedBlockWrapperMessage {
+    bytes encrypted_bytes = 1;
+}
+
+message SignedBlockBatch {
+    bytes start_block_id = 1;
+    bytes end_block_id = 2;
+    repeated SignedBlockWrapper nested_blocks = 3;
+}
+
+message SignedBlockBatchMessage {
+    bytes encrypted_bytes = 1;
+}
+
 /**
  * The change set
  */

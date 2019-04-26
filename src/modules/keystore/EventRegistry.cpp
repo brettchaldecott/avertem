@@ -91,6 +91,15 @@ keto::event::Event EventRegistry::decryptAsn1(const keto::event::Event& event) {
     return EncryptionService::getInstance()->decryptAsn1(event);
 }
 
+keto::event::Event EventRegistry::encryptNetworkBytes(const keto::event::Event& event) {
+    return EncryptionService::getInstance()->encryptNetworkBytes(event);
+}
+
+keto::event::Event EventRegistry::decryptNetworkBytes(const keto::event::Event& event) {
+    return EncryptionService::getInstance()->decryptNetworkBytes(event);
+}
+
+
 keto::event::Event EventRegistry::getNetworkSessionKeys(const keto::event::Event& event) {
     return NetworkSessionKeyManager::getInstance()->getNetworkSessionKeys(event);
 }
@@ -147,6 +156,13 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler(
             keto::server_common::Events::ENCRYPT_ASN1::DECRYPT,
             &EventRegistry::decryptAsn1);
+
+    keto::server_common::registerEventHandler(
+            keto::server_common::Events::ENCRYPT_NETWORK_BYTES::ENCRYPT,
+            &EventRegistry::encryptNetworkBytes);
+    keto::server_common::registerEventHandler(
+            keto::server_common::Events::ENCRYPT_NETWORK_BYTES::DECRYPT,
+            &EventRegistry::decryptNetworkBytes);
     
     keto::server_common::registerEventHandler(
             keto::server_common::Events::CONSENSUS::KEYSTORE,
@@ -213,6 +229,11 @@ void EventRegistry::deregisterEventHandlers() {
             keto::server_common::Events::CONSENSUS_SESSION::KEYSTORE);
     keto::server_common::deregisterEventHandler(
             keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::KEYSTORE);
+
+    keto::server_common::deregisterEventHandler(
+            keto::server_common::Events::ENCRYPT_NETWORK_BYTES::ENCRYPT);
+    keto::server_common::deregisterEventHandler(
+            keto::server_common::Events::ENCRYPT_NETWORK_BYTES::DECRYPT);
 
     keto::server_common::deregisterEventHandler(
             keto::server_common::Events::ENCRYPT_ASN1::DECRYPT);

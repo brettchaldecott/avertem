@@ -75,10 +75,10 @@ void BlockModuleManager::start() {
 
 void BlockModuleManager::postStart() {
     KETO_LOG_INFO << "[BlockModuleManager] Block manager post start has been called";
-    keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
+    /*keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
     StorageManager::getInstance()->load();
     BlockService::getInstance()->genesis();
-    transactionPtr->commit();
+    transactionPtr->commit();*/
     
     KETO_LOG_INFO << "[BlockModuleManager] Register the services";
     keto::server_common::registerService(keto::server_common::Constants::SERVICE::BLOCK);

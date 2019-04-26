@@ -9,6 +9,7 @@
 #include <memory>
 
 #include "SignedBlock.h"
+#include "BlockChain.pb.h"
 
 #include "keto/crypto/KeyLoader.hpp"
 
@@ -18,6 +19,7 @@
 #include "keto/block_db/BlockChainMeta.hpp"
 #include "keto/block_db/SignedBlockBuilder.hpp"
 #include "keto/block_db/BlockChainCallback.hpp"
+#include "keto/block_db/SignedBlockWrapperProtoHelper.hpp"
 
 #include "keto/obfuscate/MetaString.hpp"
 
@@ -64,6 +66,7 @@ public:
 
     bool requireGenesis();
     void applyDirtyTransaction(keto::transaction_common::TransactionMessageHelperPtr& transactionMessageHelperPtr, const BlockChainCallback& callback);
+    void writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockBuilder, const BlockChainCallback& callback);
     void writeBlock(const SignedBlockBuilderPtr& signedBlockBuilderPtr, const BlockChainCallback& callback);
     keto::asn1::HashHelper getParentHash();
     keto::asn1::HashHelper getParentHash(const keto::asn1::HashHelper& transactionHash);
@@ -77,6 +80,7 @@ public:
 
 private:
     bool inited;
+    bool masterChain;
     std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr;
     BlockResourceManagerPtr blockResourceManagerPtr;
     BlockChainMetaPtr blockChainMetaPtr;
@@ -97,6 +101,11 @@ private:
 
     BlockChainPtr getChildPtr(const keto::asn1::HashHelper& parentHash);
     BlockChainPtr getChildByTransactionId(const keto::asn1::HashHelper& parentHash);
+
+
+    void writeBlock(const SignedBlockWrapperProtoHelperPtr& signedBlockWrapperProtoHelperPtr, const BlockChainCallback& callback);
+    void writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock, const BlockChainCallback& callback);
+    void broadcastBlock(const keto::block_db::SignedBlockWrapperProtoHelper& signedBlockWrapperProtoHelper);
 
 };
 

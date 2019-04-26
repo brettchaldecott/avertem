@@ -112,9 +112,7 @@ SignedBlockBuilder& SignedBlockBuilder::sign(std::shared_ptr<keto::crypto::KeyLo
 }
 
 SignedBlockBuilder::operator SignedBlock_t*() {
-    SignedBlock_t* result = this->signedBlock;
-    this->signedBlock = 0;
-    return result;
+    return this->signedBlock;
 }
 
 SignedBlockBuilder::operator SignedBlock_t&() {
@@ -139,13 +137,6 @@ keto::asn1::HashHelper SignedBlockBuilder::getFirstTransactionHash() {
         return this->signedBlock->block.transactions.list.array[0]->transactionHash;
     }
     return getHash();
-}
-
-SignedBlockBuilder::operator keto::proto::SignedBlockWrapper() const {
-    keto::proto::SignedBlockWrapper signedBlockWrapper;
-    
-
-    return signedBlockWrapper;
 }
 
 keto::asn1::HashHelper SignedBlockBuilder::getBlockHash(Block_t* block) {

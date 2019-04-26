@@ -40,6 +40,7 @@ public:
     // events for the router
     static const char* UPDATE_STATUS_ROUTE_MESSSAGE;
     static const char* ROUTE_MESSAGE;
+    static const char* PERSIST_BLOCK_MESSAGE;
     static const char* REGISTER_SERVICE_MESSAGE;
     static const char* REGISTER_RPC_PEER;
     
@@ -54,12 +55,14 @@ public:
     
     // rpc server route transaction
     static const char* RPC_SERVER_TRANSACTION;
+    static const char* RPC_SERVER_BLOCK;
     
     // balancer
     static const char* BALANCER_MESSAGE;
     
     // balancer
     static const char* BLOCK_MESSAGE;
+    static const char* BLOCK_PERSIST_MESSAGE;
 
     // block producer
     static const char* ENABLE_BLOCK_PRODUCER;
@@ -83,6 +86,12 @@ public:
     static const char* SPARQL_QUERY_WITH_RESULTSET_MESSAGE;
 
     class ENCRYPT_ASN1 {
+    public:
+        static const char* ENCRYPT;
+        static const char* DECRYPT;
+    };
+
+    class ENCRYPT_NETWORK_BYTES {
     public:
         static const char* ENCRYPT;
         static const char* DECRYPT;

@@ -44,12 +44,14 @@ const char* Events::RPC_CLIENT_TRANSACTION = "RPC_CLIENT_TRANSACTION";
 
 // rpc server route transaction
 const char* Events::RPC_SERVER_TRANSACTION = "RPC_SERVER_TRANSACTION";
+const char* Events::RPC_SERVER_BLOCK       = "RPC_SERVER_BLOCK";
 
 // balancer
 const char* Events::BALANCER_MESSAGE    = "BALANCER_MESSAGE";
 
 // block message
 const char* Events::BLOCK_MESSAGE       = "BLOCK_MESSAGE";
+const char* Events::BLOCK_PERSIST_MESSAGE = "BLOCK_PERSIST_MESSAGE";
 
 const char* Events::ENABLE_BLOCK_PRODUCER = "ENABLE_BLOCK_PRODUCER";
 
@@ -74,6 +76,10 @@ const char* Events::SPARQL_QUERY_WITH_RESULTSET_MESSAGE         = "SPARQL_QUERY_
 
 const char* Events::ENCRYPT_ASN1::ENCRYPT                       = "SIGNED_BLOCK_ENCRYPT";
 const char* Events::ENCRYPT_ASN1::DECRYPT                       = "SIGNED_BLOCK_DECRYPT";
+
+// network encryption events
+const char* Events::ENCRYPT_NETWORK_BYTES::ENCRYPT              = "ENCRYPT_NETWORK_BYTES";
+const char* Events::ENCRYPT_NETWORK_BYTES::DECRYPT              = "DECRYPT_NETWORK_BYTES";
 
 // the test consensus method cannot be called as it is loaded before the event
 // registry

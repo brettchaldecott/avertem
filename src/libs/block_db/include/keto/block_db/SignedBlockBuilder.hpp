@@ -59,8 +59,10 @@ public:
     keto::asn1::HashHelper getHash();
     keto::asn1::HashHelper getFirstTransactionHash();
     keto::asn1::HashHelper getParentHash();
-    operator keto::proto::SignedBlockWrapper() const;
-    
+
+    operator SignedBlock_t*();
+    operator SignedBlock_t&();
+
 private:
     std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr;
     SignedBlock_t* signedBlock;
@@ -69,8 +71,6 @@ private:
     keto::asn1::HashHelper getBlockHash(Block_t* block);
     SignedBlockBuilder& setBlock(Block_t* block);
 
-    operator SignedBlock_t*();
-    operator SignedBlock_t&();
 
 };
 

@@ -18,6 +18,7 @@
 #include "Protocol.pb.h"
 #include "BlockChain.pb.h"
 
+#include "keto/block/BlockChainCallbackImpl.hpp"
 #include "keto/block/BlockService.hpp"
 #include "keto/block_db/BlockChainStore.hpp"
 
@@ -86,6 +87,20 @@ void BlockService::genesis() {
         GenesisLoader loader(reader);
         loader.load();
     }
+}
+
+
+keto::event::Event BlockService::persistBlockMessage(const keto::event::Event& event) {
+    keto::proto::SignedBlockWrapperMessage signedBlockWrapperMessage =
+            keto::server_common::fromEvent<keto::proto::SignedBlockWrapperMessage>(event);
+    keto::block_db::BlockChainStore::getInstance()->writeBlock(signedBlockWrapperMessage,BlockChainCallbackImpl());
+
+
+    keto::proto::MessageWrapperResponse response;
+    response.set_success(true);
+    response.set_result("persisted");
+
+    return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
 }
 
 keto::event::Event BlockService::blockMessage(const keto::event::Event& event) {

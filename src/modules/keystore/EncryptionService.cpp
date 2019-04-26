@@ -6,7 +6,10 @@
 #include "KeyStore.pb.h"
 #include "keto/key_store_utils/EncryptionResponseProtoHelper.hpp"
 #include "keto/key_store_utils/EncryptionRequestProtoHelper.hpp"
+#include "keto/key_store_utils/EncryptionNetworkRequestProtoHelper.hpp"
+#include "keto/key_store_utils/EncryptionNetworkResponseProtoHelper.hpp"
 #include "keto/keystore/KeyStoreWrapIndexManager.hpp"
+#include "keto/keystore/NetworkSessionKeyManager.hpp"
 #include "keto/crypto/SecureVectorUtils.hpp"
 #include "keto/server_common/VectorUtils.hpp"
 #include "keto/server_common/EventUtils.hpp"
@@ -59,6 +62,28 @@ keto::event::Event EncryptionService::decryptAsn1(const keto::event::Event& even
             encryptionRequestProtoHelper);
 
     return keto::server_common::toEvent<keto::proto::EncryptResponse>(encryptionResponseProtoHelper);
+}
+
+
+keto::event::Event EncryptionService::encryptNetworkBytes(const keto::event::Event& event) {
+    keto::key_store_utils::EncryptionNetworkRequestProtoHelper encryptionNetworkRequestProtoHelper(
+            keto::server_common::fromEvent<keto::proto::EncryptNetworkRequest>(event));
+    keto::key_store_utils::EncryptionNetworkResponseProtoHelper encryptionNetworkResponseProtoHelper;
+    encryptionNetworkResponseProtoHelper = NetworkSessionKeyManager::getInstance()->getEncryptor()->encrypt(
+            encryptionNetworkRequestProtoHelper);
+
+    return keto::server_common::toEvent<keto::proto::EncryptNetworkResponse>(encryptionNetworkResponseProtoHelper);
+}
+
+
+keto::event::Event EncryptionService::decryptNetworkBytes(const keto::event::Event& event) {
+    keto::key_store_utils::EncryptionNetworkRequestProtoHelper encryptionNetworkRequestProtoHelper(
+            keto::server_common::fromEvent<keto::proto::EncryptNetworkRequest>(event));
+    keto::key_store_utils::EncryptionNetworkResponseProtoHelper encryptionNetworkResponseProtoHelper;
+    encryptionNetworkResponseProtoHelper = NetworkSessionKeyManager::getInstance()->getDecryptor()->decrypt(
+            encryptionNetworkRequestProtoHelper);
+
+    return keto::server_common::toEvent<keto::proto::EncryptNetworkResponse>(encryptionNetworkResponseProtoHelper);
 }
 
 

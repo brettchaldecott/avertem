@@ -18,6 +18,8 @@ add_library( keto_block_db
             BlockChainMeta.cpp
             BlockChainTangleMeta.cpp
             include/keto/block_db/BlockChainCallback.hpp
+            SignedBlockWrapperProtoHelper.cpp
+            SignedBlockWrapperMessageProtoHelper.cpp
 
              ${HEADERS}
            )

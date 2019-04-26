@@ -18,6 +18,7 @@
 #include <memory>
 
 #include "SignedBlock.h"
+#include "BlockChain.pb.h"
 
 #include "keto/asn1/HashHelper.hpp"
 #include "keto/rocks_db/DBManager.hpp"
@@ -53,6 +54,7 @@ public:
     bool requireGenesis();
     void applyDirtyTransaction(keto::transaction_common::TransactionMessageHelperPtr& transactionMessageHelperPtr, const BlockChainCallback& callback);
     void writeBlock(const SignedBlockBuilderPtr& signedBlock, const BlockChainCallback& callback);
+    void writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlock, const BlockChainCallback& callback);
     keto::asn1::HashHelper getParentHash();
     keto::asn1::HashHelper getParentHash(const keto::asn1::HashHelper& transactionHash);
 
