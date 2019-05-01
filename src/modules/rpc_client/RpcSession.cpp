@@ -234,11 +234,13 @@ RpcSession::on_read(
     boost::system::error_code ec,
     std::size_t bytes_transferred)
 {
+    std::cout << "[RpcSession][on_read] the on read method" << std::endl;
     boost::ignore_unused(bytes_transferred);
     if(ec)
         return fail(ec, "read");
         
     // parse the input
+    std::cout << "[RpcSession][on_read] process the buffer" << std::endl;
     std::stringstream ss;
     ss << boost::beast::buffers(buffer_.data());
     std::string data = ss.str();
@@ -247,12 +249,15 @@ RpcSession::on_read(
     
     
     // Clear the buffer
+    std::cout << "[RpcSession][on_read] consume the buffer" << std::endl;
     buffer_.consume(buffer_.size());
 
     try {
+        std::cout << "[RpcSession][on_read] create a new transaction" << std::endl;
         keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
         
         // Close the WebSocket connection
+        std::cout << "[RpcSession][on_read] process the hello :" << command << std::endl;
         if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS) == 0) {
             helloConsensusResponse(command,stringVector[1],stringVector[2]);
             transactionPtr->commit();

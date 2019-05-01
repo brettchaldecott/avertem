@@ -31,6 +31,9 @@ StringUtils::~StringUtils() {
 
 StringVector StringUtils::tokenize(const std::string& token) {
     StringVector result;
+    if (!value.size()) {
+        return result;
+    }
     int start = 0;
     int end = value.find(token);
     while (end != std::string::npos)
