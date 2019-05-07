@@ -43,6 +43,17 @@ public:
     // keys for server
     static constexpr const char* PRIVATE_KEY    = "server-private-key";
     static constexpr const char* PUBLIC_KEY     = "server-public-key";
+
+    class SESSION {
+    public:
+        static constexpr const char* RESOLVE    = "resolve";
+        static constexpr const char* CONNECT    = "connect";
+        static constexpr const char* SSL_HANDSHAKE  = "ssl_handshake";
+        static constexpr const char* HANDSHAKE  = "handshake";
+
+        static const int MAX_RETRY_COUNT;
+        static const long RETRY_COUNT_DELAY;
+    };
 };
 
 }

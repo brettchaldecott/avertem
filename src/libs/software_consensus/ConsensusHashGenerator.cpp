@@ -28,6 +28,7 @@
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
 #include "keto/software_consensus/ConsensusHashScriptInfo.hpp"
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
+#include "keto/software_consensus/Exception.hpp"
 
 
 namespace keto {
@@ -298,6 +299,7 @@ void ConsensusHashGenerator::setSession(
         const keto::crypto::SecureVector& sessionKey) {
     this->sessionKey = sessionKey;
     this->currentSoftwareHash.clear();
+    bool validSession = false;
     for (ConsensusHashScriptInfoPtr consensusScript : this->consensusVector) {
         
         try {
@@ -309,11 +311,15 @@ void ConsensusHashGenerator::setSession(
                 this->sessionScript = consensusScript->getCode();
                 this->encodedKey = consensusScript->getEncodedKey();
                 this->sessionShortScript = consensusScript->getShortCode();
+                validSession = true;
                 break;
             }
         } catch (...) {
             // the key is invalid as a result we ignore and move on.
         }
+    }
+    if (!validSession) {
+        BOOST_THROW_EXCEPTION(keto::software_consensus::InvalidSessionException());
     }
 }
 

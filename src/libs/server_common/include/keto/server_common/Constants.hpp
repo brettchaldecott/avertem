@@ -90,6 +90,7 @@ public:
         static const char* RESPONSE_NETWORK_KEYS;
         static const char* REQUEST_NETWORK_FEES;
         static const char* RESPONSE_NETWORK_FEES;
+        static const char* RESPONSE_RETRY;
     };
     
 private:

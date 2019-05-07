@@ -107,6 +107,10 @@ void BlockChainStore::writeBlock(const SignedBlockBuilderPtr& signedBlock, const
 }
 
 void BlockChainStore::writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlock, const BlockChainCallback& callback) {
+    if (!masterChain) {
+        std::cout << "The block chain has not been initialized yet, ignore new blocks" << std::endl;
+        return;
+    }
     return this->masterChain->writeBlock(signedBlock,callback);
 }
 

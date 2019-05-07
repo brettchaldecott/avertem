@@ -3,8 +3,10 @@
 //
 
 #include "keto/key_tools/KeyUtils.hpp"
+#include "keto/key_tools/Exception.hpp"
 
 #include "keto/crypto/CipherBuilder.hpp"
+
 
 namespace keto {
 namespace key_tools {
@@ -24,6 +26,9 @@ KeyUtils::~KeyUtils() {
 keto::crypto::SecureVector KeyUtils::getDerivedKey(
         const keto::crypto::SecureVector& secret,
         const keto::crypto::SecureVector& encodedKey) {
+    if (!secret.size() || !encodedKey.size()) {
+        BOOST_THROW_EXCEPTION(keto::key_tools::InvalidKeyDataException());
+    }
     keto::crypto::SecureVector encryptionKeyBits;
     for (int index = 0; index < encodedKey.size(); index++) {
         encryptionKeyBits.push_back(encodedKey[index] ^ secret[index]);

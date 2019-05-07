@@ -11,8 +11,8 @@
  * Created on February 16, 2018, 8:59 AM
  */
 
-#ifndef KETO_SERVER_COMMON_EXCEPTION_HPP
-#define KETO_SERVER_COMMON_EXCEPTION_HPP
+#ifndef KETO_SOFTWARE_CONSENSUS_EXCEPTION_HPP
+#define KETO_SOFTWARE_CONSENSUS_EXCEPTION_HPP
 
 #include <string>
 #include "keto/common/Exception.hpp"
@@ -28,6 +28,7 @@ KETO_DECLARE_EXCEPTION( SoftwareConsensusException, "Software Consensus Exeption
 KETO_DECLARE_DERIVED_EXCEPTION (SoftwareConsensusException, FailedParseConsensusObjectException , "Failed to parse the consensus string object.");
 KETO_DECLARE_DERIVED_EXCEPTION (SoftwareConsensusException, NoSoftwareHashConsensusException , "Failed to parse the consensus string object.");
 KETO_DECLARE_DERIVED_EXCEPTION (SoftwareConsensusException, FailedToAddSystemHashException , "Failed to parse the consensus string object.");
+KETO_DECLARE_DERIVED_EXCEPTION (SoftwareConsensusException, InvalidSessionException , "Failed to parse the consensus string object.");
 
 }
 }

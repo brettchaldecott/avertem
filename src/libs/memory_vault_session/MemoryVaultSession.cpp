@@ -75,7 +75,9 @@ void MemoryVaultSession::clearSession() {
 // entry management methods
 MemoryVaultSessionEntryPtr MemoryVaultSession::createEntry(const std::string& name) {
     if (this->sessionEntries.count(name)) {
-        BOOST_THROW_EXCEPTION(DuplicateMemoryVaultSessionException());
+        //BOOST_THROW_EXCEPTION(DuplicateMemoryVaultSessionException());
+        // return the session entry
+        return this->sessionEntries[name];
     }
 
     MemoryVaultSessionEntryPtr memoryVaultSessionEntryPtr(new MemoryVaultSessionEntry(
@@ -86,7 +88,9 @@ MemoryVaultSessionEntryPtr MemoryVaultSession::createEntry(const std::string& na
 
 MemoryVaultSessionEntryPtr MemoryVaultSession::createEntry(const std::string& name, const keto::crypto::SecureVector& value) {
     if (this->sessionEntries.count(name)) {
-        BOOST_THROW_EXCEPTION(DuplicateMemoryVaultSessionException());
+        //BOOST_THROW_EXCEPTION(DuplicateMemoryVaultSessionException());
+        // return the session entry
+        return this->sessionEntries[name];
     }
 
     MemoryVaultSessionEntryPtr memoryVaultSessionEntryPtr(new MemoryVaultSessionEntry(this,

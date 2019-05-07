@@ -137,8 +137,8 @@ public:
         keto::event::Event setWrappingKeys(const keto::event::Event& event);
     private:
         // slave keys
-        keto::proto::NetworkKeysWrapper slaveMasterKeys;
-        keto::proto::NetworkKeysWrapper slaveWrapperKeys;
+        keto::proto::NetworkKeysWrapper* slaveMasterKeys;
+        keto::proto::NetworkKeysWrapper* slaveWrapperKeys;
     };
 
 

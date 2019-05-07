@@ -12,6 +12,8 @@
  */
 
 #include <map>
+#include <chrono>
+#include <thread>
 
 #include "keto/rpc_client/RpcSessionManager.hpp"
 #include "include/keto/rpc_client/RpcSessionManager.hpp"
@@ -57,6 +59,7 @@ RpcSessionManager::RpcSessionManager() : peered(false) {
         std::cout << "Load the peers" << std::endl;
         std::string peersString = config->getVariablesMap()[Constants::PEERS].
                 as<std::string>();
+        std::cout << "The provided peers is : " << peersString << std::endl;
         if (peersString.length()) {
             keto::server_common::StringVector peers = 
                     keto::server_common::StringUtils(
@@ -65,9 +68,10 @@ RpcSessionManager::RpcSessionManager() : peered(false) {
             for (std::vector<std::string>::iterator iter = peers.begin();
                     iter != peers.end(); iter++) {
                 std::cout << "The peer is : " << (*iter) << std::endl;
+                RpcPeer rpcPeer((*iter),this->peered);
                 this->sessionMap[(*iter)] = std::make_shared<RpcSession>(
                         this->ioc,
-                        this->ctx,this->peered,(*iter));
+                        this->ctx,rpcPeer);
             }
         }
     }
@@ -86,11 +90,28 @@ void RpcSessionManager::setPeers(const std::vector<std::string>& peers) {
     for (std::vector<std::string>::const_iterator iter = peers.begin();
             iter != peers.end(); iter++) {
         std::cout << "Add the new entry : " << (*iter) << std::endl;
+        RpcPeer rpcPeer((*iter),this->peered);
         this->sessionMap[(*iter)] = std::make_shared<RpcSession>(
                 this->ioc,
-                this->ctx,this->peered,(*iter));
+                this->ctx,rpcPeer);
         this->sessionMap[(*iter)]->run();
     }
+}
+
+void RpcSessionManager::reconnect(const RpcPeer& rpcPeer) {
+    std::cout << "The reconnect count : " << (std::string)rpcPeer << std::endl;
+    this->sessionMap.erase((std::string)rpcPeer);
+    if (rpcPeer.getReconnectCount() >= Constants::SESSION::MAX_RETRY_COUNT) {
+        return;
+    }
+    std::cout << "Setup the session" << std::endl;
+    this->sessionMap[(std::string)rpcPeer] = std::make_shared<RpcSession>(
+                this->ioc,
+                this->ctx,rpcPeer);
+    std::this_thread::sleep_for(std::chrono::milliseconds(Constants::SESSION::RETRY_COUNT_DELAY));
+    KETO_LOG_INFO << "Attempt to reconnect to : " << rpcPeer.getPeer();
+    this->sessionMap[(std::string)rpcPeer]->run();
+    std::cout << "After the reconnect" << std::endl;
 }
 
 std::vector<std::string> RpcSessionManager::listPeers() {
@@ -152,7 +173,7 @@ void RpcSessionManager::start() {
 
 void RpcSessionManager::postStart() {
     std::cout << "The post start has been called" << std::endl;
-    for (std::map<std::string,std::shared_ptr<RpcSession>>::iterator it=this->sessionMap.begin(); 
+    for (std::map<std::string,std::shared_ptr<RpcSession>>::iterator it=this->sessionMap.begin();
             it!=this->sessionMap.end(); ++it) {
         it->second->run();
     }

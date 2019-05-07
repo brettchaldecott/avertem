@@ -20,6 +20,8 @@ add_library( 0060_keto_rpc_client_module
             RpcSessionManager.cpp
             EventRegistry.cpp
             ConsensusService.cpp
+            Constants.cpp
+            RpcPeer.cpp
 
              ${HEADERS}
            )

@@ -1,5 +1,5 @@
 
-
+#include <sstream>
 #include <botan/bcrypt.h>
 #include <botan/hex.h>
 
@@ -98,7 +98,9 @@ MemoryVaultPtr MemoryVaultManager::createVault(const std::string& name,
 
 MemoryVaultPtr MemoryVaultManager::getVault(const std::string& name, const keto::crypto::SecureVector& password) {
     if (!this->vaults.count(name)) {
-        BOOST_THROW_EXCEPTION(UnknownVaultException());
+        std::stringstream ss;
+        ss << "Unknown vault [" << name << "] cannot retrieve it.";
+        BOOST_THROW_EXCEPTION(UnknownVaultException(ss.str()));
     }
     return this->vaults[name]->getMemoryVault(password);
 }

@@ -266,6 +266,7 @@ public:
         std::string message;
         
         try {
+            std::cout << "[RpcServer] process the command : " << command << std::endl;
             keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
             if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO) == 0) {
                 handleHello(command, payload);
@@ -300,28 +301,31 @@ public:
                 return;
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS) == 0) {
                 handleRequestNetworkSessionKeys(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS, payload);
-                return;
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_MASTER_NETWORK_KEYS) == 0) {
-                handleRequestMasterNetworkKeys(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS, payload);
-                return;
+                handleRequestMasterNetworkKeys(keto::server_common::Constants::RPC_COMMANDS::REQUEST_MASTER_NETWORK_KEYS, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS) == 0) {
                 handleRequestNetworkKeys(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS, payload);
-                return;
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES) == 0) {
                 handleRequestNetworkFees(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES, payload);
-                return;
             }
 
             transactionPtr->commit();
         } catch (keto::common::Exception& ex) {
+            std::cout << "[RpcServer][on_read]Failed to handle the request on the server [keto::common::Exception]: " << boost::diagnostic_information(ex,true) << std::endl;
             KETO_LOG_ERROR << "Cause: " << boost::diagnostic_information(ex,true);
+            handleRetryResponse(command);
         } catch (boost::exception& ex) {
+            std::cout << "[RpcServer][on_read]Failed to handle the request on the server [boost::exception]: " << boost::diagnostic_information(ex,true) << std::endl;
             KETO_LOG_ERROR << "Failed to process because : " << boost::diagnostic_information(ex,true);
+            handleRetryResponse(command);
         } catch (std::exception& ex) {
+            std::cout << "[RpcServer][on_read]Failed to handle the request on the server [std::exception]: " << ex.what() << std::endl;
             KETO_LOG_ERROR << "Failed process the request : " << ex.what();
-            
+            handleRetryResponse(command);
         } catch (...) {
+            std::cout << "[RpcServer][on_read] Failed to handle the request on the server [...]: unknown " << std::endl;
             KETO_LOG_ERROR << "Failed to process : ";
+            handleRetryResponse(command);
         }
         
         ws_.text(ws_.got_text());
@@ -347,28 +351,7 @@ public:
         
         ws_.text(ws_.got_text());
         ws_.async_write(
-            buffer_.data(),
-            boost::asio::bind_executor(
-                strand_,
-                std::bind(
-                    &session::on_outBoundWrite,
-                    shared_from_this(),
-                    std::placeholders::_1,
-                    std::placeholders::_2,
-                    multiBufferPtr)));
-    }
-
-    void
-    pushBlock(keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage) {
-        std::string messageWrapperStr;
-        signedBlockWrapperMessage.SerializeToString(&messageWrapperStr);
-        MultiBufferPtr multiBufferPtr(new boost::beast::multi_buffer());
-        boost::beast::ostream(*multiBufferPtr) << keto::server_common::Constants::RPC_COMMANDS::BLOCK
-                                               << " " << Botan::hex_encode((uint8_t*)messageWrapperStr.data(),messageWrapperStr.size(),true);
-
-        ws_.text(ws_.got_text());
-        ws_.async_write(
-                buffer_.data(),
+                multiBufferPtr->data(),
                 boost::asio::bind_executor(
                         strand_,
                         std::bind(
@@ -377,6 +360,28 @@ public:
                                 std::placeholders::_1,
                                 std::placeholders::_2,
                                 multiBufferPtr)));
+    }
+
+    void
+    pushBlock(keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage) {
+        std::cout << "Attempt to push the block" << std::endl;
+        std::string messageWrapperStr;
+        signedBlockWrapperMessage.SerializeToString(&messageWrapperStr);
+        MultiBufferPtr multiBufferPtr(new boost::beast::multi_buffer());
+        boost::beast::ostream(*multiBufferPtr) << keto::server_common::Constants::RPC_COMMANDS::BLOCK
+                                               << " " << Botan::hex_encode((uint8_t*)messageWrapperStr.data(),messageWrapperStr.size(),true);
+        ws_.text(ws_.got_text());
+        ws_.async_write(
+                multiBufferPtr->data(),
+                boost::asio::bind_executor(
+                        strand_,
+                        std::bind(
+                                &session::on_outBoundWrite,
+                                shared_from_this(),
+                                std::placeholders::_1,
+                                std::placeholders::_2,
+                                multiBufferPtr)));
+        std::cout << "After writing the block" << std::endl;
     }
     
     void
@@ -550,7 +555,7 @@ public:
     }
 
     void handleRequestNetworkSessionKeys(const std::string& command, const std::string& payload) {
-
+        std::cout << "[RpcServer][handleRequestNetworkSessionKeys] << request the network session keys :" << command << std::endl;
 
         keto::proto::NetworkKeysWrapper networkKeysWrapper;
         networkKeysWrapper =
@@ -561,10 +566,11 @@ public:
         std::string result = networkKeysWrapper.SerializeAsString();
         boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_SESSION_KEYS
                                        << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
+        std::cout << "[RpcServer][handleRequestNetworkSessionKeys] << after handling the network session keys request :" << command << std::endl;
     }
 
     void handleRequestMasterNetworkKeys(const std::string& command, const std::string& payload) {
-
+        std::cout << "[RpcServer][handleRequestMasterNetworkKeys] << request the master network keys :" << command << std::endl;
 
         keto::proto::NetworkKeysWrapper networkKeysWrapper;
         networkKeysWrapper =
@@ -575,10 +581,11 @@ public:
         std::string result = networkKeysWrapper.SerializeAsString();
         boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::RESPONSE_MASTER_NETWORK_KEYS
                                        << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
+        std::cout << "[RpcServer][handleRequestMasterNetworkKeys] << after handling the master network keys :" << command << std::endl;
     }
 
     void handleRequestNetworkKeys(const std::string& command, const std::string& payload) {
-
+        std::cout << "[RpcServer][handleRequestNetworkKeys] << request the network key :" << command << std::endl;
 
         keto::proto::NetworkKeysWrapper networkKeysWrapper;
         networkKeysWrapper =
@@ -589,6 +596,9 @@ public:
         std::string result = networkKeysWrapper.SerializeAsString();
         boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_KEYS
                                        << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
+
+        std::cout << "[RpcServer][handleRequestNetworkKeys] << after handling the request:" << command << std::endl;
+
     }
 
 
@@ -602,6 +612,11 @@ public:
         std::string result = feeInfoMsg.SerializeAsString();
         boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_FEES
                                        << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
+    }
+
+    void handleRetryResponse(const std::string& command) {
+        boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::RESPONSE_RETRY
+                                       << " " << command;
     }
 
 };

@@ -27,6 +27,8 @@
 #include "keto/keystore/KeyStoreStorageManager.hpp"
 #include "keto/keystore/MasterKeyManager.hpp"
 #include "keto/keystore/EncryptionService.hpp"
+#include "keto/keystore/Exception.hpp"
+#include "keto/software_consensus/ConsensusStateManager.hpp"
 
 
 namespace keto {
@@ -101,6 +103,11 @@ keto::event::Event EventRegistry::decryptNetworkBytes(const keto::event::Event& 
 
 
 keto::event::Event EventRegistry::getNetworkSessionKeys(const keto::event::Event& event) {
+    if (keto::software_consensus::ConsensusStateManager::getInstance()->getState() !=
+        keto::software_consensus::ConsensusStateManager::ACCEPTED) {
+        BOOST_THROW_EXCEPTION(keto::keystore::NetworkSessionNotStartedException());
+    }
+
     return NetworkSessionKeyManager::getInstance()->getNetworkSessionKeys(event);
 }
 
@@ -109,19 +116,27 @@ keto::event::Event EventRegistry::setNetworkSessionKeys(const keto::event::Event
 }
 
 keto::event::Event EventRegistry::getMasterKeys(const keto::event::Event& event) {
-    return MasterKeyManager::getInstance()->setMasterKey(event);
-}
-
-keto::event::Event EventRegistry::setMasterKeys(const keto::event::Event& event) {
+    if (keto::software_consensus::ConsensusStateManager::getInstance()->getState() !=
+        keto::software_consensus::ConsensusStateManager::ACCEPTED) {
+        BOOST_THROW_EXCEPTION(keto::keystore::NetworkSessionNotStartedException());
+    }
     return MasterKeyManager::getInstance()->getMasterKey(event);
 }
 
+keto::event::Event EventRegistry::setMasterKeys(const keto::event::Event& event) {
+    return MasterKeyManager::getInstance()->setMasterKey(event);
+}
+
 keto::event::Event EventRegistry::getNetworkKeys(const keto::event::Event& event) {
-    return MasterKeyManager::getInstance()->setWrappingKeys(event);
+    if (keto::software_consensus::ConsensusStateManager::getInstance()->getState() !=
+        keto::software_consensus::ConsensusStateManager::ACCEPTED) {
+        BOOST_THROW_EXCEPTION(keto::keystore::NetworkSessionNotStartedException());
+    }
+    return MasterKeyManager::getInstance()->getWrappingKeys(event);
 }
 
 keto::event::Event EventRegistry::setNetworkKeys(const keto::event::Event& event) {
-    return MasterKeyManager::getInstance()->getWrappingKeys(event);
+    return MasterKeyManager::getInstance()->setWrappingKeys(event);
 }
 
 keto::event::Event EventRegistry::isMaster(const keto::event::Event& event) {

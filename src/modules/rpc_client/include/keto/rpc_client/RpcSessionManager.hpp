@@ -23,6 +23,8 @@
 
 #include "keto/event/Event.hpp"
 
+#include "keto/rpc_client/RpcPeer.hpp"
+
 namespace keto {
 namespace rpc_client {
 
@@ -61,6 +63,7 @@ public:
     
 protected:
     void setPeers(const std::vector<std::string>& peers);
+    void reconnect(const RpcPeer& rpcPeer);
     void setAccountSessionMapping(const std::string& account,
             const RpcSessionPtr& rpcSessionPtr);
     void removeAccountSessionMapping(const std::string& account);

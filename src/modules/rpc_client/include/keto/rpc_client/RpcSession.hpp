@@ -36,6 +36,7 @@
 
 
 #include "keto/rpc_client/Constants.hpp"
+#include "keto/rpc_client/RpcPeer.hpp"
 #include "keto/crypto/KeyLoader.hpp"
 
 #include "keto/asn1/HashHelper.hpp"
@@ -68,8 +69,7 @@ public:
     RpcSession(
             std::shared_ptr<boost::asio::io_context> ioc, 
             std::shared_ptr<boostSsl::context> ctx,
-            bool peered,
-            const std::string& host);
+            const RpcPeer& rpcPeer);
     RpcSession(const RpcSession& orig) = delete;
     virtual ~RpcSession();
     
@@ -115,12 +115,12 @@ private:
     boost::asio::strand<
         boost::asio::io_context::executor_type> strand_;
     boost::beast::multi_buffer buffer_;
-    bool peered;
-    std::string host;
-    std::string port;
+    //bool peered;
+    RpcPeer rpcPeer;
     std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr;
     std::string accountHash;
-    
+    int sessionNumber;
+
     std::vector<uint8_t> buildHeloMessage();
     
     std::vector<uint8_t> buildConsensus(const keto::asn1::HashHelper& hashHelper);
@@ -140,9 +140,13 @@ private:
     void requestNetworkMasterKeyResponse(const std::string& command, const std::string& message);
     void requestNetworkKeysResponse(const std::string& command, const std::string& message);
     void requestNetworkFeesResponse(const std::string& command, const std::string& message);
+    void handleRetryResponse(const std::string& command, const std::string& message);
     void handleRegisterRequest(const std::string& command, const std::string& message);
     void handleTransaction(const std::string& command, const std::string& message);
     void handleBlock(const std::string& command, const std::string& message);
+
+
+    void fail(boost::system::error_code ec, const std::string& what);
     
 };
 

@@ -68,11 +68,28 @@
 namespace keto {
 namespace rpc_client {
 
+int sessionIndex = 0;
+
 // Report a failure
 void
-fail(boost::system::error_code ec, char const* what)
+RpcSession::fail(boost::system::error_code ec, const std::string& what)
 {
     std::cerr << what << ": " << ec.message() << "\n";
+    rpcPeer.incrementReconnectCount();
+    if (what == Constants::SESSION::CONNECT) {
+        std::cout << "Attempt to reconnect" << std::endl;
+        RpcSessionManager::getInstance()->reconnect(rpcPeer);
+
+        // force the close to be handled on this connection
+        ws_.async_close(
+                websocket::close_code::normal,
+                boost::asio::bind_executor(
+                        strand_,
+                        std::bind(
+                                &RpcSession::on_close,
+                                shared_from_this(),
+                                std::placeholders::_1)));
+    }
 }
 
 std::string RpcSession::getSourceVersion() {
@@ -82,22 +99,13 @@ std::string RpcSession::getSourceVersion() {
 RpcSession::RpcSession(
         std::shared_ptr<boost::asio::io_context> ioc, 
         std::shared_ptr<boostSsl::context> ctx, 
-        bool peered,
-        const std::string& host) :
+        const RpcPeer& rpcPeer) :
         resolver(*ioc),
         ws_(*ioc, *ctx),
         strand_(ws_.get_executor()),
-        peered(peered),
-        host(host) {
-    if (host.find(":") != std::string::npos) {
-        std::vector<std::string> results;
-        boost::split(results, host, [](char c){return c == ':';});
-        this->host = results[0];
-        this->port = results[1];
-    } else {
-        this->port = Constants::DEFAULT_PORT_NUMBER;
-    }
-    
+        rpcPeer(rpcPeer) {
+    this->sessionNumber = sessionIndex++;
+    std::cout << this->sessionNumber << ": [RpcSession] created a new session" << std::endl;
     // setup the key loader
     std::shared_ptr<keto::environment::Config> config = 
             keto::environment::EnvironmentManager::getInstance()->getConfig();
@@ -125,8 +133,8 @@ RpcSession::run()
 {
     // Look up the domain name
     this->resolver.async_resolve(
-        host.c_str(),
-        port.c_str(),
+        this->rpcPeer.getHost().c_str(),
+        this->rpcPeer.getPort().c_str(),
         std::bind(
             &RpcSession::on_resolve,
             shared_from_this(),
@@ -140,7 +148,7 @@ RpcSession::on_resolve(
     tcp::resolver::results_type results)
 {
     if(ec)
-        return fail(ec, "resolve");
+        return fail(ec, Constants::SESSION::RESOLVE);
 
     // Make the connection on the IP address we get from a lookup
     boost::asio::async_connect(
@@ -156,8 +164,10 @@ RpcSession::on_resolve(
 void
 RpcSession::on_connect(boost::system::error_code ec)
 {
-    if(ec)
-        return fail(ec, "connect");
+    if(ec) {
+
+        return fail(ec, Constants::SESSION::CONNECT);
+    }
 
     // Perform the SSL handshake
     ws_.next_layer().async_handshake(
@@ -172,11 +182,11 @@ void
 RpcSession::on_ssl_handshake(boost::system::error_code ec)
 {
     if(ec)
-        return fail(ec, "ssl_handshake");
+        return fail(ec, Constants::SESSION::SSL_HANDSHAKE);
 
     // Perform the websocket handshake
     ws_.async_handshake(
-        host, 
+        rpcPeer.getHost(),
         "/",
         std::bind(
             &RpcSession::on_handshake,
@@ -188,7 +198,7 @@ void
 RpcSession::on_handshake(boost::system::error_code ec)
 {
     if(ec)
-        return fail(ec, "handshake");
+        return fail(ec, Constants::SESSION::HANDSHAKE);
 
     // Send the message
     boost::beast::ostream(buffer_) << 
@@ -214,7 +224,8 @@ RpcSession::on_write(
 
     if(ec)
         return fail(ec, "write");
-    
+
+    std::cout << this->sessionNumber << ": [RpcSession][on_write] write the bytes and call read" << std::endl;
     buffer_.consume(buffer_.size());
 
     // Read a message into our buffer
@@ -234,30 +245,34 @@ RpcSession::on_read(
     boost::system::error_code ec,
     std::size_t bytes_transferred)
 {
-    std::cout << "[RpcSession][on_read] the on read method" << std::endl;
+    std::cout << this->sessionNumber << ": [RpcSession][on_read] the on read method" << std::endl;
     boost::ignore_unused(bytes_transferred);
     if(ec)
         return fail(ec, "read");
         
     // parse the input
-    std::cout << "[RpcSession][on_read] process the buffer" << std::endl;
+    std::cout << this->sessionNumber << ": [RpcSession][on_read] process the buffer" << std::endl;
     std::stringstream ss;
     ss << boost::beast::buffers(buffer_.data());
     std::string data = ss.str();
+    std::cout << this->sessionNumber << ": [RpcSession][on_read] data : " << data << std::endl;
     keto::server_common::StringVector stringVector = keto::server_common::StringUtils(data).tokenize(" ");
-    std::string command = stringVector[0];
-    
-    
+    std::string command = data;
+    if (stringVector.size() > 1) {
+        command = stringVector[0];
+    }
+
     // Clear the buffer
-    std::cout << "[RpcSession][on_read] consume the buffer" << std::endl;
+    std::cout << this->sessionNumber << ": [RpcSession][on_read] consume the buffer command is : " << command << std::endl;
     buffer_.consume(buffer_.size());
+    std::cout << "Size of the buffer is : " << buffer_.size() << std::endl;
 
     try {
-        std::cout << "[RpcSession][on_read] create a new transaction" << std::endl;
+        std::cout << this->sessionNumber << ": [RpcSession][on_read] create a new transaction" << std::endl;
         keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
         
         // Close the WebSocket connection
-        std::cout << "[RpcSession][on_read] process the hello :" << command << std::endl;
+        std::cout << this->sessionNumber << ": [RpcSession][on_read] process the command :" << command << std::endl;
         if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS) == 0) {
             helloConsensusResponse(command,stringVector[1],stringVector[2]);
             transactionPtr->commit();
@@ -266,7 +281,7 @@ RpcSession::on_read(
             closeResponse(keto::server_common::Constants::RPC_COMMANDS::CLOSE,stringVector[1]);
             return;
         } if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ACCEPTED) == 0) {
-            if (!peered) {
+            if (!this->rpcPeer.getPeered()) {
                 serverRequest(keto::server_common::Constants::RPC_COMMANDS::PEERS,
                         keto::server_common::Constants::RPC_COMMANDS::PEERS);
                 transactionPtr->commit();
@@ -290,7 +305,9 @@ RpcSession::on_read(
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK) == 0) {
             KETO_LOG_INFO << "[RpcSession] handle a block";
             handleBlock(command,stringVector[1]);
+            transactionPtr->commit();
             KETO_LOG_INFO << "[RpcSession] block processed";
+            return;
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK_PROCESSED) == 0) {
             KETO_LOG_INFO << "The transaction has been processed : " << stringVector[1];
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS_SESSION) == 0) {
@@ -326,20 +343,28 @@ RpcSession::on_read(
             closeResponse(command,stringVector[1]);
             transactionPtr->commit();
             return;
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_RETRY) == 0) {
+            handleRetryResponse(command,stringVector[1]);
+            transactionPtr->commit();
+            return;
         }
         transactionPtr->commit();
     } catch (keto::common::Exception& ex) {
+        std::cout << this->sessionNumber << ": Cause: " << boost::diagnostic_information(ex,true) << std::endl;
         KETO_LOG_ERROR << "Cause: " << boost::diagnostic_information(ex,true);
     } catch (boost::exception& ex) {
+        std::cout << this->sessionNumber << ": Failed to process because : " << boost::diagnostic_information(ex,true) << std::endl;
         KETO_LOG_ERROR << "Failed to process because : " << boost::diagnostic_information(ex,true);
     } catch (std::exception& ex) {
+        std::cout << this->sessionNumber << ": Failed process the request : " << ex.what() << std::endl;
         KETO_LOG_ERROR << "Failed process the request : " << ex.what();
     } catch (...) {
+        std::cout << this->sessionNumber << ": Failed process the request" << std::endl;
         KETO_LOG_ERROR << "Failed to process : ";
     }
     
     // Read a message into our buffer
-    std::cout << "Handle the read response : " << command << std::endl;
+    std::cout << this->sessionNumber << ": Handle the read response : " << command << std::endl;
     ws_.async_read(
         buffer_,
         boost::asio::bind_executor(
@@ -364,7 +389,7 @@ RpcSession::on_close(boost::system::error_code ec)
     ss << boost::beast::buffers(buffer_.data());
     std::string data = ss.str();
     
-    if (this->peered && !this->accountHash.empty()) {
+    if (this->rpcPeer.getPeered() && !this->accountHash.empty()) {
         RpcSessionManager::getInstance()->removeAccountSessionMapping(this->accountHash);
     }
 }
@@ -468,8 +493,10 @@ void RpcSession::consensusResponse(const std::string& command, const std::string
 
 void RpcSession::serverRequest(const std::string& command, const std::string& message) {
     
-    boost::beast::ostream(buffer_) << 
-            command << " " << message;
+    boost::beast::ostream(buffer_) <<
+        buildMessage(command,message);
+
+    std::cout << this->sessionNumber << ": Send the server request : " << command << std::endl;
     ws_.async_write(
         buffer_.data(),
         boost::asio::bind_executor(
@@ -479,6 +506,7 @@ void RpcSession::serverRequest(const std::string& command, const std::string& me
                 shared_from_this(),
                 std::placeholders::_1,
                 std::placeholders::_2)));
+    std::cout << this->sessionNumber << ": Sent the server request : " << command << std::endl;
 }
 
 void RpcSession::peerResponse(const std::string& command, const std::string& message) {
@@ -501,6 +529,8 @@ void RpcSession::peerResponse(const std::string& command, const std::string& mes
 }
 
 void RpcSession::handleRegisterRequest(const std::string& command, const std::string& message) {
+
+    // notify the accepted
     keto::proto::RpcPeer rpcPeer;
     rpcPeer = keto::server_common::fromEvent<keto::proto::RpcPeer>(
                 keto::server_common::processEvent(
@@ -599,21 +629,28 @@ void RpcSession::registerResponse(const std::string& command, const std::string&
 }
 
 void RpcSession::requestNetworkSessionKeysResponse(const std::string& command, const std::string& message) {
+    // notify the accepted inorder to set the network keys
+    keto::software_consensus::ConsensusSessionManager::getInstance()->notifyAccepted();
+
+    std::cout << this->sessionNumber << ": Process the hex message" << std::endl;
     keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(
             Botan::hex_decode(message));
 
+    std::cout << this->sessionNumber << ": Set the network session keys" << std::endl;
     keto::proto::NetworkKeysWrapper networkKeysWrapper = networkKeysWrapperHelper;
     networkKeysWrapper = keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(
             keto::server_common::processEvent(
                     keto::server_common::toEvent<keto::proto::NetworkKeysWrapper>(
                             keto::server_common::Events::SET_NETWORK_SESSION_KEYS,networkKeysWrapper)));
 
+    std::cout << this->sessionNumber << ": Set request the master network keys" << std::endl;
     serverRequest(keto::server_common::Constants::RPC_COMMANDS::REQUEST_MASTER_NETWORK_KEYS,
                   keto::server_common::Constants::RPC_COMMANDS::REQUEST_MASTER_NETWORK_KEYS);
 }
 
 
 void RpcSession::requestNetworkMasterKeyResponse(const std::string& command, const std::string& message) {
+    std::cout << this->sessionNumber << ": Process the master network key" << std::endl;
     keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(
             Botan::hex_decode(message));
 
@@ -623,6 +660,7 @@ void RpcSession::requestNetworkMasterKeyResponse(const std::string& command, con
                     keto::server_common::toEvent<keto::proto::NetworkKeysWrapper>(
                             keto::server_common::Events::SET_MASTER_NETWORK_KEYS,networkKeysWrapper)));
 
+    std::cout << this->sessionNumber << ": Request the network keys" << std::endl;
     serverRequest(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS,
                   keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS);
 }
@@ -637,8 +675,8 @@ void RpcSession::requestNetworkKeysResponse(const std::string& command, const st
                     keto::server_common::toEvent<keto::proto::NetworkKeysWrapper>(
                             keto::server_common::Events::SET_NETWORK_KEYS,networkKeysWrapper)));
 
-    serverRequest(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_FEES,
-                  keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_FEES);
+    serverRequest(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES,
+                  keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES);
 }
 
 void RpcSession::requestNetworkFeesResponse(const std::string& command, const std::string& message) {
@@ -649,8 +687,37 @@ void RpcSession::requestNetworkFeesResponse(const std::string& command, const st
     feeInfoMsg = keto::server_common::fromEvent<keto::proto::FeeInfoMsg>(
             keto::server_common::processEvent(
                     keto::server_common::toEvent<keto::proto::FeeInfoMsg>(
-                            keto::server_common::Events::NETWORK_FEE_INFO::GET_NETWORK_FEE,feeInfoMsg)));
+                            keto::server_common::Events::NETWORK_FEE_INFO::SET_NETWORK_FEE,feeInfoMsg)));
 
+}
+
+void RpcSession::handleRetryResponse(const std::string& command, const std::string& message) {
+    if (message == keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS ||
+        message == keto::server_common::Constants::RPC_COMMANDS::REQUEST_MASTER_NETWORK_KEYS  ||
+        message == keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS ||
+        message == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_FEES) {
+
+        std::cout << "Process the retry response : " << message << std::endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds(Constants::SESSION::RETRY_COUNT_DELAY));
+
+        std::cout << "Send the retry : " << message << std::endl;
+        serverRequest(message,
+                      message);
+        std::cout << "After sending the retry : " << message << std::endl;
+    } else {
+        std::cout << "Attempt to reconnect" << std::endl;
+        RpcSessionManager::getInstance()->reconnect(rpcPeer);
+
+        // Read a message into our buffer
+        ws_.async_close(
+                websocket::close_code::normal,
+                boost::asio::bind_executor(
+                        strand_,
+                        std::bind(
+                                &RpcSession::on_close,
+                                shared_from_this(),
+                                std::placeholders::_1)));
+    }
 }
 
 void RpcSession::routeTransaction(keto::proto::MessageWrapper&  messageWrapper) {
@@ -673,6 +740,8 @@ void RpcSession::routeTransaction(keto::proto::MessageWrapper&  messageWrapper) 
                 std::placeholders::_2,
                 multiBufferPtr)));
 }
+
+
     
 void
 RpcSession::on_outBoundWrite(
@@ -688,7 +757,6 @@ RpcSession::on_outBoundWrite(
     // Clear the buffer
     multiBufferPtr->consume(multiBufferPtr->size());
 }
-
 
 }
 }

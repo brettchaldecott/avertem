@@ -63,7 +63,9 @@ protected:
 
 private:
     bool networkSessionGenerator;
+    bool networkSessionConfigured;
     int networkSessionKeyNumber;
+
     keto::software_consensus::ConsensusHashGeneratorPtr consensusHashGenerator;
     std::map<std::vector<uint8_t>,keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr> sessionKeys;
     // the hash index is used to determine which key should be used to decrypt the entry

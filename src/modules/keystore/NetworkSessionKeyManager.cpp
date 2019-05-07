@@ -19,6 +19,7 @@
 #include "keto/rpc_protocol/NetworkKeysWrapperHelper.hpp"
 #include "keto/rpc_protocol/NetworkKeysHelper.hpp"
 #include "keto/rpc_protocol/NetworkKeyHelper.hpp"
+#include "keto/software_consensus/ConsensusStateManager.hpp"
 
 
 
@@ -32,7 +33,7 @@ std::string NetworkSessionKeyManager::getSourceVersion() {
 }
 
 NetworkSessionKeyManager::NetworkSessionKeyManager(const keto::software_consensus::ConsensusHashGeneratorPtr& consensusHashGenerator) :
-        networkSessionGenerator(false), consensusHashGenerator(consensusHashGenerator) {
+        networkSessionGenerator(false), networkSessionConfigured(false), consensusHashGenerator(consensusHashGenerator) {
     std::shared_ptr<keto::environment::Config> config =
             keto::environment::EnvironmentManager::getInstance()->getConfig();
 
@@ -88,6 +89,7 @@ void NetworkSessionKeyManager::generateSession() {
         this->sessionKeys[hash] = memoryVaultSessionKeyWrapperPtr;
         this->hashIndex.push_back(hash);
     }
+    networkSessionConfigured = true;
     std::sort(this->hashIndex.begin(),this->hashIndex.end());
 }
 
@@ -107,10 +109,14 @@ void NetworkSessionKeyManager::setSession(const keto::proto::NetworkKeysWrapper&
         }
         this->sessionKeys[hash] = memoryVaultSessionKeyWrapperPtr;
     }
+    networkSessionConfigured = true;
     std::sort(this->hashIndex.begin(),this->hashIndex.end());
 }
 
 keto::proto::NetworkKeysWrapper NetworkSessionKeyManager::getSession() {
+    if (!networkSessionConfigured) {
+        BOOST_THROW_EXCEPTION(keto::keystore::NetworkSessionNotStartedException());
+    }
     keto::rpc_protocol::NetworkKeysHelper networkKeysHelper;
     for (std::map<std::vector<uint8_t>,keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr>::iterator session =
             this->sessionKeys.begin(); session != this->sessionKeys.end(); ++session) {
