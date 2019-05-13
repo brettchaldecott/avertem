@@ -114,6 +114,35 @@ void BlockChainStore::writeBlock(const keto::proto::SignedBlockWrapperMessage& s
     return this->masterChain->writeBlock(signedBlock,callback);
 }
 
+std::vector<keto::asn1::HashHelper> BlockChainStore::getLastBlockHashs() {
+    if (!masterChain) {
+        std::cout << "The block chain has not been initialized yet, ignore new blocks" << std::endl;
+        return std::vector<keto::asn1::HashHelper>();
+    }
+    return this->masterChain->getLastBlockHashs();
+}
+
+keto::proto::SignedBlockBatchMessage BlockChainStore::requestBlocks(const std::vector<keto::asn1::HashHelper>& tangledHashes) {
+    if (!masterChain) {
+        BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
+    }
+    // if the tangled hases size is zero we have to start from the genesis block
+    std::vector<keto::asn1::HashHelper> hashes = tangledHashes;
+    if (!hashes.size()) {
+        hashes.push_back(this->masterChain->getBlockChainMeta()->getHashId());
+    }
+
+    return this->masterChain->requestBlocks(hashes);
+}
+
+bool BlockChainStore::processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage, const BlockChainCallback& callback) {
+    if (!masterChain) {
+        BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
+    }
+
+    return this->masterChain->processBlockSyncResponse(signedBlockBatchMessage,callback);
+}
+
 /*
 void BlockChainStore::writeBlock(SignedBlock& signedBlock) {
     

@@ -34,5 +34,9 @@ const char* Constants::BLOCK_PRODUCER_ENABLED_TRUE
 const char* Constants::NETWORK_FEE_RATIO = "network_fee_ratio";
 const long Constants::MAX_RUN_TIME      = 60 * 10;
 
+
+
+const long Constants::SYNC_EXPIRY_TIME  = 60 * 5;
+
 }
 }

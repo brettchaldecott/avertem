@@ -46,14 +46,19 @@ message SignedBlockWrapperMessage {
     bytes encrypted_bytes = 1;
 }
 
+message SignedBlockBatchRequest {
+    repeated bytes tangle_hashes = 3;
+}
+
 message SignedBlockBatch {
     bytes start_block_id = 1;
     bytes end_block_id = 2;
-    repeated SignedBlockWrapper nested_blocks = 3;
+    repeated SignedBlockWrapperMessage blocks = 3;
+    repeated SignedBlockBatch tangle_batches = 4;
 }
 
 message SignedBlockBatchMessage {
-    bytes encrypted_bytes = 1;
+    repeated SignedBlockBatch tangle_batches = 1;
 }
 
 /**

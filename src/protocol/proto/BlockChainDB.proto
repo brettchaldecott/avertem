@@ -4,6 +4,10 @@ import "google/protobuf/timestamp.proto";
 
 package keto.proto;
 
+message BlockChildren {
+    repeated bytes hashes = 1;
+}
+
 message ShardMeta {
     bytes shard_id = 1;
     google.protobuf.Timestamp created = 2;

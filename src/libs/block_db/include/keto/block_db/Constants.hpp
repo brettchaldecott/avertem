@@ -52,7 +52,9 @@ public:
     static const char* BLOCK_COUNT;
     
     static const std::vector<std::string> DB_LIST;
-    
+
+    // block count limit
+    static const int MAX_BLOCK_REQUEST;
     
     
 };

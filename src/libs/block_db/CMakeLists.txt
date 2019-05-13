@@ -20,6 +20,7 @@ add_library( keto_block_db
             include/keto/block_db/BlockChainCallback.hpp
             SignedBlockWrapperProtoHelper.cpp
             SignedBlockWrapperMessageProtoHelper.cpp
+            SignedBlockBatchRequestProtoHelper.cpp
 
              ${HEADERS}
            )

@@ -64,9 +64,21 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::NETWORK_FEE_INFO::SET_NETWORK_FEE,
             &keto::block::EventRegistry::setNetworkFeeInfo);
+
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::BLOCK_DB_REQUEST_BLOCK_SYNC,
+            &keto::block::EventRegistry::requestBlockSync);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::BLOCK_DB_RESPONSE_BLOCK_SYNC,
+            &keto::block::EventRegistry::processBlockSyncResponse);
 }
 
 void EventRegistry::deregisterEventHandlers() {
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::BLOCK_DB_RESPONSE_BLOCK_SYNC);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::BLOCK_DB_REQUEST_BLOCK_SYNC);
+
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::NETWORK_FEE_INFO::GET_NETWORK_FEE);
     keto::server_common::deregisterEventHandler (
@@ -124,6 +136,14 @@ keto::event::Event EventRegistry::getNetworkFeeInfo(const keto::event::Event& ev
 
 keto::event::Event EventRegistry::setNetworkFeeInfo(const keto::event::Event& event) {
     return NetworkFeeManager::getInstance()->setNetworkFeeInfo(event);
+}
+
+keto::event::Event EventRegistry::requestBlockSync(const keto::event::Event& event) {
+    return BlockService::getInstance()->requestBlockSync(event);
+}
+
+keto::event::Event EventRegistry::processBlockSyncResponse(const keto::event::Event& event) {
+    return BlockService::getInstance()->processBlockSyncResponse(event);
 }
 
 }

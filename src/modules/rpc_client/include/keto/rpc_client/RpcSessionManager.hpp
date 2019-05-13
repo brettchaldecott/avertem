@@ -56,7 +56,8 @@ public:
     void start();
     void postStart();
     void stop();
-    
+
+    keto::event::Event requestBlockSync(const keto::event::Event& event);
     keto::event::Event routeTransaction(const keto::event::Event& event);
     
     

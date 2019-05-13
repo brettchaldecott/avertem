@@ -74,6 +74,9 @@ public:
         static const char* BLOCK;
         static const char* BLOCK_PROCESSED;
         static const char* BLOCK_REQUEST;
+        static const char* BLOCK_SYNC_REQUEST;
+        static const char* BLOCK_SYNC_RESPONSE;
+        static const char* BLOCK_SYNC_PROCESSED;
         static const char* CONSENSUS_SESSION;
         static const char* CONSENSUS;
         static const char* ROUTE;

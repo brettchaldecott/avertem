@@ -52,7 +52,10 @@ public:
     
     // rpc client route transaction
     static const char* RPC_CLIENT_TRANSACTION;
-    
+    static const char* RPC_CLIENT_REQUEST_BLOCK_SYNC;
+    static const char* BLOCK_DB_REQUEST_BLOCK_SYNC;
+    static const char* BLOCK_DB_RESPONSE_BLOCK_SYNC;
+
     // rpc server route transaction
     static const char* RPC_SERVER_TRANSACTION;
     static const char* RPC_SERVER_BLOCK;

@@ -43,9 +43,12 @@ public:
     static std::shared_ptr<BlockService> getInstance();
     
     void genesis();
+    void sync();
 
     keto::event::Event persistBlockMessage(const keto::event::Event& event);
     keto::event::Event blockMessage(const keto::event::Event& event);
+    keto::event::Event requestBlockSync(const keto::event::Event& event);
+    keto::event::Event processBlockSyncResponse(const keto::event::Event& event);
 private:
     std::mutex classMutex;
     std::map<AccountHashVector,std::mutex> accountLocks;

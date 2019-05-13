@@ -27,6 +27,7 @@
 #include "keto/block/Constants.hpp"
 #include "keto/block/GenesisReader.hpp"
 #include "keto/block/GenesisLoader.hpp"
+#include "keto/block/BlockSyncManager.hpp"
 #include "include/keto/block/GenesisLoader.hpp"
 
 #include "keto/server_common/Events.hpp"
@@ -50,12 +51,15 @@ std::string BlockService::getSourceVersion() {
 }
 
 BlockService::BlockService() {
+    BlockSyncManager::createInstance();
 }
 
 BlockService::~BlockService() {
+    BlockSyncManager::finInstance();
 }
 
 std::shared_ptr<BlockService> BlockService::init() {
+
     return singleton = std::make_shared<BlockService>();
 }
 
@@ -89,6 +93,9 @@ void BlockService::genesis() {
     }
 }
 
+void BlockService::sync() {
+    BlockSyncManager::getInstance()->sync();
+}
 
 keto::event::Event BlockService::persistBlockMessage(const keto::event::Event& event) {
     keto::proto::SignedBlockWrapperMessage signedBlockWrapperMessage =
@@ -164,7 +171,18 @@ keto::event::Event BlockService::blockMessage(const keto::event::Event& event) {
     return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
 }
 
+keto::event::Event BlockService::requestBlockSync(const keto::event::Event& event) {
+    return keto::server_common::toEvent<keto::proto::SignedBlockBatchMessage>(
+            BlockSyncManager::getInstance()->requestBlocks(
+            keto::server_common::fromEvent<keto::proto::SignedBlockBatchRequest>(event)));
+}
 
+
+keto::event::Event BlockService::processBlockSyncResponse(const keto::event::Event& event) {
+    return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(
+            BlockSyncManager::getInstance()->processBlockSyncResponse(
+                    keto::server_common::fromEvent<keto::proto::SignedBlockBatchMessage>(event)));
+}
 
 std::mutex& BlockService::getAccountLock(const AccountHashVector& accountHash) {
     std::lock_guard<std::mutex> guard(this->classMutex);

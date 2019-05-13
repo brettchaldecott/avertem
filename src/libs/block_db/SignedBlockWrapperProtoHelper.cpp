@@ -16,6 +16,10 @@ std::string SignedBlockWrapperProtoHelper::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
+SignedBlockWrapperProtoHelper::SignedBlockWrapperProtoHelper(const keto::proto::BlockWrapper& blockWrapper) : signedBlock(NULL) {
+    signedBlockWrapper.set_asn1_block_message(blockWrapper.asn1_block());
+}
+
 SignedBlockWrapperProtoHelper::SignedBlockWrapperProtoHelper(const keto::proto::SignedBlockWrapper& wrapper) :
         signedBlockWrapper(wrapper), signedBlock(NULL) {
 }
@@ -51,6 +55,12 @@ std::vector<SignedBlockWrapperProtoHelperPtr> SignedBlockWrapperProtoHelper::get
                 new SignedBlockWrapperProtoHelper(this->signedBlockWrapper.nested_blocks(index))));
     }
     return result;
+}
+
+SignedBlockWrapperProtoHelper& SignedBlockWrapperProtoHelper::addNestedBlocks(
+        const keto::proto::SignedBlockWrapper& wrapper) {
+    *this->signedBlockWrapper.add_nested_blocks() = wrapper;
+    return *this;
 }
 
 keto::asn1::HashHelper SignedBlockWrapperProtoHelper::getHash() {
@@ -89,6 +99,11 @@ SignedBlockWrapperProtoHelper::operator std::string() const {
     std::string signedBlockWrapperStr;
     this->signedBlockWrapper.SerializePartialToString(&signedBlockWrapperStr);
     return signedBlockWrapperStr;
+}
+
+SignedBlockWrapperProtoHelper& SignedBlockWrapperProtoHelper::operator = (const std::string& asn1Block) {
+    this->signedBlockWrapper.set_asn1_block_message(asn1Block);
+    return *this;
 }
 
 

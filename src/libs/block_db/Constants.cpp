@@ -36,7 +36,9 @@ const char* Constants::BLOCK_COUNT     = "BLOCK_COUNT";
 const std::vector<std::string> Constants::DB_LIST = 
     {Constants::BLOCK_META_INDEX, Constants::BLOCKS_INDEX, Constants::TRANSACTIONS_INDEX, Constants::ACCOUNTS_INDEX,
     Constants::CHILD_INDEX,Constants::NESTED_INDEX};
-    
+
+const int Constants::MAX_BLOCK_REQUEST = 500;
+
 }
 }
 

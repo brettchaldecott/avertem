@@ -203,6 +203,15 @@ void RpcSessionManager::stop() {
 }
 
 
+keto::event::Event RpcSessionManager::requestBlockSync(const keto::event::Event& event) {
+    keto::proto::SignedBlockBatchRequest signedBlockBatchRequest =
+            keto::server_common::fromEvent<keto::proto::SignedBlockBatchRequest>(event);
+
+    getDefaultPeer()->requestBlockSync(signedBlockBatchRequest);
+
+    return event;
+}
+
 keto::event::Event RpcSessionManager::routeTransaction(const keto::event::Event& event) {
     
     keto::proto::MessageWrapper messageWrapper =

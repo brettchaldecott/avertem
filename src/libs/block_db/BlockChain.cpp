@@ -10,6 +10,7 @@
 #include "keto/rocks_db/DBManager.hpp"
 #include "keto/server_common/TransactionHelper.hpp"
 #include "keto/asn1/SerializationHelper.hpp"
+#include "keto/asn1/DeserializationHelper.hpp"
 #include "keto/asn1/HashHelper.hpp"
 #include "keto/crypto/SecureVectorUtils.hpp"
 #include "keto/block_db/BlockResourceManager.hpp"
@@ -350,13 +351,26 @@ void BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
 
     *blockWrapper.mutable_block_meta() = blockMeta;
 
+    // store the block wrapper in the db
     std::string blockWrapperStr;
     blockWrapper.SerializeToString(&blockWrapperStr);
     keto::rocks_db::SliceHelper valueHelper(blockWrapperStr);
-
-
     blockTransaction->Put(blockHashHelper,valueHelper);
-    childTransaction->Put(parentHashHelper,blockHashHelper);
+
+    // add the children
+    std::string childBlocks;
+    rocksdb::ReadOptions readOptions;
+    auto status = childTransaction->Get(readOptions, parentHashHelper, &childBlocks);
+    keto::proto::BlockChildren blockChildren;
+    if (rocksdb::Status::OK() == status && rocksdb::Status::NotFound() != status) {
+        keto::proto::BlockChildren blockChildren;
+        blockChildren.ParseFromString(childBlocks);
+    }
+    blockChildren.add_hashes((std::string)blockHash);
+    std::string blockChildrenStr;
+    blockChildren.SerializeToString(&blockChildrenStr);
+    keto::rocks_db::SliceHelper blockChildrenHelper(blockChildrenStr);
+    childTransaction->Put(parentHashHelper,blockChildrenHelper);
 
     // retrieve the parent hash
     BlockChainTangleMetaPtr blockChainTangleMetaPtr =
@@ -364,6 +378,7 @@ void BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
     if (!blockChainTangleMetaPtr) {
         std::cout << "Add a new block chain tangle" << std::endl;
         blockChainTangleMetaPtr = this->blockChainMetaPtr->addTangle(blockHash);
+
     } else {
         std::cout << "Update the last block hash" << std::endl;
         blockChainTangleMetaPtr->setLastBlockHash(blockHash);
@@ -377,6 +392,143 @@ void BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
     callback.postPersistBlock(blockChainMetaPtr->getHashId(),signedBlock);
 
 
+
+}
+
+
+std::vector<keto::asn1::HashHelper> BlockChain::getLastBlockHashs() {
+    std::vector<keto::asn1::HashHelper> result;
+    for (int count = 0; count < this->blockChainMetaPtr->tangleCount(); count++) {
+        result.push_back(this->blockChainMetaPtr->getTangleEntry(count)->getLastBlockHash());
+    }
+
+    return result;
+}
+
+keto::proto::SignedBlockBatchMessage BlockChain::requestBlocks(const std::vector<keto::asn1::HashHelper>& tangledHashes) {
+    keto::proto::SignedBlockBatchMessage result;
+
+    BlockResourcePtr resource = blockResourceManagerPtr->getResource();
+
+    rocksdb::Transaction* blockTransaction = resource->getTransaction(Constants::BLOCKS_INDEX);
+
+
+    for (keto::asn1::HashHelper hash : tangledHashes) {
+        *result.add_tangle_batches() = getBlockBatch(hash, resource);
+    }
+
+    return result;
+}
+
+bool BlockChain::processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage, const BlockChainCallback& callback) {
+    bool complete = true;
+    for (int index = 0; index < signedBlockBatchMessage.tangle_batches_size(); index++) {
+        const keto::proto::SignedBlockBatch& signedBlockBatch = signedBlockBatchMessage.tangle_batches(index);
+        if (!processBlockSyncResponse(signedBlockBatch,callback) && complete) {
+            complete = false;
+        }
+    }
+    return complete;
+}
+
+
+bool BlockChain::processBlockSyncResponse(const keto::proto::SignedBlockBatch& signedBlockBatch, const BlockChainCallback& callback) {
+    bool complete = true;
+    for (int index = 0; index < signedBlockBatch.blocks_size(); index++) {
+        complete = false;
+        this->writeBlock(signedBlockBatch.blocks(index),callback);
+    }
+    for (int index = 0; index < signedBlockBatch.tangle_batches_size(); index++) {
+        if (!processBlockSyncResponse(signedBlockBatch.tangle_batches(index),callback) && complete) {
+            complete = false;
+        }
+    }
+    return complete;
+}
+
+
+keto::proto::SignedBlockBatch BlockChain::getBlockBatch(keto::asn1::HashHelper hash, BlockResourcePtr resource) {
+    keto::proto::SignedBlockBatch signedBlockBatch;
+    signedBlockBatch.set_start_block_id((std::string)hash);
+    rocksdb::Transaction* blockTransaction = resource->getTransaction(Constants::BLOCKS_INDEX);
+    rocksdb::Transaction* childTransaction = resource->getTransaction(Constants::CHILD_INDEX);
+
+    bool found = false;
+    keto::asn1::HashHelper blockHash = hash;
+    do {
+        keto::proto::SignedBlockWrapper signedBlockWrapper = getBlock(blockHash, resource);
+
+        keto::block_db::SignedBlockWrapperMessageProtoHelper signedBlockWrapperMessageProtoHelper(signedBlockWrapper);
+        *signedBlockBatch.add_blocks() = (keto::proto::SignedBlockWrapperMessage)signedBlockWrapperMessageProtoHelper;
+        if (signedBlockBatch.blocks_size() >= Constants::MAX_BLOCK_REQUEST) {
+            break;
+        }
+        std::string value;
+        rocksdb::ReadOptions readOptions;
+        keto::rocks_db::SliceHelper blockHashHelper((const std::vector<uint8_t>)blockHash);
+        auto status = childTransaction->Get(readOptions, blockHashHelper, &value);
+        found = false;
+        if (rocksdb::Status::OK() == status && rocksdb::Status::NotFound() != status) {
+            keto::proto::BlockChildren blockChildren;
+            blockChildren.ParseFromString(value);
+            for (int index = 1; index < blockChildren.hashes_size(); index++) {
+                *signedBlockBatch.add_tangle_batches() = getBlockBatch(blockChildren.hashes(index),resource);
+            }
+
+            signedBlockBatch.set_end_block_id(blockChildren.hashes(0));
+            found = true;
+        }
+    } while(found);
+
+    return signedBlockBatch;
+}
+
+keto::proto::SignedBlockWrapper BlockChain::getBlock(keto::asn1::HashHelper hash, BlockResourcePtr resource) {
+
+    rocksdb::Transaction* blockTransaction = resource->getTransaction(Constants::BLOCKS_INDEX);
+    rocksdb::Transaction* nestedTransaction = resource->getTransaction(Constants::NESTED_INDEX);
+
+    rocksdb::ReadOptions readOptions;
+    keto::rocks_db::SliceHelper keyHelper((std::vector<uint8_t>)hash);
+    std::string value;
+
+    auto status = blockTransaction->Get(readOptions,keyHelper,&value);
+    if (rocksdb::Status::OK() != status || rocksdb::Status::NotFound() == status) {
+        // not found
+        BOOST_THROW_EXCEPTION(keto::block_db::InvalidLastBlockHashException());
+    }
+
+    keto::proto::BlockWrapper blockWrapper;
+    blockWrapper.ParseFromString(value);
+
+    // decrypt the block
+    if (this->blockChainMetaPtr->isEncrypted()) {
+        std::cout << "Encrypt the block" << std::endl;
+        keto::key_store_utils::EncryptionRequestProtoHelper encryptionRequestProtoHelper;
+        encryptionRequestProtoHelper = keto::server_common::VectorUtils().copyStringToVector(
+                blockWrapper.asn1_block());
+        keto::key_store_utils::EncryptionResponseProtoHelper encryptionResponseProtoHelper(
+                keto::server_common::fromEvent<keto::proto::EncryptResponse>(
+                        keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::EncryptRequest>(
+                                keto::server_common::Events::ENCRYPT_ASN1::DECRYPT,encryptionRequestProtoHelper))));
+        blockWrapper.set_asn1_block(encryptionResponseProtoHelper);
+    }
+
+    keto::block_db::SignedBlockWrapperProtoHelper signedBlockWrapperProtoHelper(blockWrapper);
+
+    std::string nestedBlockStr;
+    status = nestedTransaction->Get(readOptions,keyHelper,&nestedBlockStr);
+    if (rocksdb::Status::OK() == status && rocksdb::Status::NotFound() != status) {
+        keto::proto::NestedBlockMeta nestedBlockMeta;
+        nestedBlockMeta.ParseFromString(nestedBlockStr);
+        for (int index = 0; index < nestedBlockMeta.nested_hashs_size(); index++) {
+            signedBlockWrapperProtoHelper.addNestedBlocks(
+                    getBlock(
+                            nestedBlockMeta.nested_hashs(index),resource));
+        }
+    }
+
+    return signedBlockWrapperProtoHelper;
 }
 
 

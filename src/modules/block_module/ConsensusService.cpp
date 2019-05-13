@@ -93,6 +93,8 @@ keto::event::Event ConsensusService::consensusSessionAccepted(const keto::event:
         BlockProducer::getInstance()->getState() == BlockProducer::State::inited) {
         BlockProducer::getInstance()->setState(BlockProducer::State::block_producer);
         NetworkFeeManager::getInstance()->load();
+    } else {
+        BlockProducer::getInstance()->setState(BlockProducer::State::sync_blocks);
     }
 
     return event;

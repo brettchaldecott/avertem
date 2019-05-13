@@ -39,6 +39,7 @@ public:
     static keto::event::Event consensusSessionAccepted(const keto::event::Event& event);
 
     static keto::event::Event routeTransaction(const keto::event::Event& event);
+    static keto::event::Event requestBlockSync(const keto::event::Event& event);
     
 private:
     EventRegistry();

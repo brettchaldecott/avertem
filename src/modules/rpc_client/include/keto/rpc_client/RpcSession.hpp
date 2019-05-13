@@ -102,6 +102,9 @@ public:
     
     void
     routeTransaction(keto::proto::MessageWrapper&  messageWrapper);
+
+    void
+    requestBlockSync(const keto::proto::SignedBlockBatchRequest& signedBlockBatchRequest);
     
     void
     on_outBoundWrite(
@@ -144,7 +147,7 @@ private:
     void handleRegisterRequest(const std::string& command, const std::string& message);
     void handleTransaction(const std::string& command, const std::string& message);
     void handleBlock(const std::string& command, const std::string& message);
-
+    void handleBlockSyncResponse(const std::string& command, const std::string& message);
 
     void fail(boost::system::error_code ec, const std::string& what);
     

@@ -53,7 +53,8 @@ public:
         inited,
         block_producer,
         block_producer_complete,
-        terminated
+        terminated,
+        sync_blocks
     };
     
     BlockProducer();
@@ -91,6 +92,7 @@ private:
     void generateBlock(std::deque<keto::proto::Transaction> transactions);
 
     void load();
+    void sync();
 };
 
 

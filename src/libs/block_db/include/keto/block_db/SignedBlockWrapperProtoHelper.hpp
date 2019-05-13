@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "BlockChain.pb.h"
+#include "BlockChainDB.pb.h"
 
 #include "keto/obfuscate/MetaString.hpp"
 
@@ -30,6 +31,7 @@ public:
 
     static std::string getSourceVersion();
 
+    SignedBlockWrapperProtoHelper(const keto::proto::BlockWrapper& blockWrapper);
     SignedBlockWrapperProtoHelper(const keto::proto::SignedBlockWrapper& wrapper);
     SignedBlockWrapperProtoHelper(const std::string& str);
     SignedBlockWrapperProtoHelper(const keto::block_db::SignedBlockBuilderPtr& signedBlockBuilderPtr);
@@ -41,6 +43,8 @@ public:
     operator keto::proto::SignedBlockWrapper();
 
     std::vector<SignedBlockWrapperProtoHelperPtr> getNestedBlocks();
+    SignedBlockWrapperProtoHelper& addNestedBlocks(
+            const keto::proto::SignedBlockWrapper& wrapper);
     keto::asn1::HashHelper getHash();
     keto::asn1::HashHelper getFirstTransactionHash();
     keto::asn1::HashHelper getParentHash();
@@ -49,6 +53,8 @@ public:
     operator SignedBlock_t*();
 
     operator std::string() const;
+
+    SignedBlockWrapperProtoHelper& operator = (const std::string& asn1Block);
 
 
 private:

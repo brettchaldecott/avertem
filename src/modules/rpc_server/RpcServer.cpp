@@ -55,6 +55,7 @@
 #include "keto/rpc_server/RpcServerSession.hpp"
 #include "keto/rpc_server/Exception.hpp"
 
+
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 namespace beastSsl = boost::asio::ssl;               // from <boost/asio/ssl.hpp>
 namespace websocket = boost::beast::websocket;  // from <boost/beast/websocket.hpp>
@@ -307,8 +308,9 @@ public:
                 handleRequestNetworkKeys(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES) == 0) {
                 handleRequestNetworkFees(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES, payload);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST) == 0) {
+                handleBlockSyncRequest(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST, payload);
             }
-
             transactionPtr->commit();
         } catch (keto::common::Exception& ex) {
             std::cout << "[RpcServer][on_read]Failed to handle the request on the server [keto::common::Exception]: " << boost::diagnostic_information(ex,true) << std::endl;
@@ -611,6 +613,23 @@ public:
 
         std::string result = feeInfoMsg.SerializeAsString();
         boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_FEES
+                                       << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
+    }
+
+    void handleBlockSyncRequest(const std::string& command, const std::string& payload) {
+        keto::proto::SignedBlockBatchRequest signedBlockBatchRequest;
+        std::string rpcVector = keto::server_common::VectorUtils().copyVectorToString(
+                Botan::hex_decode(payload));
+        signedBlockBatchRequest.ParseFromString(rpcVector);
+
+        keto::proto::SignedBlockBatchMessage signedBlockBatchMessage;
+        signedBlockBatchMessage =
+                keto::server_common::fromEvent<keto::proto::SignedBlockBatchMessage>(
+                        keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SignedBlockBatchRequest>(
+                                keto::server_common::Events::BLOCK_DB_REQUEST_BLOCK_SYNC,signedBlockBatchRequest)));
+
+        std::string result = signedBlockBatchMessage.SerializeAsString();
+        boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_RESPONSE
                                        << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
     }
 
