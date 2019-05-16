@@ -94,7 +94,7 @@ keto::event::Event EventRegistry::pushBlock(const keto::event::Event& event) {
 
 keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Event& event) {
     keto::software_consensus::ConsensusStateManager::getInstance()->setState(
-            keto::software_consensus::ConsensusStateManager::GENERATE);
+            keto::software_consensus::ConsensusStateManager::ACCEPTED);
     return event;
 }
 
