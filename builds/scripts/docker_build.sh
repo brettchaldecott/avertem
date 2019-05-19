@@ -1,20 +1,21 @@
 #!/bin/bash
 
+
 COMMAND=$1
 WORK_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+echo ${WORK_DIR}
+
+. ${WORK_DIR}/docker_env.sh
+
 if [ -z "$COMMAND" ] || [ "$COMMAND" == "build" ]
 then
-    echo "Start docker"
-    cd docker/compose-build && docker-compose up -d
-    cd ${WORK_DIR}
-
+    docker_start_build_container
 
     echo "Build Keto"
-    docker exec -it compose-build_build-container_1 bash -c "/opt/keto/build.sh ubuntu build"
+    docker_execute_command "/opt/keto/build.sh ubuntu build"
 
-    echo "Stop docker"
-    cd docker/compose-build && docker-compose stop
+    docker_stop_build_container
 elif [ "$COMMAND" == "clean" ]
 then 
     echo "Clean docker"

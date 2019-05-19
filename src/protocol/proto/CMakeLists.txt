@@ -1,4 +1,4 @@
-find_package(Protobuf REQUIRED)
+find_package(Protobuf)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 include_directories(${PROTOBUF_INCLUDE_DIR})

@@ -4,6 +4,8 @@
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/docker" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/src/contracts/keto_standard_typscript_contracts" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/contracts/keto_standard_typscript_contracts/lib/assemblyscript" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/contracts/keto_standard_typscript_contracts/lib/typescript_contract_sdk" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/src/web/keto-wallet" vcs="Git" />
   </component>
 </project>

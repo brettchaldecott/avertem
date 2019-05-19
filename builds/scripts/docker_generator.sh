@@ -4,22 +4,58 @@
 # This is KETO bootstrapper script for Linux and OS X.
 ##########################################################################
 
+copyDependency() {
+
+    sourceDir=$1
+    targetDir=$2
+    if [ -z "${targetDir}"] ;
+    then
+        targetDir="/opt/dependencies/"
+    fi
+    docker exec -it compose-build_build-container_1 bash -c "/opt/keto/scripts/tools/FindTar.sh $sourceDir $targetDir"
+
+}
+
+copyDependencies() {
+    cd docker/compose-build && docker-compose up -d
+    cd ${WORK_DIR}
+
+    echo "Copy dependencies"
+    copyDependency "/opt/ChaiScript" 
+    copyDependency "/opt/asn1c" 
+    copyDependency "/opt/beast"
+    copyDependency "/opt/binaryen"
+    copyDependency "/opt/boost_1_66_0"
+    copyDependency "/opt/botan"
+    copyDependency "/opt/librdf"
+    copyDependency "/opt/libwally-core"
+    copyDependency "/opt/protobuf"
+    copyDependency "/opt/wavm"
+    copyDependency "/opt/nlohmann"
+
+    cd ../../docker/compose-build && docker-compose down -d
+    cd ${WORK_DIR}
+
+}
+
 VERSION=1.0
 # Define directories.
 WORK_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+WORK_DIR=${WORK_DIR}/../../
 BUILD_DIR=${WORK_DIR}/ide_build
 TEMP_DIR=/tmp
 
-if [[ $# != 3 ]]; then
-	echo "Please supply the architecture and base"
+if [[ $# < 2 ]]; then
+	echo "Please supply the [architecture] [ide type] optional [-d]"
         exit 1
 fi;
 
 
 # Target architectures
 ARCH=$1
-BASE_HOME=$2
-GENERATE_IDE=$3
+GENERATE_IDE=$2
+COPY_DEPENDENCIES=$3
+BASE_HOME=${WORK_DIR}/dependencies
 
 echo ""
 echo ">>> ARCHITECTURE \"$ARCH\""
@@ -75,8 +111,13 @@ CXX_COMPILER=clang++-4.0
 C_COMPILER=clang-4.0
 
 if [ $ARCH == "darwin" ]; then
-  CXX_COMPILER=clang++
-  C_COMPILER=clang
+    CXX_COMPILER=clang++
+    C_COMPILER=clang
+fi
+
+if [ -n "$COPY_DEPENDENCIES" ];
+then
+    copyDependencies
 fi
 
 # Create the build dir

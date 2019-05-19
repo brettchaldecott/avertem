@@ -8,6 +8,7 @@ VERSION=1.0
 ulimit -u
 # Define directories.
 WORK_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+WORK_DIR=${WORK_DIR}/../../
 BUILD_DIR=${WORK_DIR}/build
 BUILD_DEP_DIR=${WORK_DIR}/deps_build/build/
 TEMP_DIR=/tmp
