@@ -32,6 +32,7 @@ copyDependencies() {
     copyDependency "/opt/protobuf"
     copyDependency "/opt/wavm"
     copyDependency "/opt/nlohmann"
+    copyDependency "/opt/rocksdb"
 
     docker_stop_build_container
     cd ${WORK_DIR}
@@ -126,7 +127,9 @@ cd ${BUILD_DIR}
 if [ -n "$COPY_DEPENDENCIES" ];
 then
     copyDependencies
+    cd ${BUILD_DIR}
 fi
+
 
 # Build KETO 
 #cmake -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_CXX_COMPILER=${CXX_COMPILER} -DCMAKE_C_COMPILER=${C_COMPILER} -DWASM_LLVM_CONFIG=${WASM_LLVM_CONFIG} -DWASM_LLVM=${WASM_LLVM} -DBINARYEN_BIN=${BINARYEN_BIN} -DOPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR} -DOPENSSL_LIBRARIES=${OPENSSL_LIBRARIES} --build ../src/programs/tools/
