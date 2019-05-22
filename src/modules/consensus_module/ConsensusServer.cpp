@@ -51,7 +51,9 @@ void process(const boost::system::error_code& error) {
 const int ConsensusServer::THREAD_COUNT = 1;
 
 ConsensusServer::ConsensusServer() : currentPos(-1) {
-    time_point = std::chrono::system_clock::now();
+    sessionkey_point = std::chrono::system_clock::now();
+    network_point = std::chrono::system_clock::now();
+
     // retrieve the configuration
     std::shared_ptr<keto::environment::Config> config = keto::environment::EnvironmentManager::getInstance()->getConfig();
     
@@ -105,25 +107,45 @@ void ConsensusServer::start() {
 
 
 void ConsensusServer::process() {
-    std::chrono::system_clock::time_point currentTime = std::chrono::system_clock::now();
-    std::chrono::hours diff(
-             std::chrono::duration_cast<std::chrono::hours>(currentTime-this->time_point));
-    std::cout << "Process the event" << std::endl;
-    if ((this->currentPos == -1) || (diff.count() > 2)) {
-        std::cout << "Release a new session key" << std::endl;
-        this->currentPos++;
-        if (this->currentPos >= this->sessionKeys.size()) {
-            this->currentPos = 0;
+    try {
+        std::chrono::system_clock::time_point currentTime = std::chrono::system_clock::now();
+        std::chrono::hours diff(
+                std::chrono::duration_cast<std::chrono::hours>(currentTime - this->sessionkey_point));
+
+        std::cout << "Process the event" << std::endl;
+        if ((this->currentPos == -1) || (diff.count() > 2)) {
+            std::cout << "Release a new session key" << std::endl;
+            this->currentPos++;
+            if (this->currentPos >= this->sessionKeys.size()) {
+                this->currentPos = 0;
+            }
+            keto::crypto::SecureVector initVector = Botan::hex_decode_locked(
+                    this->sessionKeys[this->currentPos], true);
+            keto::software_consensus::ConsensusSessionManager::getInstance()->updateSessionKey(initVector);
+            internalConsensusInit(keto::crypto::HashGenerator().generateHash(initVector));
+            this->sessionkey_point = currentTime;
+            this->network_point = currentTime;
         }
-        keto::crypto::SecureVector initVector = Botan::hex_decode_locked(
-                this->sessionKeys[this->currentPos],true);
-        keto::software_consensus::ConsensusSessionManager::getInstance()->updateSessionKey(initVector);
-        internalConsensusInit(keto::crypto::HashGenerator().generateHash(initVector));
-        this->time_point = currentTime;
+
+        // check if the network time is up and needs to be retested
+        std::chrono::minutes networkDiff(
+                std::chrono::duration_cast<std::chrono::minutes>(currentTime - this->network_point));
+        if (networkDiff.count() > 10) {
+            std::cout << "Time to retest the network." << std::endl;
+            keto::crypto::SecureVector initVector = Botan::hex_decode_locked(
+                    this->sessionKeys[this->currentPos], true);
+            long time = currentTime.time_since_epoch().count();
+            const uint8_t* ptr =  (uint8_t*)&time;
+            keto::crypto::SecureVector timeBytesVector(ptr,ptr+4);
+            initVector.insert(initVector.begin(),timeBytesVector.begin(),timeBytesVector.end());
+            internalConsensusInit(keto::crypto::HashGenerator().generateHash(initVector));
+            this->network_point = currentTime;
+        }
+
+    } catch (...) {
+        KETO_LOG_ERROR << "[ConsensusServer] Failed to process the consensus server";
     }
-    
-    this->timer->expires_from_now(boost::posix_time::seconds(10));
-    this->timer->async_wait(&keto::consensus_module::process);
+    this->reschedule();
 }
 
 
@@ -143,6 +165,11 @@ void ConsensusServer::internalConsensusInit(const keto::crypto::SecureVector& in
     keto::software_consensus::ConsensusSessionManager::getInstance()->notifyAccepted();
     transactionPtr->commit();
 
+}
+
+void ConsensusServer::reschedule() {
+    this->timer->expires_from_now(boost::posix_time::seconds(10));
+    this->timer->async_wait(&keto::consensus_module::process);
 }
 
 }

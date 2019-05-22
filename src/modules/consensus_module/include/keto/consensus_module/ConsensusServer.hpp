@@ -49,9 +49,12 @@ private:
     std::vector<std::thread> threadsVector;
     std::vector<std::string> sessionKeys;
     int currentPos;
-    std::chrono::system_clock::time_point time_point;
+    std::chrono::system_clock::time_point sessionkey_point;
+    std::chrono::system_clock::time_point network_point;
 
     void internalConsensusInit(const keto::crypto::SecureVector& initHash);
+    void reschedule();
+
 };
 
 

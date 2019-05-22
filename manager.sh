@@ -9,6 +9,9 @@ then
     echo "   native - build the source code directly no container"
     echo "   ide - configure the source code base for your ide"
     echo "   genesis - rebuild the contracts used by the genesis block"
+    echo "   start_cluster - start the cluster"
+    echo "   stop_cluster - stop the cluster"
+    echo "   clean_cluster - stop the cluster"
     exit -1
 fi
 
@@ -19,6 +22,9 @@ then
 elif [ "${ACTION}" == "clean" ] ;
 then
     ./builds/scripts/docker_build.sh "clean"
+    rm -rf ./build/*
+    rm -rf ./ide_build/*
+    rm -rf ./deps_build/build
 elif [ "${ACTION}" == "native" ] ;
 then
     ARCHITECTURE=$2
@@ -61,6 +67,15 @@ then
 elif [ "${ACTION}" == "genesis" ] ;
 then
     ./builds/scripts/update_genisis.sh
+elif [ "${ACTION}" == "start_cluster" ] ;
+then
+    cd docker/compose && docker-sync start && docker-compose up
+elif [ "${ACTION}" == "stop_cluster" ] ;
+then
+    cd docker/compose && docker-compose stop && docker-sync stop
+elif [ "${ACTION}" == "clean_cluster" ] ;
+then
+    cd docker/compose && docker-compose down && docker-sync clean
 fi
 
 
