@@ -31,6 +31,19 @@ then
         exit -1
     fi
     ./builds/scripts/build.sh "$ARCHITECTURE" "$BUILD_ACTION"
+#elif [ "${ACTION}" == "ide" ] ;
+#then
+#    IDE=$2
+#    COPY_DEPENDENCIES=$3
+#    if [ -z "$IDE" ] ;
+#    then
+#        echo "native: must provide the [ide type]"
+#        echo "   ide_type - currently build"
+#        echo "   -d - copy dependencies"
+#        exit -1
+#    fi
+#    ./builds/scripts/docker_generator.sh ide "$IDE" "$COPY_DEPENDENCIES"
+#
 elif [ "${ACTION}" == "ide" ] ;
 then
     ARCHITECTURE=$2
@@ -43,7 +56,7 @@ then
         echo "   ide_type - currently build"
         exit -1
     fi
-    ./builds/scripts/docker_generator.sh "$ARCHITECTURE" "$IDE" "$COPY_DEPENDENCIES"
+    ./builds/scripts/generator.sh "$ARCHITECTURE" "$IDE" "$COPY_DEPENDENCIES"
 
 elif [ "${ACTION}" == "genesis" ] ;
 then

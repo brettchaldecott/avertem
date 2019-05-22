@@ -19,5 +19,5 @@ then
 elif [ "$COMMAND" == "clean" ]
 then 
     echo "Clean docker"
-    cd docker/compose-build && docker-compose down
+    cd docker/compose-build && docker-compose down && docker-sync clean
 fi

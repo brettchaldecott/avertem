@@ -17,15 +17,15 @@ docker_execute_command() {
 
 docker_start_build_container() {
     echo "Start docker"
-    cd $(lib_dir)/../../docker/compose-build && docker-compose up -d && cd -
+    cd $(lib_dir)/../../docker/compose-build && docker-sync start && docker-compose up -d && cd -
 }
 
 docker_stop_build_container() {
     echo "Stop docker"
-    cd $(lib_dir)/../../docker/compose-build && docker-compose stop && cd -
+    cd $(lib_dir)/../../docker/compose-build && docker-compose stop && docker-sync stop && cd -
 }
 
 docker_clean_build_container() {
     echo "Clean docker"
-    cd $(lib_dir)/../../docker/compose-build && docker-compose down && cd -
+    cd $(lib_dir)/../../docker/compose-build && docker-compose down && docker-sync clean && cd -
 }

@@ -1,4 +1,5 @@
-find_package(Asn1)
+
+find_package(Asn1 REQUIRED)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

@@ -14,7 +14,11 @@ KETO_HOME=${SOURCE_DIR%%/bin}
 export KETO_HOME
 
 # execute ketod
-${KETO_HOME}/bin/keto_tools $@
+os=$(uname -s)
+if [ ${os} == "Linux" ] ;
+then
+    ${KETO_HOME}/bin/keto_tools $@
+fi
 
 
 

@@ -12,17 +12,13 @@ copyDependency() {
     then
         targetDir="/opt/dependencies/"
     fi
-    docker_execute_command "/opt/keto/scripts/tools/FindTar.sh $sourceDir $targetDir"
-
+    /opt/keto/scripts/tools/FindTar.sh "$sourceDir" "$targetDir"
 }
 
 copyDependencies() {
-    docker_start_build_container
-    cd ${WORK_DIR}
-
     echo "Copy dependencies"
-    copyDependency "/opt/ChaiScript"
-    copyDependency "/opt/asn1c"
+    copyDependency "/opt/ChaiScript" 
+    copyDependency "/opt/asn1c" 
     copyDependency "/opt/beast"
     copyDependency "/opt/binaryen"
     copyDependency "/opt/boost_1_66_0"
@@ -32,12 +28,8 @@ copyDependencies() {
     copyDependency "/opt/protobuf"
     copyDependency "/opt/wavm"
     copyDependency "/opt/nlohmann"
-
-    docker_stop_build_container
-    cd ${WORK_DIR}
-
+    copyDependency "/opt/rocksdb"
 }
-
 
 VERSION=1.0
 # Define directories.
@@ -46,19 +38,16 @@ WORK_DIR=${WORK_DIR}/../../
 BUILD_DIR=${WORK_DIR}/ide_build
 TEMP_DIR=/tmp
 
-. ${WORK_DIR}/builds/scripts/docker_env.sh
-
-if [[ $# != 3 ]]; then
-	echo "Please supply the architecture and base"
+if [[ $# < 2 ]]; then
+	echo "Please supply the [architecture] [ide type] optional [-d]"
         exit 1
 fi;
-
 
 # Target architectures
 ARCH=$1
 GENERATE_IDE=$2
 COPY_DEPENDENCIES=$3
-BASE_HOME=${WORK_DIR}/dependencies/
+BASE_HOME=../dependencies
 
 echo ""
 echo ">>> ARCHITECTURE \"$ARCH\""
@@ -114,19 +103,19 @@ CXX_COMPILER=clang++-4.0
 C_COMPILER=clang-4.0
 
 if [ $ARCH == "darwin" ]; then
-  CXX_COMPILER=clang++
-  C_COMPILER=clang
+    CXX_COMPILER=clang++
+    C_COMPILER=clang
+fi
+
+if [ -n "$COPY_DEPENDENCIES" ];
+then
+    copyDependencies
 fi
 
 # Create the build dir
 #cd ${WORK_DIR}
 mkdir -p ${BUILD_DIR}
 cd ${BUILD_DIR}
-
-if [ -n "$COPY_DEPENDENCIES" ];
-then
-    copyDependencies
-fi
 
 # Build KETO 
 #cmake -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_CXX_COMPILER=${CXX_COMPILER} -DCMAKE_C_COMPILER=${C_COMPILER} -DWASM_LLVM_CONFIG=${WASM_LLVM_CONFIG} -DWASM_LLVM=${WASM_LLVM} -DBINARYEN_BIN=${BINARYEN_BIN} -DOPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR} -DOPENSSL_LIBRARIES=${OPENSSL_LIBRARIES} --build ../src/programs/tools/
