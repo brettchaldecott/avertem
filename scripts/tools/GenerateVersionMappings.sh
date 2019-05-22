@@ -1,8 +1,16 @@
 #!/bin/bash
 
-HEADER_FILES=(`find $1 -name "*.hpp" | xargs grep -l getHeaderVersion | sed "s/include/#/g" | cut -f 2 -d "#" - | cut -f 2-4 -d "/" -`)
-SOURCE_CLASSES=(`find $1 -name "*.hpp" | xargs grep -l getSourceVersion | sed "s/include/#/g" | cut -f 2 -d "#" - | cut -f 1 -d ":" - | cut -f 1 -d "." - | cut -f 2-4 -d "/" --output-delimiter='::' -`)
-HEADER_CLASSES=(`find $1 -name "*.hpp" | xargs grep -l getHeaderVersion | sed "s/include/#/g" | cut -f 2 -d "#" - | cut -f 1 -d ":" - | cut -f 1 -d "." - | cut -f 2-4 -d "/" --output-delimiter='::' -`)
+OS="$(uname -s)"
+if [ -d "$1" ] && [ "${OS}" == "Linux" ] ;
+then
+    HEADER_FILES=(`find $1 -name "*.hpp" | xargs grep -l getHeaderVersion | sed "s/include/#/g" | cut -f 2 -d "#" - | cut -f 2-4 -d "/" -`)
+    SOURCE_CLASSES=(`find $1 -name "*.hpp" | xargs grep -l getSourceVersion | sed "s/include/#/g" | cut -f 2 -d "#" - | cut -f 1 -d ":" - | cut -f 1 -d "." - | cut -f 2-4 -d "/" --output-delimiter='::' -`)
+    HEADER_CLASSES=(`find $1 -name "*.hpp" | xargs grep -l getHeaderVersion | sed "s/include/#/g" | cut -f 2 -d "#" - | cut -f 1 -d ":" - | cut -f 1 -d "." - | cut -f 2-4 -d "/" --output-delimiter='::' -`)
+else
+    HEADER_FILES=()
+    SOURCE_CLASSES=()
+    HEADER_CLASSES=()
+fi
 #HEADER_FILES=(`find $1 -name "*.hpp" | xargs grep getHeaderVersion | cut -f 1 -d ":" - | cut -f 2 -d "." - | cut -f 5-7 -d "/" --output-delimiter='::' -`)
 
 #echo $HEADER_FILES

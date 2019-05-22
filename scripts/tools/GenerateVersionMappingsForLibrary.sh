@@ -28,10 +28,17 @@ then
     exit 0
 fi
 
-
-HEADER_FILES=(`find $SEARCH_PATH -name "*.hpp" | xargs grep -l getHeaderVersion | sed "s/include/#/g" | cut -f 2 -d "#" - | cut -f 2-4 -d "/" -`)
-SOURCE_CLASSES=(`find $SEARCH_PATH -name "*.hpp" | xargs grep -l getSourceVersion | sed "s/include/#/g" | cut -f 2 -d "#" - | cut -f 1 -d ":" - | cut -f 1 -d "." - | cut -f 2-4 -d "/" --output-delimiter='::' -`)
-HEADER_CLASSES=(`find $SEARCH_PATH -name "*.hpp" | xargs grep -l getHeaderVersion | sed "s/include/#/g" | cut -f 2 -d "#" - | cut -f 1 -d ":" - | cut -f 1 -d "." - | cut -f 2-4 -d "/" --output-delimiter='::' -`)
+OS="$(uname -s)"
+if [ -d "${SEARCH_PATH}" ] && [ "${OS}" == "Linux" ] ;
+then
+    HEADER_FILES=(`find $SEARCH_PATH -name "*.hpp" | xargs grep -l getHeaderVersion | sed "s/include/#/g" | cut -f 2 -d "#" - | cut -f 2-4 -d "/" -`)
+    SOURCE_CLASSES=(`find $SEARCH_PATH -name "*.hpp" | xargs grep -l getSourceVersion | sed "s/include/#/g" | cut -f 2 -d "#" - | cut -f 1 -d ":" - | cut -f 1 -d "." - | cut -f 2-4 -d "/" --output-delimiter='::' -`)
+    HEADER_CLASSES=(`find $SEARCH_PATH -name "*.hpp" | xargs grep -l getHeaderVersion | sed "s/include/#/g" | cut -f 2 -d "#" - | cut -f 1 -d ":" - | cut -f 1 -d "." - | cut -f 2-4 -d "/" --output-delimiter='::' -`)
+else
+    HEADER_FILES=()
+    SOURCE_CLASSES=()
+    HEADER_CLASSES=()
+fi
 
 if [ $HEADERS == 1 ]
 then

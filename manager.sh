@@ -9,15 +9,18 @@ then
     echo "   native - build the source code directly no container"
     echo "   ide - configure the source code base for your ide"
     echo "   genesis - rebuild the contracts used by the genesis block"
-    echo "   start_cluster - start the cluster"
-    echo "   stop_cluster - stop the cluster"
-    echo "   clean_cluster - stop the cluster"
+    echo "   cluster - start the cluster"
     exit -1
 fi
 
 
 if [ "${ACTION}" == "build" ] ;
 then
+    CLUSTER_STATUS="$(./docker/scripts/dev_cluster.sh check)"
+    if [ -n "${CLUSTER_STATUS}" ]
+    then
+        ./docker/scripts/dev_cluster.sh "stop"
+    fi
     ./builds/scripts/docker_build.sh "build"
 elif [ "${ACTION}" == "clean" ] ;
 then
@@ -67,15 +70,14 @@ then
 elif [ "${ACTION}" == "genesis" ] ;
 then
     ./builds/scripts/update_genisis.sh
-elif [ "${ACTION}" == "start_cluster" ] ;
+elif [ "${ACTION}" == "cluster" ] ;
 then
-    cd docker/compose && docker-sync start && docker-compose up
-elif [ "${ACTION}" == "stop_cluster" ] ;
-then
-    cd docker/compose && docker-compose stop && docker-sync stop
-elif [ "${ACTION}" == "clean_cluster" ] ;
-then
-    cd docker/compose && docker-compose down && docker-sync clean
+    ARGS=()
+    for var in "$@"; do
+        # Ignore known bad arguments
+        [ "$var" != 'cluster' ] && ARGS+=("$var")
+    done
+    ./docker/scripts/dev_cluster.sh "${ARGS[@]}"
 fi
 
 

@@ -25,9 +25,15 @@ then
     exit 0
 fi
 
-
-SOURCE_CLASSES=(`find $SEARCH_PATH -name "*.hpp" | xargs grep -l getSourceVersion | sed "s/include/#/g" | cut -f 2 -d "#" - | cut -f 1 -d ":" - | cut -f 1 -d "." - | cut -f 2-4 -d "/" --output-delimiter='::' -`)
-HEADER_CLASSES=(`find $SEARCH_PATH -name "*.hpp" | xargs grep -l getHeaderVersion | sed "s/include/#/g" | cut -f 2 -d "#" - | cut -f 1 -d ":" - | cut -f 1 -d "." - | cut -f 2-4 -d "/" --output-delimiter='::' -`)
+OS="$(uname -s)"
+if [ -d "${SEARCH_PATH}" ] && [ "${OS}" == "Linux" ] ;
+then
+    SOURCE_CLASSES=(`find $SEARCH_PATH -name "*.hpp" | xargs grep -l getSourceVersion | sed "s/include/#/g" | cut -f 2 -d "#" - | cut -f 1 -d ":" - | cut -f 1 -d "." - | cut -f 2-4 -d "/" --output-delimiter='::' -`)
+    HEADER_CLASSES=(`find $SEARCH_PATH -name "*.hpp" | xargs grep -l getHeaderVersion | sed "s/include/#/g" | cut -f 2 -d "#" - | cut -f 1 -d ":" - | cut -f 1 -d "." - | cut -f 2-4 -d "/" --output-delimiter='::' -`)
+else
+    SOURCE_CLASSES=()
+    HEADER_CLASSES=()
+fi
 
 COUNT_HEADERS=0
 if [ $HCLIST == 1 ]
