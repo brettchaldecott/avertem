@@ -21,6 +21,4 @@ then
 
     echo "Generate Keto IDE - $IDE"
     docker_execute_command "/opt/keto/builds/scripts/generator_in_docker.sh ubuntu \"$IDE\" \"$COPY_DEPENDENCIES\""
-
-    docker_stop_build_container
 fi

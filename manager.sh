@@ -4,7 +4,7 @@ ACTION=$1
 if [ -z "$ACTION" ] ;
 then
     echo "Must select and ACTION"    
-    echo "   build - build the source code using a docker container"
+    echo "   dev - build the source code using a docker container"
     echo "   clean - clean up the docker containers"
     echo "   native - build the source code directly no container"
     echo "   ide - configure the source code base for your ide"
@@ -14,17 +14,18 @@ then
 fi
 
 
-if [ "${ACTION}" == "build" ] ;
+if [ "${ACTION}" == "dev" ] ;
 then
-    CLUSTER_STATUS="$(./docker/scripts/dev_cluster.sh check)"
-    if [ -n "${CLUSTER_STATUS}" ]
-    then
-        ./docker/scripts/dev_cluster.sh "stop"
-    fi
-    ./builds/scripts/docker_build.sh "build"
+    ARGS=()
+    for var in "$@"; do
+        # Ignore known bad arguments
+        [ "$var" != 'dev' ] && ARGS+=("$var")
+    done
+    ./builds/scripts/docker_build.sh "${ARGS[@]}"
 elif [ "${ACTION}" == "clean" ] ;
 then
     ./builds/scripts/docker_build.sh "clean"
+    ./docker/scripts/dev_cluster.sh "clean"
     rm -rf ./build/*
     rm -rf ./ide_build/*
     rm -rf ./deps_build/build

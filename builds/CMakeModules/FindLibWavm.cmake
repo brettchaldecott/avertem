@@ -69,12 +69,14 @@ find_library(LIBWAVM_EMSCRIPTEN_LIBRARY
     PATHS ${LIBWAVM_ROOT_FOLDER}/lib)
 
 # Find an installed build of LLVM
-find_package(LLVM 6.0 CONFIG PATHS ${WASM_LLVM})
-
-# Include the LLVM headers
-IF (LIBWAVM_LLVM_LIBS)
+IF ( NOT IDE_FLAG )
+    find_package(LLVM 6.0 REQUIRED CONFIG PATHS ${WASM_LLVM})
+    # Include the LLVM headers
     llvm_map_components_to_libnames(LIBWAVM_LLVM_LIBS support core passes mcjit native DebugInfoDWARF)
-ENDIF(LIBWAVM_LLVM_LIBS)
+ELSE ( NOT IDE_FLAG )
+    find_package(LLVM 6.0 CONFIG PATHS ${WASM_LLVM})
+ENDIF ( NOT IDE_FLAG )
+
 
 message(STATUS "LIBWAVM_INCLUDE_DIR " ${LIBWAVM_INCLUDE_DIR})
 message(STATUS "LIBWAVM_PLATFORM_LIBRARY " ${LIBWAVM_PLATFORM_LIBRARY})
