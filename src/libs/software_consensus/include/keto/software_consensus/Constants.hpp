@@ -35,15 +35,22 @@ public:
 
     static const std::vector<std::string> CONSENSUS_SESSION_ACCEPTED;
 
+    static const std::vector<std::string> CONSENSUS_SESSION_CHECK;
+
     static const std::vector<std::string> CONSENSUS_SESSION_STATE;
+
+    // protocol configuration
+    static const char* NETWORK_PROTOCOL_DELAY_CONFIGURATION;
+    static const int NETWORK_PROTOCOL_DELAY_DEFAULT;
+    static const char* NETWORK_PROTOCOL_COUNT_CONFIGURATION;
+    static const int NETWORK_PROTOCOL_COUNT_DEFAULT;
     
     inline static std::string getHeaderVersion() {
         return OBFUSCATED("$Id$");
     };
     
     static std::string getSourceVersion();
-    
-    //static const MetaStringType CPP_FILE_VERSION;
+
 private:
 
 };

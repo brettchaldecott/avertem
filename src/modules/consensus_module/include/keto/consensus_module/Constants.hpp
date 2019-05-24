@@ -34,7 +34,9 @@ public:
     static constexpr const char* PRIVATE_KEY    = "server-private-key";
     static constexpr const char* PUBLIC_KEY     = "server-public-key";
     static constexpr const char* CONSENSUS_KEY     = "consensus-keys";
-    
+
+    static constexpr const char* NETWORK_SESSION_LENGTH_CONFIGURATION     = "network_session_length";
+    static constexpr const int NETWORK_SESSION_LENGTH_DEFAULT     = 60;
 };
 
 }

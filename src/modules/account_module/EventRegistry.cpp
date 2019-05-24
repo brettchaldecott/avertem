@@ -86,6 +86,11 @@ keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Ev
     return event;
 }
 
+keto::event::Event EventRegistry::consensusProtolCheck(const keto::event::Event& event) {
+
+    return event;
+}
+
 void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::CHECK_ACCOUNT_MESSAGE,
@@ -123,9 +128,14 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::ACCOUNT,
             &keto::account::EventRegistry::consensusSessionAccepted);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION_CHECK::ACCOUNT,
+            &keto::account::EventRegistry::consensusProtolCheck);
 }
 
 void EventRegistry::deregisterEventHandlers() {
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION_CHECK::ACCOUNT);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::ACCOUNT);
     keto::server_common::deregisterEventHandler (

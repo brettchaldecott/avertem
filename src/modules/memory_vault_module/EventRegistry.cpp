@@ -40,6 +40,9 @@ void EventRegistry::registerEventHandlers() {
             keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::MEMORY_VAULT_MANAGER,
             &keto::memory_vault_module::EventRegistry::consensusSessionAccepted);
     keto::server_common::registerEventHandler(
+            keto::server_common::Events::CONSENSUS_SESSION_CHECK::MEMORY_VAULT_MANAGER,
+            &keto::memory_vault_module::EventRegistry::consensusProtolCheck);
+    keto::server_common::registerEventHandler(
             keto::server_common::Events::CONSENSUS_SESSION_STATE::MEMORY_VAULT_MANAGER,
             &EventRegistry::setupNodeConsensusSession);
 
@@ -77,6 +80,8 @@ void EventRegistry::deregisterEventHandlers() {
     keto::server_common::deregisterEventHandler(
             keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::MEMORY_VAULT_MANAGER);
     keto::server_common::deregisterEventHandler(
+            keto::server_common::Events::CONSENSUS_SESSION_CHECK::MEMORY_VAULT_MANAGER);
+    keto::server_common::deregisterEventHandler(
             keto::server_common::Events::CONSENSUS_SESSION::MEMORY_VAULT_MANAGER);
     keto::server_common::deregisterEventHandler(
             keto::server_common::Events::CONSENSUS::MEMORY_VAULT_MANAGER);
@@ -97,6 +102,11 @@ keto::event::Event EventRegistry::setupNodeConsensusSession(const keto::event::E
 keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Event& event) {
     keto::software_consensus::ConsensusStateManager::getInstance()->setState(
             keto::software_consensus::ConsensusStateManager::ACCEPTED);
+    return event;
+}
+
+keto::event::Event EventRegistry::consensusProtolCheck(const keto::event::Event& event) {
+
     return event;
 }
 

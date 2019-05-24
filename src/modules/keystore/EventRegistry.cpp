@@ -73,6 +73,11 @@ keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Ev
     return ConsensusService::getInstance()->consensusSessionAccepted(event);
 }
 
+keto::event::Event EventRegistry::consensusProtolCheck(const keto::event::Event& event) {
+
+    return event;
+}
+
 keto::event::Event EventRegistry::reencryptTransaction(const keto::event::Event& event) {
     return TransactionEncryptionService::getInstance()->reencryptTransaction(event);
 }
@@ -188,6 +193,9 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler(
             keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::KEYSTORE,
             &EventRegistry::consensusSessionAccepted);
+    keto::server_common::registerEventHandler(
+            keto::server_common::Events::CONSENSUS_SESSION_CHECK::KEYSTORE,
+            &EventRegistry::consensusProtolCheck);
 
 
     keto::server_common::registerEventHandler(
@@ -244,6 +252,8 @@ void EventRegistry::deregisterEventHandlers() {
             keto::server_common::Events::CONSENSUS_SESSION::KEYSTORE);
     keto::server_common::deregisterEventHandler(
             keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::KEYSTORE);
+    keto::server_common::deregisterEventHandler(
+            keto::server_common::Events::CONSENSUS_SESSION_CHECK::KEYSTORE);
 
     keto::server_common::deregisterEventHandler(
             keto::server_common::Events::ENCRYPT_NETWORK_BYTES::ENCRYPT);

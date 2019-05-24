@@ -70,14 +70,37 @@ const std::vector<std::string> Constants::CONSENSUS_SESSION_ACCEPTED = {
     keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::CONSENSUS_QUERY,
     keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::MEMORY_VAULT_MANAGER};
 
+const std::vector<std::string> Constants::CONSENSUS_SESSION_CHECK = {
+        keto::server_common::Events::CONSENSUS_SESSION_CHECK::TEST,
+        keto::server_common::Events::CONSENSUS_SESSION_CHECK::TRANSACTION,
+        keto::server_common::Events::CONSENSUS_SESSION_CHECK::ROUTER,
+        keto::server_common::Events::CONSENSUS_SESSION_CHECK::HTTPD,
+        keto::server_common::Events::CONSENSUS_SESSION_CHECK::EVENT,
+        keto::server_common::Events::CONSENSUS_SESSION_CHECK::BLOCK,
+        keto::server_common::Events::CONSENSUS_SESSION_CHECK::SANDBOX,
+        keto::server_common::Events::CONSENSUS_SESSION_CHECK::VERSION,
+        keto::server_common::Events::CONSENSUS_SESSION_CHECK::KEYSTORE,
+        keto::server_common::Events::CONSENSUS_SESSION_CHECK::BALANCER,
+        keto::server_common::Events::CONSENSUS_SESSION_CHECK::ACCOUNT,
+        keto::server_common::Events::CONSENSUS_SESSION_CHECK::RPC_CLIENT,
+        keto::server_common::Events::CONSENSUS_SESSION_CHECK::RPC_SERVER,
+        keto::server_common::Events::CONSENSUS_SESSION_CHECK::CONSENSUS_QUERY,
+        keto::server_common::Events::CONSENSUS_SESSION_CHECK::MEMORY_VAULT_MANAGER};
+
 const std::vector<std::string> Constants::CONSENSUS_SESSION_STATE = {
     keto::server_common::Events::CONSENSUS_SESSION_STATE::BLOCK,
     keto::server_common::Events::CONSENSUS_SESSION_STATE::MEMORY_VAULT_MANAGER
 };
 
-    std::string Constants::getSourceVersion() {
-        return OBFUSCATED("$Id$");
-    }
+// network protocol configuration
+const char* Constants::NETWORK_PROTOCOL_DELAY_CONFIGURATION = "network_protocol_delay";
+const int Constants::NETWORK_PROTOCOL_DELAY_DEFAULT = 10;
+const char* Constants::NETWORK_PROTOCOL_COUNT_CONFIGURATION = "network_protocol_count";
+const int Constants::NETWORK_PROTOCOL_COUNT_DEFAULT = 6;
+
+std::string Constants::getSourceVersion() {
+    return OBFUSCATED("$Id$");
+}
 
 }
 }

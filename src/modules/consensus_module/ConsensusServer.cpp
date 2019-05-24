@@ -13,9 +13,9 @@
 
 #include <botan/hex.h>
 #include <botan/base64.h>
-#include <keto/crypto/HashGenerator.hpp>
 
 
+#include "keto/crypto/HashGenerator.hpp"
 #include "keto/environment/EnvironmentManager.hpp"
 
 #include "keto/server_common/VectorUtils.hpp"
@@ -31,6 +31,7 @@
 #include "keto/consensus_module/Constants.hpp"
 #include "keto/consensus_module/ConsensusServer.hpp"
 
+#include "keto/software_consensus/Constants.hpp"
 #include "keto/software_consensus/ConsensusBuilder.hpp"
 #include "keto/software_consensus/ConsensusSessionManager.hpp"
 #include "keto/software_consensus/ModuleConsensusHelper.hpp"
@@ -50,7 +51,8 @@ void process(const boost::system::error_code& error) {
 
 const int ConsensusServer::THREAD_COUNT = 1;
 
-ConsensusServer::ConsensusServer() : currentPos(-1) {
+ConsensusServer::ConsensusServer() :
+    currentPos(-1),netwokSessionLength(Constants::NETWORK_SESSION_LENGTH_DEFAULT),netwokProtocolDelay(keto::software_consensus::Constants::NETWORK_PROTOCOL_DELAY_DEFAULT) {
     sessionkey_point = std::chrono::system_clock::now();
     network_point = std::chrono::system_clock::now();
 
@@ -61,7 +63,16 @@ ConsensusServer::ConsensusServer() : currentPos(-1) {
         sessionKeys = keto::server_common::StringUtils(
                 config->getVariablesMap()[Constants::CONSENSUS_KEY].as<std::string>()).tokenize(",");
     }
-    
+    if (config->getVariablesMap().count(Constants::NETWORK_SESSION_LENGTH_CONFIGURATION)) {
+        this->netwokSessionLength =std::stol(
+                config->getVariablesMap()[Constants::NETWORK_SESSION_LENGTH_CONFIGURATION].as<std::string>());
+    }
+    if (config->getVariablesMap().count(keto::software_consensus::Constants::NETWORK_PROTOCOL_DELAY_CONFIGURATION)) {
+        this->netwokProtocolDelay =std::stol(
+                config->getVariablesMap()[keto::software_consensus::Constants::NETWORK_PROTOCOL_DELAY_CONFIGURATION].as<std::string>());
+    }
+
+
     consensusServerPtr = this;
 }
 
@@ -109,11 +120,13 @@ void ConsensusServer::start() {
 void ConsensusServer::process() {
     try {
         std::chrono::system_clock::time_point currentTime = std::chrono::system_clock::now();
-        std::chrono::hours diff(
-                std::chrono::duration_cast<std::chrono::hours>(currentTime - this->sessionkey_point));
-
+        std::chrono::minutes diff(
+                std::chrono::duration_cast<std::chrono::minutes>(currentTime - this->sessionkey_point));
+        // check if the network time is up and needs to be retested
+        std::chrono::minutes networkDiff(
+                std::chrono::duration_cast<std::chrono::minutes>(currentTime - this->network_point));
         std::cout << "Process the event" << std::endl;
-        if ((this->currentPos == -1) || (diff.count() > 2)) {
+        if ((this->currentPos == -1) || (diff.count() > this->netwokSessionLength)) {
             std::cout << "Release a new session key" << std::endl;
             this->currentPos++;
             if (this->currentPos >= this->sessionKeys.size()) {
@@ -125,12 +138,7 @@ void ConsensusServer::process() {
             internalConsensusInit(keto::crypto::HashGenerator().generateHash(initVector));
             this->sessionkey_point = currentTime;
             this->network_point = currentTime;
-        }
-
-        // check if the network time is up and needs to be retested
-        std::chrono::minutes networkDiff(
-                std::chrono::duration_cast<std::chrono::minutes>(currentTime - this->network_point));
-        if (networkDiff.count() > 10) {
+        } else if (networkDiff.count() > this->netwokProtocolDelay) {
             std::cout << "Time to retest the network." << std::endl;
             keto::crypto::SecureVector initVector = Botan::hex_decode_locked(
                     this->sessionKeys[this->currentPos], true);
@@ -138,7 +146,7 @@ void ConsensusServer::process() {
             const uint8_t* ptr =  (uint8_t*)&time;
             keto::crypto::SecureVector timeBytesVector(ptr,ptr+4);
             initVector.insert(initVector.begin(),timeBytesVector.begin(),timeBytesVector.end());
-            internalConsensusInit(keto::crypto::HashGenerator().generateHash(initVector));
+            internalConsensusProtocolCheck(keto::crypto::HashGenerator().generateHash(initVector));
             this->network_point = currentTime;
         }
 
@@ -163,6 +171,28 @@ void ConsensusServer::internalConsensusInit(const keto::crypto::SecureVector& in
 
     keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
     keto::software_consensus::ConsensusSessionManager::getInstance()->notifyAccepted();
+    transactionPtr->commit();
+
+}
+
+
+void ConsensusServer::internalConsensusProtocolCheck(const keto::crypto::SecureVector& initHash) {
+    // reset the protocol check
+    keto::software_consensus::ConsensusSessionManager::getInstance()->resetProtocolCheck();
+
+    //std::cout << "Setup the internal consensus" << std::endl;
+    keto::software_consensus::ModuleHashMessageHelper moduleHashMessageHelper;
+    moduleHashMessageHelper.setHash(initHash);
+    keto::proto::ModuleHashMessage moduleHashMessage = moduleHashMessageHelper.getModuleHashMessage();
+    keto::proto::ConsensusMessage consensusMessage =
+            keto::server_common::fromEvent<keto::proto::ConsensusMessage>(
+                    keto::server_common::processEvent(
+                            keto::server_common::toEvent<keto::proto::ModuleHashMessage>(
+                                    keto::server_common::Events::GET_SOFTWARE_CONSENSUS_MESSAGE,moduleHashMessage)));
+    keto::software_consensus::ConsensusSessionManager::getInstance()->setSession(consensusMessage);
+
+    keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
+    keto::software_consensus::ConsensusSessionManager::getInstance()->notifyProtocolCheck(true);
     transactionPtr->commit();
 
 }

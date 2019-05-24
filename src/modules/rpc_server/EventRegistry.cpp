@@ -50,6 +50,9 @@ void EventRegistry::registerEventHandlers() {
             keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::RPC_SERVER,
             &keto::rpc_server::EventRegistry::consensusSessionAccepted);
     keto::server_common::registerEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION_CHECK::RPC_SERVER,
+            &keto::rpc_server::EventRegistry::consensusProtolCheck);
+    keto::server_common::registerEventHandler (
             keto::server_common::Events::RPC_SERVER_TRANSACTION,
             &keto::rpc_server::EventRegistry::routeTransaction);
     keto::server_common::registerEventHandler (
@@ -64,6 +67,8 @@ void EventRegistry::deregisterEventHandlers() {
             keto::server_common::Events::RPC_SERVER_TRANSACTION);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::RPC_SERVER);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION_CHECK::RPC_SERVER);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::CONSENSUS::RPC_SERVER);
     keto::server_common::deregisterEventHandler (
@@ -95,7 +100,13 @@ keto::event::Event EventRegistry::pushBlock(const keto::event::Event& event) {
 keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Event& event) {
     keto::software_consensus::ConsensusStateManager::getInstance()->setState(
             keto::software_consensus::ConsensusStateManager::ACCEPTED);
-    return event;
+    std::cout << "[RpcServer][EventRegistry::consensusSessionAccepted] the node has been accepted" << std::endl;
+    return RpcServer::getInstance()->performNetworkSessionReset(event);
+}
+
+keto::event::Event EventRegistry::consensusProtolCheck(const keto::event::Event& event) {
+    std::cout << "[RpcServer][EventRegistry::consensusSessionAccepted] the node has been accepted" << std::endl;
+    return RpcServer::getInstance()->performProtocoCheck(event);
 }
 
 }

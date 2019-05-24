@@ -351,7 +351,14 @@ RpcSession::on_read(
             handleBlockSyncResponse(command,stringVector[1]);
             transactionPtr->commit();
             return;
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_REQUEST) == 0) {
+            handleProtocolCheckRequest(command,stringVector[1]);
+            transactionPtr->commit();
+            return;
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_ACCEPT) == 0) {
+            handleProtocolCheckRequest(command,stringVector[1]);
         }
+
         transactionPtr->commit();
     } catch (keto::common::Exception& ex) {
         std::cout << this->sessionNumber << ": Cause: " << boost::diagnostic_information(ex,true) << std::endl;
@@ -637,6 +644,33 @@ void RpcSession::handleBlockSyncResponse(const std::string& command, const std::
                             shared_from_this(),
                             std::placeholders::_1,
                             std::placeholders::_2)));
+}
+
+void RpcSession::handleProtocolCheckRequest(const std::string& command, const std::string& message) {
+
+    // notify the accepted inorder to set the network keys
+    keto::software_consensus::ConsensusSessionManager::getInstance()->resetProtocolCheck();
+
+    keto::asn1::HashHelper initHashHelper(message,keto::common::StringEncoding::HEX);
+
+    boost::beast::ostream(buffer_) <<
+                                   buildMessage(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_RESPONSE,buildConsensus(initHashHelper));
+    ws_.async_write(
+            buffer_.data(),
+            boost::asio::bind_executor(
+                    strand_,
+                    std::bind(
+                            &RpcSession::on_write,
+                            shared_from_this(),
+                            std::placeholders::_1,
+                            std::placeholders::_2)));
+}
+
+void RpcSession::handleProtocolCheckAccept(const std::string& command, const std::string& message) {
+
+    // notify the accepted inorder to set the network keys
+    keto::software_consensus::ConsensusSessionManager::getInstance()->notifyProtocolCheck();
+
 }
 
 void RpcSession::registerResponse(const std::string& command, const std::string& message) {

@@ -156,6 +156,9 @@ private:
     boost::beast::multi_buffer buffer_;
     RpcServer* rpcServer;
     std::shared_ptr<keto::rpc_protocol::ServerHelloProtoHelper> serverHelloProtoHelperPtr;
+    keto::crypto::SecureVector sessionId;
+    std::shared_ptr<Botan::AutoSeeded_RNG> generatorPtr;
+
 
 public:
     // Take ownership of the socket
@@ -165,9 +168,14 @@ public:
         , strand_(ws_.get_executor())
         , rpcServer(rpcServer)
     {
+        this->generatorPtr = std::shared_ptr<Botan::AutoSeeded_RNG>(new Botan::AutoSeeded_RNG());
     }
         
-    ~session() {
+    virtual ~session() {
+    }
+
+    keto::crypto::SecureVector getSessionId() {
+        return this->sessionId;
     }
 
     // Start the asynchronous operation
@@ -310,7 +318,10 @@ public:
                 handleRequestNetworkFees(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST) == 0) {
                 handleBlockSyncRequest(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST, payload);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_RESPONSE) == 0) {
+                handleProtocolCheckResponse(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_RESPONSE, payload);
             }
+
             transactionPtr->commit();
         } catch (keto::common::Exception& ex) {
             std::cout << "[RpcServer][on_read]Failed to handle the request on the server [keto::common::Exception]: " << boost::diagnostic_information(ex,true) << std::endl;
@@ -385,6 +396,77 @@ public:
                                 multiBufferPtr)));
         std::cout << "After writing the block" << std::endl;
     }
+
+    //
+    //
+    // the protocol methods
+    void
+    performNetworkSessionReset() {
+        std::cout << "Attempt to perform the protocol reset via forcing the client to say hello" << std::endl;
+        MultiBufferPtr multiBufferPtr(new boost::beast::multi_buffer());
+        boost::beast::ostream(*multiBufferPtr) << keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS
+                                       << " " << Botan::hex_encode(this->rpcServer->getSecret())
+                                       << " " << Botan::hex_encode(this->generateSession());
+
+        ws_.text(ws_.got_text());
+        ws_.async_write(
+                multiBufferPtr->data(),
+                boost::asio::bind_executor(
+                        strand_,
+                        std::bind(
+                                &session::on_outBoundWrite,
+                                shared_from_this(),
+                                std::placeholders::_1,
+                                std::placeholders::_2,
+                                multiBufferPtr)));
+        std::cout << "After requesting the protocol reset from peers" << std::endl;
+    }
+
+
+    void
+    performProtocolCheck() {
+        std::cout << "Attempt to perform the protocol check" << std::endl;
+        MultiBufferPtr multiBufferPtr(new boost::beast::multi_buffer());
+        boost::beast::ostream(*multiBufferPtr) << keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_REQUEST
+                                               << " " << Botan::hex_encode(this->generateSession());
+
+        ws_.text(ws_.got_text());
+        ws_.async_write(
+                multiBufferPtr->data(),
+                boost::asio::bind_executor(
+                        strand_,
+                        std::bind(
+                                &session::on_outBoundWrite,
+                                shared_from_this(),
+                                std::placeholders::_1,
+                                std::placeholders::_2,
+                                multiBufferPtr)));
+        std::cout << "After requesting the protocol check from peers" << std::endl;
+    }
+
+    void
+    handleProtocolCheckResponse(const std::string& command, const std::string& payload) {
+        keto::proto::ConsensusMessage consensusMessage;
+        std::string binString = keto::server_common::VectorUtils().copyVectorToString(
+                Botan::hex_decode(payload,true));
+        consensusMessage.ParseFromString(binString);
+        keto::proto::ModuleConsensusValidationMessage moduleConsensusValidationMessage =
+                keto::server_common::fromEvent<keto::proto::ModuleConsensusValidationMessage>(
+                        keto::server_common::processEvent(
+                                keto::server_common::toEvent<keto::proto::ConsensusMessage>(
+                                        keto::server_common::Events::VALIDATE_SOFTWARE_CONSENSUS_MESSAGE,consensusMessage)));
+        keto::software_consensus::ModuleConsensusValidationMessageHelper moduleConsensusValidationMessageHelper(
+                moduleConsensusValidationMessage);
+        if (moduleConsensusValidationMessageHelper.isValid()) {
+            boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_ACCEPT
+                                           << " " << keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_ACCEPT;
+            KETO_LOG_INFO << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " was accepted";
+        } else {
+            boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::GO_AWAY
+                                           << " " << keto::server_common::Constants::RPC_COMMANDS::GO_AWAY;
+            KETO_LOG_INFO << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " was rejected from network";
+        }
+    }
     
     void
     on_outBoundWrite(
@@ -448,7 +530,7 @@ public:
         boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS
                 << " " << Botan::hex_encode(this->rpcServer->getSecret()) 
                 << " " << Botan::hex_encode(
-                keto::server_common::ServerInfo::getInstance()->getAccountHash());
+                this->generateSession());
     }
     
     void handleHelloConsensus(const std::string& command, const std::string& payload) {
@@ -636,6 +718,10 @@ public:
     void handleRetryResponse(const std::string& command) {
         boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::RESPONSE_RETRY
                                        << " " << command;
+    }
+
+    keto::crypto::SecureVector generateSession() {
+        return this->sessionId = this->generatorPtr->random_vec(Constants::SESSION_ID_LENGTH);
     }
 
 };
@@ -894,6 +980,37 @@ keto::event::Event RpcServer::pushBlock(const keto::event::Event& event) {
 
     std::stringstream ss;
     ss << "Block pushed to peers";
+    response.set_result(ss.str());
+
+    return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
+}
+
+keto::event::Event RpcServer::performNetworkSessionReset(const keto::event::Event& event) {
+    for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
+        AccountSessionCache::getInstance()->getSession(
+                account)->performNetworkSessionReset();
+    }
+    keto::proto::MessageWrapperResponse response;
+    response.set_success(true);
+
+    std::stringstream ss;
+    ss << "Perform network session reset check";
+    response.set_result(ss.str());
+
+    return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
+}
+
+
+keto::event::Event RpcServer::performProtocoCheck(const keto::event::Event& event) {
+    for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
+        AccountSessionCache::getInstance()->getSession(
+                account)->performProtocolCheck();
+    }
+    keto::proto::MessageWrapperResponse response;
+    response.set_success(true);
+
+    std::stringstream ss;
+    ss << "Perform protocol check";
     response.set_result(ss.str());
 
     return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);

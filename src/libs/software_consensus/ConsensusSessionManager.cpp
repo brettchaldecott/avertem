@@ -29,6 +29,9 @@
 #include "keto/software_consensus/ModuleSessionMessageHelper.hpp"
 #include "keto/software_consensus/Constants.hpp"
 #include "keto/software_consensus/ConsensusAcceptedMessageHelper.hpp"
+#include "keto/software_consensus/ProtocolAcceptedMessageHelper.hpp"
+#include "keto/environment/Config.hpp"
+#include "keto/environment/EnvironmentManager.hpp"
 
 
 namespace keto {
@@ -40,7 +43,21 @@ std::string ConsensusSessionManager::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
     
-ConsensusSessionManager::ConsensusSessionManager() : activeSession(false), accepted(false)  {
+ConsensusSessionManager::ConsensusSessionManager() : activeSession(false), accepted(false), protolCount(-1),
+    netwokProtocolDelay(Constants::NETWORK_PROTOCOL_DELAY_DEFAULT), networkProtocolCount(Constants::NETWORK_PROTOCOL_COUNT_DEFAULT)  {
+    this->protocolPoint = std::chrono::system_clock::now();
+
+    // retrieve the configuration
+    std::shared_ptr<keto::environment::Config> config = keto::environment::EnvironmentManager::getInstance()->getConfig();
+
+    if (config->getVariablesMap().count(Constants::NETWORK_PROTOCOL_DELAY_CONFIGURATION)) {
+        this->netwokProtocolDelay =std::stol(
+                config->getVariablesMap()[Constants::NETWORK_PROTOCOL_DELAY_CONFIGURATION].as<std::string>());
+    }
+    if (config->getVariablesMap().count(Constants::NETWORK_PROTOCOL_DELAY_CONFIGURATION)) {
+        this->networkProtocolCount =std::stol(
+                config->getVariablesMap()[Constants::NETWORK_PROTOCOL_COUNT_CONFIGURATION].as<std::string>());
+    }
 }
 
 ConsensusSessionManager::~ConsensusSessionManager() {
@@ -149,6 +166,46 @@ void ConsensusSessionManager::notifyAccepted() {
             }
         }
     }
+}
+
+bool ConsensusSessionManager::resetProtocolCheck() {
+    std::chrono::system_clock::time_point currentTime = std::chrono::system_clock::now();
+    std::chrono::minutes networkDiff(
+            std::chrono::duration_cast<std::chrono::minutes>(currentTime - this->protocolPoint));
+    if (this->protolCount == -1 || networkDiff.count() >= this->netwokProtocolDelay) {
+        this->protocolPoint = currentTime;
+        this->protolCount = 0;
+        return true;
+    }
+    return false;
+}
+
+void ConsensusSessionManager::notifyProtocolCheck(bool master) {
+    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    if (master || this->protolCount == this->networkProtocolCount) {
+        for (std::string event : Constants::CONSENSUS_SESSION_CHECK) {
+            try {
+                keto::software_consensus::ProtocolAcceptedMessageHelper protocolAcceptedMessageHelper;
+                keto::proto::ProtocolAcceptedMessage msg =
+                        protocolAcceptedMessageHelper.getMsg();
+                keto::server_common::triggerEvent(
+                        keto::server_common::toEvent<keto::proto::ProtocolAcceptedMessage>(
+                                event,msg));
+            } catch (keto::common::Exception& ex) {
+                KETO_LOG_ERROR << "[notifyProtocolCheck]Failed to process the event [" << event  << "] : " << ex.what();
+                KETO_LOG_ERROR << "[notifyProtocolCheck]Cause: " << boost::diagnostic_information(ex,true);
+            } catch (boost::exception& ex) {
+                KETO_LOG_ERROR << "[notifyProtocolCheck]Failed to process the event [" << event << "]";
+                KETO_LOG_ERROR << "[notifyProtocolCheck]Cause: " << boost::diagnostic_information(ex,true);
+            } catch (std::exception& ex) {
+                KETO_LOG_ERROR << "[notifyProtocolCheck]Failed to process the event [" << event << "]";
+                KETO_LOG_ERROR << "[notifyProtocolCheck]The cause is : " << ex.what();
+            } catch (...) {
+                KETO_LOG_ERROR << "[notifyProtocolCheck]Failed to process the event [" << event << "]";
+            }
+        }
+    }
+    this->protolCount++;
 }
 
 

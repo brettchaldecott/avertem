@@ -94,6 +94,10 @@ public:
         static const char* REQUEST_NETWORK_FEES;
         static const char* RESPONSE_NETWORK_FEES;
         static const char* RESPONSE_RETRY;
+
+        static const char* PROTOCOL_CHECK_REQUEST;
+        static const char* PROTOCOL_CHECK_RESPONSE;
+        static const char* PROTOCOL_CHECK_ACCEPT;
     };
     
 private:

@@ -74,6 +74,8 @@ public:
     
     keto::event::Event routeTransaction(const keto::event::Event& event);
     keto::event::Event pushBlock(const keto::event::Event& event);
+    keto::event::Event performNetworkSessionReset(const keto::event::Event& event);
+    keto::event::Event performProtocoCheck(const keto::event::Event& event);
 protected:
     keto::crypto::SecureVector getSecret();
     void setExternalIp(

@@ -22,6 +22,7 @@ add_library( keto_software_consensus
 		ModuleConsensusValidationMessageHelper.cpp
 		ConsensusAcceptedMessageHelper.cpp
 		ConsensusStateManager.cpp
+		ProtocolAcceptedMessageHelper.cpp
 
 		${HEADERS}
 		)

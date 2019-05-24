@@ -43,6 +43,9 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::EVENT,
             &keto::event::EventRegistry::consensusSessionAccepted);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::CONSENSUS_SESSION_CHECK::EVENT,
+            &keto::event::EventRegistry::consensusProtolCheck);
 }
 
 
@@ -60,6 +63,10 @@ keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Ev
     return event;
 }
 
+keto::event::Event EventRegistry::consensusProtolCheck(const keto::event::Event& event) {
+
+    return event;
+}
 
 }
 }

@@ -51,8 +51,11 @@ private:
     int currentPos;
     std::chrono::system_clock::time_point sessionkey_point;
     std::chrono::system_clock::time_point network_point;
+    int netwokSessionLength;
+    int netwokProtocolDelay;
 
     void internalConsensusInit(const keto::crypto::SecureVector& initHash);
+    void internalConsensusProtocolCheck(const keto::crypto::SecureVector& initHash);
     void reschedule();
 
 };

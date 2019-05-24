@@ -100,3 +100,14 @@ message ConsensusAcceptedMessage {
     // the consensus accepted status
     bool accepted = 2;
 }
+
+
+/**
+ * The consensus accepted message
+ */
+message ProtocolAcceptedMessage {
+    // the version for this protocol
+    uint32 version = 1;
+    // the protocol accepted status
+    bool accepted = 2;
+}

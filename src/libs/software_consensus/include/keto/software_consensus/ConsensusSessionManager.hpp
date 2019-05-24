@@ -48,12 +48,22 @@ public:
     void updateSessionKey(const keto::crypto::SecureVector& sessionKey);
     void setSession(keto::proto::ConsensusMessage& event);
     void notifyAccepted();
+    bool resetProtocolCheck();
+    void notifyProtocolCheck(bool master = false);
+
 private:
     std::mutex classMutex;
 
     keto::crypto::SecureVector sessionHash;
     bool activeSession;
     bool accepted;
+    int netwokProtocolDelay;
+    int networkProtocolCount;
+
+
+    // protocol consenus variables
+    int protolCount;
+    std::chrono::system_clock::time_point protocolPoint;
 
     ConsensusSessionManager();
 
