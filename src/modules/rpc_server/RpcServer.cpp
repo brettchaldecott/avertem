@@ -445,6 +445,29 @@ public:
     }
 
     void
+    performNetworkHeartbeat(const keto::proto::ProtocolHeartbeatMessage& protocolHeartbeatMessage) {
+        std::cout << "Attempt to perform the protocol heartbeat" << std::endl;
+        std::string messageWrapperStr;
+        protocolHeartbeatMessage.SerializeToString(&messageWrapperStr);
+        MultiBufferPtr multiBufferPtr(new boost::beast::multi_buffer());
+        boost::beast::ostream(*multiBufferPtr) << keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_HEARTBEAT
+                                               << " " << Botan::hex_encode((uint8_t*)messageWrapperStr.data(),messageWrapperStr.size(),true);
+
+        ws_.text(ws_.got_text());
+        ws_.async_write(
+                multiBufferPtr->data(),
+                boost::asio::bind_executor(
+                        strand_,
+                        std::bind(
+                                &session::on_outBoundWrite,
+                                shared_from_this(),
+                                std::placeholders::_1,
+                                std::placeholders::_2,
+                                multiBufferPtr)));
+        std::cout << "After requesting the protocol heartbeat" << std::endl;
+    }
+
+    void
     handleProtocolCheckResponse(const std::string& command, const std::string& payload) {
         keto::proto::ConsensusMessage consensusMessage;
         std::string binString = keto::server_common::VectorUtils().copyVectorToString(
@@ -1011,6 +1034,23 @@ keto::event::Event RpcServer::performProtocoCheck(const keto::event::Event& even
 
     std::stringstream ss;
     ss << "Perform protocol check";
+    response.set_result(ss.str());
+
+    return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
+}
+
+keto::event::Event RpcServer::performConsensusHeartbeat(const keto::event::Event& event) {
+    keto::proto::ProtocolHeartbeatMessage protocolHeartbeatMessage =
+            keto::server_common::fromEvent<keto::proto::ProtocolHeartbeatMessage>(event);
+    for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
+        AccountSessionCache::getInstance()->getSession(
+                account)->performNetworkHeartbeat(protocolHeartbeatMessage);
+    }
+    keto::proto::MessageWrapperResponse response;
+    response.set_success(true);
+
+    std::stringstream ss;
+    ss << "Perform network heartbeat";
     response.set_result(ss.str());
 
     return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);

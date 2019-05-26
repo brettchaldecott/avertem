@@ -52,9 +52,11 @@ void process(const boost::system::error_code& error) {
 const int ConsensusServer::THREAD_COUNT = 1;
 
 ConsensusServer::ConsensusServer() :
-    currentPos(-1),netwokSessionLength(Constants::NETWORK_SESSION_LENGTH_DEFAULT),netwokProtocolDelay(keto::software_consensus::Constants::NETWORK_PROTOCOL_DELAY_DEFAULT) {
-    sessionkey_point = std::chrono::system_clock::now();
-    network_point = std::chrono::system_clock::now();
+    currentPos(-1),netwokSessionLength(Constants::NETWORK_SESSION_LENGTH_DEFAULT),
+    netwokProtocolDelay(keto::software_consensus::Constants::NETWORK_PROTOCOL_DELAY_DEFAULT),
+    networkHeartbeatDelay(Constants::NETWORK_SESSION_LENGTH_DEFAULT),
+    networkHeartbeatSlot(0) {
+    networkHeartbeatPoint = networkPoint = sessionkeyPoint = std::chrono::system_clock::now();
 
     // retrieve the configuration
     std::shared_ptr<keto::environment::Config> config = keto::environment::EnvironmentManager::getInstance()->getConfig();
@@ -71,6 +73,11 @@ ConsensusServer::ConsensusServer() :
         this->netwokProtocolDelay =std::stol(
                 config->getVariablesMap()[keto::software_consensus::Constants::NETWORK_PROTOCOL_DELAY_CONFIGURATION].as<std::string>());
     }
+    if (config->getVariablesMap().count(Constants::NETWORK_SESSION_LENGTH_CONFIGURATION)) {
+        this->networkHeartbeatDelay =std::stol(
+                config->getVariablesMap()[Constants::NETWORK_SESSION_LENGTH_CONFIGURATION].as<std::string>());
+    }
+
 
 
     consensusServerPtr = this;
@@ -121,10 +128,12 @@ void ConsensusServer::process() {
     try {
         std::chrono::system_clock::time_point currentTime = std::chrono::system_clock::now();
         std::chrono::minutes diff(
-                std::chrono::duration_cast<std::chrono::minutes>(currentTime - this->sessionkey_point));
+                std::chrono::duration_cast<std::chrono::minutes>(currentTime - this->sessionkeyPoint));
         // check if the network time is up and needs to be retested
         std::chrono::minutes networkDiff(
-                std::chrono::duration_cast<std::chrono::minutes>(currentTime - this->network_point));
+                std::chrono::duration_cast<std::chrono::minutes>(currentTime - this->networkPoint));
+        std::chrono::seconds heartbeatDiff(
+                std::chrono::duration_cast<std::chrono::seconds>(currentTime - this->networkHeartbeatPoint));
         std::cout << "Process the event" << std::endl;
         if ((this->currentPos == -1) || (diff.count() > this->netwokSessionLength)) {
             std::cout << "Release a new session key" << std::endl;
@@ -136,8 +145,8 @@ void ConsensusServer::process() {
                     this->sessionKeys[this->currentPos], true);
             keto::software_consensus::ConsensusSessionManager::getInstance()->updateSessionKey(initVector);
             internalConsensusInit(keto::crypto::HashGenerator().generateHash(initVector));
-            this->sessionkey_point = currentTime;
-            this->network_point = currentTime;
+            this->networkHeartbeatPoint = this->networkPoint = this->sessionkeyPoint = currentTime;
+            this->networkHeartbeatSlot = 0;
         } else if (networkDiff.count() > this->netwokProtocolDelay) {
             std::cout << "Time to retest the network." << std::endl;
             keto::crypto::SecureVector initVector = Botan::hex_decode_locked(
@@ -147,7 +156,13 @@ void ConsensusServer::process() {
             keto::crypto::SecureVector timeBytesVector(ptr,ptr+4);
             initVector.insert(initVector.begin(),timeBytesVector.begin(),timeBytesVector.end());
             internalConsensusProtocolCheck(keto::crypto::HashGenerator().generateHash(initVector));
-            this->network_point = currentTime;
+            this->networkHeartbeatPoint = this->networkPoint = currentTime;
+            this->networkHeartbeatSlot = 0;
+        } else if (heartbeatDiff.count() > this->networkHeartbeatDelay) {
+            std::cout << "The network heartbeat." << std::endl;
+            initNetworkHeartbeat();
+            this->networkHeartbeatPoint = currentTime;
+
         }
 
     } catch (...) {
@@ -195,6 +210,12 @@ void ConsensusServer::internalConsensusProtocolCheck(const keto::crypto::SecureV
     keto::software_consensus::ConsensusSessionManager::getInstance()->notifyProtocolCheck(true);
     transactionPtr->commit();
 
+}
+
+void ConsensusServer::initNetworkHeartbeat() {
+    keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
+    keto::software_consensus::ConsensusSessionManager::getInstance()->initNetworkHeartbeat(this->networkHeartbeatSlot++);
+    transactionPtr->commit();
 }
 
 void ConsensusServer::reschedule() {

@@ -142,6 +142,7 @@ private:
     // protocol methods
     void handleProtocolCheckRequest(const std::string& command, const std::string& message);
     void handleProtocolCheckAccept(const std::string& command, const std::string& message);
+    void handleProtocolHeartbeat(const std::string& command, const std::string& message);
 
     void registerResponse(const std::string& command, const std::string& message);
     void requestNetworkSessionKeysResponse(const std::string& command, const std::string& message);
@@ -155,6 +156,7 @@ private:
     void handleBlockSyncResponse(const std::string& command, const std::string& message);
 
     void fail(boost::system::error_code ec, const std::string& what);
+
     
 };
 

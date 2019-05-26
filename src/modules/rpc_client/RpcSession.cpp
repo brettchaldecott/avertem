@@ -356,8 +356,11 @@ RpcSession::on_read(
             transactionPtr->commit();
             return;
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_ACCEPT) == 0) {
-            handleProtocolCheckRequest(command,stringVector[1]);
+            handleProtocolCheckAccept(command,stringVector[1]);
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_HEARTBEAT) == 0) {
+            handleProtocolHeartbeat(command,stringVector[1]);
         }
+
 
         transactionPtr->commit();
     } catch (keto::common::Exception& ex) {
@@ -666,12 +669,22 @@ void RpcSession::handleProtocolCheckRequest(const std::string& command, const st
                             std::placeholders::_2)));
 }
 
+
 void RpcSession::handleProtocolCheckAccept(const std::string& command, const std::string& message) {
 
     // notify the accepted inorder to set the network keys
     keto::software_consensus::ConsensusSessionManager::getInstance()->notifyProtocolCheck();
 
 }
+
+void RpcSession::handleProtocolHeartbeat(const std::string& command, const std::string& message) {
+    keto::proto::ProtocolHeartbeatMessage protocolHeartbeatMessage;
+    protocolHeartbeatMessage.ParseFromString(keto::server_common::VectorUtils().copyVectorToString(
+            Botan::hex_decode(message)));
+
+    keto::software_consensus::ConsensusSessionManager::getInstance()->initNetworkHeartbeat(protocolHeartbeatMessage);
+}
+
 
 void RpcSession::registerResponse(const std::string& command, const std::string& message) {
     keto::router_utils::RpcPeerHelper rpcPeerHelper;

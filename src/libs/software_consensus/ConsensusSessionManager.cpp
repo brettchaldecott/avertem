@@ -43,8 +43,9 @@ std::string ConsensusSessionManager::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
     
-ConsensusSessionManager::ConsensusSessionManager() : activeSession(false), accepted(false), protolCount(-1),
-    netwokProtocolDelay(Constants::NETWORK_PROTOCOL_DELAY_DEFAULT), networkProtocolCount(Constants::NETWORK_PROTOCOL_COUNT_DEFAULT)  {
+ConsensusSessionManager::ConsensusSessionManager() : activeSession(false), accepted(false),
+    netwokProtocolDelay(Constants::NETWORK_PROTOCOL_DELAY_DEFAULT), networkProtocolCount(Constants::NETWORK_PROTOCOL_COUNT_DEFAULT),
+    protolCount(-1){
     this->protocolPoint = std::chrono::system_clock::now();
 
     // retrieve the configuration
@@ -207,6 +208,49 @@ void ConsensusSessionManager::notifyProtocolCheck(bool master) {
     }
     this->protolCount++;
 }
+
+
+void ConsensusSessionManager::initNetworkHeartbeat(int networkSlot) {
+    keto::software_consensus::ProtocolHeartbeatMessageHelper protocolHeartbeatMessageHelper;
+    protocolHeartbeatMessageHelper.setNetworkSlot(networkSlot);
+    initNetworkHeartbeat(protocolHeartbeatMessageHelper.getMsg());
+}
+
+void ConsensusSessionManager::initNetworkHeartbeat(const keto::proto::ProtocolHeartbeatMessage& msg) {
+    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    if (!checkHeartbeatTimestamp(msg)) {
+        return;
+    }
+    for (std::string event : Constants::CONSENSUS_HEARTBEAT) {
+        try {
+            keto::server_common::triggerEvent(
+                    keto::server_common::toEvent<keto::proto::ProtocolHeartbeatMessage>(
+                            event,msg));
+        } catch (keto::common::Exception& ex) {
+            KETO_LOG_ERROR << "[initNetworkHeartbeat]Failed to process the event [" << event  << "] : " << ex.what();
+            KETO_LOG_ERROR << "[initNetworkHeartbeat]Cause: " << boost::diagnostic_information(ex,true);
+        } catch (boost::exception& ex) {
+            KETO_LOG_ERROR << "[initNetworkHeartbeat]Failed to process the event [" << event << "]";
+            KETO_LOG_ERROR << "[initNetworkHeartbeat]Cause: " << boost::diagnostic_information(ex,true);
+        } catch (std::exception& ex) {
+            KETO_LOG_ERROR << "[initNetworkHeartbeat]Failed to process the event [" << event << "]";
+            KETO_LOG_ERROR << "[initNetworkHeartbeat]The cause is : " << ex.what();
+        } catch (...) {
+            KETO_LOG_ERROR << "[initNetworkHeartbeat]Failed to process the event [" << event << "]";
+        }
+    }
+}
+
+
+bool ConsensusSessionManager::checkHeartbeatTimestamp(const keto::proto::ProtocolHeartbeatMessage& msg) {
+    if (this->protocolHeartbeatMessageHelper.getTimestamp() < msg.timestamp()) {
+        this->protocolHeartbeatMessageHelper = ProtocolHeartbeatMessageHelper(msg);
+        return true;
+    }
+    return false;
+}
+
+
 
 
 }

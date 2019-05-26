@@ -98,6 +98,7 @@ public:
         static const char* PROTOCOL_CHECK_REQUEST;
         static const char* PROTOCOL_CHECK_RESPONSE;
         static const char* PROTOCOL_CHECK_ACCEPT;
+        static const char* PROTOCOL_HEARTBEAT;
     };
     
 private:

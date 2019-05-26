@@ -51,7 +51,10 @@ void EventRegistry::registerEventHandlers() {
             &keto::rpc_server::EventRegistry::consensusSessionAccepted);
     keto::server_common::registerEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION_CHECK::RPC_SERVER,
-            &keto::rpc_server::EventRegistry::consensusProtolCheck);
+            &keto::rpc_server::EventRegistry::consensusProtocolCheck);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::CONSENSUS_HEARTBEAT::RPC_SERVER,
+            &keto::rpc_server::EventRegistry::consensusHeartbeat);
     keto::server_common::registerEventHandler (
             keto::server_common::Events::RPC_SERVER_TRANSACTION,
             &keto::rpc_server::EventRegistry::routeTransaction);
@@ -65,6 +68,8 @@ void EventRegistry::deregisterEventHandlers() {
             keto::server_common::Events::RPC_SERVER_BLOCK);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::RPC_SERVER_TRANSACTION);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::CONSENSUS_HEARTBEAT::RPC_SERVER);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::RPC_SERVER);
     keto::server_common::deregisterEventHandler (
@@ -104,9 +109,14 @@ keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Ev
     return RpcServer::getInstance()->performNetworkSessionReset(event);
 }
 
-keto::event::Event EventRegistry::consensusProtolCheck(const keto::event::Event& event) {
+keto::event::Event EventRegistry::consensusProtocolCheck(const keto::event::Event& event) {
     std::cout << "[RpcServer][EventRegistry::consensusSessionAccepted] the node has been accepted" << std::endl;
     return RpcServer::getInstance()->performProtocoCheck(event);
+}
+
+keto::event::Event EventRegistry::consensusHeartbeat(const keto::event::Event& event) {
+    std::cout << "[RpcServer][EventRegistry::consensusHeartbeat] the node has been accepted" << std::endl;
+    return RpcServer::getInstance()->performConsensusHeartbeat(event);
 }
 
 }

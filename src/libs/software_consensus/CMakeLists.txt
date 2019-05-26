@@ -23,6 +23,7 @@ add_library( keto_software_consensus
 		ConsensusAcceptedMessageHelper.cpp
 		ConsensusStateManager.cpp
 		ProtocolAcceptedMessageHelper.cpp
+		ProtocolHeartbeatMessageHelper.cpp
 
 		${HEADERS}
 		)

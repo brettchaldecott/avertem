@@ -69,7 +69,12 @@ keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Ev
     return event;
 }
 
-keto::event::Event EventRegistry::consensusProtolCheck(const keto::event::Event& event) {
+keto::event::Event EventRegistry::consensusProtocolCheck(const keto::event::Event& event) {
+
+    return event;
+}
+
+keto::event::Event EventRegistry::consensusHeartbeat(const keto::event::Event& event) {
 
     return event;
 }
@@ -98,7 +103,10 @@ void EventRegistry::registerEventHandlers() {
             &keto::router::EventRegistry::consensusSessionAccepted);
     keto::server_common::registerEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION_CHECK::ROUTER,
-            &keto::router::EventRegistry::consensusProtolCheck);
+            &keto::router::EventRegistry::consensusProtocolCheck);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::CONSENSUS_HEARTBEAT::ROUTER,
+            &keto::router::EventRegistry::consensusHeartbeat);
 }
 
 void EventRegistry::deregisterEventHandlers() {
@@ -106,6 +114,8 @@ void EventRegistry::deregisterEventHandlers() {
             keto::server_common::Events::CONSENSUS::ROUTER);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION::ROUTER);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::CONSENSUS_HEARTBEAT::ROUTER);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::ROUTER);
     keto::server_common::deregisterEventHandler (

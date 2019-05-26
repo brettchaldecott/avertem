@@ -41,7 +41,8 @@ public:
     static keto::event::Event generateSoftwareHash(const keto::event::Event& event);
     static keto::event::Event setModuleSession(const keto::event::Event& event);
     static keto::event::Event consensusSessionAccepted(const keto::event::Event& event);
-    static keto::event::Event consensusProtolCheck(const keto::event::Event& event);
+    static keto::event::Event consensusProtocolCheck(const keto::event::Event& event);
+    static keto::event::Event consensusHeartbeat(const keto::event::Event& event);
 private:
     EventRegistry();
     

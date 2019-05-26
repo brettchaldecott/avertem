@@ -56,7 +56,10 @@ void EventRegistry::registerEventHandlers() {
             &keto::block::EventRegistry::consensusSessionAccepted);
     keto::server_common::registerEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION_CHECK::BLOCK,
-            &keto::block::EventRegistry::consensusProtolCheck);
+            &keto::block::EventRegistry::consensusProtocolCheck);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::CONSENSUS_HEARTBEAT::BLOCK,
+            &keto::block::EventRegistry::consensusHeartbeat);
     keto::server_common::registerEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION_STATE::BLOCK,
             &keto::block::EventRegistry::setupNodeConsensusSession);
@@ -94,6 +97,8 @@ void EventRegistry::deregisterEventHandlers() {
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION::BLOCK);
     keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::CONSENSUS_HEARTBEAT::BLOCK);
+    keto::server_common::deregisterEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::BLOCK);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION_CHECK::BLOCK);
@@ -130,7 +135,12 @@ keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Ev
     return ConsensusService::getInstance()->consensusSessionAccepted(event);
 }
 
-keto::event::Event EventRegistry::consensusProtolCheck(const keto::event::Event& event) {
+keto::event::Event EventRegistry::consensusProtocolCheck(const keto::event::Event& event) {
+
+    return event;
+}
+
+keto::event::Event EventRegistry::consensusHeartbeat(const keto::event::Event& event) {
 
     return event;
 }

@@ -36,7 +36,9 @@ public:
     static constexpr const char* CONSENSUS_KEY     = "consensus-keys";
 
     static constexpr const char* NETWORK_SESSION_LENGTH_CONFIGURATION     = "network_session_length";
-    static constexpr const int NETWORK_SESSION_LENGTH_DEFAULT     = 60;
+    static constexpr const int NETWORK_SESSION_LENGTH_DEFAULT     = 120;
+    static constexpr const char* NETWORK_CONSENSUS_HEARTBEAT_CONFIGURATION     = "network_consensus_heartbeat";
+    static constexpr const int NETWORK_CONSENSUS_HEARTBEAT_DEFAULT     = 60;
 };
 
 }

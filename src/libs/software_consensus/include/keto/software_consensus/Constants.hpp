@@ -37,6 +37,8 @@ public:
 
     static const std::vector<std::string> CONSENSUS_SESSION_CHECK;
 
+    static const std::vector<std::string> CONSENSUS_HEARTBEAT;
+
     static const std::vector<std::string> CONSENSUS_SESSION_STATE;
 
     // protocol configuration

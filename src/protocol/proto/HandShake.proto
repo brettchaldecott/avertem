@@ -111,3 +111,15 @@ message ProtocolAcceptedMessage {
     // the protocol accepted status
     bool accepted = 2;
 }
+
+/**
+ * The consensus accepted message
+ */
+message ProtocolHeartbeatMessage {
+    // the version for this protocol
+    uint32 version = 1;
+    // the protocol accepted status
+    uint64 timestamp = 2;
+    // the hour
+    uint32 network_slot = 3;
+}

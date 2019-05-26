@@ -49,13 +49,17 @@ private:
     std::vector<std::thread> threadsVector;
     std::vector<std::string> sessionKeys;
     int currentPos;
-    std::chrono::system_clock::time_point sessionkey_point;
-    std::chrono::system_clock::time_point network_point;
+    std::chrono::system_clock::time_point sessionkeyPoint;
+    std::chrono::system_clock::time_point networkPoint;
+    std::chrono::system_clock::time_point networkHeartbeatPoint;
     int netwokSessionLength;
     int netwokProtocolDelay;
+    int networkHeartbeatDelay;
+    int networkHeartbeatSlot;
 
     void internalConsensusInit(const keto::crypto::SecureVector& initHash);
     void internalConsensusProtocolCheck(const keto::crypto::SecureVector& initHash);
+    void initNetworkHeartbeat();
     void reschedule();
 
 };

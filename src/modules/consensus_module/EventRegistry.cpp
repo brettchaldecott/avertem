@@ -50,7 +50,10 @@ void EventRegistry::registerEventHandlers() {
             &keto::consensus_module::EventRegistry::consensusSessionAccepted);
     keto::server_common::registerEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION_CHECK::CONSENSUS_QUERY,
-            &keto::consensus_module::EventRegistry::consensusProtolCheck);
+            &keto::consensus_module::EventRegistry::consensusProtocolCheck);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::CONSENSUS_HEARTBEAT::CONSENSUS_QUERY,
+            &keto::consensus_module::EventRegistry::consensusHeartbeat);
 }
 
 void EventRegistry::deregisterEventHandlers() {
@@ -60,6 +63,8 @@ void EventRegistry::deregisterEventHandlers() {
             keto::server_common::Events::VALIDATE_SOFTWARE_CONSENSUS_MESSAGE);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::CONSENSUS::CONSENSUS_QUERY);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::CONSENSUS_HEARTBEAT::CONSENSUS_QUERY);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION::CONSENSUS_QUERY);
     keto::server_common::deregisterEventHandler (
@@ -91,7 +96,12 @@ keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Ev
     return event;
 }
 
-keto::event::Event EventRegistry::consensusProtolCheck(const keto::event::Event& event) {
+keto::event::Event EventRegistry::consensusProtocolCheck(const keto::event::Event& event) {
+
+    return event;
+}
+
+keto::event::Event EventRegistry::consensusHeartbeat(const keto::event::Event& event) {
 
     return event;
 }

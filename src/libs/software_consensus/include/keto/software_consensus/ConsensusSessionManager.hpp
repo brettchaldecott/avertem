@@ -25,6 +25,9 @@
 
 #include "keto/obfuscate/MetaString.hpp"
 
+
+#include "keto/software_consensus/ProtocolHeartbeatMessageHelper.hpp"
+
 namespace keto {
 namespace software_consensus {
 
@@ -50,6 +53,8 @@ public:
     void notifyAccepted();
     bool resetProtocolCheck();
     void notifyProtocolCheck(bool master = false);
+    void initNetworkHeartbeat(int networkSlot);
+    void initNetworkHeartbeat(const keto::proto::ProtocolHeartbeatMessage& msg);
 
 private:
     std::mutex classMutex;
@@ -59,6 +64,7 @@ private:
     bool accepted;
     int netwokProtocolDelay;
     int networkProtocolCount;
+    ProtocolHeartbeatMessageHelper protocolHeartbeatMessageHelper;
 
 
     // protocol consenus variables
@@ -67,6 +73,7 @@ private:
 
     ConsensusSessionManager();
 
+    bool checkHeartbeatTimestamp(const keto::proto::ProtocolHeartbeatMessage& msg);
 
 };
 

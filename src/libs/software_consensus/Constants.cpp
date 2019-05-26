@@ -87,6 +87,23 @@ const std::vector<std::string> Constants::CONSENSUS_SESSION_CHECK = {
         keto::server_common::Events::CONSENSUS_SESSION_CHECK::CONSENSUS_QUERY,
         keto::server_common::Events::CONSENSUS_SESSION_CHECK::MEMORY_VAULT_MANAGER};
 
+const std::vector<std::string> Constants::CONSENSUS_HEARTBEAT = {
+        keto::server_common::Events::CONSENSUS_HEARTBEAT::RPC_CLIENT,
+        keto::server_common::Events::CONSENSUS_HEARTBEAT::RPC_SERVER,
+        keto::server_common::Events::CONSENSUS_HEARTBEAT::TEST,
+        keto::server_common::Events::CONSENSUS_HEARTBEAT::TRANSACTION,
+        keto::server_common::Events::CONSENSUS_HEARTBEAT::ROUTER,
+        keto::server_common::Events::CONSENSUS_HEARTBEAT::HTTPD,
+        keto::server_common::Events::CONSENSUS_HEARTBEAT::EVENT,
+        keto::server_common::Events::CONSENSUS_HEARTBEAT::BLOCK,
+        keto::server_common::Events::CONSENSUS_HEARTBEAT::SANDBOX,
+        keto::server_common::Events::CONSENSUS_HEARTBEAT::VERSION,
+        keto::server_common::Events::CONSENSUS_HEARTBEAT::KEYSTORE,
+        keto::server_common::Events::CONSENSUS_HEARTBEAT::BALANCER,
+        keto::server_common::Events::CONSENSUS_HEARTBEAT::ACCOUNT,
+        keto::server_common::Events::CONSENSUS_HEARTBEAT::CONSENSUS_QUERY,
+        keto::server_common::Events::CONSENSUS_HEARTBEAT::MEMORY_VAULT_MANAGER};
+
 const std::vector<std::string> Constants::CONSENSUS_SESSION_STATE = {
     keto::server_common::Events::CONSENSUS_SESSION_STATE::BLOCK,
     keto::server_common::Events::CONSENSUS_SESSION_STATE::MEMORY_VAULT_MANAGER
