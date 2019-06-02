@@ -24,6 +24,8 @@
 #include "keto/event/Event.hpp"
 
 #include "keto/rpc_client/RpcPeer.hpp"
+#include "keto/rocks_db/DBManager.hpp"
+
 
 namespace keto {
 namespace rpc_client {
@@ -59,6 +61,7 @@ public:
 
     keto::event::Event requestBlockSync(const keto::event::Event& event);
     keto::event::Event routeTransaction(const keto::event::Event& event);
+    keto::event::Event pushBlock(const keto::event::Event& event);
     
     
     
@@ -77,11 +80,12 @@ private:
     // The SSL context is required, and holds certificates
     std::shared_ptr<boostSsl::context> ctx;
     // the thread information
+    std::string configuredPeersString;
     int threads;
     std::vector<std::thread> threadsVector;
     bool peered;
-    
-    
+
+
     bool hasAccountSessionMapping(const std::string& account);
     RpcSessionPtr getAccountSessionMapping(const std::string& account);
     RpcSessionPtr getDefaultPeer();

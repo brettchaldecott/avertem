@@ -184,6 +184,12 @@ keto::event::Event BlockService::processBlockSyncResponse(const keto::event::Eve
                     keto::server_common::fromEvent<keto::proto::SignedBlockBatchMessage>(event)));
 }
 
+keto::event::Event BlockService::getAccountBlockTangle(const keto::event::Event& event) {
+    return keto::server_common::toEvent<keto::proto::AccountChainTangle>(
+            keto::block_db::BlockChainStore::getInstance()->getAccountBlockTangle(
+                    keto::server_common::fromEvent<keto::proto::AccountChainTangle>(event)));
+}
+
 std::mutex& BlockService::getAccountLock(const AccountHashVector& accountHash) {
     std::lock_guard<std::mutex> guard(this->classMutex);
     if (!accountLocks.count(accountHash)) {

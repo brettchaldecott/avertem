@@ -102,19 +102,6 @@ keto::event::Event AccountService::checkAccount(const keto::event::Event& event)
 }
 
 
-keto::event::Event AccountService::getNodeAccountRouting(
-        const keto::event::Event& event) {
-    keto::asn1::HashHelper accountHashHelper(
-        keto::crypto::SecureVectorUtils().copyToSecure(    
-            keto::server_common::ServerInfo::getInstance()->getAccountHash()));
-    keto::router_utils::RpcPeerHelper rpcPeerHelper;
-    keto::account_db::AccountStore::getInstance()->getNodeAccountRouting(accountHashHelper,
-            rpcPeerHelper);
-    keto::proto::RpcPeer rpcPeer = (keto::proto::RpcPeer)rpcPeerHelper;
-    return keto::server_common::toEvent<keto::proto::RpcPeer>(rpcPeer);
-    
-}
-
 keto::event::Event AccountService::sparqlQuery(const keto::event::Event& event) {
     keto::proto::SparqlQuery  sparqlQuery = 
             keto::server_common::fromEvent<keto::proto::SparqlQuery>(event);

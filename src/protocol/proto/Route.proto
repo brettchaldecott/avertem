@@ -38,6 +38,9 @@ message AccountRoutingStore {
 message RpcPeer {
     uint32 version = 1;
     bytes account_hash = 2;
-    bool server = 3;
-    PushAccount accountInfo = 4;
+    bytes peer_account_hash = 3;
+    bool server = 4;
+    repeated RpcPeer rpc_children = 5;
 }
+
+

@@ -58,7 +58,7 @@ RpcPeerHelper& RpcPeerHelper::setAccountHash(
     return *this;
 }
 
-std::vector<uint8_t> RpcPeerHelper::getAccountHashBytes() {
+std::vector<uint8_t> RpcPeerHelper::getAccountHashBytes() const {
     std::string accountHash = this->rpcPeer.account_hash();
     std::vector<uint8_t> hash;
     std::copy(accountHash.begin(), accountHash.end(), std::back_inserter(hash));
@@ -66,8 +66,41 @@ std::vector<uint8_t> RpcPeerHelper::getAccountHashBytes() {
 }
 
 
-std::string RpcPeerHelper::getAccountHashString() {
+std::string RpcPeerHelper::getAccountHashString() const {
     return this->rpcPeer.account_hash();
+}
+
+RpcPeerHelper& RpcPeerHelper::setPeerAccountHash(
+        const keto::asn1::HashHelper& accountHash) {
+    this->rpcPeer.set_peer_account_hash(
+            accountHash.operator keto::crypto::SecureVector().data(),
+            accountHash.operator keto::crypto::SecureVector().size());
+    return *this;
+}
+
+keto::asn1::HashHelper RpcPeerHelper::getPeerAccountHash() {
+    std::string accountHash = this->rpcPeer.peer_account_hash();
+    return keto::asn1::HashHelper(accountHash);
+}
+
+RpcPeerHelper& RpcPeerHelper::setPeerAccountHash(
+        const std::vector<uint8_t>& accountHash) {
+    this->rpcPeer.set_peer_account_hash(
+            accountHash.data(),
+            accountHash.size());
+    return *this;
+}
+
+std::vector<uint8_t> RpcPeerHelper::getPeerAccountHashBytes() const {
+    std::string accountHash = this->rpcPeer.peer_account_hash();
+    std::vector<uint8_t> hash;
+    std::copy(accountHash.begin(), accountHash.end(), std::back_inserter(hash));
+    return hash;
+}
+
+
+std::string RpcPeerHelper::getPeerAccountHashString() const {
+    return this->rpcPeer.peer_account_hash();
 }
 
 RpcPeerHelper& RpcPeerHelper::setServer(
@@ -80,35 +113,40 @@ bool RpcPeerHelper::isServer() {
     return this->rpcPeer.server();
 }
 
-RpcPeerHelper& RpcPeerHelper::setPushAccount(
-        const keto::proto::PushAccount& pushAccount) {
-    this->rpcPeer.set_allocated_accountinfo(new keto::proto::PushAccount(pushAccount));
+RpcPeerHelper& RpcPeerHelper::addChild(
+        const RpcPeerHelper& child) {
+    *rpcPeer.add_rpc_children() = (keto::proto::RpcPeer)child;
     return *this;
 }
 
-keto::proto::PushAccount RpcPeerHelper::getPushAccount() {
-    return this->rpcPeer.accountinfo();
-}
-
-RpcPeerHelper& RpcPeerHelper::setPushAccount(
-        PushAccountHelper& pushAccountHelper) {
-    keto::proto::PushAccount copyPushAccount = pushAccountHelper.operator keto::proto::PushAccount();
-    this->rpcPeer.set_allocated_accountinfo(new keto::proto::PushAccount(copyPushAccount));
+RpcPeerHelper& RpcPeerHelper::addChild(
+        const keto::proto::RpcPeer& child) {
+    *rpcPeer.add_rpc_children() = child;
     return *this;
 }
 
-PushAccountHelper RpcPeerHelper::getPushAccountHelper() {
-    return PushAccountHelper(this->rpcPeer.accountinfo());
+int RpcPeerHelper::numberOfChildren() const {
+    return rpcPeer.rpc_children_size();
 }
 
-RpcPeerHelper::operator keto::proto::RpcPeer() {
+RpcPeerHelperPtr RpcPeerHelper::getChild(int index) const {
+    if (index >= rpcPeer.rpc_children_size()) {
+        return RpcPeerHelperPtr();
+    }
+    return RpcPeerHelperPtr(new RpcPeerHelper(rpcPeer.rpc_children(index)));
+}
+
+
+RpcPeerHelper::operator keto::proto::RpcPeer() const {
     return this->rpcPeer;
 }
 
-std::string RpcPeerHelper::toString() {
-    std::string result;
-    this->rpcPeer.ParseFromString(result);
-    return result;
+RpcPeerHelper::operator std::string() const {
+    return toString();
+}
+
+std::string RpcPeerHelper::toString() const {
+    return this->rpcPeer.SerializeAsString();
 }
 
 }

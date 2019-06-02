@@ -77,9 +77,17 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::BLOCK_DB_RESPONSE_BLOCK_SYNC,
             &keto::block::EventRegistry::processBlockSyncResponse);
+
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::GET_ACCOUNT_TANGLE,
+            &keto::block::EventRegistry::getAccountBlockTangle);
 }
 
 void EventRegistry::deregisterEventHandlers() {
+
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::GET_ACCOUNT_TANGLE);
+
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::BLOCK_DB_RESPONSE_BLOCK_SYNC);
     keto::server_common::deregisterEventHandler (
@@ -136,13 +144,12 @@ keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Ev
 }
 
 keto::event::Event EventRegistry::consensusProtocolCheck(const keto::event::Event& event) {
-
+    
     return event;
 }
 
 keto::event::Event EventRegistry::consensusHeartbeat(const keto::event::Event& event) {
-
-    return event;
+    return BlockProducer::getInstance()->consensusHeartbeat(event);
 }
 
 keto::event::Event EventRegistry::enableBlockProducer(const keto::event::Event& event) {
@@ -164,6 +171,10 @@ keto::event::Event EventRegistry::requestBlockSync(const keto::event::Event& eve
 
 keto::event::Event EventRegistry::processBlockSyncResponse(const keto::event::Event& event) {
     return BlockService::getInstance()->processBlockSyncResponse(event);
+}
+
+keto::event::Event EventRegistry::getAccountBlockTangle(const keto::event::Event& event) {
+    return BlockService::getInstance()->getAccountBlockTangle(event);
 }
 
 }

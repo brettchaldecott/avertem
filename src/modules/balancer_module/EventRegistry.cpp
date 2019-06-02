@@ -95,8 +95,7 @@ keto::event::Event EventRegistry::consensusProtocolCheck(const keto::event::Even
 }
 
 keto::event::Event EventRegistry::consensusHeartbeat(const keto::event::Event& event) {
-
-    return event;
+    return BalancerService::getInstance()->consensusHeartbeat(event);
 }
 
 }

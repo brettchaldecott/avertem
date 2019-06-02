@@ -30,7 +30,7 @@ std::string DBManager::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
     
-DBManager::DBManager(const std::vector<std::string>& databases) {
+DBManager::DBManager(const std::vector<std::string>& databases, bool purge) {
     std::shared_ptr<keto::environment::Config> config = 
             keto::environment::EnvironmentManager::getInstance()->getConfig();
     for (std::string dbName : databases) {
@@ -40,10 +40,12 @@ DBManager::DBManager(const std::vector<std::string>& databases) {
             BOOST_THROW_EXCEPTION(keto::rocks_db::RocksInvalidDBNameException(
                 ss.str()));
         }
-        
-        boost::filesystem::path dbPath =  
+        boost::filesystem::path dbPath =
                 keto::environment::EnvironmentManager::getInstance()->getEnv()->getInstallDir() / 
                 config->getVariablesMap()[dbName].as<std::string>();
+        if (purge) {
+            boost::filesystem::remove_all(dbPath);
+        }
         connections[dbName] = DBConnectorPtr(new DBConnector(dbPath.c_str()));
     }
 }

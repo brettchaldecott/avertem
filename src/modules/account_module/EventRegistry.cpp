@@ -38,10 +38,6 @@ keto::event::Event EventRegistry::checkAccount(const keto::event::Event& event) 
     return AccountService::getInstance()->checkAccount(event);
 }
 
-keto::event::Event EventRegistry::getNodeAccountRouting(const keto::event::Event& event) {
-    return AccountService::getInstance()->getNodeAccountRouting(event);
-}
-
 keto::event::Event EventRegistry::applyDirtyTransaction(const keto::event::Event& event) {
     return AccountService::getInstance()->applyDirtyTransaction(event);
 }
@@ -101,9 +97,6 @@ void EventRegistry::registerEventHandlers() {
             keto::server_common::Events::CHECK_ACCOUNT_MESSAGE,
             &keto::account::EventRegistry::checkAccount);
     keto::server_common::registerEventHandler (
-            keto::server_common::Events::GET_NODE_ACCOUNT_ROUTING,
-            &keto::account::EventRegistry::getNodeAccountRouting);
-    keto::server_common::registerEventHandler (
             keto::server_common::Events::APPLY_ACCOUNT_DIRTY_TRANSACTION_MESSAGE,
             &keto::account::EventRegistry::applyDirtyTransaction);
     keto::server_common::registerEventHandler (
@@ -162,8 +155,6 @@ void EventRegistry::deregisterEventHandlers() {
             keto::server_common::Events::DIRTY_SPARQL_QUERY_WITH_RESULTSET_MESSAGE);
     keto::server_common::deregisterEventHandler(
             keto::server_common::Events::SPARQL_QUERY_MESSAGE);
-    keto::server_common::deregisterEventHandler (
-            keto::server_common::Events::GET_NODE_ACCOUNT_ROUTING);
     keto::server_common::deregisterEventHandler(
             keto::server_common::Events::APPLY_ACCOUNT_TRANSACTION_MESSAGE);
     keto::server_common::deregisterEventHandler(

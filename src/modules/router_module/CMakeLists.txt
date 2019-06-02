@@ -21,6 +21,7 @@ add_library( 0015_keto_router_module
             StorageManager.cpp
             RouterRegistry.cpp
             PeerCache.cpp
+            TangleServiceCache.cpp
 
              ${HEADERS}
            )

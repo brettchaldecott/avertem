@@ -53,6 +53,12 @@ message BlockMeta {
     bool encrypted = 4;
 }
 
+message AccountMeta {
+    bytes account_hash = 1;
+    bytes block_tangle_hash_id = 2;
+    bytes block_chain_hash = 3;
+}
+
 /**
  * The block definition
  */

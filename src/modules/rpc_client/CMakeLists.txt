@@ -22,6 +22,9 @@ add_library( 0060_keto_rpc_client_module
             ConsensusService.cpp
             Constants.cpp
             RpcPeer.cpp
+            PeerResource.cpp
+            PeerResourceManager.cpp
+            PeerStore.cpp
 
              ${HEADERS}
            )

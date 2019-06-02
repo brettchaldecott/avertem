@@ -68,8 +68,6 @@ public:
     void getContract(
         const keto::proto::AccountInfo& accountInfo,
         keto::proto::ContractMessage& contractMessage);
-    void getNodeAccountRouting(const keto::asn1::HashHelper& accountHash,
-            keto::router_utils::RpcPeerHelper& rpcPeerHelper);
     
 private:
     std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr;
@@ -87,10 +85,6 @@ private:
     
     void setAccountInfo(const keto::asn1::HashHelper& accountHash,
             keto::proto::AccountInfo& accountInfo);
-    
-    void buildNodeAccountRouting(const std::string& accountHash,
-            const std::vector<keto::proto::AccountInfo>& accountInfoVector,
-            keto::router_utils::PushAccountHelper& pushAccountHelper);
 
     void copyResultSet(
             ResultVectorMap& resultVectorMap,

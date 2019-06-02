@@ -54,7 +54,7 @@ const int ConsensusServer::THREAD_COUNT = 1;
 ConsensusServer::ConsensusServer() :
     currentPos(-1),netwokSessionLength(Constants::NETWORK_SESSION_LENGTH_DEFAULT),
     netwokProtocolDelay(keto::software_consensus::Constants::NETWORK_PROTOCOL_DELAY_DEFAULT),
-    networkHeartbeatDelay(Constants::NETWORK_SESSION_LENGTH_DEFAULT),
+    networkHeartbeatDelay(Constants::NETWORK_CONSENSUS_HEARTBEAT_DEFAULT),
     networkHeartbeatSlot(0) {
     networkHeartbeatPoint = networkPoint = sessionkeyPoint = std::chrono::system_clock::now();
 
@@ -73,9 +73,9 @@ ConsensusServer::ConsensusServer() :
         this->netwokProtocolDelay =std::stol(
                 config->getVariablesMap()[keto::software_consensus::Constants::NETWORK_PROTOCOL_DELAY_CONFIGURATION].as<std::string>());
     }
-    if (config->getVariablesMap().count(Constants::NETWORK_SESSION_LENGTH_CONFIGURATION)) {
+    if (config->getVariablesMap().count(Constants::NETWORK_CONSENSUS_HEARTBEAT_CONFIGURATION)) {
         this->networkHeartbeatDelay =std::stol(
-                config->getVariablesMap()[Constants::NETWORK_SESSION_LENGTH_CONFIGURATION].as<std::string>());
+                config->getVariablesMap()[Constants::NETWORK_CONSENSUS_HEARTBEAT_CONFIGURATION].as<std::string>());
     }
 
 

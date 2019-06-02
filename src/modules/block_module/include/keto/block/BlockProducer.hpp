@@ -71,10 +71,11 @@ public:
     State getState();
 
     keto::event::Event setupNodeConsensusSession(const keto::event::Event& event);
-    
     void addTransaction(keto::transaction_common::TransactionProtoHelperPtr& transactionProtoHelperPtr);
-    
     bool isEnabled();
+
+    // heart beat
+    keto::event::Event consensusHeartbeat(const keto::event::Event& event);
     
 private:
     bool enabled;

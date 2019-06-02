@@ -302,46 +302,6 @@ void AccountStore::setAccountInfo(const keto::asn1::HashHelper& accountHash,
 }
 
 
-void AccountStore::getNodeAccountRouting(const keto::asn1::HashHelper& accountHash,
-            keto::router_utils::RpcPeerHelper& rpcPeerHelper) {
-    AccountResourcePtr resource = accountResourceManagerPtr->getResource();
-    rocksdb::Transaction* accountTransaction = resource->getTransaction(Constants::ACCOUNTS_MAPPING);
-    rocksdb::ReadOptions readOptions;
-    rocksdb::Iterator* iterator = accountTransaction->GetIterator(readOptions);
-    iterator->SeekToFirst();
-    std::vector<keto::proto::AccountInfo> accountInfoVector;
-    while (iterator->Valid()) {
-        keto::rocks_db::SliceHelper valueHelper(iterator->value());
-        keto::proto::AccountInfo accountInfo;
-        accountInfo.ParseFromString((const std::string)valueHelper);
-        accountInfoVector.push_back(accountInfo);
-        iterator->Next();
-    }
-    rpcPeerHelper.setAccountHash(accountHash);
-    keto::router_utils::PushAccountHelper pushAccountHelper;
-    pushAccountHelper.setAccountHash(accountHash);
-    buildNodeAccountRouting(accountHash,accountInfoVector,pushAccountHelper);
-    rpcPeerHelper.setPushAccount(pushAccountHelper);
-}
-
-
-void AccountStore::buildNodeAccountRouting(const std::string& accountHash,
-            const std::vector<keto::proto::AccountInfo>& accountInfoVector,
-            keto::router_utils::PushAccountHelper& pushAccountHelper) {
-    for (const keto::proto::AccountInfo& accountInfo : accountInfoVector) {
-        if (accountHash == accountInfo.parent_account_hash()) {
-            keto::router_utils::PushAccountHelper childPushAccountHelper;
-            childPushAccountHelper.setAccountHash(accountInfo.account_hash());
-            childPushAccountHelper.setManagementAccountHash(accountHash);
-            buildNodeAccountRouting(accountInfo.account_hash(),
-                    accountInfoVector,childPushAccountHelper);
-            pushAccountHelper.addChildAccount(childPushAccountHelper);
-        }
-    }
-    
-}
-
-
 void AccountStore::copyResultSet(
         ResultVectorMap& resultVectorMap,
         keto::proto::SparqlResultSet& sparqlResultSet) {

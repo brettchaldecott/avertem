@@ -33,7 +33,7 @@ public:
     };
     static std::string getSourceVersion();
 
-    DBManager(const std::vector<std::string>& databases);
+    DBManager(const std::vector<std::string>& databases, bool purge = false);
     DBManager(const DBManager& orig) = delete;
     virtual ~DBManager();
     

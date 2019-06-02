@@ -5,7 +5,7 @@
  */
 
 /* 
- * File:   RouterStore.hpp
+ * File:   PeerStore.hpp
  * Author: ubuntu
  *
  * Created on March 6, 2018, 3:20 AM
@@ -22,43 +22,41 @@
 #include "keto/rocks_db/DBManager.hpp"
 
 #include "keto/asn1/HashHelper.hpp"
-#include "keto/router_db/RouterResourceManager.hpp"
+#include "keto/rpc_client/PeerResourceManager.hpp"
 #include "keto/obfuscate/MetaString.hpp"
 
 #include "keto/router_utils/PushAccountHelper.hpp"
-#include "keto/router_utils/RpcPeerHelper.hpp"
 
 
 namespace keto {
-namespace router_db {
+namespace rpc_client {
 
-class RouterStore {
+class PeerStore {
 public:
     static std::string getHeaderVersion() {
         return OBFUSCATED("$Id$");
     };
     static std::string getSourceVersion();
 
-    RouterStore();
-    RouterStore(const RouterStore& orig) = delete;
-    virtual ~RouterStore();
+    PeerStore();
+    PeerStore(const PeerStore& orig) = delete;
+    virtual ~PeerStore();
     
     // manage the store
-    static std::shared_ptr<RouterStore> init();
+    static std::shared_ptr<PeerStore> init();
     static void fin();
-    static std::shared_ptr<RouterStore> getInstance();
+    static std::shared_ptr<PeerStore> getInstance();
 
-    // get the account information
-    bool getAccountRouting(
-            const keto::asn1::HashHelper& helper,
-            keto::proto::RpcPeer& result);
-    void pushPeerRouting(
-            const keto::router_utils::RpcPeerHelper& rpcPeerHelper);
-
+    // get the peers
+    void setPeers(const std::vector<std::string>& peers);
+    std::vector<std::string> getPeers();
+    
 private:
     std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr;
-    RouterResourceManagerPtr routerResourceManagerPtr;
+    PeerResourceManagerPtr peerResourceManagerPtr;
     
+    void pushAccountRouting(
+            keto::router_utils::PushAccountHelper& pushAccountHelper);
 };
 
 

@@ -35,7 +35,6 @@ public:
     // string constants
     static const char* ROUTER_INDEX;
     
-    
     static const std::vector<std::string> DB_LIST;
     
     

@@ -143,6 +143,14 @@ bool BlockChainStore::processBlockSyncResponse(const keto::proto::SignedBlockBat
     return this->masterChain->processBlockSyncResponse(signedBlockBatchMessage,callback);
 }
 
+keto::proto::AccountChainTangle BlockChainStore::getAccountBlockTangle(const keto::proto::AccountChainTangle& accountChainTangle) {
+    if (!masterChain) {
+        BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
+    }
+
+    return this->masterChain->getAccountBlockTangle(accountChainTangle);
+}
+
 /*
 void BlockChainStore::writeBlock(SignedBlock& signedBlock) {
     

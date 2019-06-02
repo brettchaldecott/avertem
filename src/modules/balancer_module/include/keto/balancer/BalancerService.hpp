@@ -43,6 +43,7 @@ public:
     static BalancerServicePtr getInstance();
 
     keto::event::Event balanceMessage(const keto::event::Event& event);
+    keto::event::Event consensusHeartbeat(const keto::event::Event& event);
     
 private:
 

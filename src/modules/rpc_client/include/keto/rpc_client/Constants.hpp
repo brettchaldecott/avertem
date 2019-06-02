@@ -54,6 +54,11 @@ public:
         static const int MAX_RETRY_COUNT;
         static const long RETRY_COUNT_DELAY;
     };
+
+    // string constants
+    static const char* PEER_INDEX;
+
+    static const std::vector<std::string> DB_LIST;
 };
 
 }

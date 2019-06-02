@@ -105,6 +105,9 @@ public:
 
     void
     requestBlockSync(const keto::proto::SignedBlockBatchRequest& signedBlockBatchRequest);
+
+    void
+    pushBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage);
     
     void
     on_outBoundWrite(

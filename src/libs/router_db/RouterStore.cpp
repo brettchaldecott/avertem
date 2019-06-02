@@ -20,6 +20,8 @@
 #include "keto/crypto/SecureVectorUtils.hpp"
 #include "keto/rocks_db/SliceHelper.hpp"
 #include "keto/router_utils/AccountRoutingStoreHelper.hpp"
+#include "keto/router_db/Exception.hpp"
+#include "keto/router_db/RouterStore.hpp"
 
 namespace keto {
 namespace router_db {
@@ -31,8 +33,9 @@ std::string RouterStore::getSourceVersion() {
 }
 
 RouterStore::RouterStore() {
+    // re-setup the db routing information and purge the data that is in place.
     dbManagerPtr = std::shared_ptr<keto::rocks_db::DBManager>(
-            new keto::rocks_db::DBManager(Constants::DB_LIST));
+            new keto::rocks_db::DBManager(Constants::DB_LIST,true));
     routerResourceManagerPtr  =  RouterResourceManagerPtr(
             new RouterResourceManager(dbManagerPtr));
 }
@@ -59,7 +62,7 @@ std::shared_ptr<RouterStore> RouterStore::getInstance() {
 
 bool RouterStore::getAccountRouting(
             const keto::asn1::HashHelper& accountHash,
-            keto::proto::AccountRoutingStore& result) {
+            keto::proto::RpcPeer& result) {
     RouterResourcePtr resource = routerResourceManagerPtr->getResource();
     rocksdb::Transaction* routerTransaction = resource->getTransaction(Constants::ROUTER_INDEX);
     keto::rocks_db::SliceHelper accountHashHelper(keto::crypto::SecureVectorUtils().copyFromSecure(
@@ -73,39 +76,29 @@ bool RouterStore::getAccountRouting(
     return true;
 }
 
-void RouterStore::setAccountRouting(
-            const keto::asn1::HashHelper& accountHash,
-            const keto::proto::AccountRoutingStore& routing) {
+
+void RouterStore::pushPeerRouting(
+        const keto::router_utils::RpcPeerHelper& rpcPeerHelper) {
+    keto::router_utils::RpcPeerHelper newRpcPeerHelper(rpcPeerHelper);
     RouterResourcePtr resource = routerResourceManagerPtr->getResource();
     rocksdb::Transaction* routerTransaction = resource->getTransaction(Constants::ROUTER_INDEX);
-    keto::rocks_db::SliceHelper accountHashHelper(keto::crypto::SecureVectorUtils().copyFromSecure(
-        accountHash));
-    keto::rocks_db::SliceHelper value(routing.SerializePartialAsString());
-    routerTransaction->Put(accountHashHelper,value);
-}
-
-
-void RouterStore::pushAccountRouting(
-            const keto::proto::PushAccount& pushAccount) {
-    keto::router_utils::PushAccountHelper pushAccountHelper(pushAccount);
-    pushAccountRouting(pushAccountHelper);
-}
-
-
-void RouterStore::pushAccountRouting(
-            keto::router_utils::PushAccountHelper& pushAccountHelper) {
-    RouterResourcePtr resource = routerResourceManagerPtr->getResource();
-    rocksdb::Transaction* routerTransaction = resource->getTransaction(Constants::ROUTER_INDEX);
-    keto::rocks_db::SliceHelper accountHashHelper(pushAccountHelper.getAccountHashBytes());
-    keto::router_utils::AccountRoutingStoreHelper accountRoutingStoreHelper;
-    accountRoutingStoreHelper.setManagementAccountHash(pushAccountHelper.getManagementAccountHashBytes());
-    keto::rocks_db::SliceHelper value(accountRoutingStoreHelper.toString());
-    routerTransaction->Put(accountHashHelper,value);
-    for (keto::router_utils::PushAccountHelper entry : pushAccountHelper.getChildren()) {
-        pushAccountRouting(entry);
+    keto::rocks_db::SliceHelper accountSliceHelper(rpcPeerHelper.getAccountHashBytes());
+    std::string value;
+    rocksdb::ReadOptions readOptions;
+    auto status = routerTransaction->Get(readOptions,accountSliceHelper,&value);
+    if (rocksdb::Status::OK() != status && rocksdb::Status::NotFound() != status) {
+        keto::router_utils::RpcPeerHelper existingEntryRpcPeerHelper(value);
+        for (int index = 0; index < existingEntryRpcPeerHelper.numberOfChildren(); index++) {
+            newRpcPeerHelper.addChild(*existingEntryRpcPeerHelper.getChild(index));
+        }
     }
-    
+    keto::rocks_db::SliceHelper rpcPeerSliceHelper(newRpcPeerHelper.toString());
+    routerTransaction->Put(accountSliceHelper,rpcPeerSliceHelper);
+    for (int index = 0; index < rpcPeerHelper.numberOfChildren(); index++) {
+        pushPeerRouting(*rpcPeerHelper.getChild(index));
+    }
 }
+
 
 }
 }

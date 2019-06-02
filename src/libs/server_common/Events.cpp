@@ -33,6 +33,9 @@ const char* Events::ROUTE_MESSAGE = "ROUTE_MESSAGE";
 const char* Events::REGISTER_SERVICE_MESSAGE = "REGISTER_SERVICE_MESSAGE";
 const char* Events::REGISTER_RPC_PEER = "REGISTER_RPC_PEER";
 
+// get account tangle
+const char* Events::GET_ACCOUNT_TANGLE = "GET_ACCOUNT_TANGLE";
+
 // account events
 const char* Events::CHECK_ACCOUNT_MESSAGE = "CHECK_ACCOUNT_MESSAGE";
 const char* Events::GET_NODE_ACCOUNT_ROUTING = "GET_NODE_ACCOUNT_ROUTING";
@@ -48,6 +51,7 @@ const char* Events::BLOCK_DB_RESPONSE_BLOCK_SYNC = "BLOCK_DB_RESPONSE_BLOCK_SYNC
 // rpc server route transaction
 const char* Events::RPC_SERVER_TRANSACTION = "RPC_SERVER_TRANSACTION";
 const char* Events::RPC_SERVER_BLOCK       = "RPC_SERVER_BLOCK";
+const char* Events::RPC_CLIENT_BLOCK       = "RPC_CLIENT_BLOCK";
 
 // balancer
 const char* Events::BALANCER_MESSAGE    = "BALANCER_MESSAGE";

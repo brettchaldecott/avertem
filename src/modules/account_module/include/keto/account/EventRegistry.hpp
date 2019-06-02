@@ -33,7 +33,6 @@ public:
     virtual ~EventRegistry();
     
     static keto::event::Event checkAccount(const keto::event::Event& event);
-    static keto::event::Event getNodeAccountRouting(const keto::event::Event& event);
     static keto::event::Event applyDirtyTransaction(const keto::event::Event& event);
     static keto::event::Event applyTransaction(const keto::event::Event& event);
     static keto::event::Event sparqlQuery(const keto::event::Event& event);

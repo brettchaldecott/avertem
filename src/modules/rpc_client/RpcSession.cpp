@@ -48,6 +48,8 @@
 #include "keto/rpc_client/Constants.hpp"
 #include "keto/rpc_client/Exception.hpp"
 
+#include "keto/router_utils/RpcPeerHelper.hpp"
+
 #include "keto/rpc_protocol/ServerHelloProtoHelper.hpp"
 #include "keto/rpc_protocol/PeerResponseHelper.hpp"
 #include "keto/rpc_protocol/NetworkKeysWrapperHelper.hpp"
@@ -545,11 +547,10 @@ void RpcSession::peerResponse(const std::string& command, const std::string& mes
 void RpcSession::handleRegisterRequest(const std::string& command, const std::string& message) {
 
     // notify the accepted
-    keto::proto::RpcPeer rpcPeer;
-    rpcPeer = keto::server_common::fromEvent<keto::proto::RpcPeer>(
-                keto::server_common::processEvent(
-                keto::server_common::toEvent<keto::proto::RpcPeer>(
-                keto::server_common::Events::GET_NODE_ACCOUNT_ROUTING,rpcPeer)));
+    keto::router_utils::RpcPeerHelper rpcPeerHelper;
+    rpcPeerHelper.setAccountHash(keto::server_common::ServerInfo::getInstance()->getAccountHash());
+
+    keto::proto::RpcPeer rpcPeer = rpcPeerHelper;
     std::string rpcValue;
     rpcPeer.SerializePartialToString(&rpcValue);
     std::vector<uint8_t> rpcAccountBytes =  keto::server_common::VectorUtils().copyStringToVector(
@@ -837,6 +838,28 @@ void RpcSession::requestBlockSync(const keto::proto::SignedBlockBatchRequest& si
                     std::placeholders::_1,
                     std::placeholders::_2,
                     multiBufferPtr)));
+}
+
+
+void RpcSession::pushBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage) {
+    std::string messageWrapperStr = signedBlockWrapperMessage.SerializeAsString();
+    std::vector<uint8_t> messageBytes =  keto::server_common::VectorUtils().copyStringToVector(
+            messageWrapperStr);
+
+    MultiBufferPtr multiBufferPtr(new boost::beast::multi_buffer());
+    boost::beast::ostream(*multiBufferPtr) << buildMessage(keto::server_common::Constants::RPC_COMMANDS::BLOCK,
+                                                           messageBytes);
+
+    ws_.async_write(
+            multiBufferPtr->data(),
+            boost::asio::bind_executor(
+                    strand_,
+                    std::bind(
+                            &RpcSession::on_outBoundWrite,
+                            shared_from_this(),
+                            std::placeholders::_1,
+                            std::placeholders::_2,
+                            multiBufferPtr)));
 }
 
     

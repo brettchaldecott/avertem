@@ -29,9 +29,10 @@
 
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
-
+#include "keto/rpc_client/PeerStore.hpp"
 
 #include "keto/rpc_client/Exception.hpp"
+#include "keto/rpc_client/PeerStore.hpp"
 
 namespace keto {
 namespace rpc_client {
@@ -44,7 +45,7 @@ std::string RpcSessionManager::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
-RpcSessionManager::RpcSessionManager() : peered(false) {
+RpcSessionManager::RpcSessionManager() : peered(true) {
     
     this->ioc = std::make_shared<boost::asio::io_context>();
     
@@ -57,35 +58,24 @@ RpcSessionManager::RpcSessionManager() : peered(false) {
     std::shared_ptr<ketoEnv::Config> config = ketoEnv::EnvironmentManager::getInstance()->getConfig();
     if (config->getVariablesMap().count(Constants::PEERS)) {
         std::cout << "Load the peers" << std::endl;
-        std::string peersString = config->getVariablesMap()[Constants::PEERS].
+        this->configuredPeersString = config->getVariablesMap()[Constants::PEERS].
                 as<std::string>();
-        std::cout << "The provided peers is : " << peersString << std::endl;
-        if (peersString.length()) {
-            keto::server_common::StringVector peers = 
-                    keto::server_common::StringUtils(
-                    peersString).tokenize(",");
-            std::cout << "Load the peers" << std::endl;
-            for (std::vector<std::string>::iterator iter = peers.begin();
-                    iter != peers.end(); iter++) {
-                std::cout << "The peer is : " << (*iter) << std::endl;
-                RpcPeer rpcPeer((*iter),this->peered);
-                this->sessionMap[(*iter)] = std::make_shared<RpcSession>(
-                        this->ioc,
-                        this->ctx,rpcPeer);
-            }
-        }
     }
-    
+
     threads = Constants::DEFAULT_RPC_CLIENT_THREADS;
     if (config->getVariablesMap().count(Constants::RPC_CLIENT_THREADS)) {
         threads = std::max<int>(1,atoi(config->getVariablesMap()[Constants::RPC_CLIENT_THREADS].as<std::string>().c_str()));
     }
+
+
 }
 
 RpcSessionManager::~RpcSessionManager() {
+    PeerStore::fin();
 }
 
 void RpcSessionManager::setPeers(const std::vector<std::string>& peers) {
+    PeerStore::getInstance()->setPeers(peers);
     this->peered = true;
     for (std::vector<std::string>::const_iterator iter = peers.begin();
             iter != peers.end(); iter++) {
@@ -173,10 +163,23 @@ void RpcSessionManager::start() {
 
 void RpcSessionManager::postStart() {
     std::cout << "The post start has been called" << std::endl;
-    for (std::map<std::string,std::shared_ptr<RpcSession>>::iterator it=this->sessionMap.begin();
-            it!=this->sessionMap.end(); ++it) {
-        it->second->run();
+    std::vector<std::string> peers = PeerStore::getInstance()->getPeers();
+    if (!peers.size()) {
+        peers = keto::server_common::StringUtils(
+                        this->configuredPeersString).tokenize(",");
+        this->peered = false;
     }
+
+    for (std::vector<std::string>::iterator iter = peers.begin();
+         iter != peers.end(); iter++) {
+        std::cout << "The peer is : " << (*iter) << std::endl;
+        RpcPeer rpcPeer((*iter),this->peered);
+        this->sessionMap[(*iter)] = std::make_shared<RpcSession>(
+                this->ioc,
+                this->ctx,rpcPeer);
+        this->sessionMap[(*iter)]->run();
+    }
+
     this->threadsVector.reserve(this->threads);
     for(int i = 0; i < this->threads; i++) {
         this->threadsVector.emplace_back(
@@ -208,6 +211,18 @@ keto::event::Event RpcSessionManager::requestBlockSync(const keto::event::Event&
             keto::server_common::fromEvent<keto::proto::SignedBlockBatchRequest>(event);
 
     getDefaultPeer()->requestBlockSync(signedBlockBatchRequest);
+
+    return event;
+}
+
+keto::event::Event RpcSessionManager::pushBlock(const keto::event::Event& event) {
+    keto::proto::SignedBlockWrapperMessage signedBlockWrapperMessage =
+            keto::server_common::fromEvent<keto::proto::SignedBlockWrapperMessage>(event);
+
+    std::vector<std::string> peers = this->listPeers();
+    for (std::string peer : peers) {
+        getAccountSessionMapping(peer)->pushBlock(signedBlockWrapperMessage);
+    }
 
     return event;
 }

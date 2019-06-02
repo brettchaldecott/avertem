@@ -19,6 +19,9 @@
 
 
 #include "keto/software_consensus/ConsensusSessionManager.hpp"
+#include "keto/transaction/Transaction.hpp"
+#include "keto/server_common/TransactionHelper.hpp"
+
 
 #include "keto/rpc_client/RpcClientModuleManager.hpp"
 #include "keto/rpc_client/RpcClientModuleManagerMisc.hpp"
@@ -66,7 +69,10 @@ void RpcClientModuleManager::start() {
 }
 
 void RpcClientModuleManager::postStart() {
+    keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
     RpcSessionManager::getInstance()->postStart();
+    transactionPtr->commit();
+
     KETO_LOG_INFO << "[RpcClientModuleManager] Post Started the RpcClientModuleManager";
 }
 

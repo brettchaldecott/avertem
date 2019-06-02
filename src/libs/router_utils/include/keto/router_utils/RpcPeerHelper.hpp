@@ -29,6 +29,9 @@
 namespace keto {
 namespace router_utils {
 
+class RpcPeerHelper;
+typedef std::shared_ptr<RpcPeerHelper> RpcPeerHelperPtr;
+
 class RpcPeerHelper {
 public:
     static std::string getHeaderVersion() {
@@ -47,24 +50,33 @@ public:
     keto::asn1::HashHelper getAccountHash();
     RpcPeerHelper& setAccountHash(
             const std::vector<uint8_t>& accountHash);
-    std::vector<uint8_t> getAccountHashBytes();
-    std::string getAccountHashString();
-    
+    std::vector<uint8_t> getAccountHashBytes() const;
+    std::string getAccountHashString() const;
+
+    RpcPeerHelper& setPeerAccountHash(
+            const keto::asn1::HashHelper& accountHash);
+    keto::asn1::HashHelper getPeerAccountHash();
+    RpcPeerHelper& setPeerAccountHash(
+            const std::vector<uint8_t>& accountHash);
+    std::vector<uint8_t> getPeerAccountHashBytes() const;
+    std::string getPeerAccountHashString() const;
+
+
     RpcPeerHelper& setServer(
             const bool& server);
     bool isServer();
     
     
-    RpcPeerHelper& setPushAccount(
-            const keto::proto::PushAccount& pushAccount);
-    keto::proto::PushAccount getPushAccount();
-    RpcPeerHelper& setPushAccount(
-            PushAccountHelper& pushAccountHelper);
-    PushAccountHelper getPushAccountHelper();
+    RpcPeerHelper& addChild(
+            const RpcPeerHelper& child);
+    RpcPeerHelper& addChild(
+            const keto::proto::RpcPeer& child);
+    int numberOfChildren() const;
+    RpcPeerHelperPtr getChild(int index) const;
     
-    
-    operator keto::proto::RpcPeer();
-    std::string toString();
+    operator keto::proto::RpcPeer() const;
+    operator std::string() const;
+    std::string toString() const;
     
 private:
     keto::proto::RpcPeer rpcPeer;

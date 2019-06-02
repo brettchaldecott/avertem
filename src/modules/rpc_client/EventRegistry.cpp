@@ -51,6 +51,10 @@ keto::event::Event EventRegistry::requestBlockSync(const keto::event::Event& eve
     return RpcSessionManager::getInstance()->requestBlockSync(event);
 }
 
+keto::event::Event EventRegistry::pushBlock(const keto::event::Event& event) {
+    return RpcSessionManager::getInstance()->pushBlock(event);
+}
+
 keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Event& event) {
     keto::software_consensus::ConsensusStateManager::getInstance()->setState(
             keto::software_consensus::ConsensusStateManager::ACCEPTED);
@@ -82,9 +86,14 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::RPC_CLIENT_REQUEST_BLOCK_SYNC,
             &keto::rpc_client::EventRegistry::requestBlockSync);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::RPC_CLIENT_BLOCK,
+            &keto::rpc_client::EventRegistry::pushBlock);
 }
 
 void EventRegistry::deregisterEventHandlers() {
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::RPC_CLIENT_BLOCK);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::RPC_CLIENT_REQUEST_BLOCK_SYNC);
     keto::server_common::deregisterEventHandler (

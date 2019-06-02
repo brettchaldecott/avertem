@@ -316,6 +316,8 @@ public:
                 handleRequestNetworkKeys(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES) == 0) {
                 handleRequestNetworkFees(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES, payload);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK) == 0) {
+                handleBlockPush(keto::server_common::Constants::RPC_COMMANDS::BLOCK, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST) == 0) {
                 handleBlockSyncRequest(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_RESPONSE) == 0) {
@@ -621,6 +623,7 @@ public:
                     keto::server_common::processEvent(
                     keto::server_common::toEvent<keto::proto::RpcPeer>(
                     keto::server_common::Events::REGISTER_RPC_PEER,rpcPeer)));
+
         
         boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::REGISTER
                 << " " << Botan::hex_encode(
@@ -719,6 +722,19 @@ public:
         std::string result = feeInfoMsg.SerializeAsString();
         boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_FEES
                                        << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
+    }
+
+    void handleBlockPush(const std::string& command, const std::string& payload) {
+        keto::proto::SignedBlockWrapperMessage signedBlockWrapperMessage;
+        std::string rpcVector = keto::server_common::VectorUtils().copyVectorToString(
+                Botan::hex_decode(payload));
+        signedBlockWrapperMessage.ParseFromString(rpcVector);
+
+        keto::proto::MessageWrapperResponse messageWrapperResponse =
+                keto::server_common::fromEvent<keto::proto::MessageWrapperResponse>(
+                        keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SignedBlockWrapperMessage>(
+                                keto::server_common::Events::BLOCK_PERSIST_MESSAGE,signedBlockWrapperMessage)));
+
     }
 
     void handleBlockSyncRequest(const std::string& command, const std::string& payload) {

@@ -32,6 +32,7 @@
 #include "keto/crypto/SecureVectorUtils.hpp"
 #include "keto/router/RouterService.hpp"
 #include "keto/router/RouterRegistry.hpp"
+#include "keto/router/TangleServiceCache.hpp"
 
 #include "keto/transaction_common/MessageWrapperProtoHelper.hpp"
 #include "keto/transaction_common/TransactionProtoHelper.hpp"
@@ -93,45 +94,44 @@ keto::event::Event RouterService::routeMessage(const keto::event::Event& event) 
         response.set_result("local");
         return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
     }
-    
-    keto::proto::CheckForAccount checkForAccount;
-    checkForAccount.set_version(1);
-    checkForAccount.set_account_hash(messageWrapper.account_hash());
-    checkForAccount.set_found(false);
-    
-    checkForAccount = 
-            keto::server_common::fromEvent<keto::proto::CheckForAccount>(
-            keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::CheckForAccount>(
-            keto::server_common::Events::CHECK_ACCOUNT_MESSAGE,checkForAccount)));
-    if (checkForAccount.found()) {
-        routeToAccount(messageWrapper);
-        // route
-        keto::proto::MessageWrapperResponse response;
-        response.set_success(true);
-        response.set_result("found");
-        return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
+
+    if (!TangleServiceCache::getInstance()->containsAccount(messageWrapper.account_hash())) {
+        keto::proto::AccountChainTangle accountChainTangle;
+        accountChainTangle.set_account_id(messageWrapper.account_hash());
+        accountChainTangle =
+                keto::server_common::fromEvent<keto::proto::AccountChainTangle>(
+                        keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::AccountChainTangle>(
+                                keto::server_common::Events::GET_ACCOUNT_TANGLE,accountChainTangle)));
+        if (!accountChainTangle.found()) {
+            messageWrapper.set_account_hash(
+                    TangleServiceCache::getInstance()->getGrowTangle()->
+                            getService(keto::server_common::Constants::SERVICE::BALANCE)->getAccountHash());
+        } else {
+            messageWrapper.set_account_hash(
+                    TangleServiceCache::getInstance()->getTangle(accountChainTangle.chain_tangle_id())->
+                    getService(keto::server_common::Constants::SERVICE::BALANCE)->getAccountHash());
+        }
     }
-    
-    
-    
-    keto::proto::AccountRoutingStore accountRouting;
+
+    // check if we can rout to a peer
+    keto::proto::RpcPeer rpcPeer;
+    keto::asn1::HashHelper peerAccountHash(messageWrapper.account_hash());
     while (keto::router_db::RouterStore::getInstance()->getAccountRouting(
-            accountHash,accountRouting)) {
-        keto::router_utils::AccountRoutingStoreHelper accountRoutingStoreHelper(
-                accountRouting);
-        if (PeerCache::getInstance()->contains(accountRoutingStoreHelper.getManagementAccountHashBytes())) {
+            peerAccountHash,rpcPeer)) {
+        keto::router_utils::RpcPeerHelper rpcPeerHelper(
+                rpcPeer);
+        if (PeerCache::getInstance()->contains(rpcPeerHelper.getAccountHash())) {
             this->routeToRpcClient(messageWrapper,
-                    PeerCache::getInstance()->getPeer(
-                    accountRoutingStoreHelper.getManagementAccountHashBytes()));
-            
+                    PeerCache::getInstance()->getPeer(rpcPeerHelper.getAccountHash()));
+
             // route
             keto::proto::MessageWrapperResponse response;
             response.set_success(true);
             response.set_result("routed");
             return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
+        } else {
+            peerAccountHash = rpcPeerHelper.getPeerAccountHash();
         }
-        
-        
     }
     
     this->routeToRpcPeer(messageWrapper);
@@ -145,9 +145,13 @@ keto::event::Event RouterService::routeMessage(const keto::event::Event& event) 
 keto::event::Event RouterService::registerRpcPeer(const keto::event::Event& event) {
     keto::router_utils::RpcPeerHelper  rpcPeerHelper(
             keto::server_common::fromEvent<keto::proto::RpcPeer>(event));
-    
+    rpcPeerHelper.setPeerAccountHash(keto::server_common::ServerInfo::getInstance()->getAccountHash());
+
     PeerCache::getInstance()->addPeer(rpcPeerHelper);
-    keto::router_db::RouterStore::getInstance()->pushAccountRouting(rpcPeerHelper.getPushAccount());
+
+    keto::router_db::RouterStore::getInstance()->pushPeerRouting(rpcPeerHelper);
+
+
     
     return event;
 }

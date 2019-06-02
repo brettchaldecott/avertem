@@ -202,6 +202,12 @@ bool BlockProducer::isEnabled() {
     return enabled;
 }
 
+
+keto::event::Event BlockProducer::consensusHeartbeat(const keto::event::Event& event) {
+    std::cout << "[BlockProducer][consensusHeartbeat] block producer [" << getState() << "]" << std::endl;
+    return event;
+}
+
 BlockProducer::State BlockProducer::checkState() {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
     KETO_LOG_DEBUG << "[BlockProducer] wait";

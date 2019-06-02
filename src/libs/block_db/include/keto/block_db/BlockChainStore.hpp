@@ -58,6 +58,9 @@ public:
     std::vector<keto::asn1::HashHelper> getLastBlockHashs();
     keto::proto::SignedBlockBatchMessage requestBlocks(const std::vector<keto::asn1::HashHelper>& tangledHashes);
     bool processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage, const BlockChainCallback& callback);
+
+    keto::proto::AccountChainTangle getAccountBlockTangle(const keto::proto::AccountChainTangle& accountChainTangle);
+
     keto::asn1::HashHelper getParentHash();
     keto::asn1::HashHelper getParentHash(const keto::asn1::HashHelper& transactionHash);
 

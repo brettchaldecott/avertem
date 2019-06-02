@@ -286,6 +286,7 @@ void BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
     rocksdb::Transaction* blockTransaction = resource->getTransaction(Constants::BLOCKS_INDEX);
     rocksdb::Transaction* childTransaction = resource->getTransaction(Constants::CHILD_INDEX);
     rocksdb::Transaction* transactionTransaction = resource->getTransaction(Constants::TRANSACTIONS_INDEX);
+    rocksdb::Transaction* accountTransaction = resource->getTransaction(Constants::ACCOUNTS_INDEX);
     std::shared_ptr<keto::asn1::SerializationHelper<SignedBlock>> serializationHelperPtr =
             std::make_shared<keto::asn1::SerializationHelper<SignedBlock>>(
                     &signedBlock,&asn_DEF_SignedBlock);
@@ -300,8 +301,9 @@ void BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
     // setup the transaction indexing for the block
     for (int index = 0; index < signedBlock.block.transactions.list.count; index++) {
         TransactionWrapper_t* transactionWrapper = signedBlock.block.transactions.list.array[index];
+        keto::transaction_common::TransactionWrapperHelper transactionWrapperHelper(transactionWrapper,false);
+
         if (!inited && index == 0) {
-            keto::transaction_common::TransactionWrapperHelper transactionWrapperHelper(transactionWrapper,false);
             this->blockChainMetaPtr->setCreated(transactionWrapperHelper.getSignedTransaction()->getTransaction()->getDate());
             this->blockChainMetaPtr->setEncrypted(transactionWrapperHelper.getSignedTransaction()->getTransaction()->isEncrypted());
         }
@@ -323,6 +325,18 @@ void BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
         // post persist
         callback.postPersistTransaction(blockChainMetaPtr->getHashId(),
                                        signedBlock, *transactionWrapper);
+
+        // update the accounting information
+        keto::proto::AccountMeta accountMeta;
+        accountMeta.set_account_hash(transactionWrapperHelper.getCurrentAccount());
+        accountMeta.set_block_tangle_hash_id(this->activeTangle->getHash());
+        accountMeta.set_block_chain_hash(this->blockChainMetaPtr->getHashId());
+        std::string accountValue;
+        accountMeta.SerializeToString(&value);
+        keto::rocks_db::SliceHelper accountMetaHelper(accountValue);
+
+        accountTransaction->Put(keto::rocks_db::SliceHelper(
+                (const std::vector<uint8_t>)transactionWrapperHelper.getCurrentAccount()),accountMetaHelper);
     }
 
     keto::proto::BlockWrapper blockWrapper;
@@ -410,7 +424,7 @@ keto::proto::SignedBlockBatchMessage BlockChain::requestBlocks(const std::vector
 
     BlockResourcePtr resource = blockResourceManagerPtr->getResource();
 
-    rocksdb::Transaction* blockTransaction = resource->getTransaction(Constants::BLOCKS_INDEX);
+    //rocksdb::Transaction* blockTransaction = resource->getTransaction(Constants::BLOCKS_INDEX);
 
 
     for (keto::asn1::HashHelper hash : tangledHashes) {
@@ -450,7 +464,6 @@ bool BlockChain::processBlockSyncResponse(const keto::proto::SignedBlockBatch& s
 keto::proto::SignedBlockBatch BlockChain::getBlockBatch(keto::asn1::HashHelper hash, BlockResourcePtr resource) {
     keto::proto::SignedBlockBatch signedBlockBatch;
     signedBlockBatch.set_start_block_id((std::string)hash);
-    rocksdb::Transaction* blockTransaction = resource->getTransaction(Constants::BLOCKS_INDEX);
     rocksdb::Transaction* childTransaction = resource->getTransaction(Constants::CHILD_INDEX);
 
     bool found = false;
@@ -532,6 +545,27 @@ keto::proto::SignedBlockWrapper BlockChain::getBlock(keto::asn1::HashHelper hash
 }
 
 
+keto::proto::AccountChainTangle BlockChain::getAccountBlockTangle(const keto::proto::AccountChainTangle& accountChainTangle) {
+    keto::proto::AccountChainTangle result = accountChainTangle;
+    BlockResourcePtr resource = blockResourceManagerPtr->getResource();
+    rocksdb::Transaction* accountTransaction =  resource->getTransaction(Constants::ACCOUNTS_INDEX);
+
+    rocksdb::ReadOptions readOptions;
+    keto::rocks_db::SliceHelper keyHelper(accountChainTangle.account_id());
+    std::string value;
+    auto status = accountTransaction->Get(readOptions,keyHelper,&value);
+    if (rocksdb::Status::OK() == status && rocksdb::Status::NotFound() != status) {
+        result.set_found(false);
+    } else {
+        keto::proto::AccountMeta accountMeta;
+        accountMeta.ParseFromString(value);
+        result.set_found(true);
+        result.set_chain_tangle_id(accountMeta.block_tangle_hash_id());
+    }
+
+    return result;
+}
+
 void BlockChain::load(const std::vector<uint8_t>& id) {
     BlockResourcePtr resource = blockResourceManagerPtr->getResource();
     rocksdb::Transaction* blockMetaTransaction =  resource->getTransaction(Constants::BLOCK_META_INDEX);
@@ -605,6 +639,8 @@ void BlockChain::broadcastBlock(const keto::block_db::SignedBlockWrapperProtoHel
     SignedBlockWrapperMessageProtoHelper signedBlockWrapperMessageProtoHelper(signedBlockWrapperProtoHelper);
     keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::SignedBlockWrapperMessage>(
             keto::server_common::Events::RPC_SERVER_BLOCK,signedBlockWrapperMessageProtoHelper));
+    keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::SignedBlockWrapperMessage>(
+            keto::server_common::Events::RPC_CLIENT_BLOCK,signedBlockWrapperMessageProtoHelper));
 }
 
 }

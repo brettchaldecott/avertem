@@ -71,5 +71,11 @@ keto::event::Event BalancerService::balanceMessage(const keto::event::Event& eve
     return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
 }
 
+
+keto::event::Event BalancerService::consensusHeartbeat(const keto::event::Event& event) {
+    std::cout << "[BalancerService][consensusHeartbeat] balancer [ not available yet ]" << std::endl;
+    return event;
+}
+
 }
 }

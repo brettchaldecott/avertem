@@ -43,6 +43,9 @@ public:
     static const char* PERSIST_BLOCK_MESSAGE;
     static const char* REGISTER_SERVICE_MESSAGE;
     static const char* REGISTER_RPC_PEER;
+
+    // get the chain tangle information
+    static const char* GET_ACCOUNT_TANGLE;
     
     // account events
     static const char* CHECK_ACCOUNT_MESSAGE;
@@ -59,6 +62,7 @@ public:
     // rpc server route transaction
     static const char* RPC_SERVER_TRANSACTION;
     static const char* RPC_SERVER_BLOCK;
+    static const char* RPC_CLIENT_BLOCK;
     
     // balancer
     static const char* BALANCER_MESSAGE;

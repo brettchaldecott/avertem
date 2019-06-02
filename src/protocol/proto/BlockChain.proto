@@ -75,3 +75,11 @@ message FeeInfoMsg {
     int64 max_fee = 3;
     google.protobuf.Timestamp expiry_time = 4;
 }
+
+
+message AccountChainTangle {
+    uint32 version = 1;
+    bytes account_id = 2;
+    bytes chain_tangle_id = 3;
+    bool found = 4;
+}
