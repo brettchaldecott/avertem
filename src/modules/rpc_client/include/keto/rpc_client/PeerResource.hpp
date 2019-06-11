@@ -11,8 +11,8 @@
  * Created on February 28, 2018, 10:56 AM
  */
 
-#ifndef ROUTER_RESOURCE_HPP
-#define RPCCLIENT_RESOURCE_HPP
+#ifndef PEER_RESOURCE_HPP
+#define PEER_RESOURCE_HPP
 
 #include <string>
 #include <memory>

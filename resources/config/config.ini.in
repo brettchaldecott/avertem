@@ -33,6 +33,7 @@ default_block=true
 block_producer_enabled=true
 # rpc peer
 rpc-peer=
+peers=data/peers
 # keys
 consensus-keys=${KetoConsensusKeys}
 # version

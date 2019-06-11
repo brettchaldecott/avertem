@@ -18,10 +18,16 @@
 
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
+#include "keto/server_common/StatePersistanceManager.hpp"
 
 #include "keto/balancer/BalancerService.hpp"
 #include "keto/balancer/BlockRouting.hpp"
-#include "include/keto/balancer/BlockRouting.hpp"
+#include "keto/balancer/BlockRouting.hpp"
+#include "keto/balancer/Constants.hpp"
+
+#include "keto/server_common/StatePersistanceManager.hpp"
+#include "keto/environment/Config.hpp"
+#include "keto/environment/EnvironmentManager.hpp"
 
 namespace keto {
 namespace balancer {
@@ -32,10 +38,20 @@ std::string BalancerService::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
-BalancerService::BalancerService() {
+BalancerService::BalancerService() : currentState(BalancerService::State::inited) {
+
+    std::shared_ptr<keto::environment::Config> config =
+            keto::environment::EnvironmentManager::getInstance()->getConfig();
+
+    if (config->getVariablesMap().count(Constants::STATE_STORAGE_CONFIG)) {
+        keto::server_common::StatePersistanceManager::init(config->getVariablesMap()[Constants::STATE_STORAGE_CONFIG].as<std::string>());
+    } else {
+        keto::server_common::StatePersistanceManager::init(Constants::STATE_STORAGE_DEFAULT);
+    }
 }
 
 BalancerService::~BalancerService() {
+    keto::server_common::StatePersistanceManager::fin();
 }
 
 BalancerServicePtr BalancerService::init() {
@@ -48,6 +64,14 @@ void BalancerService::fin() {
 
 BalancerServicePtr BalancerService::getInstance() {
     return singleton;
+}
+
+void BalancerService::setState(const BalancerService::State& state) {
+    this->currentState = state;
+}
+
+BalancerService::State BalancerService::getState() {
+    return currentState;
 }
 
 keto::event::Event BalancerService::balanceMessage(const keto::event::Event& event) {
@@ -73,7 +97,7 @@ keto::event::Event BalancerService::balanceMessage(const keto::event::Event& eve
 
 
 keto::event::Event BalancerService::consensusHeartbeat(const keto::event::Event& event) {
-    std::cout << "[BalancerService][consensusHeartbeat] balancer [ not available yet ]" << std::endl;
+    std::cout << "[BalancerService][consensusHeartbeat] balance [ not available yet ]" << std::endl;
     return event;
 }
 

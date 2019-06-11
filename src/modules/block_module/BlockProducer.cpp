@@ -96,6 +96,7 @@ BlockProducer::BlockProducer() :
                 config->getVariablesMap()[Constants::BLOCK_PRODUCER_ENABLED].as<std::string>().compare(
                 Constants::BLOCK_PRODUCER_ENABLED_TRUE) == 0;
     }
+
 }
 
 BlockProducer::~BlockProducer() {

@@ -33,20 +33,22 @@ add_dependencies(0060_keto_rpc_client_module keto_tools)
 
 KetoModuleDepencencies( 0060_keto_rpc_client_module 
                             PRIVATE keto_software_consensus
-                            PRIVATE keto_transaction_common keto_server_common keto_router_utils keto_rpc_protocol
+                            PRIVATE keto_transaction_common keto_server_common keto_router_utils keto_rocks_db keto_rpc_protocol
                             PRIVATE keto_key_tools keto_proto_environment ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_asn1_common keto_asn1_protocol
-                            PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
+                            PRIVATE keto_crypto ${BOTAN_LIBRARIES}
+                            PRIVATE ${ROCKSDB_LIBRARIES}
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
 KetoModuleConsensus( 0060_keto_rpc_client_module ${NUMBER_OF_KEYS} rpc_client )
 
 KetoModuleConsensusScriptsCalls( 0060_keto_rpc_client_module ${NUMBER_OF_KEYS} "4"
         PRIVATE keto_software_consensus
-        PRIVATE keto_transaction_common keto_server_common keto_router_utils keto_rpc_protocol
+        PRIVATE keto_transaction_common keto_server_common keto_router_utils keto_rocks_db keto_rpc_protocol
         PRIVATE keto_key_tools keto_proto_environment ${PROTOBUF_LIBRARIES}
         PRIVATE keto_asn1_common keto_asn1_protocol
         PRIVATE keto_crypto ${BOTAN_LIBRARIES}
+        PRIVATE ${ROCKSDB_LIBRARIES}
         PRIVATE ${OPENSSL_LIBRARIES} )
 
 configure_file(include/keto/rpc_client/RpcClientModuleManagerMisc.hpp.in include/keto/rpc_client/RpcClientModuleManagerMisc.hpp)

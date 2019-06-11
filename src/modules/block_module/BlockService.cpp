@@ -37,9 +37,12 @@
 
 #include "keto/block/TransactionProcessor.hpp"
 #include "keto/block/BlockProducer.hpp"
+#include "keto/block/Constants.hpp"
 
 #include "keto/transaction_common/MessageWrapperProtoHelper.hpp"
 #include "keto/transaction_common/TransactionProtoHelper.hpp"
+
+#include "keto/server_common/StatePersistanceManager.hpp"
 
 namespace keto {
 namespace block {
@@ -52,9 +55,19 @@ std::string BlockService::getSourceVersion() {
 
 BlockService::BlockService() {
     BlockSyncManager::createInstance();
+
+    std::shared_ptr<keto::environment::Config> config =
+            keto::environment::EnvironmentManager::getInstance()->getConfig();
+
+    if (config->getVariablesMap().count(Constants::STATE_STORAGE_CONFIG)) {
+        keto::server_common::StatePersistanceManager::init(config->getVariablesMap()[Constants::STATE_STORAGE_CONFIG].as<std::string>());
+    } else {
+        keto::server_common::StatePersistanceManager::init(Constants::STATE_STORAGE_DEFAULT);
+    }
 }
 
 BlockService::~BlockService() {
+    keto::server_common::StatePersistanceManager::fin();
     BlockSyncManager::finInstance();
 }
 

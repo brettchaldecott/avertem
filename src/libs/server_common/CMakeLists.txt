@@ -17,6 +17,7 @@ add_library( keto_server_common
 				StringUtils.cpp
 				RDFUtils.cpp
 				ModuleSessionManager.cpp
+				StatePersistanceManager.cpp
 
              ${HEADERS}
            )

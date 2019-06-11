@@ -79,5 +79,10 @@ keto::event::Event ConsensusService::setModuleSession(const keto::event::Event& 
 }
 
 
+keto::event::Event ConsensusService::consensusSessionAccepted(const keto::event::Event& event) {
+
+    return event;
+}
+
 }
 }

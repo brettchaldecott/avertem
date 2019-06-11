@@ -34,6 +34,10 @@ public:
     
     // document root
     static constexpr const char* DEFAULT_BLOCK = "default_block";
+
+    // state storage
+    static constexpr const char* STATE_STORAGE_CONFIG = "balancer_state_storage";
+    static constexpr const char* STATE_STORAGE_DEFAULT = "data/balancer/state.ini";
     
     
 };

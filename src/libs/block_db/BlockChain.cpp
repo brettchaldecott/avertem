@@ -179,6 +179,17 @@ keto::asn1::HashHelper BlockChain::selectParentHashByLastBlockHash(const keto::a
     return this->activeTangle->getHash();
 }
 
+keto::asn1::HashHelper BlockChain::getTangleHash() {
+    if (activeTangle) {
+        return activeTangle->getLastBlockHash();
+    }
+    activeTangle = this->blockChainMetaPtr->selectTangleEntry();
+    if (!activeTangle) {
+        return keto::asn1::HashHelper();
+    }
+    return activeTangle->getHash();
+}
+
 void BlockChain::writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage, const BlockChainCallback& callback) {
     SignedBlockWrapperMessageProtoHelper signedBlockWrapperMessageProtoHelper(signedBlockWrapperMessage);
 
@@ -329,7 +340,7 @@ void BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
         // update the accounting information
         keto::proto::AccountMeta accountMeta;
         accountMeta.set_account_hash(transactionWrapperHelper.getCurrentAccount());
-        accountMeta.set_block_tangle_hash_id(this->activeTangle->getHash());
+        accountMeta.set_block_tangle_hash_id(this->getTangleHash());
         accountMeta.set_block_chain_hash(this->blockChainMetaPtr->getHashId());
         std::string accountValue;
         accountMeta.SerializeToString(&value);

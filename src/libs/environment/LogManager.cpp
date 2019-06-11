@@ -19,6 +19,7 @@
 #include <boost/log/utility/setup/common_attributes.hpp>
 #include <boost/log/sources/severity_logger.hpp>
 #include <boost/log/sources/record_ostream.hpp>
+#include <boost/log/utility/setup/console.hpp>
 
 #include "keto/environment/LogManager.hpp"
 #include "include/keto/environment/Constants.hpp"
@@ -63,6 +64,8 @@ LogManager::LogManager(
     (
         logging::trivial::severity >= logLevel
     );
+
+    logging::add_console_log(std::cout, boost::log::keywords::format = ">> %Message%");
 }
 
 LogManager::~LogManager() {

@@ -45,6 +45,11 @@ public:
 
     // max time
     static const long SYNC_EXPIRY_TIME;
+
+
+    // state storage
+    static constexpr const char* STATE_STORAGE_CONFIG = "block_state_storage";
+    static constexpr const char* STATE_STORAGE_DEFAULT = "data/block/state.ini";
 };
 
 

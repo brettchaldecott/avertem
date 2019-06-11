@@ -16,9 +16,11 @@
 
 #include <string>
 #include <memory>
+#include <mutex>
 
 #include "keto/event/Event.hpp"
 #include "keto/common/MetaInfo.hpp"
+#include "keto/server_common/StatePersistanceManager.hpp"
 
 namespace keto {
 namespace balancer {
@@ -28,6 +30,18 @@ typedef std::shared_ptr<BalancerService> BalancerServicePtr;
 
 class BalancerService {
 public:
+    /**
+     * The state enum containing the various states that the module manager can
+     * be in.
+     */
+    enum State {
+        inited,
+        active_balancer,
+        active_balancer_complete,
+        terminated,
+        inactive_balancer
+    };
+
     static std::string getHeaderVersion() {
         return OBFUSCATED("$Id$");
     };
@@ -42,10 +56,16 @@ public:
     static void fin();
     static BalancerServicePtr getInstance();
 
+    void setState(const State& state);
+    State getState();
+
     keto::event::Event balanceMessage(const keto::event::Event& event);
     keto::event::Event consensusHeartbeat(const keto::event::Event& event);
     
 private:
+    std::mutex classMutex;
+    State currentState;
+
 
 };
 

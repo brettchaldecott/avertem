@@ -6,6 +6,10 @@
 # Created on Jan 12, 2018, 5:44:49 PM
 #
 
+# this is only possible as root so holding thumbs it works
+echo '/tmp/core.%h.%e.%t' > /proc/sys/kernel/core_pattern
+
+# up the ulimits
 ulimit -c unlimited
 ulimit -a
 

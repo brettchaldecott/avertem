@@ -79,7 +79,9 @@ void RpcClientModuleManager::postStart() {
 void RpcClientModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
     ConsensusService::fin();
-    RpcSessionManager::getInstance()->stop();
+    if (RpcSessionManager::getInstance()) {
+        RpcSessionManager::getInstance()->stop();
+    }
     RpcSessionManager::fin();
     keto::software_consensus::ConsensusSessionManager::fin();
     modules.clear();

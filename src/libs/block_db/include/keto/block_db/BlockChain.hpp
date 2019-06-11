@@ -103,6 +103,7 @@ private:
 
     keto::asn1::HashHelper selectParentHash();
     keto::asn1::HashHelper selectParentHashByLastBlockHash(const keto::asn1::HashHelper& id);
+    keto::asn1::HashHelper getTangleHash();
 
     void load(const std::vector<uint8_t>& id);
     void persist();

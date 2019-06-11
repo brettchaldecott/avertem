@@ -10,11 +10,11 @@ docker_check_build_container_env() {
 
 docker_start_build_container_env() {
     BUILD_STATUS="$(docker_check_build_container_env)"
-    if [ -z "${BUILD_STATUS}" ] ;
-    then
+    #if [ -z "${BUILD_STATUS}" ] ;
+    #then
         echo "Start docker"
         cd $(lib_dir)/../../docker/compose-build && docker-sync start && docker-compose up -d && cd -
-    fi
+    #fi
 }
 
 docker_stop_build_container_env() {

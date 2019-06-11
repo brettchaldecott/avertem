@@ -67,7 +67,7 @@ RpcSessionManager::RpcSessionManager() : peered(true) {
         threads = std::max<int>(1,atoi(config->getVariablesMap()[Constants::RPC_CLIENT_THREADS].as<std::string>().c_str()));
     }
 
-
+    PeerStore::init();
 }
 
 RpcSessionManager::~RpcSessionManager() {
@@ -101,7 +101,7 @@ void RpcSessionManager::reconnect(const RpcPeer& rpcPeer) {
     std::this_thread::sleep_for(std::chrono::milliseconds(Constants::SESSION::RETRY_COUNT_DELAY));
     KETO_LOG_INFO << "Attempt to reconnect to : " << rpcPeer.getPeer();
     this->sessionMap[(std::string)rpcPeer]->run();
-    std::cout << "After the reconnect" << std::endl;
+    KETO_LOG_INFO << "After the reconnect";
 }
 
 std::vector<std::string> RpcSessionManager::listPeers() {
@@ -156,13 +156,13 @@ RpcSessionManagerPtr RpcSessionManager::getInstance() {
 
 
 void RpcSessionManager::start() {
-    std::cout << "The start has been called" << std::endl;
+    KETO_LOG_INFO << "The start has been called";
     // Run the I/O service on the requested number of threads
     
 }
 
 void RpcSessionManager::postStart() {
-    std::cout << "The post start has been called" << std::endl;
+    KETO_LOG_INFO << "The post start has been called";
     std::vector<std::string> peers = PeerStore::getInstance()->getPeers();
     if (!peers.size()) {
         peers = keto::server_common::StringUtils(
@@ -170,6 +170,7 @@ void RpcSessionManager::postStart() {
         this->peered = false;
     }
 
+    KETO_LOG_INFO << "After retrieving the peers.";
     for (std::vector<std::string>::iterator iter = peers.begin();
          iter != peers.end(); iter++) {
         std::cout << "The peer is : " << (*iter) << std::endl;
@@ -188,13 +189,15 @@ void RpcSessionManager::postStart() {
             this->ioc->run();
         });
     }
-    std::cout << "All the threads have been started" << std::endl;
+    KETO_LOG_INFO << "All the threads have been started";
     
 }
 
 void RpcSessionManager::stop() {
-    this->ioc->stop();
-    
+    if (this->ioc) {
+        this->ioc->stop();
+    }
+
     for (std::vector<std::thread>::iterator iter = this->threadsVector.begin();
             iter != this->threadsVector.end(); iter++) {
         iter->join();
@@ -221,7 +224,9 @@ keto::event::Event RpcSessionManager::pushBlock(const keto::event::Event& event)
 
     std::vector<std::string> peers = this->listPeers();
     for (std::string peer : peers) {
-        getAccountSessionMapping(peer)->pushBlock(signedBlockWrapperMessage);
+        if (getAccountSessionMapping(peer)) {
+            getAccountSessionMapping(peer)->pushBlock(signedBlockWrapperMessage);
+        }
     }
 
     return event;
