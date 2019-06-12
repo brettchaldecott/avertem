@@ -25,6 +25,9 @@ then
     echo "Build Keto"
     docker_execute_command "/opt/keto/build.sh ubuntu build"
 
+elif [ "$COMMAND" == "start" ]
+then 
+    docker_start_build_container
 elif [ "$COMMAND" == "stop" ]
 then 
     docker_stop_build_container_env

@@ -5,16 +5,17 @@ lib_dir() {
 }
 
 docker_check_build_container_env() {
-    cd $(lib_dir)/../../docker/compose-build && echo "$(docker-compose ps -q)" && cd -
+    cd $(lib_dir)/../../docker/compose-build && echo "$(docker-compose top)" && cd -
 }
 
 docker_start_build_container_env() {
     BUILD_STATUS="$(docker_check_build_container_env)"
-    #if [ -z "${BUILD_STATUS}" ] ;
-    #then
+    echo "Build status${BUILD_STATUS}"
+    if [ -n "${BUILD_STATUS}" ] ;
+    then
         echo "Start docker"
         cd $(lib_dir)/../../docker/compose-build && docker-sync start && docker-compose up -d && cd -
-    #fi
+    fi
 }
 
 docker_stop_build_container_env() {
