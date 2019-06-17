@@ -50,6 +50,8 @@ public:
     // state storage
     static constexpr const char* STATE_STORAGE_CONFIG = "block_state_storage";
     static constexpr const char* STATE_STORAGE_DEFAULT = "data/block/state.ini";
+
+    static constexpr const char* PERSISTED_STATE = "BlockProducer.state";
 };
 
 

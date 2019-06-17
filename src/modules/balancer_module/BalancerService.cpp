@@ -38,7 +38,7 @@ std::string BalancerService::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
-BalancerService::BalancerService() : currentState(BalancerService::State::inited) {
+BalancerService::BalancerService() : currentState(BalancerService::State::unloaded) {
 
     std::shared_ptr<keto::environment::Config> config =
             keto::environment::EnvironmentManager::getInstance()->getConfig();
@@ -67,11 +67,41 @@ BalancerServicePtr BalancerService::getInstance() {
 }
 
 void BalancerService::setState(const BalancerService::State& state) {
-    this->currentState = state;
+    std::lock_guard<std::mutex> uniqueLock(this->classMutex);
+    _setState(state);
 }
 
 BalancerService::State BalancerService::getState() {
+    std::lock_guard<std::mutex> uniqueLock(this->classMutex);
     return currentState;
+}
+
+void BalancerService::loadState(const BalancerService::State& state) {
+    std::lock_guard<std::mutex> uniqueLock(this->classMutex);
+    if (this->currentState == BalancerService::State::unloaded) {
+        keto::server_common::StatePersistanceManagerPtr statePersistanceManagerPtr =
+                keto::server_common::StatePersistanceManager::getInstance();
+        if (statePersistanceManagerPtr->contains(Constants::PERSISTED_STATE)) {
+            this->currentState = (BalancerService::State)(long)(*statePersistanceManagerPtr)[Constants::PERSISTED_STATE];
+        } else {
+            this->currentState = BalancerService::State::inited;
+            _setState(state);
+        }
+    } else {
+        _setState(state);
+    }
+}
+
+void BalancerService::_setState(const BalancerService::State& state) {
+    keto::server_common::StatePersistanceManagerPtr statePersistanceManagerPtr =
+            keto::server_common::StatePersistanceManager::getInstance();
+    keto::server_common::StatePersistanceManager::StateMonitorPtr stateMonitorPtr =
+            statePersistanceManagerPtr->createStateMonitor();
+
+    this->currentState = state;
+    if (currentState != State::terminated) {
+        (*statePersistanceManagerPtr)[Constants::PERSISTED_STATE].set((long) this->currentState);
+    }
 }
 
 keto::event::Event BalancerService::balanceMessage(const keto::event::Event& event) {
@@ -97,6 +127,7 @@ keto::event::Event BalancerService::balanceMessage(const keto::event::Event& eve
 
 
 keto::event::Event BalancerService::consensusHeartbeat(const keto::event::Event& event) {
+
     std::cout << "[BalancerService][consensusHeartbeat] balance [ not available yet ]" << std::endl;
     return event;
 }

@@ -8,8 +8,8 @@
 namespace keto {
 namespace rpc_client {
 
-const int Constants::SESSION::MAX_RETRY_COUNT = 200;
-const long Constants::SESSION::RETRY_COUNT_DELAY = 20000;
+const int Constants::SESSION::MAX_RETRY_COUNT = 120;
+const long Constants::SESSION::RETRY_COUNT_DELAY = 1000;
 
 
 const char* Constants::PEER_INDEX = "peers";

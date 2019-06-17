@@ -24,6 +24,7 @@
 
 
 #include "keto/balancer/ConsensusService.hpp"
+#include "keto/balancer/BalancerService.hpp"
 
 namespace keto{
 namespace balancer {
@@ -80,6 +81,14 @@ keto::event::Event ConsensusService::setModuleSession(const keto::event::Event& 
 
 
 keto::event::Event ConsensusService::consensusSessionAccepted(const keto::event::Event& event) {
+    keto::software_consensus::ConsensusStateManager::getInstance()->setState(
+            keto::software_consensus::ConsensusStateManager::ACCEPTED);
+    if (keto::server_common::ServerInfo::getInstance()->isMaster() &&
+        BalancerService::getInstance()->getState() == BalancerService::State::inited) {
+        BalancerService::getInstance()->loadState(BalancerService::State::active_balancer);
+    } else {
+        BalancerService::getInstance()->loadState();
+    }
 
     return event;
 }

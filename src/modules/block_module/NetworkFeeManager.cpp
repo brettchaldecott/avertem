@@ -70,8 +70,12 @@ void NetworkFeeManager::setFeeInfo(const keto::transaction_common::FeeInfoMsgPro
 }
 
 keto::event::Event NetworkFeeManager::getNetworkFeeInfo(const keto::event::Event& event) {
-    keto::proto::FeeInfoMsg feeInfoMsg = *getFeeInfo();
-    return keto::server_common::toEvent<keto::proto::FeeInfoMsg>(feeInfoMsg);
+    if (this->feeInfoMsgProtoHelperPtr) {
+        keto::proto::FeeInfoMsg feeInfoMsg = *getFeeInfo();
+        return keto::server_common::toEvent<keto::proto::FeeInfoMsg>(feeInfoMsg);
+    } else {
+        BOOST_THROW_EXCEPTION(keto::block::NetworkFeeRatioNotSetException());
+    }
 }
 
 keto::event::Event NetworkFeeManager::setNetworkFeeInfo(const keto::event::Event& event) {

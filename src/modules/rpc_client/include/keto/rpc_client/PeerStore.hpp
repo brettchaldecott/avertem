@@ -31,6 +31,9 @@
 namespace keto {
 namespace rpc_client {
 
+class PeerStore;
+typedef std::shared_ptr<PeerStore> PeerStorePtr;
+
 class PeerStore {
 public:
     static std::string getHeaderVersion() {
@@ -43,9 +46,9 @@ public:
     virtual ~PeerStore();
     
     // manage the store
-    static std::shared_ptr<PeerStore> init();
+    static PeerStorePtr init();
     static void fin();
-    static std::shared_ptr<PeerStore> getInstance();
+    static PeerStorePtr getInstance();
 
     // get the peers
     void setPeers(const std::vector<std::string>& peers);

@@ -53,6 +53,7 @@
 #include "keto/server_common/EventUtils.hpp"
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
+#include "keto/server_common/StatePersistanceManager.hpp"
 
 
 #include "keto/software_consensus/ConsensusStateManager.hpp"
@@ -75,7 +76,7 @@ std::string BlockProducer::getSourceVersion() {
 BlockProducer::BlockProducer() : 
         enabled(false),
         loaded(false),
-        currentState(State::inited) {
+        currentState(State::unloaded) {
     std::shared_ptr<keto::environment::Config> config = 
             keto::environment::EnvironmentManager::getInstance()->getConfig();
     if (!config->getVariablesMap().count(Constants::PRIVATE_KEY)) {
@@ -152,6 +153,37 @@ void BlockProducer::terminate() {
 
 void BlockProducer::setState(const State& state) {
     std::lock_guard<std::mutex> uniqueLock(this->classMutex);
+    _setState(state);
+}
+
+void BlockProducer::loadState(const State& state) {
+    std::lock_guard<std::mutex> uniqueLock(this->classMutex);
+    if (this->currentState == BlockProducer::State::unloaded) {
+        keto::server_common::StatePersistanceManagerPtr statePersistanceManagerPtr =
+                keto::server_common::StatePersistanceManager::getInstance();
+        if (statePersistanceManagerPtr->contains(Constants::PERSISTED_STATE)) {
+            this->currentState = (BlockProducer::State)(long)(*statePersistanceManagerPtr)[Constants::PERSISTED_STATE];
+        } else {
+            this->currentState = BlockProducer::State::inited;
+            _setState(state);
+        }
+    } else {
+        _setState(state);
+    }
+}
+
+
+BlockProducer::State BlockProducer::getState() {
+    std::lock_guard<std::mutex> uniqueLock(this->classMutex);
+    return this->currentState;
+}
+
+
+void BlockProducer::_setState(const State& state) {
+    keto::server_common::StatePersistanceManagerPtr statePersistanceManagerPtr =
+            keto::server_common::StatePersistanceManager::getInstance();
+    keto::server_common::StatePersistanceManager::StateMonitorPtr stateMonitorPtr =
+            statePersistanceManagerPtr->createStateMonitor();
     if (currentState == State::terminated || state == State::terminated) {
         return;
     }
@@ -166,20 +198,18 @@ void BlockProducer::setState(const State& state) {
         BOOST_THROW_EXCEPTION(keto::block::BlockProducerNotAcceptedByNetworkException());
     }
     this->currentState = state;
+    if (currentState != State::terminated) {
+        (*statePersistanceManagerPtr)[Constants::PERSISTED_STATE].set((long) this->currentState);
+    }
+
     this->stateCondition.notify_all();
 }
-
 
 keto::event::Event BlockProducer::setupNodeConsensusSession(const keto::event::Event& event) {
     std::lock_guard<std::mutex> uniqueLock(this->classMutex);
     this->consensusMessageHelper = keto::software_consensus::ConsensusMessageHelper(
             keto::server_common::fromEvent<keto::proto::ConsensusMessage>(event));
     return event;
-}
-
-BlockProducer::State BlockProducer::getState() {
-    std::lock_guard<std::mutex> uniqueLock(this->classMutex);
-    return this->currentState;
 }
 
 void BlockProducer::addTransaction(keto::transaction_common::TransactionProtoHelperPtr& transactionProtoHelperPtr) {

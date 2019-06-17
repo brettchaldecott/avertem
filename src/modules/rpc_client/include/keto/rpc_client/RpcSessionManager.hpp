@@ -66,7 +66,7 @@ public:
     
     
 protected:
-    void setPeers(const std::vector<std::string>& peers);
+    void setPeers(const std::vector<std::string>& peers, bool peered = true);
     void reconnect(const RpcPeer& rpcPeer);
     void setAccountSessionMapping(const std::string& account,
             const RpcSessionPtr& rpcSessionPtr);

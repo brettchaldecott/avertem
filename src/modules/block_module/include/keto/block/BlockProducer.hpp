@@ -50,6 +50,7 @@ public:
      * be in.
      */
     enum State {
+        unloaded,
         inited,
         block_producer,
         block_producer_complete,
@@ -68,6 +69,7 @@ public:
     void run();
     void terminate();
     void setState(const State& state);
+    void loadState(const State& state = State::sync_blocks);
     State getState();
 
     keto::event::Event setupNodeConsensusSession(const keto::event::Event& event);
@@ -94,6 +96,7 @@ private:
 
     void load();
     void sync();
+    void _setState(const State& state);
 };
 
 

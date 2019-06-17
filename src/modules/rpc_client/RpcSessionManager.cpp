@@ -74,9 +74,9 @@ RpcSessionManager::~RpcSessionManager() {
     PeerStore::fin();
 }
 
-void RpcSessionManager::setPeers(const std::vector<std::string>& peers) {
+void RpcSessionManager::setPeers(const std::vector<std::string>& peers, bool peered) {
     PeerStore::getInstance()->setPeers(peers);
-    this->peered = true;
+    this->peered = peered;
     for (std::vector<std::string>::const_iterator iter = peers.begin();
             iter != peers.end(); iter++) {
         std::cout << "Add the new entry : " << (*iter) << std::endl;
@@ -92,6 +92,9 @@ void RpcSessionManager::reconnect(const RpcPeer& rpcPeer) {
     std::cout << "The reconnect count : " << (std::string)rpcPeer << std::endl;
     this->sessionMap.erase((std::string)rpcPeer);
     if (rpcPeer.getReconnectCount() >= Constants::SESSION::MAX_RETRY_COUNT) {
+        // force a reconnect to the peers
+        setPeers(keto::server_common::StringUtils(
+                this->configuredPeersString).tokenize(","),false);
         return;
     }
     std::cout << "Setup the session" << std::endl;

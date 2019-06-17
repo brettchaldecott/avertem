@@ -38,7 +38,8 @@ public:
     // state storage
     static constexpr const char* STATE_STORAGE_CONFIG = "balancer_state_storage";
     static constexpr const char* STATE_STORAGE_DEFAULT = "data/balancer/state.ini";
-    
+
+    static constexpr const char* PERSISTED_STATE = "Balancer.state";
     
 };
     

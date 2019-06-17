@@ -519,7 +519,9 @@ keto::proto::SignedBlockWrapper BlockChain::getBlock(keto::asn1::HashHelper hash
     auto status = blockTransaction->Get(readOptions,keyHelper,&value);
     if (rocksdb::Status::OK() != status || rocksdb::Status::NotFound() == status) {
         // not found
-        BOOST_THROW_EXCEPTION(keto::block_db::InvalidLastBlockHashException());
+        std::stringstream ss;
+        ss << "The last hash was not found in the store : " << hash.getHash(keto::common::StringEncoding::HEX);
+        BOOST_THROW_EXCEPTION(keto::block_db::InvalidLastBlockHashException(ss.str()));
     }
 
     keto::proto::BlockWrapper blockWrapper;

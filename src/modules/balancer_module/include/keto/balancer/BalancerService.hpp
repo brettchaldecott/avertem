@@ -35,6 +35,7 @@ public:
      * be in.
      */
     enum State {
+        unloaded,
         inited,
         active_balancer,
         active_balancer_complete,
@@ -58,6 +59,7 @@ public:
 
     void setState(const State& state);
     State getState();
+    void loadState(const State& state = State::inactive_balancer);
 
     keto::event::Event balanceMessage(const keto::event::Event& event);
     keto::event::Event consensusHeartbeat(const keto::event::Event& event);
@@ -66,7 +68,7 @@ private:
     std::mutex classMutex;
     State currentState;
 
-
+    void _setState(const State& state);
 };
 
 

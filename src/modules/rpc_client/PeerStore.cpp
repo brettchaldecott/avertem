@@ -24,7 +24,7 @@
 namespace keto {
 namespace rpc_client {
 
-static std::shared_ptr<PeerStore> singleton;
+static PeerStorePtr singleton;
 
 std::string PeerStore::getSourceVersion() {
     return OBFUSCATED("$Id$");
@@ -43,18 +43,15 @@ PeerStore::~PeerStore() {
     dbManagerPtr.reset();
 }
 
-std::shared_ptr<PeerStore> PeerStore::init() {
-    if (singleton) {
-        return singleton;
-    }
-    return singleton = std::shared_ptr<PeerStore>(new PeerStore());
+PeerStorePtr PeerStore::init() {
+    return singleton = PeerStorePtr(new PeerStore());
 }
 
 void PeerStore::fin() {
     singleton.reset();
 }
 
-std::shared_ptr<PeerStore> PeerStore::getInstance() {
+PeerStorePtr PeerStore::getInstance() {
     return singleton;
 }
 
@@ -79,6 +76,7 @@ std::vector<std::string> PeerStore::getPeers() {
     while(iterator->Valid()) {
         keto::rocks_db::SliceHelper valueHelper(iterator->key());
         values.push_back((std::string)valueHelper);
+        iterator->Next();
     }
     return values;
 }
