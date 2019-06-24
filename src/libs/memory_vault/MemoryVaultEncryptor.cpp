@@ -5,6 +5,7 @@
 #include <random>
 #include <algorithm>
 #include <botan/hex.h>
+#include <sstream>
 
 #include "keto/memory_vault/MemoryVaultEncryptor.hpp"
 #include "keto/memory_vault/Exception.hpp"
@@ -126,7 +127,9 @@ void MemoryVaultEncryptor::decrypt(const keto::crypto::SecureVector& key, keto::
         //std::cout << "The id is : " << Botan::hex_encode(entryId) << std::endl;
         MemoryVaultCipherPtr memoryVaultCipherPtr = this->bytesCiphers[entryId];
         if (!memoryVaultCipherPtr) {
-            BOOST_THROW_EXCEPTION(InvalidCipherIDException());
+            std::stringstream ss;
+            ss << "[InvalidCipherIDException] Failed to find the entry id [" << Botan::hex_encode(entryId,true) << "]";
+            BOOST_THROW_EXCEPTION(InvalidCipherIDException(ss.str()));
         }
 
         //std::cout << "Size of bytes : " << entryId.size() << std::endl;

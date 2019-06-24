@@ -8,6 +8,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <mutex>
 
 #include "KeyStore.pb.h"
 
@@ -62,6 +63,7 @@ protected:
     keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr getKey(int index);
 
 private:
+    std::mutex classMutex;
     bool networkSessionGenerator;
     bool networkSessionConfigured;
     int networkSessionKeyNumber;

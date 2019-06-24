@@ -12,6 +12,8 @@
  */
 
 #include <iostream>
+#include <sstream>
+
 #include <keto/keystore/NetworkSessionKeyManager.hpp>
 
 #include "keto/keystore/EventRegistry.hpp"
@@ -115,7 +117,10 @@ keto::event::Event EventRegistry::decryptNetworkBytes(const keto::event::Event& 
 keto::event::Event EventRegistry::getNetworkSessionKeys(const keto::event::Event& event) {
     if (keto::software_consensus::ConsensusStateManager::getInstance()->getState() !=
         keto::software_consensus::ConsensusStateManager::ACCEPTED) {
-        BOOST_THROW_EXCEPTION(keto::keystore::NetworkSessionNotStartedException());
+        std::stringstream ss;
+        ss << "[EventRegistry::getNetworkSessionKeys]Session state is currently [" <<
+            keto::software_consensus::ConsensusStateManager::getInstance()->getState() << "]";
+        BOOST_THROW_EXCEPTION(keto::keystore::NetworkSessionNotStartedException(ss.str()));
     }
 
     return NetworkSessionKeyManager::getInstance()->getNetworkSessionKeys(event);
@@ -128,7 +133,10 @@ keto::event::Event EventRegistry::setNetworkSessionKeys(const keto::event::Event
 keto::event::Event EventRegistry::getMasterKeys(const keto::event::Event& event) {
     if (keto::software_consensus::ConsensusStateManager::getInstance()->getState() !=
         keto::software_consensus::ConsensusStateManager::ACCEPTED) {
-        BOOST_THROW_EXCEPTION(keto::keystore::NetworkSessionNotStartedException());
+        std::stringstream ss;
+        ss << "[EventRegistry::getMasterKeys]Session state is currently [" <<
+           keto::software_consensus::ConsensusStateManager::getInstance()->getState() << "]";
+        BOOST_THROW_EXCEPTION(keto::keystore::NetworkSessionNotStartedException(ss.str()));
     }
     return MasterKeyManager::getInstance()->getMasterKey(event);
 }
@@ -140,6 +148,9 @@ keto::event::Event EventRegistry::setMasterKeys(const keto::event::Event& event)
 keto::event::Event EventRegistry::getNetworkKeys(const keto::event::Event& event) {
     if (keto::software_consensus::ConsensusStateManager::getInstance()->getState() !=
         keto::software_consensus::ConsensusStateManager::ACCEPTED) {
+        std::stringstream ss;
+        ss << "[EventRegistry::getNetworkKeys]Session state is currently [" <<
+           keto::software_consensus::ConsensusStateManager::getInstance()->getState() << "]";
         BOOST_THROW_EXCEPTION(keto::keystore::NetworkSessionNotStartedException());
     }
     return MasterKeyManager::getInstance()->getWrappingKeys(event);

@@ -114,6 +114,8 @@ public:
         boost::system::error_code ec,
         std::size_t bytes_transferred,
         MultiBufferPtr multiBufferPtr);
+
+    RpcPeer getPeer();
     
 private:
     tcp::resolver resolver;
@@ -159,7 +161,7 @@ private:
     void handleBlockSyncResponse(const std::string& command, const std::string& message);
 
     void fail(boost::system::error_code ec, const std::string& what);
-
+    void processingFailed();
     
 };
 

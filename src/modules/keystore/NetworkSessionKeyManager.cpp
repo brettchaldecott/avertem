@@ -94,6 +94,7 @@ void NetworkSessionKeyManager::generateSession() {
 }
 
 void NetworkSessionKeyManager::setSession(const keto::proto::NetworkKeysWrapper& networkKeys) {
+    std::lock_guard<std::mutex> uniqueLock(this->classMutex);
     keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(networkKeys);
     keto::rpc_protocol::NetworkKeysHelper networkKeysHelper(
         keto::crypto::SecureVectorUtils().copySecureToString(this->consensusHashGenerator->decrypt(networkKeysWrapperHelper.getBytes())));

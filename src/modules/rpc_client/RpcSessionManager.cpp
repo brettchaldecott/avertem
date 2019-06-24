@@ -124,6 +124,16 @@ void RpcSessionManager::setAccountSessionMapping(const std::string& account,
     this->accountSessionMap[account] = rpcSessionPtr;
 }
 
+void RpcSessionManager::removeAccountSessionMapping(const std::string& account) {
+    std::lock_guard<std::mutex> guard(this->classMutex);
+    if (!this->accountSessionMap.count(account)) {
+        return;
+    }
+    RpcSessionPtr rpcSessionPtr = this->accountSessionMap[account];
+    this->accountSessionMap.erase(account);
+    this->sessionMap.erase(rpcSessionPtr->getPeer().getPeer());
+}
+
 bool RpcSessionManager::hasAccountSessionMapping(const std::string& account) {
     std::lock_guard<std::mutex> guard(this->classMutex);
     if (this->accountSessionMap.count(account)) {

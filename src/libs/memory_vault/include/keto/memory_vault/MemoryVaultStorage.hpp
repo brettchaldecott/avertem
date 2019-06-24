@@ -29,6 +29,24 @@ public:
     };
     static std::string getSourceVersion();
 
+    class MemoryVaultStorageEntry {
+    public:
+        MemoryVaultStorageEntry(const byteVector& bytes);
+        MemoryVaultStorageEntry(const MemoryVaultStorageEntry& memoryVaultStorageEntry) = delete;
+        virtual ~MemoryVaultStorageEntry();
+
+        operator byteVector();
+        byteVector getBytes();
+        int incrementRefCount();
+        int decrementRefCount();
+
+    private:
+        std::mutex classMutex;
+        int refCount;
+        byteVector bytes;
+    };
+    typedef std::shared_ptr<MemoryVaultStorageEntry> MemoryVaultStorageEntryPtr;
+
     MemoryVaultStorage();
     MemoryVaultStorage(const MemoryVaultStorage& orig) = delete;
     virtual ~MemoryVaultStorage();
@@ -43,7 +61,7 @@ public:
 
 private:
     std::mutex classMutex;
-    std::map<keto::crypto::SecureVector,byteVector> store;
+    std::map<keto::crypto::SecureVector,MemoryVaultStorageEntryPtr> store;
 
 };
 

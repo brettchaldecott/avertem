@@ -46,20 +46,25 @@ std::time_t BlockSyncManager::getStartTime() {
 }
 
 void BlockSyncManager::sync() {
+    KETO_LOG_INFO << "[BlockSyncManager::sync] start of the sync";
     if (this->status == WAIT && !isExpired()) {
         return;
     }
     if (!this->tangleHashes.size()) {
+        KETO_LOG_INFO << "[BlockSyncManager::sync] attempt to get the last block hash";
         this->tangleHashes = keto::block_db::BlockChainStore::getInstance()->getLastBlockHashs();
     }
+    KETO_LOG_INFO << "[BlockSyncManager::sync] loop through the signed blocks";
     keto::block_db::SignedBlockBatchRequestProtoHelper signedBlockBatchRequestProtoHelper;
     for (keto::asn1::HashHelper hash: this->tangleHashes) {
         signedBlockBatchRequestProtoHelper.addHash(hash);
     }
 
+    KETO_LOG_INFO << "[BlockSyncManager::sync] make the block sync request";
     keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::SignedBlockBatchRequest>(
-            keto::server_common::Events::BLOCK_DB_REQUEST_BLOCK_SYNC,signedBlockBatchRequestProtoHelper));
+            keto::server_common::Events::RPC_CLIENT_REQUEST_BLOCK_SYNC,signedBlockBatchRequestProtoHelper));
 
+    KETO_LOG_INFO << "[BlockSyncManager::sync] reset the start time for the sync";
     this->startTime = time(0);
 }
 

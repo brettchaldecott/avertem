@@ -79,6 +79,11 @@ void ConsensusSessionManager::fin() {
 
 void ConsensusSessionManager::updateSessionKey(const keto::crypto::SecureVector& sessionKey) {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    // the session key is zero length
+    if (!sessionKey.size()) {
+        KETO_LOG_ERROR << "[updateSessionKey] The session key is zero lenght ignore update";
+        return;
+    }
     keto::crypto::SecureVector sessionHash = keto::crypto::HashGenerator().generateHash(sessionKey);
 
     if (sessionHash == this->sessionHash) {

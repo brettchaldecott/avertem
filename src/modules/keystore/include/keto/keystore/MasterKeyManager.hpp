@@ -9,6 +9,7 @@
 #include <memory>
 #include <map>
 #include <vector>
+#include <mutex>
 
 #include <nlohmann/json.hpp>
 
@@ -137,6 +138,7 @@ public:
         keto::event::Event setWrappingKeys(const keto::event::Event& event);
     private:
         // slave keys
+        std::mutex classMutex;
         keto::proto::NetworkKeysWrapper* slaveMasterKeys;
         keto::proto::NetworkKeysWrapper* slaveWrapperKeys;
     };

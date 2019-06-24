@@ -15,6 +15,9 @@
 
 #include <chaiscript/chaiscript.hpp>
 #include <map>
+#include <sstream>
+
+#include "botan/hex.h"
 
 #include "keto/crypto/HashGenerator.hpp"
 #include "keto/crypto/SecureVectorUtils.hpp"
@@ -319,7 +322,9 @@ void ConsensusHashGenerator::setSession(
         }
     }
     if (!validSession) {
-        BOOST_THROW_EXCEPTION(keto::software_consensus::InvalidSessionException());
+        std::stringstream ss;
+        ss << "The session key is invalid [" << Botan::hex_encode(sessionKey,true) << "]";
+        BOOST_THROW_EXCEPTION(keto::software_consensus::InvalidSessionException(ss.str()));
     }
 }
 

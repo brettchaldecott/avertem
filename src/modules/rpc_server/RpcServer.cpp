@@ -983,12 +983,12 @@ keto::event::Event RpcServer::routeTransaction(const keto::event::Event& event) 
     keto::proto::MessageWrapper messageWrapper =
             keto::server_common::fromEvent<keto::proto::MessageWrapper>(event);
     keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper(messageWrapper);
-    
+
     if (!AccountSessionCache::getInstance()->hasSession(
             messageWrapper.account_hash())) {
         std::stringstream ss;
-        ss << "Account [" << 
-                messageWrapperProtoHelper.getAccountHash().getHash(keto::common::StringEncoding::HEX) 
+        ss << "Account [" <<
+                messageWrapperProtoHelper.getAccountHash().getHash(keto::common::StringEncoding::HEX)
                 << "] is not bound as a peer.";
         BOOST_THROW_EXCEPTION(ClientNotAvailableException(
                 ss.str()));
@@ -997,9 +997,9 @@ keto::event::Event RpcServer::routeTransaction(const keto::event::Event& event) 
             messageWrapper.account_hash())->routeTransaction(messageWrapper);
     keto::proto::MessageWrapperResponse response;
     response.set_success(true);
-    
+
     std::stringstream ss;
-    ss << "Routed to the peer [" << 
+    ss << "Routed to the peer [" <<
             messageWrapperProtoHelper.getAccountHash().getHash(keto::common::StringEncoding::HEX) << "]";
     response.set_result(ss.str());
     return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
@@ -1011,8 +1011,19 @@ keto::event::Event RpcServer::pushBlock(const keto::event::Event& event) {
             keto::server_common::fromEvent<keto::proto::SignedBlockWrapperMessage>(event);
 
     for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
-        AccountSessionCache::getInstance()->getSession(
-                account)->pushBlock(signedBlockWrapperMessage);
+        try {
+            AccountSessionCache::getInstance()->getSession(
+                    account)->pushBlock(signedBlockWrapperMessage);
+        } catch (keto::common::Exception& ex) {
+            KETO_LOG_ERROR << "[RpcServer::pushBlock]Failed to push the block : " << ex.what();
+            KETO_LOG_ERROR << "[RpcServer::pushBlock]Cause : " << boost::diagnostic_information(ex,true);
+        } catch (boost::exception& ex) {
+            KETO_LOG_ERROR << "[RpcServer::pushBlock]Failed to push the block : " << boost::diagnostic_information(ex,true);
+        } catch (std::exception& ex) {
+            KETO_LOG_ERROR << "[RpcServer::pushBlock]Failed to push the block : " << ex.what();
+        } catch (...) {
+            KETO_LOG_ERROR << "[RpcServer::pushBlock]Failed to push the block : unknown cause";
+        }
     }
     keto::proto::MessageWrapperResponse response;
     response.set_success(true);
@@ -1026,8 +1037,19 @@ keto::event::Event RpcServer::pushBlock(const keto::event::Event& event) {
 
 keto::event::Event RpcServer::performNetworkSessionReset(const keto::event::Event& event) {
     for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
-        AccountSessionCache::getInstance()->getSession(
-                account)->performNetworkSessionReset();
+        try {
+            AccountSessionCache::getInstance()->getSession(
+                    account)->performNetworkSessionReset();
+        }  catch (keto::common::Exception& ex) {
+            KETO_LOG_ERROR << "[RpcServer::performNetworkSessionReset]Failed to push the session reset : " << ex.what();
+            KETO_LOG_ERROR << "[RpcServer::performNetworkSessionReset]Cause : " << boost::diagnostic_information(ex,true);
+        } catch (boost::exception& ex) {
+            KETO_LOG_ERROR << "[RpcServer::performNetworkSessionReset]Failed to push the session reset : " << boost::diagnostic_information(ex,true);
+        } catch (std::exception& ex) {
+            KETO_LOG_ERROR << "[RpcServer::performNetworkSessionReset]Failed to push the session reset : " << ex.what();
+        } catch (...) {
+            KETO_LOG_ERROR << "[RpcServer::performNetworkSessionReset]Failed to push the session reset  : unknown cause";
+        }
     }
     keto::proto::MessageWrapperResponse response;
     response.set_success(true);
@@ -1042,8 +1064,19 @@ keto::event::Event RpcServer::performNetworkSessionReset(const keto::event::Even
 
 keto::event::Event RpcServer::performProtocoCheck(const keto::event::Event& event) {
     for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
-        AccountSessionCache::getInstance()->getSession(
-                account)->performProtocolCheck();
+        try {
+            AccountSessionCache::getInstance()->getSession(
+                    account)->performProtocolCheck();
+        }  catch (keto::common::Exception& ex) {
+            KETO_LOG_ERROR << "[RpcServer::performProtocoCheck]Failed to perform the protocol check : " << ex.what();
+            KETO_LOG_ERROR << "[RpcServer::performProtocoCheck]Cause : " << boost::diagnostic_information(ex,true);
+        } catch (boost::exception& ex) {
+            KETO_LOG_ERROR << "[RpcServer::performProtocoCheck]Failed to perform the protocol check : " << boost::diagnostic_information(ex,true);
+        } catch (std::exception& ex) {
+            KETO_LOG_ERROR << "[RpcServer::performProtocoCheck]Failed to perform the protocol check : " << ex.what();
+        } catch (...) {
+            KETO_LOG_ERROR << "[RpcServer::performProtocoCheck]Failed to perform the protocol check : unknown cause";
+        }
     }
     keto::proto::MessageWrapperResponse response;
     response.set_success(true);
@@ -1059,8 +1092,19 @@ keto::event::Event RpcServer::performConsensusHeartbeat(const keto::event::Event
     keto::proto::ProtocolHeartbeatMessage protocolHeartbeatMessage =
             keto::server_common::fromEvent<keto::proto::ProtocolHeartbeatMessage>(event);
     for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
-        AccountSessionCache::getInstance()->getSession(
-                account)->performNetworkHeartbeat(protocolHeartbeatMessage);
+        try {
+            AccountSessionCache::getInstance()->getSession(
+                    account)->performNetworkHeartbeat(protocolHeartbeatMessage);
+        }  catch (keto::common::Exception& ex) {
+            KETO_LOG_ERROR << "[RpcServer::performConsensusHeartbeat]Failed to perform the consensus heartbeat : " << ex.what();
+            KETO_LOG_ERROR << "[RpcServer::performConsensusHeartbeat]Cause : " << boost::diagnostic_information(ex,true);
+        } catch (boost::exception& ex) {
+            KETO_LOG_ERROR << "[RpcServer::performConsensusHeartbeat]Failed to perform the consensus heartbeat : " << boost::diagnostic_information(ex,true);
+        } catch (std::exception& ex) {
+            KETO_LOG_ERROR << "[RpcServer::performConsensusHeartbeat]Failed to perform the consensus heartbeat : " << ex.what();
+        } catch (...) {
+            KETO_LOG_ERROR << "[RpcServer::performConsensusHeartbeat]Failed to perform the consensus heartbeat : unknown cause";
+        }
     }
     keto::proto::MessageWrapperResponse response;
     response.set_success(true);

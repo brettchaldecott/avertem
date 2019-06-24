@@ -345,18 +345,13 @@ void BlockProducer::load() {
         }
         transactionPtr->commit();
     } catch (keto::common::Exception& ex) {
-        std::cout << "[BlockProducer::load]Failed to load: " << ex.what() << std::endl;
-        std::cout << "[BlockProducer::load]Cause: " << boost::diagnostic_information(ex,true) << std::endl;
         KETO_LOG_ERROR << "[BlockProducer::load]Failed to load: " << ex.what();
         KETO_LOG_ERROR << "[BlockProducer::load]Cause: " << boost::diagnostic_information(ex,true);
     } catch (boost::exception& ex) {
-        std::cout << "[BlockProducer::load]Failed to create a new block: " << boost::diagnostic_information(ex,true) << std::endl;
         KETO_LOG_ERROR << "[BlockProducer::load]Failed to create a new block: " << boost::diagnostic_information(ex,true);
     } catch (std::exception& ex) {
-        std::cout << "[BlockProducer::load]Failed to create a new block: " << ex.what() << std::endl;
         KETO_LOG_ERROR << "[BlockProducer::load]Failed to create a new block: " << ex.what();
     } catch (...) {
-        std::cout << "[BlockProducer::load]Failed to create a new block: unknown cause" << std::endl;
         KETO_LOG_ERROR << "[BlockProducer::load]Failed to create a new block: unknown cause";
     }
 
@@ -365,21 +360,18 @@ void BlockProducer::load() {
 
 void BlockProducer::sync() {
     try {
+        keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
         BlockService::getInstance()->sync();
+        transactionPtr->commit();
     } catch (keto::common::Exception& ex) {
-        std::cout << "[BlockProducer::load]Failed to load: " << ex.what() << std::endl;
-        std::cout << "[BlockProducer::load]Cause: " << boost::diagnostic_information(ex,true) << std::endl;
-        KETO_LOG_ERROR << "[BlockProducer::load]Failed to load: " << ex.what();
-        KETO_LOG_ERROR << "[BlockProducer::load]Cause: " << boost::diagnostic_information(ex,true);
+        KETO_LOG_ERROR << "[BlockProducer::sync]Failed to sync : " << ex.what();
+        KETO_LOG_ERROR << "[BlockProducer::sync]Cause : " << boost::diagnostic_information(ex,true);
     } catch (boost::exception& ex) {
-        std::cout << "[BlockProducer::load]Failed to create a new block: " << boost::diagnostic_information(ex,true) << std::endl;
-        KETO_LOG_ERROR << "[BlockProducer::load]Failed to create a new block: " << boost::diagnostic_information(ex,true);
+        KETO_LOG_ERROR << "[BlockProducer::sync]Failed sync : " << boost::diagnostic_information(ex,true);
     } catch (std::exception& ex) {
-        std::cout << "[BlockProducer::load]Failed to create a new block: " << ex.what() << std::endl;
-        KETO_LOG_ERROR << "[BlockProducer::load]Failed to create a new block: " << ex.what();
+        KETO_LOG_ERROR << "[BlockProducer::sync]Failed sync : " << ex.what();
     } catch (...) {
-        std::cout << "[BlockProducer::load]Failed to create a new block: unknown cause" << std::endl;
-        KETO_LOG_ERROR << "[BlockProducer::load]Failed to create a new block: unknown cause";
+        KETO_LOG_ERROR << "[BlockProducer::sync]Failed sync: unknown cause";
     }
 }
 

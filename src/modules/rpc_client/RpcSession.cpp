@@ -94,6 +94,24 @@ RpcSession::fail(boost::system::error_code ec, const std::string& what)
     }
 }
 
+// Report a failure
+void RpcSession::processingFailed()
+{
+    rpcPeer.incrementReconnectCount();
+    std::cout << "Attempt to reconnect" << std::endl;
+    RpcSessionManager::getInstance()->reconnect(rpcPeer);
+
+    // force the close to be handled on this connection
+    ws_.async_close(
+            websocket::close_code::normal,
+            boost::asio::bind_executor(
+                    strand_,
+                    std::bind(
+                            &RpcSession::on_close,
+                            shared_from_this(),
+                            std::placeholders::_1)));
+}
+
 std::string RpcSession::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
@@ -366,17 +384,17 @@ RpcSession::on_read(
 
         transactionPtr->commit();
     } catch (keto::common::Exception& ex) {
-        std::cout << this->sessionNumber << ": Cause: " << boost::diagnostic_information(ex,true) << std::endl;
-        KETO_LOG_ERROR << "Cause: " << boost::diagnostic_information(ex,true);
+        KETO_LOG_ERROR << "[RPCSession][" << this->sessionNumber << "]" << command << " : Failed to process because : " << boost::diagnostic_information(ex,true);
+        return processingFailed();
     } catch (boost::exception& ex) {
-        std::cout << this->sessionNumber << ": Failed to process because : " << boost::diagnostic_information(ex,true) << std::endl;
-        KETO_LOG_ERROR << "Failed to process because : " << boost::diagnostic_information(ex,true);
+        KETO_LOG_ERROR << "[RPCSession][" << this->sessionNumber << "]" << command << " : Failed to process because : " << boost::diagnostic_information(ex,true);
+        return processingFailed();
     } catch (std::exception& ex) {
-        std::cout << this->sessionNumber << ": Failed process the request : " << ex.what() << std::endl;
-        KETO_LOG_ERROR << "Failed process the request : " << ex.what();
+        KETO_LOG_ERROR << "[RPCSession][" << this->sessionNumber << "]" << command << " : Failed process the request : " << ex.what();
+        return processingFailed();
     } catch (...) {
-        std::cout << this->sessionNumber << ": Failed process the request" << std::endl;
-        KETO_LOG_ERROR << "Failed to process : ";
+        KETO_LOG_ERROR << "[RPCSession][" << this->sessionNumber << "]" << command << " : Failed process the request" << std::endl;
+        return processingFailed();
     }
     
     // Read a message into our buffer
@@ -757,7 +775,7 @@ void RpcSession::requestNetworkKeysResponse(const std::string& command, const st
 }
 
 void RpcSession::requestNetworkFeesResponse(const std::string& command, const std::string& message) {
-    keto:transaction_common::FeeInfoMsgProtoHelper feeInfoMsgProtoHelper(
+    keto::transaction_common::FeeInfoMsgProtoHelper feeInfoMsgProtoHelper(
             Botan::hex_decode(message));
 
     keto::proto::FeeInfoMsg feeInfoMsg = feeInfoMsgProtoHelper;
@@ -876,6 +894,10 @@ RpcSession::on_outBoundWrite(
 
     // Clear the buffer
     multiBufferPtr->consume(multiBufferPtr->size());
+}
+
+RpcPeer RpcSession::getPeer() {
+    return this->rpcPeer;
 }
 
 }
