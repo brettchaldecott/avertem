@@ -26,6 +26,7 @@ KETO_DECLARE_EXCEPTION( RpcServerModuleException, "Keto Rpc Server Module Except
 
 // the client is not available
 KETO_DECLARE_DERIVED_EXCEPTION (RpcServerModuleException, ClientNotAvailableException , "The client is not available.");
+KETO_DECLARE_DERIVED_EXCEPTION (RpcServerModuleException, ConnectionLost , "The connection to the client has been lost.");
 
 }
 }

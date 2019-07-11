@@ -197,6 +197,7 @@ void BlockProducer::_setState(const State& state) {
         != keto::software_consensus::ConsensusStateManager::State::ACCEPTED) {
         BOOST_THROW_EXCEPTION(keto::block::BlockProducerNotAcceptedByNetworkException());
     }
+
     this->currentState = state;
     if (currentState != State::terminated) {
         (*statePersistanceManagerPtr)[Constants::PERSISTED_STATE].set((long) this->currentState);

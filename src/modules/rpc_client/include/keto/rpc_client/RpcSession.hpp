@@ -27,6 +27,7 @@
 #include <functional>
 #include <iostream>
 #include <string>
+#include <set>
 
 #include "Route.pb.h"
 #include "BlockChain.pb.h"
@@ -55,11 +56,33 @@ namespace rpc_client {
 class RpcSession;
 
 typedef std::shared_ptr<RpcSession> RpcSessionPtr;
-
 typedef std::shared_ptr<boost::beast::multi_buffer> MultiBufferPtr;
 
 class RpcSession : public std::enable_shared_from_this<RpcSession> {
 public:
+    class BufferCache {
+    public:
+        BufferCache();
+        BufferCache(const BufferCache& orig) = delete;
+        virtual ~BufferCache();
+
+        boost::beast::multi_buffer* create();
+        void remove(boost::beast::multi_buffer* buffer);
+    private:
+        std::set<boost::beast::multi_buffer*> buffers;
+    };
+    typedef std::shared_ptr<BufferCache> BufferCachePtr;
+    class BufferScope {
+    public:
+        BufferScope(const BufferCachePtr& bufferCachePtr, boost::beast::multi_buffer* buffer);
+        BufferScope(const BufferScope& orig) = delete;
+        virtual ~BufferScope();
+
+    private:
+        BufferCachePtr bufferCachePtr;
+        boost::beast::multi_buffer* buffer;
+    };
+
     static std::string getHeaderVersion() {
         return OBFUSCATED("$Id$");
     };
@@ -118,11 +141,14 @@ public:
     RpcPeer getPeer();
     
 private:
+    std::mutex classMutex;
     tcp::resolver resolver;
     websocket::stream<boostSsl::stream<tcp::socket>> ws_;
     boost::asio::strand<
         boost::asio::io_context::executor_type> strand_;
     boost::beast::multi_buffer buffer_;
+
+
     //bool peered;
     RpcPeer rpcPeer;
     std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr;
@@ -141,7 +167,10 @@ private:
     void closeResponse(const std::string& command, const std::string& message);
     void consensusSessionResponse(const std::string& command, const std::string& sessionKey);
     void consensusResponse(const std::string& command, const std::string& message);
+    void serverRequest(const std::string& command, const std::vector<uint8_t>& message);
+    void serverRequest(MultiBufferPtr multiBufferPtr, const std::string& command, const std::vector<uint8_t>& message);
     void serverRequest(const std::string& command, const std::string& message);
+    void serverRequest(MultiBufferPtr multiBufferPtr, const std::string& command, const std::string& message);
     void peerResponse(const std::string& command, const std::string& message);
 
     // protocol methods

@@ -63,7 +63,51 @@ namespace websocket = boost::beast::websocket;  // from <boost/beast/websocket.h
 namespace keto {
 namespace rpc_server {
 
-static RpcServerPtr singleton;
+
+class BufferCache {
+public:
+    BufferCache() {
+
+    }
+    BufferCache(const BufferCache& orig) = delete;
+    virtual ~BufferCache() {
+        for (boost::beast::multi_buffer* buffer : buffers) {
+            delete buffer;
+        }
+        buffers.clear();
+    }
+
+    boost::beast::multi_buffer* create() {
+        boost::beast::multi_buffer* buffer = new boost::beast::multi_buffer();
+        this->buffers.insert(buffer);
+        return buffer;
+    }
+    void remove(boost::beast::multi_buffer* buffer) {
+        this->buffers.erase(buffer);
+        delete buffer;
+    }
+private:
+    std::set<boost::beast::multi_buffer*> buffers;
+};
+typedef std::shared_ptr<BufferCache> BufferCachePtr;
+
+class BufferScope {
+public:
+    BufferScope(const BufferCachePtr& bufferCachePtr, boost::beast::multi_buffer* buffer) :
+        bufferCachePtr(bufferCachePtr), buffer(buffer) {
+    }
+    BufferScope(const BufferScope& orig) = delete;
+    virtual ~BufferScope() {
+        bufferCachePtr->remove(buffer);
+    }
+
+private:
+    BufferCachePtr bufferCachePtr;
+    boost::beast::multi_buffer* buffer;
+};
+
+
+    static RpcServerPtr singleton;
 
 // Report a failure
 void
@@ -113,8 +157,13 @@ public:
         accountSessionMap[account] = sessionRef;
     }
     
-    void removeAccount(const std::string& account) {
+    void removeAccount(const std::string& account,const session* session) {
         std::lock_guard<std::mutex> guard(classMutex);
+        if (!accountSessionMap.count(account)) {
+            return;
+        } else if (accountSessionMap[account].get() != session) {
+            return;
+        }
         accountSessionMap.erase(account);
     }
     
@@ -143,12 +192,12 @@ public:
     
 };
 
-typedef std::shared_ptr<boost::beast::multi_buffer> MultiBufferPtr;
 
 // Echoes back all received WebSocket messages
 class session : public std::enable_shared_from_this<session>
 {
 private:
+    std::mutex classMutex;
     tcp::socket socket_;
     websocket::stream<beastSsl::stream<tcp::socket&>> ws_;
     boost::asio::strand<
@@ -168,10 +217,12 @@ public:
         , strand_(ws_.get_executor())
         , rpcServer(rpcServer)
     {
+        ws_.auto_fragment(false);
         this->generatorPtr = std::shared_ptr<Botan::AutoSeeded_RNG>(new Botan::AutoSeeded_RNG());
     }
         
     virtual ~session() {
+        removeFromCache();
     }
 
     keto::crypto::SecureVector getSessionId() {
@@ -235,38 +286,53 @@ public:
     }
 
     void
+    removeFromCache() {
+        if (serverHelloProtoHelperPtr) {
+            std::string accountHash = keto::server_common::VectorUtils().copyVectorToString(
+                    serverHelloProtoHelperPtr->getAccountHash());
+            KETO_LOG_INFO << "End of server session remove it from the account session cache : " <<
+                Botan::hex_encode(serverHelloProtoHelperPtr->getAccountHash());
+            AccountSessionCache::getInstance()->removeAccount(accountHash,this);
+        }
+    }
+
+    std::string
+    getAccount() {
+        if (serverHelloProtoHelperPtr) {
+            return Botan::hex_encode(
+                    serverHelloProtoHelperPtr->getAccountHash());
+        }
+        return "";
+    }
+
+    void
     on_read(
         boost::system::error_code ec,
         std::size_t bytes_transferred)
     {
+        keto::server_common::StringVector stringVector;
+
         boost::ignore_unused(bytes_transferred);
 
         // This indicates that the session was closed
-        if(ec == websocket::error::closed || !ws_.is_open()) {
-            if (serverHelloProtoHelperPtr) {
-                std::string accountHash = keto::server_common::VectorUtils().copyVectorToString(    
-                    serverHelloProtoHelperPtr->getAccountHash());
-                if (AccountSessionCache::getInstance()->hasSession(accountHash)) {
-                    AccountSessionCache::getInstance()->removeAccount(accountHash);
-                }
-            }
+        if (ec == websocket::error::closed || !ws_.is_open()) {
+            removeFromCache();
             return;
         }
-        if(ec) {
+        if (ec) {
             fail(ec, "read");
         }
-            
-        
-        
+
+
         std::stringstream ss;
         ss << boost::beast::buffers(buffer_.data());
         std::string data = ss.str();
-        keto::server_common::StringVector stringVector = keto::server_common::StringUtils(data).tokenize(" ");
+        stringVector = keto::server_common::StringUtils(data).tokenize(" ");
 
-        
+
         // Clear the buffer
         buffer_.consume(buffer_.size());
-        
+
         std::string command = stringVector[0];
         std::string payload;
         if (stringVector.size() == 2) {
@@ -275,23 +341,23 @@ public:
         std::string message;
         
         try {
-            std::cout << "[RpcServer] process the command : " << command << std::endl;
+            std::cout << "[RpcServer][" << getAccount() << "] process the command : " << command << std::endl;
             keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
             if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO) == 0) {
                 handleHello(command, payload);
-                KETO_LOG_INFO << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " Said hello";
+                KETO_LOG_INFO << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " Said hello";
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS) == 0) {
                 handleHelloConsensus(command, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PEERS) == 0) {
-                KETO_LOG_INFO << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " requested peers";
+                KETO_LOG_INFO << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " requested peers";
                 handlePeer(command,payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REGISTER) == 0) {
-                KETO_LOG_INFO << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " register";
+                KETO_LOG_INFO << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " register";
                 handleRegister(keto::server_common::Constants::RPC_COMMANDS::REGISTER, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
-                KETO_LOG_INFO << "[RpcServer] handle a transaction";
+                KETO_LOG_INFO << "[RpcServer][" << getAccount() << "] handle a transaction";
                 handleTransaction(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION, payload);
-                KETO_LOG_INFO << "[RpcServer] Transaction processing complete";
+                KETO_LOG_INFO << "[RpcServer][" << getAccount() << "] Transaction processing complete";
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED) == 0) {
                 handleTransactionProcessed(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS) == 0) {
@@ -304,9 +370,10 @@ public:
 
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLOSE) == 0) {
                 // implement
+                KETO_LOG_INFO << "[RpcServer][" << getAccount() << "] close the session";
                 AccountSessionCache::getInstance()->removeAccount(
                     keto::server_common::VectorUtils().copyVectorToString(    
-                        serverHelloProtoHelperPtr->getAccountHash()));
+                        serverHelloProtoHelperPtr->getAccountHash()),this);
                 return;
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS) == 0) {
                 handleRequestNetworkSessionKeys(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS, payload);
@@ -326,77 +393,68 @@ public:
 
             transactionPtr->commit();
         } catch (keto::common::Exception& ex) {
-            std::cout << "[RpcServer][on_read]Failed to handle the request on the server [keto::common::Exception]: " << boost::diagnostic_information(ex,true) << std::endl;
-            KETO_LOG_ERROR << "Cause: " << boost::diagnostic_information(ex,true);
+            KETO_LOG_ERROR << "[RpcServer][on_read] Failed to handle the request on the server [keto::common::Exception]: " << boost::diagnostic_information(ex,true);
+            KETO_LOG_ERROR << "[RpcServer][on_read] Cause: " << boost::diagnostic_information(ex,true);
             handleRetryResponse(command);
         } catch (boost::exception& ex) {
-            std::cout << "[RpcServer][on_read]Failed to handle the request on the server [boost::exception]: " << boost::diagnostic_information(ex,true) << std::endl;
-            KETO_LOG_ERROR << "Failed to process because : " << boost::diagnostic_information(ex,true);
+            KETO_LOG_ERROR << "[RpcServer][on_read] Failed to handle the request on the server [boost::exception]: " << boost::diagnostic_information(ex,true);
+            KETO_LOG_ERROR << "[RpcServer][on_read] Failed to process because : " << boost::diagnostic_information(ex,true);
             handleRetryResponse(command);
         } catch (std::exception& ex) {
-            std::cout << "[RpcServer][on_read]Failed to handle the request on the server [std::exception]: " << ex.what() << std::endl;
+            KETO_LOG_ERROR << "[RpcServer][on_read] Failed to handle the request on the server [std::exception]: " << ex.what();
             KETO_LOG_ERROR << "Failed process the request : " << ex.what();
             handleRetryResponse(command);
         } catch (...) {
-            std::cout << "[RpcServer][on_read] Failed to handle the request on the server [...]: unknown " << std::endl;
-            KETO_LOG_ERROR << "Failed to process : ";
+            KETO_LOG_ERROR << "[RpcServer][on_read] Failed to handle the request on the server [...]: unknown " << std::endl;
+            KETO_LOG_ERROR << "[RpcServer][on_read] Failed to process : ";
             handleRetryResponse(command);
         }
-        
+
+        if (!ws_.is_open()) {
+            removeFromCache();
+            return;
+        }
+        std::lock_guard<std::mutex> guard(classMutex);
         ws_.text(ws_.got_text());
         ws_.async_write(
-            buffer_.data(),
-            boost::asio::bind_executor(
-                strand_,
-                std::bind(
-                    &session::on_write,
-                    shared_from_this(),
-                    std::placeholders::_1,
-                    std::placeholders::_2)));
-        
+                buffer_.data(),
+                boost::asio::bind_executor(
+                        strand_,
+                        std::bind(
+                                &session::on_write,
+                                shared_from_this(),
+                                std::placeholders::_1,
+                                std::placeholders::_2)));
+
     }
     
     void
     routeTransaction(keto::proto::MessageWrapper&  messageWrapper) {
+
+        if (!ws_.is_open()) {
+            removeFromCache();
+            BOOST_THROW_EXCEPTION(ConnectionLost());
+        }
         std::string messageWrapperStr;
         messageWrapper.SerializeToString(&messageWrapperStr);
         MultiBufferPtr multiBufferPtr(new boost::beast::multi_buffer());
-        boost::beast::ostream(*multiBufferPtr) << keto::server_common::Constants::RPC_COMMANDS::TRANSACTION
-                << " " << Botan::hex_encode((uint8_t*)messageWrapperStr.data(),messageWrapperStr.size(),true);
-        
-        ws_.text(ws_.got_text());
-        ws_.async_write(
-                multiBufferPtr->data(),
-                boost::asio::bind_executor(
-                        strand_,
-                        std::bind(
-                                &session::on_outBoundWrite,
-                                shared_from_this(),
-                                std::placeholders::_1,
-                                std::placeholders::_2,
-                                multiBufferPtr)));
+        clientRequest(multiBufferPtr, keto::server_common::Constants::RPC_COMMANDS::TRANSACTION,
+                      Botan::hex_encode((uint8_t*)messageWrapperStr.data(),messageWrapperStr.size(),true));
     }
 
     void
-    pushBlock(keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage) {
-        std::cout << "Attempt to push the block" << std::endl;
+    pushBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage) {
+        KETO_LOG_INFO << "Attempt to push the block";
+        if (!ws_.is_open()) {
+            removeFromCache();
+            return;
+        }
         std::string messageWrapperStr;
         signedBlockWrapperMessage.SerializeToString(&messageWrapperStr);
         MultiBufferPtr multiBufferPtr(new boost::beast::multi_buffer());
-        boost::beast::ostream(*multiBufferPtr) << keto::server_common::Constants::RPC_COMMANDS::BLOCK
-                                               << " " << Botan::hex_encode((uint8_t*)messageWrapperStr.data(),messageWrapperStr.size(),true);
-        ws_.text(ws_.got_text());
-        ws_.async_write(
-                multiBufferPtr->data(),
-                boost::asio::bind_executor(
-                        strand_,
-                        std::bind(
-                                &session::on_outBoundWrite,
-                                shared_from_this(),
-                                std::placeholders::_1,
-                                std::placeholders::_2,
-                                multiBufferPtr)));
-        std::cout << "After writing the block" << std::endl;
+        clientRequest(multiBufferPtr, keto::server_common::Constants::RPC_COMMANDS::BLOCK,
+                      Botan::hex_encode((uint8_t*)messageWrapperStr.data(),messageWrapperStr.size(),true));
+        KETO_LOG_INFO << "After writing the block";
     }
 
     //
@@ -404,12 +462,18 @@ public:
     // the protocol methods
     void
     performNetworkSessionReset() {
-        std::cout << "Attempt to perform the protocol reset via forcing the client to say hello" << std::endl;
+        KETO_LOG_INFO << "Attempt to perform the protocol reset via forcing the client to say hello";
+
+        if (!ws_.is_open()) {
+            removeFromCache();
+            return;
+        }
+        // different message format
+        std::lock_guard<std::mutex> guard(classMutex);
         MultiBufferPtr multiBufferPtr(new boost::beast::multi_buffer());
         boost::beast::ostream(*multiBufferPtr) << keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS
-                                       << " " << Botan::hex_encode(this->rpcServer->getSecret())
-                                       << " " << Botan::hex_encode(this->generateSession());
-
+                                               << " " << Botan::hex_encode(this->rpcServer->getSecret())
+                                               << " " << Botan::hex_encode(this->generateSession());
         ws_.text(ws_.got_text());
         ws_.async_write(
                 multiBufferPtr->data(),
@@ -421,52 +485,40 @@ public:
                                 std::placeholders::_1,
                                 std::placeholders::_2,
                                 multiBufferPtr)));
-        std::cout << "After requesting the protocol reset from peers" << std::endl;
+        KETO_LOG_INFO << "After requesting the protocol reset from peers";
     }
 
 
     void
     performProtocolCheck() {
-        std::cout << "Attempt to perform the protocol check" << std::endl;
-        MultiBufferPtr multiBufferPtr(new boost::beast::multi_buffer());
-        boost::beast::ostream(*multiBufferPtr) << keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_REQUEST
-                                               << " " << Botan::hex_encode(this->generateSession());
+        KETO_LOG_INFO << "Attempt to perform the protocol check";
 
-        ws_.text(ws_.got_text());
-        ws_.async_write(
-                multiBufferPtr->data(),
-                boost::asio::bind_executor(
-                        strand_,
-                        std::bind(
-                                &session::on_outBoundWrite,
-                                shared_from_this(),
-                                std::placeholders::_1,
-                                std::placeholders::_2,
-                                multiBufferPtr)));
-        std::cout << "After requesting the protocol check from peers" << std::endl;
+        if (!ws_.is_open()) {
+            removeFromCache();
+            return;
+        }
+        MultiBufferPtr multiBufferPtr(new boost::beast::multi_buffer());
+        clientRequest(multiBufferPtr, keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_REQUEST,
+                      Botan::hex_encode(this->generateSession()));
+
+        KETO_LOG_INFO << "After requesting the protocol check from peers";
     }
+
+
 
     void
     performNetworkHeartbeat(const keto::proto::ProtocolHeartbeatMessage& protocolHeartbeatMessage) {
-        std::cout << "Attempt to perform the protocol heartbeat" << std::endl;
+        KETO_LOG_INFO << "Attempt to perform the protocol heartbeat";
+        if (!ws_.is_open()) {
+            removeFromCache();
+            return;
+        }
         std::string messageWrapperStr;
         protocolHeartbeatMessage.SerializeToString(&messageWrapperStr);
         MultiBufferPtr multiBufferPtr(new boost::beast::multi_buffer());
-        boost::beast::ostream(*multiBufferPtr) << keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_HEARTBEAT
-                                               << " " << Botan::hex_encode((uint8_t*)messageWrapperStr.data(),messageWrapperStr.size(),true);
-
-        ws_.text(ws_.got_text());
-        ws_.async_write(
-                multiBufferPtr->data(),
-                boost::asio::bind_executor(
-                        strand_,
-                        std::bind(
-                                &session::on_outBoundWrite,
-                                shared_from_this(),
-                                std::placeholders::_1,
-                                std::placeholders::_2,
-                                multiBufferPtr)));
-        std::cout << "After requesting the protocol heartbeat" << std::endl;
+        clientRequest(multiBufferPtr, keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_HEARTBEAT,
+                Botan::hex_encode((uint8_t*)messageWrapperStr.data(),messageWrapperStr.size(),true));
+        KETO_LOG_INFO << "After requesting the protocol heartbeat";
     }
 
     void
@@ -492,7 +544,29 @@ public:
             KETO_LOG_INFO << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " was rejected from network";
         }
     }
-    
+
+    void clientRequest(MultiBufferPtr multiBufferPtr, const std::string& command, const std::string& message) {
+
+        std::lock_guard<std::mutex> guard(classMutex);
+        boost::beast::ostream(*multiBufferPtr) <<
+                                               buildMessage(command,message);
+        KETO_LOG_INFO << "[RpcServer] Send the server request : " << command << std::endl;
+        ws_.text(ws_.got_text());
+        ws_.async_write(
+                multiBufferPtr->data(),
+                boost::asio::bind_executor(
+                        strand_,
+                        std::bind(
+                                &session::on_outBoundWrite,
+                                shared_from_this(),
+                                std::placeholders::_1,
+                                std::placeholders::_2,
+                                multiBufferPtr)));
+
+        KETO_LOG_INFO << "[RpcServer] Sent the server request : " << command << std::endl;
+    }
+
+
     void
     on_outBoundWrite(
         boost::system::error_code ec,
@@ -506,7 +580,7 @@ public:
                 std::string accountHash = keto::server_common::VectorUtils().copyVectorToString(    
                     serverHelloProtoHelperPtr->getAccountHash());
                 if (AccountSessionCache::getInstance()->hasSession(accountHash)) {
-                    AccountSessionCache::getInstance()->removeAccount(accountHash);
+                    AccountSessionCache::getInstance()->removeAccount(accountHash,this);
                 }
             }
             return fail(ec, "write");
@@ -632,7 +706,7 @@ public:
     
     
     void handleTransaction(const std::string& command, const std::string& payload) {
-        
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleTransaction] handle transaction";
         keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper(
             keto::server_common::VectorUtils().copyVectorToString(
                 Botan::hex_decode(payload)));
@@ -649,23 +723,26 @@ public:
         std::string result = messageWrapperResponse.SerializeAsString();
         boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED
                 << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
+
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleTransaction] process the transaction";
     }
     
     void handleTransactionProcessed(const std::string& command, const std::string& payload) {
-        
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleTransactionProcessed] handle the transaction";
+
         keto::proto::MessageWrapperResponse messageWrapperResponse;
         messageWrapperResponse.ParseFromString(
             keto::server_common::VectorUtils().copyVectorToString(
                 Botan::hex_decode(payload)));
-        
-        KETO_LOG_INFO << "[RpcServer] transaction processed by peer [" << 
+
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "] transaction processed by peer [" <<
                 this->serverHelloProtoHelperPtr->getAccountHashStr() << "] : " 
                 << messageWrapperResponse.result();
         
     }
 
     void handleRequestNetworkSessionKeys(const std::string& command, const std::string& payload) {
-        std::cout << "[RpcServer][handleRequestNetworkSessionKeys] << request the network session keys :" << command << std::endl;
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleRequestNetworkSessionKeys] << request the network session keys :" << command;
 
         keto::proto::NetworkKeysWrapper networkKeysWrapper;
         networkKeysWrapper =
@@ -676,11 +753,11 @@ public:
         std::string result = networkKeysWrapper.SerializeAsString();
         boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_SESSION_KEYS
                                        << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
-        std::cout << "[RpcServer][handleRequestNetworkSessionKeys] << after handling the network session keys request :" << command << std::endl;
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleRequestNetworkSessionKeys] << after handling the network session keys request :" << command;
     }
 
     void handleRequestMasterNetworkKeys(const std::string& command, const std::string& payload) {
-        std::cout << "[RpcServer][handleRequestMasterNetworkKeys] << request the master network keys :" << command << std::endl;
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleRequestMasterNetworkKeys] << request the master network keys :" << command;
 
         keto::proto::NetworkKeysWrapper networkKeysWrapper;
         networkKeysWrapper =
@@ -691,11 +768,11 @@ public:
         std::string result = networkKeysWrapper.SerializeAsString();
         boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::RESPONSE_MASTER_NETWORK_KEYS
                                        << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
-        std::cout << "[RpcServer][handleRequestMasterNetworkKeys] << after handling the master network keys :" << command << std::endl;
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleRequestMasterNetworkKeys] << after handling the master network keys :" << command;
     }
 
     void handleRequestNetworkKeys(const std::string& command, const std::string& payload) {
-        std::cout << "[RpcServer][handleRequestNetworkKeys] << request the network key :" << command << std::endl;
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleRequestNetworkKeys] << request the network key :" << command;
 
         keto::proto::NetworkKeysWrapper networkKeysWrapper;
         networkKeysWrapper =
@@ -707,12 +784,13 @@ public:
         boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_KEYS
                                        << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
 
-        std::cout << "[RpcServer][handleRequestNetworkKeys] << after handling the request:" << command << std::endl;
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleRequestNetworkKeys] << after handling the request:" << command;
 
     }
 
 
     void handleRequestNetworkFees(const std::string& command, const std::string& payload) {
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleRequestNetworkFees] handle request network fees";
         keto::proto::FeeInfoMsg feeInfoMsg;
         feeInfoMsg =
                 keto::server_common::fromEvent<keto::proto::FeeInfoMsg>(
@@ -722,9 +800,11 @@ public:
         std::string result = feeInfoMsg.SerializeAsString();
         boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_FEES
                                        << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleRequestNetworkFees] request network fees";
     }
 
     void handleBlockPush(const std::string& command, const std::string& payload) {
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleBlockPush] handle block push";
         keto::proto::SignedBlockWrapperMessage signedBlockWrapperMessage;
         std::string rpcVector = keto::server_common::VectorUtils().copyVectorToString(
                 Botan::hex_decode(payload));
@@ -734,10 +814,12 @@ public:
                 keto::server_common::fromEvent<keto::proto::MessageWrapperResponse>(
                         keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SignedBlockWrapperMessage>(
                                 keto::server_common::Events::BLOCK_PERSIST_MESSAGE,signedBlockWrapperMessage)));
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleBlockPush] pushed the block";
 
     }
 
     void handleBlockSyncRequest(const std::string& command, const std::string& payload) {
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleBlockSyncRequest] handle the block sync request : " << command;
         keto::proto::SignedBlockBatchRequest signedBlockBatchRequest;
         std::string rpcVector = keto::server_common::VectorUtils().copyVectorToString(
                 Botan::hex_decode(payload));
@@ -752,6 +834,7 @@ public:
         std::string result = signedBlockBatchMessage.SerializeAsString();
         boost::beast::ostream(buffer_) << keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_RESPONSE
                                        << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleBlockSyncRequest] The block data returned [" << result.size() << "]";
     }
 
     void handleRetryResponse(const std::string& command) {
@@ -940,6 +1023,7 @@ void RpcServer::start() {
             this->ioc->run();
         });
     }
+    KETO_LOG_INFO << "[RpcServer::start] All the threads have been started : " << this->threads;
 }
     
 void RpcServer::stop() {
@@ -1007,13 +1091,14 @@ keto::event::Event RpcServer::routeTransaction(const keto::event::Event& event) 
 
 
 keto::event::Event RpcServer::pushBlock(const keto::event::Event& event) {
-    keto::proto::SignedBlockWrapperMessage signedBlockWrapperMessage =
-            keto::server_common::fromEvent<keto::proto::SignedBlockWrapperMessage>(event);
-
     for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
         try {
-            AccountSessionCache::getInstance()->getSession(
-                    account)->pushBlock(signedBlockWrapperMessage);
+            KETO_LOG_INFO << "[RpcServer::pushBlock] push block to node [" << Botan::hex_encode((const uint8_t*)account.c_str(),account.size(),true) << "]";
+            sessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
+                            account);
+            if (sessionPtr_) {
+                sessionPtr_->pushBlock(keto::server_common::fromEvent<keto::proto::SignedBlockWrapperMessage>(event));
+            }
         } catch (keto::common::Exception& ex) {
             KETO_LOG_ERROR << "[RpcServer::pushBlock]Failed to push the block : " << ex.what();
             KETO_LOG_ERROR << "[RpcServer::pushBlock]Cause : " << boost::diagnostic_information(ex,true);
@@ -1038,8 +1123,11 @@ keto::event::Event RpcServer::pushBlock(const keto::event::Event& event) {
 keto::event::Event RpcServer::performNetworkSessionReset(const keto::event::Event& event) {
     for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
         try {
-            AccountSessionCache::getInstance()->getSession(
-                    account)->performNetworkSessionReset();
+            sessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
+                    account);
+            if (sessionPtr_) {
+                sessionPtr_->performNetworkSessionReset();
+            }
         }  catch (keto::common::Exception& ex) {
             KETO_LOG_ERROR << "[RpcServer::performNetworkSessionReset]Failed to push the session reset : " << ex.what();
             KETO_LOG_ERROR << "[RpcServer::performNetworkSessionReset]Cause : " << boost::diagnostic_information(ex,true);
@@ -1065,8 +1153,11 @@ keto::event::Event RpcServer::performNetworkSessionReset(const keto::event::Even
 keto::event::Event RpcServer::performProtocoCheck(const keto::event::Event& event) {
     for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
         try {
-            AccountSessionCache::getInstance()->getSession(
-                    account)->performProtocolCheck();
+            sessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
+                    account);
+            if (sessionPtr_) {
+                sessionPtr_->performProtocolCheck();
+            }
         }  catch (keto::common::Exception& ex) {
             KETO_LOG_ERROR << "[RpcServer::performProtocoCheck]Failed to perform the protocol check : " << ex.what();
             KETO_LOG_ERROR << "[RpcServer::performProtocoCheck]Cause : " << boost::diagnostic_information(ex,true);
@@ -1089,13 +1180,16 @@ keto::event::Event RpcServer::performProtocoCheck(const keto::event::Event& even
 }
 
 keto::event::Event RpcServer::performConsensusHeartbeat(const keto::event::Event& event) {
-    keto::proto::ProtocolHeartbeatMessage protocolHeartbeatMessage =
-            keto::server_common::fromEvent<keto::proto::ProtocolHeartbeatMessage>(event);
     for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
         try {
-            AccountSessionCache::getInstance()->getSession(
-                    account)->performNetworkHeartbeat(protocolHeartbeatMessage);
-        }  catch (keto::common::Exception& ex) {
+            KETO_LOG_INFO << "[RpcServer::performConsensusHeartbeat] perform consensus heart beat on [" << Botan::hex_encode((const uint8_t*)account.c_str(),account.size(),true) << "]";
+            sessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
+                    account);
+            if (sessionPtr_) {
+                sessionPtr_->performNetworkHeartbeat(
+                        keto::server_common::fromEvent<keto::proto::ProtocolHeartbeatMessage>(event));
+            }
+        } catch (keto::common::Exception& ex) {
             KETO_LOG_ERROR << "[RpcServer::performConsensusHeartbeat]Failed to perform the consensus heartbeat : " << ex.what();
             KETO_LOG_ERROR << "[RpcServer::performConsensusHeartbeat]Cause : " << boost::diagnostic_information(ex,true);
         } catch (boost::exception& ex) {

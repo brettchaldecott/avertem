@@ -58,7 +58,7 @@ void MemoryVaultStorage::setEntry(const keto::crypto::SecureVector& id,
         std::cout << "[MemoryVaultStorage][setEntry] Increment the reference count for [" << Botan::hex_encode(id) << "]" << std::endl;
         this->store[id]->incrementRefCount();
     } else {
-        std::cout << "[MemoryVaultStorage][setEntry] Add the entry [" << Botan::hex_encode(id) << "]" << std::endl;
+        std::cout << "[MemoryVaultStorage][setEntry] Add the entry [" << Botan::hex_encode(id) << "][" << this->store.count(id) << "]" << std::endl;
         this->store[id] = MemoryVaultStorageEntryPtr(new MemoryVaultStorageEntry(bytes));
     }
 
@@ -69,10 +69,10 @@ byteVector MemoryVaultStorage::getEntry(const keto::crypto::SecureVector& id) {
     //std::cout << "Get the entry : " << Botan::hex_encode(id) << std::endl;
     if (!this->store.count(id)) {
         std::stringstream ss;
-        ss << "[VaultEntryNotFoundException]The entry [" << Botan::hex_encode(id) << "][" << this->store.size() << "]";
-        //for(std::map<keto::crypto::SecureVector,MemoryVaultStorageEntryPtr>::iterator iter = this->store.begin(); iter != this->store.end(); ++iter) {
-        //    ss << "[" << Botan::hex_encode(iter->first) << "]";
-        //}
+        ss << "[VaultEntryNotFoundException]The entry [" << Botan::hex_encode(id) << "][" << this->store.size() << "][" << this->store.count(id) << "] was not found";
+        for(std::map<keto::crypto::SecureVector,MemoryVaultStorageEntryPtr>::iterator iter = this->store.begin(); iter != this->store.end(); ++iter) {
+            ss << "[" << Botan::hex_encode(iter->first) << "]";
+        }
         BOOST_THROW_EXCEPTION(VaultEntryNotFoundException(ss.str()));
     }
     return this->store[id]->getBytes();

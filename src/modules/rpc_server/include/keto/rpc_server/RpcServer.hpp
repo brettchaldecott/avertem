@@ -29,6 +29,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <mutex>
 
 #include "keto/common/MetaInfo.hpp"
 #include "keto/crypto/Containers.hpp"
@@ -46,6 +47,8 @@ namespace rpc_server {
 
 class RpcServer;
 typedef std::shared_ptr<RpcServer> RpcServerPtr;
+
+typedef std::shared_ptr<boost::beast::multi_buffer> MultiBufferPtr;
     
 class RpcServer {
 public:

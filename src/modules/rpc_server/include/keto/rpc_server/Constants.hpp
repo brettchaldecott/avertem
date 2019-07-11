@@ -40,7 +40,7 @@ public:
     static constexpr const unsigned short DEFAULT_PORT_NUMBER = 28003;
     
     static constexpr const char* HTTP_THREADS = "rpc-server-thread-number";
-    static constexpr const int DEFAULT_HTTP_THREADS = 1;
+    static constexpr const int DEFAULT_HTTP_THREADS = 10;
 
     static constexpr const int SESSION_ID_LENGTH = 32;
 };

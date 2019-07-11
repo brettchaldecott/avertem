@@ -83,6 +83,10 @@ keto::proto::MessageWrapperResponse  BlockSyncManager::processBlockSyncResponse(
     if (keto::block_db::BlockChainStore::getInstance()->processBlockSyncResponse(signedBlockBatchMessage,BlockChainCallbackImpl())) {
         response.set_result("complete");
         this->status = COMPLETE;
+        KETO_LOG_INFO << "[BlockProducer::setState]" << " ########################################################";
+        KETO_LOG_INFO << "[BlockProducer::setState]" << " ######## Synchronization has now been completed ########";
+        KETO_LOG_INFO << "[BlockProducer::setState]" << " ########################################################";
+
     } else {
         response.set_result("applied");
     }

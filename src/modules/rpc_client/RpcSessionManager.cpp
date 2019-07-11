@@ -202,7 +202,7 @@ void RpcSessionManager::postStart() {
             this->ioc->run();
         });
     }
-    KETO_LOG_INFO << "All the threads have been started";
+    KETO_LOG_INFO << "[RpcSessionManager::postStart] All the threads have been started : " << this->threads;
     
 }
 
@@ -223,22 +223,44 @@ void RpcSessionManager::stop() {
 
 
 keto::event::Event RpcSessionManager::requestBlockSync(const keto::event::Event& event) {
-    keto::proto::SignedBlockBatchRequest signedBlockBatchRequest =
-            keto::server_common::fromEvent<keto::proto::SignedBlockBatchRequest>(event);
 
-    getDefaultPeer()->requestBlockSync(signedBlockBatchRequest);
+    RpcSessionPtr rcpSessionPtr = getDefaultPeer();
+    if (rcpSessionPtr) {
+        try {
+            rcpSessionPtr->requestBlockSync(keto::server_common::fromEvent<keto::proto::SignedBlockBatchRequest>(event));
+        } catch (keto::common::Exception& ex) {
+            KETO_LOG_ERROR << "[RpcSessionManager::requestBlockSync] Failed to request a block sync : " << ex.what();
+            KETO_LOG_ERROR << "[RpcSessionManager::requestBlockSync] Cause : " << boost::diagnostic_information(ex,true);
+        } catch (boost::exception& ex) {
+            KETO_LOG_ERROR << "[RpcSessionManager::requestBlockSync] Failed to request a block sync : " << boost::diagnostic_information(ex,true);
+        } catch (std::exception& ex) {
+            KETO_LOG_ERROR << "[RpcSessionManager::requestBlockSync] Failed to request a block sync : " << ex.what();
+        } catch (...) {
+            KETO_LOG_ERROR << "[RpcSessionManager::requestBlockSync] Failed to request a block sync : unknown cause";
+        }
+    } else {
+        KETO_LOG_ERROR << "No peers to request block sync from";
+    }
 
     return event;
 }
 
 keto::event::Event RpcSessionManager::pushBlock(const keto::event::Event& event) {
-    keto::proto::SignedBlockWrapperMessage signedBlockWrapperMessage =
-            keto::server_common::fromEvent<keto::proto::SignedBlockWrapperMessage>(event);
-
     std::vector<std::string> peers = this->listPeers();
     for (std::string peer : peers) {
         if (getAccountSessionMapping(peer)) {
-            getAccountSessionMapping(peer)->pushBlock(signedBlockWrapperMessage);
+            try {
+                getAccountSessionMapping(peer)->pushBlock(keto::server_common::fromEvent<keto::proto::SignedBlockWrapperMessage>(event));
+            } catch (keto::common::Exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::pushBlock] Failed to push block : " << ex.what();
+                KETO_LOG_ERROR << "[RpcSessionManager::pushBlock] Cause : " << boost::diagnostic_information(ex,true);
+            } catch (boost::exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::pushBlock] Failed to push block : " << boost::diagnostic_information(ex,true);
+            } catch (std::exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::pushBlock] Failed to push block : " << ex.what();
+            } catch (...) {
+                KETO_LOG_ERROR << "[RpcSessionManager::pushBlock] Failed to push block : unknown cause";
+            }
         }
     }
 
@@ -265,9 +287,21 @@ keto::event::Event RpcSessionManager::routeTransaction(const keto::event::Event&
     } else {
         // route to the default account which is the first peer in the list
         std::cout << "Get the default peer and route" << std::endl;
-        if (getDefaultPeer()) {
+        RpcSessionPtr rpcSessionPtr = getDefaultPeer();
+        if (rpcSessionPtr) {
             std::cout << "Route to the default peer" << std::endl;
-            getDefaultPeer()->routeTransaction(messageWrapper);
+            try {
+                rpcSessionPtr->routeTransaction(messageWrapper);
+            } catch (keto::common::Exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::routeTransaction] Failed route transaction : " << ex.what();
+                KETO_LOG_ERROR << "[RpcSessionManager::routeTransaction] Cause : " << boost::diagnostic_information(ex,true);
+            } catch (boost::exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::routeTransaction] Failed route transaction : " << boost::diagnostic_information(ex,true);
+            } catch (std::exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::routeTransaction] Failed route transaction : " << ex.what();
+            } catch (...) {
+                KETO_LOG_ERROR << "[RpcSessionManager::routeTransaction] Failed route transaction : unknown cause";
+            }
         } else {
             std::cout << "No default peer exists throw an exception" << std::endl;
             
