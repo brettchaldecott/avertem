@@ -71,7 +71,7 @@ LogManager::LogManager(
             keywords::auto_flush = true,
             keywords::format = (
                     expr::stream
-                            << "[" << expr::attr< unsigned int >("LineID") << "]["
+                            << "[" << expr::attr< attrs::current_thread_id::value_type >("ThreadID") << "]["
                             << expr::format_date_time< boost::posix_time::ptime >("TimeStamp", "%Y-%m-%d %H:%M:%S.%f")
                             << "] <" << logging::trivial::severity
                             << "> " << expr::smessage
@@ -92,7 +92,7 @@ LogManager::LogManager(
 
     logging::add_console_log(std::cout, boost::log::keywords::format =(
             expr::stream
-                    << "[" << expr::attr< unsigned int >("LineID") << "][" << expr::attr< attrs::current_thread_id::value_type >("ThreadID") << "]["
+                    << "[" << expr::attr< attrs::current_thread_id::value_type >("ThreadID") << "]["
                     << expr::format_date_time< boost::posix_time::ptime >("TimeStamp", "%Y-%m-%d %H:%M:%S.%f")
                     << "] <" << logging::trivial::severity
                     << "> " << expr::smessage

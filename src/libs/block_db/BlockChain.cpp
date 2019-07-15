@@ -294,6 +294,7 @@ void BlockChain::writeBlock(const SignedBlockBuilderPtr& signedBlockBuilderPtr, 
 
 void BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock, const BlockChainCallback& callback) {
 
+    KETO_LOG_DEBUG << "[BlockChain::writeBlock]Write a new block";
     rocksdb::Transaction* blockTransaction = resource->getTransaction(Constants::BLOCKS_INDEX);
     rocksdb::Transaction* childTransaction = resource->getTransaction(Constants::CHILD_INDEX);
     rocksdb::Transaction* transactionTransaction = resource->getTransaction(Constants::TRANSACTIONS_INDEX);
@@ -361,7 +362,7 @@ void BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
     blockMeta.set_encrypted(this->blockChainMetaPtr->isEncrypted());
 
     if (this->blockChainMetaPtr->isEncrypted()) {
-        std::cout << "Encrypt the block" << std::endl;
+        KETO_LOG_DEBUG << "[BlockChain::writeBlock] Decrypt the block";
         keto::key_store_utils::EncryptionRequestProtoHelper encryptionRequestProtoHelper;
         encryptionRequestProtoHelper = blockBytes;
         keto::key_store_utils::EncryptionResponseProtoHelper encryptionResponseProtoHelper(
@@ -369,7 +370,9 @@ void BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
                 keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::EncryptRequest>(
                         keto::server_common::Events::ENCRYPT_ASN1::ENCRYPT,encryptionRequestProtoHelper))));
         blockWrapper.set_asn1_block(encryptionResponseProtoHelper);
+        KETO_LOG_DEBUG << "[BlockChain::writeBlock] Decrypted the block";
     } else {
+        KETO_LOG_DEBUG << "Block is not encrypted copy bytes";
         blockWrapper.set_asn1_block(keto::server_common::VectorUtils().copyVectorToString(
            blockBytes));
     }
@@ -401,11 +404,11 @@ void BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
     BlockChainTangleMetaPtr blockChainTangleMetaPtr =
             this->blockChainMetaPtr->getTangleEntryByLastBlock(parentHash);
     if (!blockChainTangleMetaPtr) {
-        std::cout << "Add a new block chain tangle" << std::endl;
+        KETO_LOG_DEBUG << "Add a new block chain tangle";
         blockChainTangleMetaPtr = this->blockChainMetaPtr->addTangle(blockHash);
 
     } else {
-        std::cout << "Update the last block hash" << std::endl;
+        KETO_LOG_DEBUG << "Update the last block hash";
         blockChainTangleMetaPtr->setLastBlockHash(blockHash);
     }
     blockChainTangleMetaPtr->setLastModified(keto::asn1::TimeHelper(signedBlock.date));
@@ -416,7 +419,7 @@ void BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
 
     callback.postPersistBlock(blockChainMetaPtr->getHashId(),signedBlock);
 
-
+    KETO_LOG_DEBUG << "Completed writing the block";
 
 }
 
@@ -517,7 +520,7 @@ keto::proto::SignedBlockWrapper BlockChain::getBlock(keto::asn1::HashHelper hash
     std::string value;
 
     auto status = blockTransaction->Get(readOptions,keyHelper,&value);
-    if (rocksdb::Status::OK() != status || rocksdb::Status::NotFound() == status) {
+    if (rocksdb::Status::OK() != status && rocksdb::Status::NotFound() == status) {
         // not found
         std::stringstream ss;
         ss << "The last hash was not found in the store : " << hash.getHash(keto::common::StringEncoding::HEX);

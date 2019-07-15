@@ -49,6 +49,7 @@ class RpcServer;
 typedef std::shared_ptr<RpcServer> RpcServerPtr;
 
 typedef std::shared_ptr<boost::beast::multi_buffer> MultiBufferPtr;
+typedef std::shared_ptr<std::lock_guard<std::mutex>> LockGuardPtr;
     
 class RpcServer {
 public:

@@ -57,6 +57,7 @@ class RpcSession;
 
 typedef std::shared_ptr<RpcSession> RpcSessionPtr;
 typedef std::shared_ptr<boost::beast::multi_buffer> MultiBufferPtr;
+typedef std::shared_ptr<std::lock_guard<std::mutex>> LockGuardPtr;
 
 class RpcSession : public std::enable_shared_from_this<RpcSession> {
 public:
@@ -134,14 +135,14 @@ public:
     
     void
     on_outBoundWrite(
-        boost::system::error_code ec,
-        std::size_t bytes_transferred,
-        MultiBufferPtr multiBufferPtr);
+            boost::system::error_code ec,
+            std::size_t bytes_transferred,
+            MultiBufferPtr multiBufferPtr);
 
     RpcPeer getPeer();
     
 private:
-    std::mutex classMutex;
+    std::recursive_mutex classMutex;
     tcp::resolver resolver;
     websocket::stream<boostSsl::stream<tcp::socket>> ws_;
     boost::asio::strand<

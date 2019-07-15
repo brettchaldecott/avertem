@@ -17,15 +17,15 @@ namespace common {
 #define KETO_LOG_TRACE \
    BOOST_LOG_TRIVIAL(trace)
 #define KETO_LOG_DEBUG \
-   BOOST_LOG_TRIVIAL(debug)
+   BOOST_LOG_TRIVIAL(debug) << "[" << __FILE__ << "][" << __LINE__ << "]"
 #define KETO_LOG_INFO \
-   BOOST_LOG_TRIVIAL(info)
+   BOOST_LOG_TRIVIAL(info) << "[" << __FILE__ << "][" << __LINE__ << "]"
 #define KETO_LOG_WARNING \
-   BOOST_LOG_TRIVIAL(warning)
+   BOOST_LOG_TRIVIAL(warning) << "[" << __FILE__ << "][" << __LINE__ << "]"
 #define KETO_LOG_ERROR \
-   BOOST_LOG_TRIVIAL(error)
+   BOOST_LOG_TRIVIAL(error) << "[" << __FILE__ << "][" << __LINE__ << "]"
 #define KETO_LOG_FATAL \
-   BOOST_LOG_TRIVIAL(fatal)
+   BOOST_LOG_TRIVIAL(fatal) << "[" << __FILE__ << "][" << __LINE__ << "]"
 
 }
 }

@@ -126,7 +126,7 @@ static AccountSessionCachePtr accountSessionSingleton;
 
 class AccountSessionCache {
 private:
-    std::mutex classMutex;
+    std::recursive_mutex classMutex;
     std::map<std::string,sessionPtr> accountSessionMap;
 
 public:
@@ -153,12 +153,12 @@ public:
     
     void addAccount(const std::string& account, 
             const sessionPtr sessionRef) {
-        std::lock_guard<std::mutex> guard(classMutex);
+        std::lock_guard<std::recursive_mutex> guard(classMutex);
         accountSessionMap[account] = sessionRef;
     }
     
     void removeAccount(const std::string& account,const session* session) {
-        std::lock_guard<std::mutex> guard(classMutex);
+        std::lock_guard<std::recursive_mutex> guard(classMutex);
         if (!accountSessionMap.count(account)) {
             return;
         } else if (accountSessionMap[account].get() != session) {
@@ -168,7 +168,7 @@ public:
     }
     
     bool hasSession(const std::string& account) {
-        std::lock_guard<std::mutex> guard(classMutex);
+        std::lock_guard<std::recursive_mutex> guard(classMutex);
         if (accountSessionMap.count(account)) {
             return true;
         }
@@ -176,12 +176,12 @@ public:
     }
     
     sessionPtr getSession(const std::string& account) {
-        std::lock_guard<std::mutex> guard(this->classMutex);
+        std::lock_guard<std::recursive_mutex> guard(this->classMutex);
         return this->accountSessionMap[account];
     }
 
     std::vector<std::string> getSessions() {
-        std::lock_guard<std::mutex> guard(classMutex);
+        std::lock_guard<std::recursive_mutex> guard(classMutex);
         std::vector<std::string> keys;
         for(std::map<std::string,sessionPtr>::iterator it = this->accountSessionMap.begin();
             it != this->accountSessionMap.end(); ++it) {
@@ -197,7 +197,7 @@ public:
 class session : public std::enable_shared_from_this<session>
 {
 private:
-    std::mutex classMutex;
+    std::recursive_mutex classMutex;
     tcp::socket socket_;
     websocket::stream<beastSsl::stream<tcp::socket&>> ws_;
     boost::asio::strand<
@@ -247,6 +247,7 @@ public:
     void
     on_handshake(boost::system::error_code ec)
     {
+        std::lock_guard<std::recursive_mutex> guard(classMutex);
         if(ec)
             return fail(ec, "handshake");
 
@@ -263,6 +264,7 @@ public:
     void
     on_accept(boost::system::error_code ec)
     {
+        std::lock_guard<std::recursive_mutex> guard(classMutex);
         if(ec)
             return fail(ec, "accept");
 
@@ -310,6 +312,7 @@ public:
         boost::system::error_code ec,
         std::size_t bytes_transferred)
     {
+        std::lock_guard<std::recursive_mutex> guard(classMutex);
         keto::server_common::StringVector stringVector;
 
         boost::ignore_unused(bytes_transferred);
@@ -341,7 +344,7 @@ public:
         std::string message;
         
         try {
-            std::cout << "[RpcServer][" << getAccount() << "] process the command : " << command << std::endl;
+            KETO_LOG_INFO << "[RpcServer][" << getAccount() << "] process the command : " << command;
             keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
             if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO) == 0) {
                 handleHello(command, payload);
@@ -390,7 +393,7 @@ public:
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_RESPONSE) == 0) {
                 handleProtocolCheckResponse(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_RESPONSE, payload);
             }
-
+            KETO_LOG_INFO << "[RpcServer][" << getAccount() << "] processed the command : " << command;
             transactionPtr->commit();
         } catch (keto::common::Exception& ex) {
             KETO_LOG_ERROR << "[RpcServer][on_read] Failed to handle the request on the server [keto::common::Exception]: " << boost::diagnostic_information(ex,true);
@@ -414,7 +417,6 @@ public:
             removeFromCache();
             return;
         }
-        std::lock_guard<std::mutex> guard(classMutex);
         ws_.text(ws_.got_text());
         ws_.async_write(
                 buffer_.data(),
@@ -425,7 +427,7 @@ public:
                                 shared_from_this(),
                                 std::placeholders::_1,
                                 std::placeholders::_2)));
-
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "] Finished processing.";
     }
     
     void
@@ -463,13 +465,13 @@ public:
     void
     performNetworkSessionReset() {
         KETO_LOG_INFO << "Attempt to perform the protocol reset via forcing the client to say hello";
+        std::lock_guard<std::recursive_mutex> guard(classMutex);
 
         if (!ws_.is_open()) {
             removeFromCache();
             return;
         }
         // different message format
-        std::lock_guard<std::mutex> guard(classMutex);
         MultiBufferPtr multiBufferPtr(new boost::beast::multi_buffer());
         boost::beast::ostream(*multiBufferPtr) << keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS
                                                << " " << Botan::hex_encode(this->rpcServer->getSecret())
@@ -547,10 +549,10 @@ public:
 
     void clientRequest(MultiBufferPtr multiBufferPtr, const std::string& command, const std::string& message) {
 
-        std::lock_guard<std::mutex> guard(classMutex);
+        std::lock_guard<std::recursive_mutex> guard(classMutex);
         boost::beast::ostream(*multiBufferPtr) <<
                                                buildMessage(command,message);
-        KETO_LOG_INFO << "[RpcServer] Send the server request : " << command << std::endl;
+        KETO_LOG_INFO << "[RpcServer] Send the server request : " << command;
         ws_.text(ws_.got_text());
         ws_.async_write(
                 multiBufferPtr->data(),
@@ -563,7 +565,7 @@ public:
                                 std::placeholders::_2,
                                 multiBufferPtr)));
 
-        KETO_LOG_INFO << "[RpcServer] Sent the server request : " << command << std::endl;
+        KETO_LOG_INFO << "[RpcServer] Sent the server request : " << command;
     }
 
 
@@ -573,6 +575,8 @@ public:
         std::size_t bytes_transferred,
         MultiBufferPtr multiBufferPtr)
     {
+        std::lock_guard<std::recursive_mutex> guard(classMutex);
+
         boost::ignore_unused(bytes_transferred);
 
         if(ec) {
@@ -596,6 +600,7 @@ public:
         boost::system::error_code ec,
         std::size_t bytes_transferred)
     {
+        std::lock_guard<std::recursive_mutex> guard(classMutex);
         boost::ignore_unused(bytes_transferred);
 
         if(ec)
