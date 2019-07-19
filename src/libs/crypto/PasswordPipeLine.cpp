@@ -37,6 +37,7 @@ PasswordPipeLine::~PasswordPipeLine() {
 }
 
 keto::crypto::SecureVector PasswordPipeLine::generatePassword(const keto::crypto::SecureVector& password) {
+    std::lock_guard<std::mutex> guard(classMutex);
     keto::crypto::SecureVector bytes = password;
     for (ConfigurableSha256& configurableSha256: this->shas) {
         bytes = configurableSha256.process(bytes);

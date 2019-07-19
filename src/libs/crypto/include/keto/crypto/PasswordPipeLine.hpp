@@ -44,6 +44,7 @@ public:
 
     keto::crypto::SecureVector generatePassword(const keto::crypto::SecureVector& password);
 private:
+    std::mutex classMutex;
     std::vector<ConfigurableSha256> shas;
 };
 

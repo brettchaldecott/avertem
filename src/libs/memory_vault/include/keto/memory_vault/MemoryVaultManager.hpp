@@ -40,6 +40,7 @@ public:
         keto::crypto::SecureVector getSessionId();
         MemoryVaultPtr getMemoryVault(const keto::crypto::SecureVector& password);
     private:
+        std::mutex classMutex;
         keto::crypto::SecureVector sessionId;
         MemoryVaultPtr memoryVaultPtr;
         keto::crypto::PasswordPipeLinePtr passwordPipeLinePtr;
@@ -74,6 +75,7 @@ public:
 
 
 private:
+    std::mutex classMutex;
     std::map<keto::crypto::SecureVector,MemoryVaultWrapperPtr> sessions;
     MemoryVaultEncryptorPtr memoryVaultEncryptorPtr;
     std::map<std::string,MemoryVaultWrapperPtr> vaults;

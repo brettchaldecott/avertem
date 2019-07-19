@@ -33,6 +33,7 @@ keto::crypto::SecureVector MemoryVaultManager::MemoryVaultWrapper::getSessionId(
 }
 
 MemoryVaultPtr MemoryVaultManager::MemoryVaultWrapper::getMemoryVault(const keto::crypto::SecureVector& password) {
+    std::lock_guard<std::mutex> guard(classMutex);
     if (!(this->hash == this->passwordPipeLinePtr->generatePassword(password))) {
         BOOST_THROW_EXCEPTION(InvalidPasswordException());
     }
@@ -62,6 +63,7 @@ MemoryVaultManagerPtr MemoryVaultManager::getInstance() {
 
 void MemoryVaultManager::createSession(
         const vectorOfSecureVectors& sessions) {
+    std::lock_guard<std::mutex> guard(classMutex);
     this->vaults.clear();
     this->sessions.clear();
     for (keto::crypto::SecureVector vector : sessions) {
@@ -71,13 +73,14 @@ void MemoryVaultManager::createSession(
 }
 
 void MemoryVaultManager::clearSession() {
+    std::lock_guard<std::mutex> guard(classMutex);
     this->vaults.clear();
     this->sessions.clear();
 }
 
 MemoryVaultPtr MemoryVaultManager::createVault(const std::string& name,
                                   const keto::crypto::SecureVector& sessionId, const keto::crypto::SecureVector& password) {
-
+    std::lock_guard<std::mutex> guard(classMutex);
     //std::cout << "[createVault] vectors : " << Botan::hex_encode(sessionId) << std::endl;
     if (!this->sessions.count(sessionId)) {
         BOOST_THROW_EXCEPTION(InvalidSesssionException());
@@ -97,6 +100,7 @@ MemoryVaultPtr MemoryVaultManager::createVault(const std::string& name,
 }
 
 MemoryVaultPtr MemoryVaultManager::getVault(const std::string& name, const keto::crypto::SecureVector& password) {
+    std::lock_guard<std::mutex> guard(classMutex);
     if (!this->vaults.count(name)) {
         std::stringstream ss;
         ss << "Unknown vault [" << name << "] cannot retrieve it.";

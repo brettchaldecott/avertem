@@ -57,6 +57,7 @@ MemoryVaultSessionEntry::~MemoryVaultSessionEntry() {
 }
 
 keto::crypto::SecureVector MemoryVaultSessionEntry::getValue() {
+
     //auto start = std::chrono::steady_clock::now();
 
     //std::cout << "[MemoryVaultSessionEntry::getValue][" <<

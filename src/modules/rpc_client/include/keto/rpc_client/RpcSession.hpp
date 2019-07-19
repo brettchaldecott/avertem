@@ -15,6 +15,7 @@
 #define RPCSESSION_HPP
 
 #include <memory>
+#include <queue>
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/beast/websocket/ssl.hpp>
@@ -114,12 +115,18 @@ public:
     void
     on_write(boost::system::error_code ec,
             std::size_t bytes_transferred);
-    
+
+    void
+    do_read();
+
     void
     on_read(
             boost::system::error_code ec,
             std::size_t bytes_transferred);
-    
+
+    void
+    do_close();
+
     void
     on_close(boost::system::error_code ec);
     
@@ -133,22 +140,17 @@ public:
     void
     pushBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage);
     
-    void
-    on_outBoundWrite(
-            boost::system::error_code ec,
-            std::size_t bytes_transferred,
-            MultiBufferPtr multiBufferPtr);
-
     RpcPeer getPeer();
     
 private:
+    bool reading;
     std::recursive_mutex classMutex;
     tcp::resolver resolver;
     websocket::stream<boostSsl::stream<tcp::socket>> ws_;
     boost::asio::strand<
         boost::asio::io_context::executor_type> strand_;
     boost::beast::multi_buffer buffer_;
-
+    std::queue<std::shared_ptr<std::string>> queue_;
 
     //bool peered;
     RpcPeer rpcPeer;
@@ -169,9 +171,7 @@ private:
     void consensusSessionResponse(const std::string& command, const std::string& sessionKey);
     void consensusResponse(const std::string& command, const std::string& message);
     void serverRequest(const std::string& command, const std::vector<uint8_t>& message);
-    void serverRequest(MultiBufferPtr multiBufferPtr, const std::string& command, const std::vector<uint8_t>& message);
     void serverRequest(const std::string& command, const std::string& message);
-    void serverRequest(MultiBufferPtr multiBufferPtr, const std::string& command, const std::string& message);
     void peerResponse(const std::string& command, const std::string& message);
 
     // protocol methods
@@ -192,7 +192,12 @@ private:
 
     void fail(boost::system::error_code ec, const std::string& what);
     void processingFailed();
-    
+
+    void
+    send(const std::string& message);
+    void
+    sendMessage(std::shared_ptr<std::string> ss);
+    void sendFirstQueueMessage();
 };
 
 
