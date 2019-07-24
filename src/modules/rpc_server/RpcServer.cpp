@@ -414,7 +414,9 @@ public:
         }
 
         // send a message
-        send(message);
+        if (!message.empty()) {
+            send(message);
+        }
 
         // do a read and wait for more messages
         do_read();
@@ -575,6 +577,7 @@ public:
     
     std::string handlePeer(const std::string& command, const std::string& payload) {
         // first check if the external ip address has been added
+        KETO_LOG_INFO << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " get the peers for a client";
         this->rpcServer->setExternalIp(this->socket_.local_endpoint().address());
         std::vector<std::string> urls;
         keto::rpc_protocol::PeerResponseHelper peerResponseHelper;
@@ -589,12 +592,15 @@ public:
         } else {
             
             // deserialize the object
+            KETO_LOG_INFO << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " no peers were provided request a retry.";
+            return handleRetryResponse(command);
         }
         std::string result;
         peerResponseHelper.operator keto::proto::PeerResponse().SerializePartialToString(&result);
         std::stringstream ss;
         ss << keto::server_common::Constants::RPC_COMMANDS::PEERS
                 << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
+        KETO_LOG_INFO << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " return the peers to the client";
         return ss.str();
     }
     
@@ -809,7 +815,8 @@ public:
     }
 
     void sendFirstQueueMessage() {
-        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][sendFirstQueueMessage] send the message from the message buffer.";
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][sendFirstQueueMessage] send the message from the message buffer : " <<
+            keto::server_common::StringUtils(*queue_.front()).tokenize(" ")[0];
         // We are not currently writing, so send this immediately
         ws_.async_write(
                 boost::asio::buffer(*queue_.front()),

@@ -166,37 +166,35 @@ private:
     std::string buildMessage(const std::string& command, const std::vector<uint8_t>& message);
     
     // response handling
-    void helloConsensusResponse(const std::string& command, const std::string& sessionKey, const std::string& initHash);
+    std::string helloConsensusResponse(const std::string& command, const std::string& sessionKey, const std::string& initHash);
     void closeResponse(const std::string& command, const std::string& message);
-    void consensusSessionResponse(const std::string& command, const std::string& sessionKey);
-    void consensusResponse(const std::string& command, const std::string& message);
-    void serverRequest(const std::string& command, const std::vector<uint8_t>& message);
-    void serverRequest(const std::string& command, const std::string& message);
+    std::string consensusSessionResponse(const std::string& command, const std::string& sessionKey);
+    std::string consensusResponse(const std::string& command, const std::string& message);
+    std::string serverRequest(const std::string& command, const std::vector<uint8_t>& message);
+    std::string serverRequest(const std::string& command, const std::string& message);
     void peerResponse(const std::string& command, const std::string& message);
 
     // protocol methods
-    void handleProtocolCheckRequest(const std::string& command, const std::string& message);
+    std::string handleProtocolCheckRequest(const std::string& command, const std::string& message);
     void handleProtocolCheckAccept(const std::string& command, const std::string& message);
     void handleProtocolHeartbeat(const std::string& command, const std::string& message);
 
-    void registerResponse(const std::string& command, const std::string& message);
-    void requestNetworkSessionKeysResponse(const std::string& command, const std::string& message);
-    void requestNetworkMasterKeyResponse(const std::string& command, const std::string& message);
-    void requestNetworkKeysResponse(const std::string& command, const std::string& message);
+    std::string registerResponse(const std::string& command, const std::string& message);
+    std::string requestNetworkSessionKeysResponse(const std::string& command, const std::string& message);
+    std::string requestNetworkMasterKeyResponse(const std::string& command, const std::string& message);
+    std::string requestNetworkKeysResponse(const std::string& command, const std::string& message);
     void requestNetworkFeesResponse(const std::string& command, const std::string& message);
-    void handleRetryResponse(const std::string& command, const std::string& message);
-    void handleRegisterRequest(const std::string& command, const std::string& message);
-    void handleTransaction(const std::string& command, const std::string& message);
-    void handleBlock(const std::string& command, const std::string& message);
-    void handleBlockSyncResponse(const std::string& command, const std::string& message);
+    bool handleRetryResponse(const std::string& command, const std::string& message, std::string& result);
+    std::string handleRegisterRequest(const std::string& command, const std::string& message);
+    std::string handleTransaction(const std::string& command, const std::string& message);
+    std::string handleBlock(const std::string& command, const std::string& message);
+    std::string handleBlockSyncResponse(const std::string& command, const std::string& message);
 
     void fail(boost::system::error_code ec, const std::string& what);
     void processingFailed();
 
-    void
-    send(const std::string& message);
-    void
-    sendMessage(std::shared_ptr<std::string> ss);
+    void send(const std::string& message);
+    void sendMessage(std::shared_ptr<std::string> ss);
     void sendFirstQueueMessage();
 };
 
