@@ -190,18 +190,19 @@ keto::asn1::HashHelper BlockChain::getTangleHash() {
     return activeTangle->getHash();
 }
 
-void BlockChain::writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage, const BlockChainCallback& callback) {
+bool BlockChain::writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage, const BlockChainCallback& callback) {
     std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     SignedBlockWrapperMessageProtoHelper signedBlockWrapperMessageProtoHelper(signedBlockWrapperMessage);
 
     SignedBlockWrapperProtoHelperPtr signedBlockWrapperProtoHelperPtr =
             signedBlockWrapperMessageProtoHelper.getSignedBlockWrapper();
 
-    writeBlock(signedBlockWrapperProtoHelperPtr, callback);
+    bool result = writeBlock(signedBlockWrapperProtoHelperPtr, callback);
     broadcastBlock(*signedBlockWrapperProtoHelperPtr);
+    return result;
 }
 
-void BlockChain::writeBlock(const SignedBlockWrapperProtoHelperPtr& signedBlockWrapperProtoHelperPtr, const BlockChainCallback& callback) {
+bool BlockChain::writeBlock(const SignedBlockWrapperProtoHelperPtr& signedBlockWrapperProtoHelperPtr, const BlockChainCallback& callback) {
     SignedBlock& signedBlock = *signedBlockWrapperProtoHelperPtr;
 
     BlockResourcePtr resource = blockResourceManagerPtr->getResource();
@@ -218,7 +219,7 @@ void BlockChain::writeBlock(const SignedBlockWrapperProtoHelperPtr& signedBlockW
     if (rocksdb::Status::OK() == status && rocksdb::Status::NotFound() != status) {
         // ignore as the block already exists
         KETO_LOG_DEBUG << "[BlockChain::writeBlock] The block already exists in the store ignore it.";
-        return;
+        return false;
     }
 
     writeBlock(resource, signedBlock, callback);
@@ -251,10 +252,10 @@ void BlockChain::writeBlock(const SignedBlockWrapperProtoHelperPtr& signedBlockW
     nestedTransaction->Put(blockHashHelper,nestedSliceHelper);
 
     persist();
-
+    return true;
 }
 
-void BlockChain::writeBlock(const SignedBlockBuilderPtr& signedBlockBuilderPtr, const BlockChainCallback& callback) {
+bool BlockChain::writeBlock(const SignedBlockBuilderPtr& signedBlockBuilderPtr, const BlockChainCallback& callback) {
     std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     SignedBlock& signedBlock = *signedBlockBuilderPtr;
 
@@ -266,6 +267,7 @@ void BlockChain::writeBlock(const SignedBlockBuilderPtr& signedBlockBuilderPtr, 
     // handle the nested blocks
     keto::proto::NestedBlockMeta nestedBlockMeta;
     nestedBlockMeta.set_block_hash(blockChainMetaPtr->getHashId());
+    bool result = true;
     for (SignedBlockBuilderPtr nestedBlock: signedBlockBuilderPtr->getNestedBlocks()) {
         BlockChainPtr nestedPtr;
         if (nestedBlock->getParentHash() == keto::block_db::Constants::GENESIS_HASH) {
@@ -275,7 +277,9 @@ void BlockChain::writeBlock(const SignedBlockBuilderPtr& signedBlockBuilderPtr, 
         }  else {
             nestedPtr = getChildPtr(nestedBlock->getParentHash());
         }
-        nestedPtr->writeBlock(nestedBlock,callback);
+        if (!nestedPtr->writeBlock(nestedBlock,callback)) {
+            result = false;
+        }
         *nestedBlockMeta.add_nested_hashs() = nestedBlock->getHash();
     }
 
@@ -291,13 +295,13 @@ void BlockChain::writeBlock(const SignedBlockBuilderPtr& signedBlockBuilderPtr, 
 
     keto::block_db::SignedBlockWrapperProtoHelper signedBlockWrapperProtoHelper(signedBlockBuilderPtr);
     broadcastBlock(signedBlockWrapperProtoHelper);
-
+    return result;
 }
 
 
 
 
-void BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock, const BlockChainCallback& callback) {
+bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock, const BlockChainCallback& callback) {
 
     KETO_LOG_DEBUG << "[BlockChain::writeBlock]Write a new block";
     rocksdb::Transaction* blockTransaction = resource->getTransaction(Constants::BLOCKS_INDEX);
@@ -316,7 +320,7 @@ void BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
     if (rocksdb::Status::OK() == blockStatus && rocksdb::Status::NotFound() != blockStatus) {
         // ignore as the block already exists
         KETO_LOG_DEBUG << "[BlockChain::writeBlock] The block already exists in the store ignore it.";
-        return;
+        return false;
     }
 
     std::shared_ptr<keto::asn1::SerializationHelper<SignedBlock>> serializationHelperPtr =
@@ -439,7 +443,7 @@ void BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
     callback.postPersistBlock(blockChainMetaPtr->getHashId(),signedBlock);
 
     KETO_LOG_DEBUG << "[BlockChain::writeBlock] Completed writing the block : " << blockHash.getHash(keto::common::StringEncoding::HEX);
-
+    return true;
 }
 
 
@@ -483,8 +487,10 @@ bool BlockChain::processBlockSyncResponse(const keto::proto::SignedBlockBatch& s
     bool complete = true;
     KETO_LOG_DEBUG << "[BlockChain::processBlockSyncResponse] process the block : " << signedBlockBatch.blocks_size();
     for (int index = 0; index < signedBlockBatch.blocks_size(); index++) {
-        complete = false;
-        this->writeBlock(signedBlockBatch.blocks(index),callback);
+        bool write = this->writeBlock(signedBlockBatch.blocks(index),callback);
+        if (complete) {
+            complete = write;
+        }
     }
     KETO_LOG_DEBUG << "[BlockChain::processBlockSyncResponse] process the tangle block : " << signedBlockBatch.tangle_batches_size();
     for (int index = 0; index < signedBlockBatch.tangle_batches_size(); index++) {

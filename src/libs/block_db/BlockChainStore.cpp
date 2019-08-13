@@ -102,14 +102,14 @@ void BlockChainStore::applyDirtyTransaction(keto::transaction_common::Transactio
     return this->masterChain->applyDirtyTransaction(transactionMessageHelperPtr, callback);
 }
 
-void BlockChainStore::writeBlock(const SignedBlockBuilderPtr& signedBlock, const BlockChainCallback& callback) {
+bool BlockChainStore::writeBlock(const SignedBlockBuilderPtr& signedBlock, const BlockChainCallback& callback) {
     return this->masterChain->writeBlock(signedBlock,callback);
 }
 
-void BlockChainStore::writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlock, const BlockChainCallback& callback) {
+bool BlockChainStore::writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlock, const BlockChainCallback& callback) {
     if (!masterChain) {
         KETO_LOG_DEBUG << "The block chain has not been initialized yet, ignore new blocks";
-        return;
+        return false;
     }
     return this->masterChain->writeBlock(signedBlock,callback);
 }
