@@ -44,15 +44,18 @@ PeerCachePtr PeerCache::getInstance() {
 }
 
 void PeerCache::addPeer(keto::router_utils::RpcPeerHelper& rpcPeerHelper) {
+    std::lock_guard<std::mutex> guard(classMutex);
     this->entries[rpcPeerHelper.getAccountHashBytes()] = rpcPeerHelper;
 }
 
 keto::router_utils::RpcPeerHelper& PeerCache::getPeer(
         const std::vector<uint8_t>& accountHash) {
+    std::lock_guard<std::mutex> guard(classMutex);
     return this->entries[accountHash];
 }
 
 bool PeerCache::contains(const std::vector<uint8_t>& accountHash) {
+    std::lock_guard<std::mutex> guard(classMutex);
     if (this->entries.count(accountHash)) {
         return true;
     }

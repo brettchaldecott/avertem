@@ -54,6 +54,7 @@ public:
     bool contains(const std::vector<uint8_t>& accountHash);
     
 private:
+    std::mutex classMutex;
     std::map<std::vector<uint8_t>,keto::router_utils::RpcPeerHelper> entries;
 };
 

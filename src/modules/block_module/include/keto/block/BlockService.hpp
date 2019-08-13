@@ -49,6 +49,7 @@ public:
     keto::event::Event blockMessage(const keto::event::Event& event);
     keto::event::Event requestBlockSync(const keto::event::Event& event);
     keto::event::Event processBlockSyncResponse(const keto::event::Event& event);
+    keto::event::Event processRequestBlockSyncRetry(const keto::event::Event& event);
 
     keto::event::Event getAccountBlockTangle(const keto::event::Event& event);
 private:

@@ -87,6 +87,7 @@ public:
     keto::proto::AccountChainTangle getAccountBlockTangle(const keto::proto::AccountChainTangle& accountChainTangle);
 
 private:
+    std::recursive_mutex classMutex;
     bool inited;
     bool masterChain;
     std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr;

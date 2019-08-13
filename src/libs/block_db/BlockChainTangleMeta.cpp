@@ -22,11 +22,15 @@ keto::asn1::HashHelper BlockChainTangleMeta::getHash() {
 }
 
 keto::asn1::HashHelper BlockChainTangleMeta::getLastBlockHash() {
+    KETO_LOG_DEBUG << "[BlockChainTangleMeta::getLastBlockHash][" << this->hash.getHash(keto::common::StringEncoding::HEX)
+                   << "] get the last hash for [" << lastBlockHash.getHash(keto::common::StringEncoding::HEX) << "]";
     return this->lastBlockHash;
 }
 
 void BlockChainTangleMeta::setLastBlockHash(const keto::asn1::HashHelper& lastBlockHash) {
     this->blockChainMeta->updateTangleEntryByLastBlock(this->lastBlockHash,lastBlockHash);
+    KETO_LOG_DEBUG << "[BlockChainTangleMeta::setLastBlockHash][" << this->hash.getHash(keto::common::StringEncoding::HEX)
+        << "] set the last hash for [" << lastBlockHash.getHash(keto::common::StringEncoding::HEX) << "]";
     this->lastBlockHash = lastBlockHash;
 }
 

@@ -108,7 +108,7 @@ void BlockChainStore::writeBlock(const SignedBlockBuilderPtr& signedBlock, const
 
 void BlockChainStore::writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlock, const BlockChainCallback& callback) {
     if (!masterChain) {
-        std::cout << "The block chain has not been initialized yet, ignore new blocks" << std::endl;
+        KETO_LOG_DEBUG << "The block chain has not been initialized yet, ignore new blocks";
         return;
     }
     return this->masterChain->writeBlock(signedBlock,callback);
@@ -116,7 +116,7 @@ void BlockChainStore::writeBlock(const keto::proto::SignedBlockWrapperMessage& s
 
 std::vector<keto::asn1::HashHelper> BlockChainStore::getLastBlockHashs() {
     if (!masterChain) {
-        std::cout << "The block chain has not been initialized yet, ignore new blocks" << std::endl;
+        KETO_LOG_DEBUG << "The block chain has not been initialized yet, ignore new blocks";
         return std::vector<keto::asn1::HashHelper>();
     }
     return this->masterChain->getLastBlockHashs();
@@ -129,9 +129,14 @@ keto::proto::SignedBlockBatchMessage BlockChainStore::requestBlocks(const std::v
     // if the tangled hases size is zero we have to start from the genesis block
     std::vector<keto::asn1::HashHelper> hashes = tangledHashes;
     if (!hashes.size()) {
-        hashes.push_back(this->masterChain->getBlockChainMeta()->getHashId());
-    }
+        for (int index = 0; index < this->masterChain->getBlockChainMeta()->tangleCount(); index++) {
+            keto::asn1::HashHelper tangleHash = this->masterChain->getBlockChainMeta()->getTangleEntry(index)->getHash();
+            KETO_LOG_DEBUG<< "[BlockChainStore::requestBlocks][" << index << "] Client is requesting the complete chain using the starting point of :  " <<
+                          tangleHash.getHash(keto::common::StringEncoding::HEX);
+            hashes.push_back(tangleHash);
+        }
 
+    }
     return this->masterChain->requestBlocks(hashes);
 }
 

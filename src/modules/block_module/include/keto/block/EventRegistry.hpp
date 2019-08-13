@@ -50,6 +50,7 @@ public:
     static keto::event::Event setNetworkFeeInfo(const keto::event::Event& event);
     static keto::event::Event requestBlockSync(const keto::event::Event& event);
     static keto::event::Event processBlockSyncResponse(const keto::event::Event& event);
+    static keto::event::Event processRequestBlockSyncRetry(const keto::event::Event& event);
 
     static keto::event::Event getAccountBlockTangle(const keto::event::Event& event);
 

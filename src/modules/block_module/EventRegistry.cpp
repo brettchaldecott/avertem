@@ -13,6 +13,7 @@
 
 #include "keto/block/EventRegistry.hpp"
 #include "keto/block/BlockService.hpp"
+#include "keto/block/BlockSyncManager.hpp"
 
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
@@ -77,6 +78,9 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::BLOCK_DB_RESPONSE_BLOCK_SYNC,
             &keto::block::EventRegistry::processBlockSyncResponse);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::BLOCK_DB_REQUEST_BLOCK_SYNC_RETRY,
+            &keto::block::EventRegistry::processRequestBlockSyncRetry);
 
     keto::server_common::registerEventHandler (
             keto::server_common::Events::GET_ACCOUNT_TANGLE,
@@ -88,6 +92,8 @@ void EventRegistry::deregisterEventHandlers() {
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::GET_ACCOUNT_TANGLE);
 
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::BLOCK_DB_REQUEST_BLOCK_SYNC_RETRY);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::BLOCK_DB_RESPONSE_BLOCK_SYNC);
     keto::server_common::deregisterEventHandler (
@@ -171,6 +177,10 @@ keto::event::Event EventRegistry::requestBlockSync(const keto::event::Event& eve
 
 keto::event::Event EventRegistry::processBlockSyncResponse(const keto::event::Event& event) {
     return BlockService::getInstance()->processBlockSyncResponse(event);
+}
+
+keto::event::Event EventRegistry::processRequestBlockSyncRetry(const keto::event::Event& event) {
+    return BlockService::getInstance()->processRequestBlockSyncRetry(event);
 }
 
 keto::event::Event EventRegistry::getAccountBlockTangle(const keto::event::Event& event) {

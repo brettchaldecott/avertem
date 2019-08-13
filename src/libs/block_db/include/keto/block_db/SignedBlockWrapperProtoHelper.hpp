@@ -56,7 +56,7 @@ public:
 
     SignedBlockWrapperProtoHelper& operator = (const std::string& asn1Block);
 
-
+    void loadSignedBlock();
 private:
     keto::proto::SignedBlockWrapper signedBlockWrapper;
     SignedBlock_t* signedBlock;
@@ -65,7 +65,7 @@ private:
     void populateSignedBlockWrapper(keto::proto::SignedBlockWrapper& signedBlockWrapper,
                                     const keto::block_db::SignedBlockBuilderPtr& signedBlockBuilderPtr);
 
-    void loadSignedBlock();
+
 };
 
 

@@ -20,6 +20,7 @@
 #include <keto/block_db/MerkleUtils.hpp>
 
 #include "keto/block/BlockProducer.hpp"
+#include "keto/block/BlockSyncManager.hpp"
 
 #include "keto/common/Log.hpp"
 
@@ -248,6 +249,7 @@ BlockProducer::State BlockProducer::checkState() {
     return this->currentState;
 }
 
+
 std::deque<keto::proto::Transaction> BlockProducer::getTransactions() {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
 
@@ -361,9 +363,13 @@ void BlockProducer::load() {
 
 void BlockProducer::sync() {
     try {
-        keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
-        BlockService::getInstance()->sync();
-        transactionPtr->commit();
+        while (this->getState()  == BlockProducer::State::sync_blocks &&
+            BlockSyncManager::getInstance()->getStatus() != BlockSyncManager::COMPLETE) {
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+            keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
+            BlockService::getInstance()->sync();
+            transactionPtr->commit();
+        }
     } catch (keto::common::Exception& ex) {
         KETO_LOG_ERROR << "[BlockProducer::sync]Failed to sync : " << ex.what();
         KETO_LOG_ERROR << "[BlockProducer::sync]Cause : " << boost::diagnostic_information(ex,true);

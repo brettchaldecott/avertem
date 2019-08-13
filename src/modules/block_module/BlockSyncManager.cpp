@@ -47,33 +47,44 @@ std::time_t BlockSyncManager::getStartTime() {
 
 void BlockSyncManager::sync() {
     KETO_LOG_INFO << "[BlockSyncManager::sync] start of the sync";
-    if (this->status == WAIT && !isExpired()) {
+    if (!isExpired()) {
+        KETO_LOG_INFO << "[BlockSyncManager::sync] the timeout has not been reached yet [" << this->startTime << "][" <<
+            time(0) << "]";
+        return;
+    } else if (getStatus() == COMPLETE) {
+        KETO_LOG_INFO << "[BlockSyncManager::sync] the processing is now complete ignore further sync requests";
         return;
     }
-    if (!this->tangleHashes.size()) {
+    //if (!this->tangleHashes.size()) {
         KETO_LOG_INFO << "[BlockSyncManager::sync] attempt to get the last block hash";
         this->tangleHashes = keto::block_db::BlockChainStore::getInstance()->getLastBlockHashs();
-    }
-    KETO_LOG_INFO << "[BlockSyncManager::sync] loop through the signed blocks";
+    //}
+    KETO_LOG_DEBUG << "[BlockSyncManager::sync] loop through the signed blocks : " << this->tangleHashes.size();
     keto::block_db::SignedBlockBatchRequestProtoHelper signedBlockBatchRequestProtoHelper;
     for (keto::asn1::HashHelper hash: this->tangleHashes) {
+        KETO_LOG_DEBUG << "[BlockSyncManager::sync] add the block hash to the list : " << hash.getHash(keto::common::HEX);
         signedBlockBatchRequestProtoHelper.addHash(hash);
     }
 
-    KETO_LOG_INFO << "[BlockSyncManager::sync] make the block sync request";
+    KETO_LOG_DEBUG << "[BlockSyncManager::sync] make the block sync request";
     keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::SignedBlockBatchRequest>(
             keto::server_common::Events::RPC_CLIENT_REQUEST_BLOCK_SYNC,signedBlockBatchRequestProtoHelper));
 
-    KETO_LOG_INFO << "[BlockSyncManager::sync] reset the start time for the sync";
+    KETO_LOG_DEBUG << "[BlockSyncManager::sync] reset the start time for the sync";
     this->startTime = time(0);
 }
 
 keto::proto::SignedBlockBatchMessage  BlockSyncManager::requestBlocks(const keto::proto::SignedBlockBatchRequest& signedBlockBatchRequest) {
     keto::block_db::SignedBlockBatchRequestProtoHelper signedBlockBatchRequestProtoHelper(signedBlockBatchRequest);
     std::vector<keto::asn1::HashHelper> tangledHashes;
+    KETO_LOG_DEBUG<< "[BlockSyncManager::requestBlocks]" << " Request blocks : " << signedBlockBatchRequestProtoHelper.hashCount();
     for (int index = 0; index < signedBlockBatchRequestProtoHelper.hashCount(); index++) {
+        KETO_LOG_DEBUG<< "[BlockSyncManager::requestBlocks]" << " Request block sync for the following block  : " <<
+            signedBlockBatchRequestProtoHelper.getHash(index).getHash(keto::common::HEX);
         tangledHashes.push_back(signedBlockBatchRequestProtoHelper.getHash(index));
     }
+
+
     return keto::block_db::BlockChainStore::getInstance()->requestBlocks(tangledHashes);
 }
 
@@ -88,12 +99,20 @@ keto::proto::MessageWrapperResponse  BlockSyncManager::processBlockSyncResponse(
         KETO_LOG_INFO << "[BlockProducer::setState]" << " ########################################################";
 
     } else {
+        KETO_LOG_DEBUG << "[BlockSyncManager::processBlockSyncResponse] finished process need to trigger the next request.";
         response.set_result("applied");
+        this->startTime = 0;
     }
     response.set_success(true);
 
     return response;
 
+}
+
+void
+BlockSyncManager::processRequestBlockSyncRetry() {
+    KETO_LOG_DEBUG << "[BlockSyncManager::processRequestBlockSyncRetry] trigger the retry by resetting the start time";
+    this->startTime =0;
 }
 
 

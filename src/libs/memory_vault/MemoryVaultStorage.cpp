@@ -55,10 +55,10 @@ void MemoryVaultStorage::setEntry(const keto::crypto::SecureVector& id,
               const byteVector bytes) {
     std::lock_guard<std::mutex> guard(this->classMutex);
     if (this->store.count(id)) {
-        std::cout << "[MemoryVaultStorage][setEntry] Increment the reference count for [" << Botan::hex_encode(id) << "]" << std::endl;
+        KETO_LOG_INFO << "[MemoryVaultStorage][setEntry] Increment the reference count for [" << Botan::hex_encode(id) << "]";
         this->store[id]->incrementRefCount();
     } else {
-        std::cout << "[MemoryVaultStorage][setEntry] Add the entry [" << Botan::hex_encode(id) << "][" << this->store.count(id) << "]" << std::endl;
+        KETO_LOG_INFO << "[MemoryVaultStorage][setEntry] Add the entry [" << Botan::hex_encode(id) << "][" << this->store.count(id) << "]";
         this->store[id] = MemoryVaultStorageEntryPtr(new MemoryVaultStorageEntry(bytes));
     }
 
@@ -80,7 +80,7 @@ byteVector MemoryVaultStorage::getEntry(const keto::crypto::SecureVector& id) {
 
 void MemoryVaultStorage::removeEntry(const keto::crypto::SecureVector& id) {
     std::lock_guard<std::mutex> guard(this->classMutex);
-    std::cout << "[MemoryVaultStorage][removeEntry] Remove the entry [" << Botan::hex_encode(id) << "]" << std::endl;
+    KETO_LOG_INFO << "[MemoryVaultStorage][removeEntry] Remove the entry [" << Botan::hex_encode(id) << "]";
     if (!this->store.count(id)) {
         return;
     }

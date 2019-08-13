@@ -191,7 +191,7 @@ private:
     std::string handleBlockSyncResponse(const std::string& command, const std::string& message);
 
     void fail(boost::system::error_code ec, const std::string& what);
-    void processingFailed();
+    void processingFailed(const std::string& command);
 
     void send(const std::string& message);
     void sendMessage(std::shared_ptr<std::string> ss);

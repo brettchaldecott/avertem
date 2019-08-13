@@ -397,19 +397,16 @@ public:
             KETO_LOG_INFO << "[RpcServer][" << getAccount() << "] processed the command : " << command;
             transactionPtr->commit();
         } catch (keto::common::Exception& ex) {
-            KETO_LOG_ERROR << "[RpcServer][on_read] Failed to handle the request on the server [keto::common::Exception]: " << boost::diagnostic_information(ex,true);
-            KETO_LOG_ERROR << "[RpcServer][on_read] Cause: " << boost::diagnostic_information(ex,true);
+            KETO_LOG_ERROR << "[RpcServer][on_read][" << getAccount() << "] Failed to handle the request [" << command << "] on the server [keto::common::Exception]: " << boost::diagnostic_information(ex,true);
             message = handleRetryResponse(command);
         } catch (boost::exception& ex) {
-            KETO_LOG_ERROR << "[RpcServer][on_read] Failed to handle the request on the server [boost::exception]: " << boost::diagnostic_information(ex,true);
-            KETO_LOG_ERROR << "[RpcServer][on_read] Failed to process because : " << boost::diagnostic_information(ex,true);
+            KETO_LOG_ERROR << "[RpcServer][on_read][" << getAccount() << "] Failed to handle the request [" << command << "]on the server [boost::exception]: " << boost::diagnostic_information(ex,true);
             message = handleRetryResponse(command);
         } catch (std::exception& ex) {
-            KETO_LOG_ERROR << "[RpcServer][on_read] Failed to handle the request on the server [std::exception]: " << ex.what();
-
+            KETO_LOG_ERROR << "[RpcServer][on_read][" << getAccount() << "] Failed to handle the request [" << command << "] on the server [std::exception]: " << ex.what();
             message = handleRetryResponse(command);
         } catch (...) {
-            KETO_LOG_ERROR << "[RpcServer][on_read] Failed to handle the request on the server [...]: unknown " << std::endl;
+            KETO_LOG_ERROR << "[RpcServer][on_read][" << getAccount() << "] Failed to handle the request [" << command << "] on the server [...]: unknown";
             message = handleRetryResponse(command);
         }
 

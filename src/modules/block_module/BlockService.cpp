@@ -111,6 +111,15 @@ void BlockService::sync() {
 }
 
 keto::event::Event BlockService::persistBlockMessage(const keto::event::Event& event) {
+    if (BlockSyncManager::getInstance()->getStatus() != BlockSyncManager::COMPLETE) {
+        KETO_LOG_DEBUG << "[BlockService::persistBlockMessage]" << "Block sync is not complete ignore block.";
+        keto::proto::MessageWrapperResponse response;
+        response.set_success(true);
+        response.set_result("ignored");
+
+        return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
+    }
+
     keto::proto::SignedBlockWrapperMessage signedBlockWrapperMessage =
             keto::server_common::fromEvent<keto::proto::SignedBlockWrapperMessage>(event);
     keto::block_db::BlockChainStore::getInstance()->writeBlock(signedBlockWrapperMessage,BlockChainCallbackImpl());
@@ -195,6 +204,11 @@ keto::event::Event BlockService::processBlockSyncResponse(const keto::event::Eve
     return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(
             BlockSyncManager::getInstance()->processBlockSyncResponse(
                     keto::server_common::fromEvent<keto::proto::SignedBlockBatchMessage>(event)));
+}
+
+keto::event::Event BlockService::processRequestBlockSyncRetry(const keto::event::Event& event) {
+    BlockSyncManager::getInstance()->processRequestBlockSyncRetry();
+    return event;
 }
 
 keto::event::Event BlockService::getAccountBlockTangle(const keto::event::Event& event) {
