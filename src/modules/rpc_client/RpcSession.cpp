@@ -152,7 +152,8 @@ void RpcSession::processingFailed(const std::string& command)
 
         // Read a message into our buffer
         do_close();
-    } else if (command == keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST) {
+    } else if (command == keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST ||
+        command == keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_RESPONSE) {
         keto::proto::MessageWrapper messageWrapper;
         keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
                 keto::server_common::Events::BLOCK_DB_REQUEST_BLOCK_SYNC_RETRY,messageWrapper));
@@ -747,7 +748,12 @@ bool RpcSession::handleRetryResponse(const std::string& command, const std::stri
         // Read a message into our buffer
         do_close();
         close = true;
-    } else {
+    }  else if (command == keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST ||
+                command == keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_RESPONSE) {
+        keto::proto::MessageWrapper messageWrapper;
+        keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
+                keto::server_common::Events::BLOCK_DB_REQUEST_BLOCK_SYNC_RETRY,messageWrapper));
+    }else {
         KETO_LOG_INFO << "Ignore as no retry is required";
         KETO_LOG_INFO << this->sessionNumber << ": Setup connection for read : " << command << std::endl;
     }

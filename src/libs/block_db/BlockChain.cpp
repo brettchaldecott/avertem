@@ -222,7 +222,7 @@ bool BlockChain::writeBlock(const SignedBlockWrapperProtoHelperPtr& signedBlockW
         return false;
     }
 
-    writeBlock(resource, signedBlock, callback);
+    bool result = writeBlock(resource, signedBlock, callback);
 
     rocksdb::Transaction* nestedTransaction = resource->getTransaction(Constants::NESTED_INDEX);
 
@@ -239,7 +239,10 @@ bool BlockChain::writeBlock(const SignedBlockWrapperProtoHelperPtr& signedBlockW
         }  else {
             childPtr = getChildPtr(signedNestedBlock->getParentHash());
         }
-        childPtr->writeBlock(signedNestedBlock,callback);
+        bool childResult = childPtr->writeBlock(signedNestedBlock,callback);
+        if (result) {
+            result = childResult;
+        }
         *nestedBlockMeta.add_nested_hashs() = signedNestedBlock->getHash();
     }
 
@@ -252,7 +255,7 @@ bool BlockChain::writeBlock(const SignedBlockWrapperProtoHelperPtr& signedBlockW
     nestedTransaction->Put(blockHashHelper,nestedSliceHelper);
 
     persist();
-    return true;
+    return result;
 }
 
 bool BlockChain::writeBlock(const SignedBlockBuilderPtr& signedBlockBuilderPtr, const BlockChainCallback& callback) {
