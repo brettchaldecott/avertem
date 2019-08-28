@@ -67,6 +67,9 @@
 #include "keto/server_common/TransactionHelper.hpp"
 #include "keto/transaction_common/MessageWrapperProtoHelper.hpp"
 
+#include "keto/election_common/ElectionPeerMessageProtoHelper.hpp"
+#include "keto/election_common/ElectionResultMessageProtoHelper.hpp"
+
 namespace keto {
 namespace rpc_client {
 
@@ -418,6 +421,11 @@ RpcSession::on_read(
             handleProtocolCheckAccept(command,stringVector[1]);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_HEARTBEAT) == 0) {
             handleProtocolHeartbeat(command,stringVector[1]);
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_REQUEST) == 0) {
+            handleElectionRequest(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_REQUEST, stringVector[1]);
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE) == 0) {
+            handleElectionResponse(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE, stringVector[1]);
+            return;
         }
         transactionPtr->commit();
     } catch (keto::common::Exception& ex) {
@@ -459,6 +467,14 @@ RpcSession::do_close() {
 void
 RpcSession::on_close(boost::system::error_code ec)
 {
+    if (this->rpcPeer.getPeered()) {
+        keto::router_utils::RpcPeerHelper rpcPeerHelper;
+        rpcPeerHelper.setAccountHash(this->accountHash);
+        keto::server_common::triggerEvent(
+                keto::server_common::toEvent<keto::proto::RpcPeer>(
+                        keto::server_common::Events::DEREGISTER_RPC_PEER,rpcPeerHelper));
+    }
+
     if(ec)
         return fail(ec, "close");
     // If we get here then the connection is closed gracefully
@@ -634,6 +650,32 @@ void RpcSession::handleProtocolHeartbeat(const std::string& command, const std::
     keto::software_consensus::ConsensusSessionManager::getInstance()->initNetworkHeartbeat(protocolHeartbeatMessage);
 }
 
+void RpcSession::handleElectionRequest(const std::string& command, const std::string& message) {
+    keto::election_common::ElectionPeerMessageProtoHelper electionPeerMessageProtoHelper(
+            keto::server_common::VectorUtils().copyVectorToString(
+                    Botan::hex_decode(message)));
+
+    keto::election_common::ElectionResultMessageProtoHelper electionResultMessageProtoHelper(
+            keto::server_common::fromEvent<keto::proto::ElectionResultMessage>(
+            keto::server_common::processEvent(
+                    keto::server_common::toEvent<keto::proto::ElectionPeerMessage>(
+                            keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_REQUEST,electionPeerMessageProtoHelper))));
+
+    std::string result = electionResultMessageProtoHelper;
+    serverRequest(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE,
+                         Botan::hex_encode((uint8_t*)result.data(),result.size(),true));
+}
+
+void RpcSession::handleElectionResponse(const std::string& command, const std::string& message) {
+    keto::election_common::ElectionResultMessageProtoHelper electionResultMessageProtoHelper(
+            keto::server_common::VectorUtils().copyVectorToString(
+                    Botan::hex_decode(message)));
+
+    keto::server_common::triggerEvent(
+            keto::server_common::toEvent<keto::proto::ElectionResultMessage>(
+                    keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_RESPONSE,electionResultMessageProtoHelper));
+}
+
 
 std::string RpcSession::registerResponse(const std::string& command, const std::string& message) {
     keto::router_utils::RpcPeerHelper rpcPeerHelper;
@@ -748,11 +790,13 @@ bool RpcSession::handleRetryResponse(const std::string& command, const std::stri
         // Read a message into our buffer
         do_close();
         close = true;
-    }  else if (command == keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST ||
-                command == keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_RESPONSE) {
+    }  else if (message == keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST ||
+            message == keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_RESPONSE) {
+        KETO_LOG_INFO << "[RpcSession::handleRetryResponse]Process the retry of a sync request";
         keto::proto::MessageWrapper messageWrapper;
         keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
                 keto::server_common::Events::BLOCK_DB_REQUEST_BLOCK_SYNC_RETRY,messageWrapper));
+        KETO_LOG_INFO << "[RpcSession::handleRetryResponse]After handling the retry of a sync request";
     }else {
         KETO_LOG_INFO << "Ignore as no retry is required";
         KETO_LOG_INFO << this->sessionNumber << ": Setup connection for read : " << command << std::endl;
@@ -789,12 +833,25 @@ void RpcSession::pushBlock(const keto::proto::SignedBlockWrapperMessage& signedB
     std::vector<uint8_t> messageBytes =  keto::server_common::VectorUtils().copyStringToVector(
             messageWrapperStr);
 
-    MultiBufferPtr multiBufferPtr(new boost::beast::multi_buffer());
     send(serverRequest(keto::server_common::Constants::RPC_COMMANDS::BLOCK,
                   messageBytes));
     KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::pushBlock]: ";
 }
 
+
+void
+RpcSession::electBlockProducer() {
+    KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::electBlockProducer]: call the block producer";
+    keto::election_common::ElectionPeerMessageProtoHelper electionPeerMessageProtoHelper;
+    electionPeerMessageProtoHelper.setAccount(keto::server_common::ServerInfo::getInstance()->getAccountHash());
+
+    std::vector<uint8_t> messageBytes =  keto::server_common::VectorUtils().copyStringToVector(
+            electionPeerMessageProtoHelper);
+
+    send(serverRequest(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_REQUEST,
+                       messageBytes));
+    KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::electBlockProducer]: call the block ";
+}
 
 RpcPeer RpcSession::getPeer() {
     return this->rpcPeer;

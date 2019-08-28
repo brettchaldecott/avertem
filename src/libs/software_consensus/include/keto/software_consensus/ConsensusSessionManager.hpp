@@ -53,7 +53,7 @@ public:
     void notifyAccepted();
     bool resetProtocolCheck();
     void notifyProtocolCheck(bool master = false);
-    void initNetworkHeartbeat(int networkSlot);
+    void initNetworkHeartbeat(int networkSlot, int electionSlot, int electionPublishSlot, int confirmationSlot);
     void initNetworkHeartbeat(const keto::proto::ProtocolHeartbeatMessage& msg);
 
 private:

@@ -43,7 +43,7 @@ public:
     virtual ~PrivateKeyHelper();
     
     PrivateKeyHelper& setKey(const BerEncodingHelper& key);
-    BerEncodingHelper getKey();
+    BerEncodingHelper getKey() const;
     
     PrivateKeyHelper& operator=(const PrivateKey_t* privateKey);
     PrivateKeyHelper& operator=(const PrivateKey_t& privateKey);

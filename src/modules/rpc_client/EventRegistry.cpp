@@ -72,6 +72,10 @@ keto::event::Event EventRegistry::consensusHeartbeat(const keto::event::Event& e
     return event;
 }
 
+keto::event::Event EventRegistry::electBlockProducer(const keto::event::Event& event) {
+    return RpcSessionManager::getInstance()->electBlockProducer(event);
+}
+
 void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::CONSENSUS::RPC_CLIENT,
@@ -98,6 +102,10 @@ void EventRegistry::registerEventHandlers() {
             keto::server_common::Events::RPC_CLIENT_BLOCK,
             &keto::rpc_client::EventRegistry::pushBlock);
 
+    // election methods
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_CLIENT,
+            &keto::rpc_client::EventRegistry::electBlockProducer);
 }
 
 void EventRegistry::deregisterEventHandlers() {
@@ -117,6 +125,10 @@ void EventRegistry::deregisterEventHandlers() {
             keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::RPC_CLIENT);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::CONSENSUS_SESSION_CHECK::RPC_CLIENT);
+
+    // election methods
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_CLIENT);
 }
 
 }

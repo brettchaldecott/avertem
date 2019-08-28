@@ -81,6 +81,8 @@ public:
     keto::event::Event performNetworkSessionReset(const keto::event::Event& event);
     keto::event::Event performProtocoCheck(const keto::event::Event& event);
     keto::event::Event performConsensusHeartbeat(const keto::event::Event& event);
+    keto::event::Event electBlockProducer(const keto::event::Event& event);
+
 protected:
     keto::crypto::SecureVector getSecret();
     void setExternalIp(

@@ -99,6 +99,15 @@ public:
         static const char* PROTOCOL_CHECK_RESPONSE;
         static const char* PROTOCOL_CHECK_ACCEPT;
         static const char* PROTOCOL_HEARTBEAT;
+
+        static const char* ELECT_NODE_REQUEST;
+        static const char* ELECT_NODE_RESPONSE;
+    };
+
+    class ELECTION {
+    public:
+        static const int ELECTOR_COUNT;
+
     };
     
 private:

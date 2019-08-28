@@ -75,7 +75,7 @@ PrivateKeyHelper& PrivateKeyHelper::setKey(const BerEncodingHelper& key) {
     return (*this);
 }
 
-BerEncodingHelper PrivateKeyHelper::getKey() {
+BerEncodingHelper PrivateKeyHelper::getKey() const {
     return this->privateKey->key;
 }
 

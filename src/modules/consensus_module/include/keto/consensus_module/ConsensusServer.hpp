@@ -55,7 +55,10 @@ private:
     int netwokSessionLength;
     int netwokProtocolDelay;
     int networkHeartbeatDelay;
-    int networkHeartbeatSlot;
+    int networkHeartbeatCurrentSlot;
+    int networkHeartbeatElectionSlot;
+    int networkHeartbeatElectionPublishSlot;
+    int networkHeartbeatConfirmationSlot;
 
     void internalConsensusInit(const keto::crypto::SecureVector& initHash);
     void internalConsensusProtocolCheck(const keto::crypto::SecureVector& initHash);

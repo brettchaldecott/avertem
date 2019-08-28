@@ -54,6 +54,64 @@ public:
         void clearCache();
     };
 
+    class TangleManagerInterface {
+    public:
+        virtual void addTangle(const keto::asn1::HashHelper& tangle) = 0;
+        virtual std::vector<keto::asn1::HashHelper> getActiveTangles() = 0;
+        virtual void setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles) = 0;
+        //virtual keto::asn1::HashHelper getTangleHash() = 0;
+        virtual keto::asn1::HashHelper getParentHash() = 0;
+        //virtual keto::asn1::HashHelper selectParentHashByLastBlockHash(const keto::asn1::HashHelper& id) = 0;
+        virtual keto::asn1::HashHelper selectParentHash() = 0;
+        virtual void setCurrentTangle(const keto::asn1::HashHelper& tangle) = 0;
+    };
+    typedef std::shared_ptr<TangleManagerInterface> TangleManagerInterfacePtr;
+
+    class MasterTangleManager : public TangleManagerInterface {
+    public:
+        MasterTangleManager(const BlockChainMetaPtr& blockChainMetaPtr);
+        MasterTangleManager(const MasterTangleManager& orig) = delete;
+        virtual ~MasterTangleManager();
+
+        virtual void addTangle(const keto::asn1::HashHelper& tangle);
+        virtual std::vector<keto::asn1::HashHelper> getActiveTangles();
+        virtual void setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles);
+        //virtual keto::asn1::HashHelper getTangleHash();
+        virtual keto::asn1::HashHelper getParentHash();
+        //virtual keto::asn1::HashHelper selectParentHashByLastBlockHash(const keto::asn1::HashHelper& id);
+        virtual keto::asn1::HashHelper selectParentHash();
+        virtual void setCurrentTangle(const keto::asn1::HashHelper& tangle);
+
+    private:
+        BlockChainMetaPtr blockChainMetaPtr;
+        std::map<std::vector<uint8_t>,BlockChainTangleMetaPtr> activeTangles;
+        BlockChainTangleMetaPtr currentTangle;
+
+
+    };
+
+    class NestedTangleManager : public TangleManagerInterface {
+    public:
+        NestedTangleManager(const BlockChainMetaPtr& blockChainMetaPtr);
+        NestedTangleManager(const NestedTangleManager& orig) = delete;
+        virtual ~NestedTangleManager();
+
+        virtual void addTangle(const keto::asn1::HashHelper& tangle);
+        virtual std::vector<keto::asn1::HashHelper> getActiveTangles();
+        virtual void setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles);
+        //virtual keto::asn1::HashHelper getTangleHash();
+        virtual keto::asn1::HashHelper getParentHash();
+        //virtual keto::asn1::HashHelper selectParentHashByLastBlockHash(const keto::asn1::HashHelper& id);
+        virtual keto::asn1::HashHelper selectParentHash();
+        virtual void setCurrentTangle(const keto::asn1::HashHelper& tangle);
+
+    private:
+        BlockChainMetaPtr blockChainMetaPtr;
+        BlockChainTangleMetaPtr activeTangle;
+
+
+    };
+
     friend class BlockChainStore;
 
     static std::string getHeaderVersion() {
@@ -68,6 +126,7 @@ public:
     void applyDirtyTransaction(keto::transaction_common::TransactionMessageHelperPtr& transactionMessageHelperPtr, const BlockChainCallback& callback);
     bool writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockBuilder, const BlockChainCallback& callback);
     bool writeBlock(const SignedBlockBuilderPtr& signedBlockBuilderPtr, const BlockChainCallback& callback);
+
     keto::asn1::HashHelper getParentHash();
     keto::asn1::HashHelper getParentHash(const keto::asn1::HashHelper& transactionHash);
     BlockChainMetaPtr getBlockChainMeta();
@@ -85,6 +144,12 @@ public:
     bool processBlockSyncResponse(const keto::proto::SignedBlockBatch& signedBlockBatch, const BlockChainCallback& callback);
 
     keto::proto::AccountChainTangle getAccountBlockTangle(const keto::proto::AccountChainTangle& accountChainTangle);
+    bool getAccountTangle(const keto::asn1::HashHelper& accountHash, keto::asn1::HashHelper& tangeHash);
+
+    std::vector<keto::asn1::HashHelper> getActiveTangles();
+    void setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles);
+    void setCurrentTangle(const keto::asn1::HashHelper& tangle);
+
 
 private:
     std::recursive_mutex classMutex;
@@ -93,7 +158,8 @@ private:
     std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr;
     BlockResourceManagerPtr blockResourceManagerPtr;
     BlockChainMetaPtr blockChainMetaPtr;
-    BlockChainTangleMetaPtr activeTangle;
+    TangleManagerInterfacePtr tangleManagerInterfacePtr;
+    //BlockChainTangleMetaPtr activeTangle;
     std::vector<BlockChainPtr> sideChains;
 
 
@@ -102,9 +168,9 @@ private:
     BlockChain(std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr,
                BlockResourceManagerPtr blockResourceManagerPtr,const std::vector<uint8_t>& id);
 
-    keto::asn1::HashHelper selectParentHash();
-    keto::asn1::HashHelper selectParentHashByLastBlockHash(const keto::asn1::HashHelper& id);
-    keto::asn1::HashHelper getTangleHash();
+    //keto::asn1::HashHelper selectParentHash();
+    //keto::asn1::HashHelper selectParentHashByLastBlockHash(const keto::asn1::HashHelper& id);
+    //keto::asn1::HashHelper getTangleHash();
 
     void load(const std::vector<uint8_t>& id);
     void persist();
@@ -120,6 +186,8 @@ private:
 
     keto::proto::SignedBlockBatch getBlockBatch(keto::asn1::HashHelper hash, BlockResourcePtr resource);
     keto::proto::SignedBlockWrapper getBlock(keto::asn1::HashHelper hash, BlockResourcePtr resource);
+
+    bool accountExists(const keto::asn1::HashHelper& accountHash);
 };
 
 }

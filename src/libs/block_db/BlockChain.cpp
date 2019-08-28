@@ -72,6 +72,140 @@ void BlockChain::BlockChainCache::clearCache() {
     transactionIdBlockChainMap.clear();
 }
 
+
+BlockChain::MasterTangleManager::MasterTangleManager(const BlockChainMetaPtr& blockChainMetaPtr) : blockChainMetaPtr(blockChainMetaPtr) {
+
+}
+
+BlockChain::MasterTangleManager::~MasterTangleManager() {
+
+}
+
+void BlockChain::MasterTangleManager::addTangle(const keto::asn1::HashHelper& tangle) {
+    this->activeTangles[tangle] = this->blockChainMetaPtr->getTangleEntry(tangle);
+}
+
+std::vector<keto::asn1::HashHelper> BlockChain::MasterTangleManager::getActiveTangles() {
+    std::vector<keto::asn1::HashHelper> keys;
+    std::transform(
+            this->activeTangles.begin(),
+            this->activeTangles.end(),
+            std::back_inserter(keys),
+            [](const std::map<std::vector<uint8_t>,BlockChainTangleMetaPtr>::value_type
+               &pair){return pair.first;});
+    return keys;
+}
+
+void BlockChain::MasterTangleManager::setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles) {
+    this->activeTangles.clear();
+    for (keto::asn1::HashHelper tangle : tangles) {
+        addTangle(tangle);
+    }
+}
+
+//keto::asn1::HashHelper BlockChain::MasterTangleManager::getTangleHash() {
+//    if (this->currentTangle) {
+//        return this->currentTangle->getHash();
+//    }
+//    BOOST_THROW_EXCEPTION(keto::block_db::MasterTangleNotConfiguredException());
+//}
+
+keto::asn1::HashHelper BlockChain::MasterTangleManager::getParentHash() {
+    if (this->currentTangle) {
+        return this->currentTangle->getLastBlockHash();
+    }
+    BOOST_THROW_EXCEPTION(keto::block_db::MasterTangleNotConfiguredException("The required current tangle has not been configured"));
+}
+
+//keto::asn1::HashHelper BlockChain::MasterTangleManager::selectParentHashByLastBlockHash(const keto::asn1::HashHelper& id) {
+//    BlockChainTangleMetaPtr tangle =
+//        this->blockChainMetaPtr->getTangleEntryByLastBlock(id);
+//    if (!tangle) {
+//        BOOST_THROW_EXCEPTION(keto::block_db::InvalidLastBlockHashException());
+//    }
+//    return tangle->getHash();
+//}
+
+keto::asn1::HashHelper BlockChain::MasterTangleManager::selectParentHash() {
+    if (this->currentTangle) {
+        return this->currentTangle->getLastBlockHash();
+    }
+    BOOST_THROW_EXCEPTION(keto::block_db::MasterTangleNotConfiguredException("The required current tangle has not been configured"));
+}
+
+void BlockChain::MasterTangleManager::setCurrentTangle(const keto::asn1::HashHelper& tangle) {
+    this->currentTangle = this->activeTangles[tangle];
+}
+
+//
+// The nested tangles
+//
+//
+BlockChain::NestedTangleManager::NestedTangleManager(const BlockChainMetaPtr& blockChainMetaPtr) : blockChainMetaPtr(blockChainMetaPtr) {
+
+}
+
+BlockChain::NestedTangleManager::~NestedTangleManager() {
+
+}
+
+void BlockChain::NestedTangleManager::addTangle(const keto::asn1::HashHelper& tangle) {
+    // do nothing
+}
+
+std::vector<keto::asn1::HashHelper> BlockChain::NestedTangleManager::getActiveTangles() {
+    return std::vector<keto::asn1::HashHelper>();
+}
+
+void BlockChain::NestedTangleManager::setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles) {
+
+}
+
+//keto::asn1::HashHelper BlockChain::NestedTangleManager::getTangleHash() {
+//    if (activeTangle) {
+//        return activeTangle->getLastBlockHash();
+//    }
+//    activeTangle = this->blockChainMetaPtr->selectTangleEntry();
+//    if (!activeTangle) {
+//        return keto::asn1::HashHelper();
+//    }
+//    return activeTangle->getHash();
+//}
+
+keto::asn1::HashHelper BlockChain::NestedTangleManager::getParentHash() {
+    if (!this->activeTangle) {
+        return selectParentHash();
+    }
+    return this->activeTangle->getLastBlockHash();
+}
+
+//keto::asn1::HashHelper BlockChain::NestedTangleManager::selectParentHashByLastBlockHash(const keto::asn1::HashHelper& id) {
+//    this->activeTangle =
+//            this->blockChainMetaPtr->getTangleEntryByLastBlock(id);
+//    if (!this->activeTangle) {
+//        BOOST_THROW_EXCEPTION(keto::block_db::InvalidLastBlockHashException());
+//    }
+//    return this->activeTangle->getHash();
+//}
+
+keto::asn1::HashHelper BlockChain::NestedTangleManager::selectParentHash() {
+    if (activeTangle) {
+        return activeTangle->getLastBlockHash();
+    }
+    activeTangle = this->blockChainMetaPtr->selectTangleEntry();
+    if (!activeTangle) {
+        return keto::asn1::HashHelper();
+    }
+    return activeTangle->getLastBlockHash();
+}
+
+
+void BlockChain::NestedTangleManager::setCurrentTangle(const keto::asn1::HashHelper& tangle) {
+
+}
+
+
+
 std::string BlockChain::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
@@ -106,10 +240,7 @@ void BlockChain::applyDirtyTransaction(keto::transaction_common::TransactionMess
 
 
 keto::asn1::HashHelper BlockChain::getParentHash() {
-    if (!this->activeTangle) {
-        return selectParentHash();
-    }
-    return this->activeTangle->getLastBlockHash();
+    return this->tangleManagerInterfacePtr->getParentHash();
 }
 
 keto::asn1::HashHelper BlockChain::getParentHash(const keto::asn1::HashHelper& transactionHash) {
@@ -159,36 +290,17 @@ BlockChain::BlockChain(std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr,
     load(id);
 }
 
-keto::asn1::HashHelper BlockChain::selectParentHash() {
-    if (activeTangle) {
-        return activeTangle->getLastBlockHash();
-    }
-    activeTangle = this->blockChainMetaPtr->selectTangleEntry();
-    if (!activeTangle) {
-        return keto::asn1::HashHelper();
-    }
-    return activeTangle->getLastBlockHash();
-}
+//keto::asn1::HashHelper BlockChain::selectParentHash() {
+//    return this->tangleManagerInterfacePtr->selectParentHash();
+//}
 
-keto::asn1::HashHelper BlockChain::selectParentHashByLastBlockHash(const keto::asn1::HashHelper& id) {
-    this->activeTangle =
-            this->blockChainMetaPtr->getTangleEntryByLastBlock(id);
-    if (!this->activeTangle) {
-        BOOST_THROW_EXCEPTION(keto::block_db::InvalidLastBlockHashException());
-    }
-    return this->activeTangle->getHash();
-}
+//keto::asn1::HashHelper BlockChain::selectParentHashByLastBlockHash(const keto::asn1::HashHelper& id) {
+//    return this->tangleManagerInterfacePtr->selectParentHashByLastBlockHash(id);
+//}
 
-keto::asn1::HashHelper BlockChain::getTangleHash() {
-    if (activeTangle) {
-        return activeTangle->getLastBlockHash();
-    }
-    activeTangle = this->blockChainMetaPtr->selectTangleEntry();
-    if (!activeTangle) {
-        return keto::asn1::HashHelper();
-    }
-    return activeTangle->getHash();
-}
+//keto::asn1::HashHelper BlockChain::getTangleHash() {
+//    return this->tangleManagerInterfacePtr->getTangleHash();
+//}
 
 bool BlockChain::writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage, const BlockChainCallback& callback) {
     std::lock_guard<std::recursive_mutex> guard(this->classMutex);
@@ -302,8 +414,6 @@ bool BlockChain::writeBlock(const SignedBlockBuilderPtr& signedBlockBuilderPtr, 
 }
 
 
-
-
 bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock, const BlockChainCallback& callback) {
 
     KETO_LOG_DEBUG << "[BlockChain::writeBlock]Write a new block";
@@ -335,6 +445,18 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
 
     callback.prePersistBlock(blockChainMetaPtr->getHashId(),signedBlock);
 
+    // check if there is a tangle for this entry
+    BlockChainTangleMetaPtr blockChainTangleMetaPtr =
+            this->blockChainMetaPtr->getTangleEntryByLastBlock(parentHash);
+    if (!blockChainTangleMetaPtr) {
+        KETO_LOG_DEBUG << "[BlockChain::writeBlock] parent hash is [" << parentHash.getHash(keto::common::StringEncoding::HEX)
+                       << "] Add a new block chain tangle : " << blockHash.getHash(keto::common::StringEncoding::HEX);
+        blockChainTangleMetaPtr = this->blockChainMetaPtr->addTangle(blockHash);
+        this->tangleManagerInterfacePtr->addTangle(blockChainTangleMetaPtr->getHash());
+        this->tangleManagerInterfacePtr->setCurrentTangle(blockChainTangleMetaPtr->getHash());
+    }
+
+
     // setup the transaction indexing for the block
     for (int index = 0; index < signedBlock.block.transactions.list.count; index++) {
         TransactionWrapper_t* transactionWrapper = signedBlock.block.transactions.list.array[index];
@@ -364,9 +486,12 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
                                        signedBlock, *transactionWrapper);
 
         // update the accounting information
+        if (!accountExists(transactionWrapperHelper.getCurrentAccount())) {
+            blockChainTangleMetaPtr->incrementNumberOfAccounts();
+        }
         keto::proto::AccountMeta accountMeta;
         accountMeta.set_account_hash(transactionWrapperHelper.getCurrentAccount());
-        accountMeta.set_block_tangle_hash_id(this->getTangleHash());
+        accountMeta.set_block_tangle_hash_id(blockChainTangleMetaPtr->getHash());
         accountMeta.set_block_chain_hash(this->blockChainMetaPtr->getHashId());
         std::string accountValue;
         accountMeta.SerializeToString(&value);
@@ -425,18 +550,9 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
     KETO_LOG_DEBUG << "[BlockChain::writeBlock] Add children to parent block : " << parentHash.getHash(keto::common::StringEncoding::HEX);
     childTransaction->Put(parentHashHelper,blockChildrenHelper);
 
-    // retrieve the parent hash
-    BlockChainTangleMetaPtr blockChainTangleMetaPtr =
-            this->blockChainMetaPtr->getTangleEntryByLastBlock(parentHash);
-    if (!blockChainTangleMetaPtr) {
-        KETO_LOG_DEBUG << "[BlockChain::writeBlock] parent hash is [" << parentHash.getHash(keto::common::StringEncoding::HEX)
-            << "] Add a new block chain tangle : " << blockHash.getHash(keto::common::StringEncoding::HEX);
-        blockChainTangleMetaPtr = this->blockChainMetaPtr->addTangle(blockHash);
-
-    } else {
-        KETO_LOG_DEBUG << "[BlockChain::writeBlock] Set the last block hash : "  << blockHash.getHash(keto::common::StringEncoding::HEX);
-        blockChainTangleMetaPtr->setLastBlockHash(blockHash);
-    }
+    // update the tangle information
+    KETO_LOG_DEBUG << "[BlockChain::writeBlock] Set the last block hash : "  << blockHash.getHash(keto::common::StringEncoding::HEX);
+    blockChainTangleMetaPtr->setLastBlockHash(blockHash);
     blockChainTangleMetaPtr->setLastModified(keto::asn1::TimeHelper(signedBlock.date));
 
     // update the key tracking the parent key
@@ -562,7 +678,8 @@ keto::proto::SignedBlockWrapper BlockChain::getBlock(keto::asn1::HashHelper hash
     if (rocksdb::Status::OK() != status && rocksdb::Status::NotFound() == status) {
         // not found
         std::stringstream ss;
-        ss << "The last hash was not found in the store [" << hash.getHash(keto::common::StringEncoding::HEX) << "] : " << status.getState();
+        ss << "The last hash was not found in the store [" << hash.getHash(keto::common::StringEncoding::HEX) << "][" << status.ToString()
+            << "] : " << status.code();
         BOOST_THROW_EXCEPTION(keto::block_db::InvalidLastBlockHashException(ss.str()));
     }
 
@@ -625,7 +742,39 @@ keto::proto::AccountChainTangle BlockChain::getAccountBlockTangle(const keto::pr
     return result;
 }
 
+
+bool BlockChain::getAccountTangle(const keto::asn1::HashHelper& accountHash, keto::asn1::HashHelper& tangleHash) {
+    BlockResourcePtr resource = blockResourceManagerPtr->getResource();
+    rocksdb::Transaction* accountTransaction =  resource->getTransaction(Constants::ACCOUNTS_INDEX);
+
+    rocksdb::ReadOptions readOptions;
+    keto::rocks_db::SliceHelper keyHelper((std::vector<uint8_t>)accountHash);
+    std::string value;
+    auto status = accountTransaction->Get(readOptions,keyHelper,&value);
+    if (rocksdb::Status::OK() == status && rocksdb::Status::NotFound() != status) {
+        return false;
+    } else {
+        keto::proto::AccountMeta accountMeta;
+        accountMeta.ParseFromString(value);
+        tangleHash = accountMeta.block_tangle_hash_id();
+        return true;
+    }
+}
+
+std::vector<keto::asn1::HashHelper> BlockChain::getActiveTangles() {
+    return this->tangleManagerInterfacePtr->getActiveTangles();
+}
+
+void BlockChain::setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles) {
+    this->tangleManagerInterfacePtr->setActiveTangles(tangles);
+}
+
+void BlockChain::setCurrentTangle(const keto::asn1::HashHelper& tangle) {
+    this->tangleManagerInterfacePtr->setCurrentTangle(tangle);
+}
+
 void BlockChain::load(const std::vector<uint8_t>& id) {
+
     BlockResourcePtr resource = blockResourceManagerPtr->getResource();
     rocksdb::Transaction* blockMetaTransaction =  resource->getTransaction(Constants::BLOCK_META_INDEX);
 
@@ -642,6 +791,12 @@ void BlockChain::load(const std::vector<uint8_t>& id) {
         blockChainMeta.ParseFromString(value);
         this->blockChainMetaPtr = BlockChainMetaPtr(
                 new BlockChainMeta(blockChainMeta));
+    }
+
+    if (this->masterChain) {
+        this->tangleManagerInterfacePtr = TangleManagerInterfacePtr(new BlockChain::MasterTangleManager(this->blockChainMetaPtr));
+    } else {
+        this->tangleManagerInterfacePtr = TangleManagerInterfacePtr(new BlockChain::NestedTangleManager(this->blockChainMetaPtr));
     }
 }
 
@@ -706,5 +861,22 @@ void BlockChain::broadcastBlock(const keto::block_db::SignedBlockWrapperProtoHel
             keto::server_common::Events::RPC_CLIENT_BLOCK,signedBlockWrapperMessageProtoHelper));
 }
 
+
+bool BlockChain::accountExists(const keto::asn1::HashHelper& accountHash) {
+    BlockResourcePtr resource = blockResourceManagerPtr->getResource();
+    rocksdb::Transaction* accountTransaction =  resource->getTransaction(Constants::ACCOUNTS_INDEX);
+
+    rocksdb::ReadOptions readOptions;
+    keto::rocks_db::SliceHelper keyHelper((std::vector<uint8_t>)accountHash);
+    std::string value;
+    auto status = accountTransaction->Get(readOptions,keyHelper,&value);
+    if (rocksdb::Status::OK() == status && rocksdb::Status::NotFound() != status) {
+        return false;
+    }
+    return true;
 }
+
+
+
+    }
 }

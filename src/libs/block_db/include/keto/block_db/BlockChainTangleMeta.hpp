@@ -42,7 +42,8 @@ public:
     void setLastBlockHash(const keto::asn1::HashHelper& lastBlockHash);
     std::time_t getLastModified();
     void setLastModified(const std::time_t& lastModified);
-
+    int incrementNumberOfAccounts();
+    int getNumberOfAccounts();
 
     operator keto::proto::BlockChainTangleMeta();
 private:
@@ -50,6 +51,7 @@ private:
     keto::asn1::HashHelper hash;
     keto::asn1::HashHelper lastBlockHash;
     std::time_t lastModified;
+    int numberOfAccounts;
 
     BlockChainTangleMeta(BlockChainMeta* blockChainMeta, const keto::asn1::HashHelper& hash);
     BlockChainTangleMeta(BlockChainMeta* blockChainMeta, const keto::proto::BlockChainTangleMeta& blockChainTangleMeta);

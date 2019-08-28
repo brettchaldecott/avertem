@@ -32,7 +32,7 @@ add_library( 0060_keto_rpc_client_module
 add_dependencies(0060_keto_rpc_client_module keto_tools)
 
 KetoModuleDepencencies( 0060_keto_rpc_client_module 
-                            PRIVATE keto_software_consensus
+                            PRIVATE  keto_election_common keto_software_consensus
                             PRIVATE keto_transaction_common keto_server_common keto_router_utils keto_rocks_db keto_rpc_protocol
                             PRIVATE keto_key_tools keto_proto_environment ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_asn1_common keto_asn1_protocol
@@ -43,7 +43,7 @@ KetoModuleDepencencies( 0060_keto_rpc_client_module
 KetoModuleConsensus( 0060_keto_rpc_client_module ${NUMBER_OF_KEYS} rpc_client )
 
 KetoModuleConsensusScriptsCalls( 0060_keto_rpc_client_module ${NUMBER_OF_KEYS} "4"
-        PRIVATE keto_software_consensus
+        PRIVATE keto_election_common keto_software_consensus
         PRIVATE keto_transaction_common keto_server_common keto_router_utils keto_rocks_db keto_rpc_protocol
         PRIVATE keto_key_tools keto_proto_environment ${PROTOBUF_LIBRARIES}
         PRIVATE keto_asn1_common keto_asn1_protocol
@@ -86,6 +86,7 @@ target_include_directories( 0060_keto_rpc_client_module
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/event_service_api/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/server_common/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/rpc_protocol/include"
+                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/election_common/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/ssl/include"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/libs/common/include/"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/proto/"

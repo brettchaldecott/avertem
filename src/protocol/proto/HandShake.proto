@@ -120,6 +120,12 @@ message ProtocolHeartbeatMessage {
     uint32 version = 1;
     // the protocol accepted status
     uint64 timestamp = 2;
-    // the hour
+    // the current network slot
     uint32 network_slot = 3;
+    // the election slot
+    uint32 network_election_slot = 4;
+    // the election slot
+    uint32 network_election_publish_slot = 5;
+    // the election slot
+    uint32 network_confirmation_slot = 6;
 }

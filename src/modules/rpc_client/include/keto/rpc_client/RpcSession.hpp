@@ -139,6 +139,9 @@ public:
 
     void
     pushBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage);
+
+    void
+    electBlockProducer();
     
     RpcPeer getPeer();
     
@@ -178,6 +181,10 @@ private:
     std::string handleProtocolCheckRequest(const std::string& command, const std::string& message);
     void handleProtocolCheckAccept(const std::string& command, const std::string& message);
     void handleProtocolHeartbeat(const std::string& command, const std::string& message);
+
+    // elect node request
+    void handleElectionRequest(const std::string& command, const std::string& message);
+    void handleElectionResponse(const std::string& command, const std::string& message);
 
     std::string registerResponse(const std::string& command, const std::string& message);
     std::string requestNetworkSessionKeysResponse(const std::string& command, const std::string& message);

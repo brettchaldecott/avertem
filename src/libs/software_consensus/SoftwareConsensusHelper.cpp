@@ -11,6 +11,8 @@
  * Created on June 14, 2018, 10:50 AM
  */
 
+#include <cstdlib>
+
 #include "keto/common/MetaInfo.hpp"
 
 #include "keto/software_consensus/SoftwareConsensusHelper.hpp"
@@ -137,6 +139,15 @@ SoftwareConsensusHelper::operator SoftwareConsensus_t*() {
     return keto::asn1::clone<SoftwareConsensus_t>(this->softwareConsensus,&asn_DEF_SoftwareConsensus);
 }
 
+SoftwareConsensusHelper::operator SoftwareConsensus_t() const {
+    SoftwareConsensus_t* softwareConsensusPtr =
+            keto::asn1::clone<SoftwareConsensus_t>(this->softwareConsensus,&asn_DEF_SoftwareConsensus);
+
+    SoftwareConsensus_t softwareConsensus = *softwareConsensusPtr;
+    free(softwareConsensusPtr);
+
+    return softwareConsensus;
+}
 
 }
 }

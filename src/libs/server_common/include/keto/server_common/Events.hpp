@@ -43,6 +43,7 @@ public:
     static const char* PERSIST_BLOCK_MESSAGE;
     static const char* REGISTER_SERVICE_MESSAGE;
     static const char* REGISTER_RPC_PEER;
+    static const char* DEREGISTER_RPC_PEER;
 
     // get the chain tangle information
     static const char* GET_ACCOUNT_TANGLE;
@@ -229,6 +230,18 @@ public:
         static const char* SET_NETWORK_FEE;
     };
 
+    class BLOCK_PRODUCER_ELECTION {
+    public:
+        static const char* ELECT_RPC_CLIENT;
+        static const char* ELECT_RPC_SERVER;
+        static const char* ELECT_RPC_REQUEST;
+        static const char* ELECT_RPC_RESPONSE;
+    };
+
+    class ROUTER_QUERY {
+    public:
+        static const char* ELECT_ROUTER_PEER;
+    };
 
     static const char* GET_SOFTWARE_CONSENSUS_MESSAGE;
     static const char* VALIDATE_SOFTWARE_CONSENSUS_MESSAGE;
@@ -243,6 +256,12 @@ public:
     static const char* SET_NETWORK_KEYS;
 
     static const char* IS_MASTER;
+
+    class PEER_TYPES {
+    public:
+        static const char* CLIENT;
+        static const char* SERVER;
+    };
 
 private:
 

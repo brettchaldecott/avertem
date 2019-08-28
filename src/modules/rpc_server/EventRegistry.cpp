@@ -61,9 +61,17 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::RPC_SERVER_BLOCK,
             &keto::rpc_server::EventRegistry::pushBlock);
+
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_SERVER,
+            &keto::rpc_server::EventRegistry::electBlockProducer);
 }
 
 void EventRegistry::deregisterEventHandlers() {
+
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_SERVER);
+
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::RPC_SERVER_BLOCK);
     keto::server_common::deregisterEventHandler (
@@ -117,6 +125,11 @@ keto::event::Event EventRegistry::consensusProtocolCheck(const keto::event::Even
 keto::event::Event EventRegistry::consensusHeartbeat(const keto::event::Event& event) {
     std::cout << "[RpcServer][EventRegistry::consensusHeartbeat] the node has been accepted" << std::endl;
     return RpcServer::getInstance()->performConsensusHeartbeat(event);
+}
+
+keto::event::Event EventRegistry::electBlockProducer(const keto::event::Event& event) {
+    std::cout << "[RpcServer][EventRegistry::consensusHeartbeat] the node has been accepted" << std::endl;
+    return RpcServer::getInstance()->electBlockProducer(event);
 }
 
 }

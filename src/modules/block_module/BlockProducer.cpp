@@ -60,9 +60,14 @@
 #include "keto/software_consensus/ConsensusStateManager.hpp"
 #include "keto/software_consensus/SoftwareConsensusHelper.hpp"
 #include "keto/software_consensus/ModuleHashMessageHelper.hpp"
+#include "keto/software_consensus/ProtocolHeartbeatMessageHelper.hpp"
 
 #include "keto/block/StorageManager.hpp"
 #include "keto/block/BlockService.hpp"
+#include "keto/block/ElectionManager.hpp"
+
+#include "keto/election_common/ElectionPeerMessageProtoHelper.hpp"
+#include "keto/election_common/ElectionResultMessageProtoHelper.hpp"
 
 namespace keto {
 namespace block {
@@ -99,9 +104,11 @@ BlockProducer::BlockProducer() :
                 Constants::BLOCK_PRODUCER_ENABLED_TRUE) == 0;
     }
 
+
 }
 
 BlockProducer::~BlockProducer() {
+    ElectionManager::fin();
 }
 
 BlockProducerPtr BlockProducer::init() {
@@ -235,10 +242,22 @@ bool BlockProducer::isEnabled() {
     return enabled;
 }
 
+keto::software_consensus::ConsensusMessageHelper BlockProducer::getAcceptedCheck() {
+    return this->consensusMessageHelper;
+}
 
-keto::event::Event BlockProducer::consensusHeartbeat(const keto::event::Event& event) {
-    std::cout << "[BlockProducer][consensusHeartbeat] block producer [" << getState() << "]" << std::endl;
-    return event;
+
+keto::crypto::KeyLoaderPtr BlockProducer::getKeyLoader() {
+    return this->keyLoaderPtr;
+}
+
+// setup the active tangles
+std::vector<keto::asn1::HashHelper> BlockProducer::getActiveTangles() {
+    return keto::block_db::BlockChainStore::getInstance()->getActiveTangles();
+}
+
+void BlockProducer::setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles) {
+    keto::block_db::BlockChainStore::getInstance()->setActiveTangles(tangles);
 }
 
 BlockProducer::State BlockProducer::checkState() {

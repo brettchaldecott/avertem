@@ -89,11 +89,15 @@ keto::event::Event ConsensusService::setupNodeConsensusSession(const keto::event
 keto::event::Event ConsensusService::consensusSessionAccepted(const keto::event::Event& event) {
     keto::software_consensus::ConsensusStateManager::getInstance()->setState(
             keto::software_consensus::ConsensusStateManager::ACCEPTED);
-    if (keto::server_common::ServerInfo::getInstance()->isMaster() &&
-            BlockProducer::getInstance()->getState() == BlockProducer::State::unloaded){
-        BlockProducer::getInstance()->loadState(BlockProducer::State::block_producer);
-        NetworkFeeManager::getInstance()->load();
+    // I don't like nested if statements but this is safer in this case against
+    // future modifications
+    if (keto::server_common::ServerInfo::getInstance()->isMaster()) {
+        if (BlockProducer::getInstance()->getState() == BlockProducer::State::unloaded) {
+            BlockProducer::getInstance()->loadState(BlockProducer::State::block_producer);
+            NetworkFeeManager::getInstance()->load();
+        }
     } else {
+        // if this node is not a master start he synchronization process.
         BlockProducer::getInstance()->loadState(BlockProducer::State::sync_blocks);
     }
 

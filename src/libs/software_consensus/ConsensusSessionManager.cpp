@@ -13,6 +13,8 @@
 
 #include "SoftwareConsensus.pb.h"
 
+#include "botan/hex.h"
+
 #include "keto/common/Log.hpp"
 
 #include "keto/crypto/HashGenerator.hpp"
@@ -88,7 +90,10 @@ void ConsensusSessionManager::updateSessionKey(const keto::crypto::SecureVector&
 
     if (sessionHash == this->sessionHash) {
         // ignore at this point the session matches and we dont need to update it.
+        KETO_LOG_DEBUG << "[updateSessionKey] Ignore the session key : " << Botan::hex_encode((uint8_t*)sessionHash.data(),sessionHash.size(),true);
         return;
+    } else {
+        KETO_LOG_DEBUG << "[updateSessionKey] Start a new session as the session hashes dont match : " << Botan::hex_encode((uint8_t*)sessionHash.data(),sessionHash.size(),true);
     }
     this->sessionHash = sessionHash;
     this->accepted = false;
@@ -215,9 +220,12 @@ void ConsensusSessionManager::notifyProtocolCheck(bool master) {
 }
 
 
-void ConsensusSessionManager::initNetworkHeartbeat(int networkSlot) {
+void ConsensusSessionManager::initNetworkHeartbeat(int networkSlot, int electionSlot, int electionPublishSlot, int confirmationSlot) {
     keto::software_consensus::ProtocolHeartbeatMessageHelper protocolHeartbeatMessageHelper;
     protocolHeartbeatMessageHelper.setNetworkSlot(networkSlot);
+    protocolHeartbeatMessageHelper.setElectionSlot(electionSlot);
+    protocolHeartbeatMessageHelper.setElectionPublishSlot(electionPublishSlot);
+    protocolHeartbeatMessageHelper.setConfirmationSlot(confirmationSlot);
     initNetworkHeartbeat(protocolHeartbeatMessageHelper.getMsg());
 }
 

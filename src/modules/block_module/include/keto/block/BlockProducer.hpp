@@ -76,9 +76,13 @@ public:
     void addTransaction(keto::transaction_common::TransactionProtoHelperPtr& transactionProtoHelperPtr);
     bool isEnabled();
 
-    // heart beat
-    keto::event::Event consensusHeartbeat(const keto::event::Event& event);
-    
+    keto::software_consensus::ConsensusMessageHelper getAcceptedCheck();
+    keto::crypto::KeyLoaderPtr getKeyLoader();
+
+    // setup the active tangles
+    std::vector<keto::asn1::HashHelper> getActiveTangles();
+    void setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles);
+
 private:
     bool enabled;
     bool loaded;

@@ -32,6 +32,7 @@
 #include "keto/block/ConsensusService.hpp"
 #include "include/keto/block/ConsensusService.hpp"
 #include "include/keto/block/NetworkFeeManager.hpp"
+#include "include/keto/block/ElectionManager.hpp"
 
 namespace keto {
 namespace block {
@@ -69,6 +70,7 @@ void BlockModuleManager::start() {
     BlockService::init();
     NetworkFeeManager::init();
     ConsensusService::init(getConsensusHash());
+    ElectionManager::init();
     EventRegistry::registerEventHandlers();
     KETO_LOG_INFO << "[BlockModuleManager] Started the BlockModuleManager";
 }
@@ -87,6 +89,7 @@ void BlockModuleManager::postStart() {
 
 void BlockModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
+    ElectionManager::fin();
     ConsensusService::fin();
     NetworkFeeManager::fin();
     BlockService::fin();

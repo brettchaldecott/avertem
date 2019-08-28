@@ -59,6 +59,36 @@ int ProtocolHeartbeatMessageHelper::getNetworkSlot() {
     return protocolHeartbeatMessage.network_slot();
 }
 
+
+ProtocolHeartbeatMessageHelper& ProtocolHeartbeatMessageHelper::setElectionSlot(int electionSlot) {
+    protocolHeartbeatMessage.set_network_election_slot(electionSlot);
+    return *this;
+}
+
+int ProtocolHeartbeatMessageHelper::getElectionSlot() {
+    return protocolHeartbeatMessage.network_election_slot();
+}
+
+ProtocolHeartbeatMessageHelper& ProtocolHeartbeatMessageHelper::setElectionPublishSlot(int electionPublishSlot) {
+    protocolHeartbeatMessage.set_network_election_publish_slot(electionPublishSlot);
+    return *this;
+}
+
+int ProtocolHeartbeatMessageHelper::getElectionPublishSlot() {
+    return protocolHeartbeatMessage.network_election_publish_slot();
+}
+
+
+ProtocolHeartbeatMessageHelper& ProtocolHeartbeatMessageHelper::setConfirmationSlot(int confirmationSlot) {
+    protocolHeartbeatMessage.set_network_confirmation_slot(confirmationSlot);
+    return *this;
+}
+
+int ProtocolHeartbeatMessageHelper::getConfirmationSlot() {
+    return protocolHeartbeatMessage.network_confirmation_slot();
+}
+
+
 ProtocolHeartbeatMessageHelper& ProtocolHeartbeatMessageHelper::setMsg(const keto::proto::ProtocolHeartbeatMessage &msg) {
     this->protocolHeartbeatMessage = msg;
     return *this;

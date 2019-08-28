@@ -5,8 +5,9 @@ include_directories(${PROTOBUF_INCLUDE_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS BlockChain.proto 
-    HandShake.proto Protocol.proto Route.proto Balancer.proto KeyStore.proto Account.proto
-    Sparql.proto Sandbox.proto Contract.proto SoftwareConsensus.proto MemoryVault.proto BlockChainDB.proto)
+        HandShake.proto Protocol.proto Route.proto Balancer.proto KeyStore.proto Account.proto
+        Sparql.proto Sandbox.proto Contract.proto SoftwareConsensus.proto MemoryVault.proto BlockChainDB.proto
+        Election.proto)
 
 add_library(keto_proto_environment ${PROTO_SRCS} )
 

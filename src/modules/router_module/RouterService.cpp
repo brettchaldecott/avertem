@@ -156,6 +156,15 @@ keto::event::Event RouterService::registerRpcPeer(const keto::event::Event& even
     return event;
 }
 
+keto::event::Event RouterService::deregisterRpcPeer(const keto::event::Event& event) {
+    keto::router_utils::RpcPeerHelper  rpcPeerHelper(
+            keto::server_common::fromEvent<keto::proto::RpcPeer>(event));
+
+    PeerCache::getInstance()->removePeer(rpcPeerHelper);
+
+    return event;
+}
+
 keto::event::Event RouterService::updateStateRouteMessage(const keto::event::Event& event) {
     
     keto::proto::MessageWrapper  messageWrapper = 

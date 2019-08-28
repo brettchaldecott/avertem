@@ -62,7 +62,9 @@ public:
     keto::event::Event requestBlockSync(const keto::event::Event& event);
     keto::event::Event routeTransaction(const keto::event::Event& event);
     keto::event::Event pushBlock(const keto::event::Event& event);
-    
+
+
+    keto::event::Event electBlockProducer(const keto::event::Event& event);
     
     
 protected:

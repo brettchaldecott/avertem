@@ -53,7 +53,7 @@ std::vector<std::string> TangleServiceCache::Tangle::getServices() {
     for(std::map<std::string,ServicePtr>::iterator it = this->services.begin(); it != this->services.end(); ++it) {
         results.push_back(it->first);
     }
-    results;
+    return results;
 }
 
 static TangleServiceCachePtr singleton;
@@ -121,6 +121,7 @@ int TangleServiceCache::addAccount(const std::string& account) {
     } else {
         this->accounts[account]++;
     }
+    return this->accounts.size();
 }
 
 int TangleServiceCache::removeAccount(const std::string& account) {

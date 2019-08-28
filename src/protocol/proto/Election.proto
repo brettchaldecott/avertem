@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package keto.proto;
+
+
+/**
+ * The server to server hand shake
+ */
+message ElectionMessage {
+    // the version for this protocol
+    uint32 version = 1;
+    // account hashes that the election calls have been made to.
+    repeated bytes account_hashes = 2;
+    // the source be that RPC client or Server
+    string source = 3;
+}
+
+
+message ElectionResultMessage {
+    // the version for this protocol
+    uint32 version = 1;
+    // account hashes that the election calls have been made to.
+    bytes elecion_msg = 2;
+    // the source account
+    bytes source_account_hash = 3;
+}
+
+
+/**
+ * The server to server hand shake
+ */
+message ElectionPeerMessage {
+    // the version for this protocol
+    uint32 version = 1;
+    // the account hash the request is being performed for
+    bytes account_hash = 2;
+    // account hash that has been randomly elected by the router
+    bytes peer_hash = 3;
+}
+
+message ElectionPublishTangleAccount {
+    // the version for this protocol
+    uint32 version = 1;
+    // the account hash the request is being performed for
+    bytes account_hash = 2;
+    // the account hash the request is being performed for
+    repeated bytes tangle_hash = 3;
+}

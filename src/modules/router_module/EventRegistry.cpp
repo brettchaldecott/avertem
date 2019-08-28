@@ -20,7 +20,11 @@
 
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
+
 #include "keto/router/ConsensusService.hpp"
+#include "keto/router/PeerCache.hpp"
+
+#include "keto/election_common/ElectionPeerMessageProtoHelper.hpp"
 
 
 namespace keto {
@@ -51,6 +55,10 @@ keto::event::Event EventRegistry::registerRpcPeer(const keto::event::Event& even
     return RouterService::getInstance()->registerRpcPeer(event);
 }
 
+keto::event::Event EventRegistry::deregisterRpcPeer(const keto::event::Event& event) {
+    return RouterService::getInstance()->deregisterRpcPeer(event);
+}
+
 keto::event::Event EventRegistry::registerService(const keto::event::Event& event) {
     return RouterService::getInstance()->registerService(event);
 }
@@ -69,12 +77,24 @@ keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Ev
     return event;
 }
 
+
+
 keto::event::Event EventRegistry::consensusProtocolCheck(const keto::event::Event& event) {
 
     return event;
 }
 
 keto::event::Event EventRegistry::consensusHeartbeat(const keto::event::Event& event) {
+
+    return event;
+}
+
+keto::event::Event EventRegistry::electRouterPeer(const keto::event::Event& event) {
+    keto::election_common::ElectionPeerMessageProtoHelper electionPeerMessageProtoHelper(
+            keto::server_common::fromEvent<keto::proto::ElectionPeerMessage>(event));
+
+    electionPeerMessageProtoHelper.setPeer(
+            PeerCache::getInstance()->electPeer(electionPeerMessageProtoHelper.getAccount()));
 
     return event;
 }
@@ -93,6 +113,9 @@ void EventRegistry::registerEventHandlers() {
             keto::server_common::Events::REGISTER_RPC_PEER,
             &keto::router::EventRegistry::registerRpcPeer);
     keto::server_common::registerEventHandler (
+            keto::server_common::Events::DEREGISTER_RPC_PEER,
+            &keto::router::EventRegistry::deregisterRpcPeer);
+    keto::server_common::registerEventHandler (
             keto::server_common::Events::CONSENSUS::ROUTER,
             &keto::router::EventRegistry::generateSoftwareHash);
     keto::server_common::registerEventHandler (
@@ -107,9 +130,23 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::CONSENSUS_HEARTBEAT::ROUTER,
             &keto::router::EventRegistry::consensusHeartbeat);
+
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::ROUTER_QUERY::ELECT_ROUTER_PEER,
+            &keto::router::EventRegistry::electRouterPeer);
+
 }
 
 void EventRegistry::deregisterEventHandlers() {
+
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::ROUTER_QUERY::ELECT_ROUTER_PEER);
+
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::REGISTER_RPC_PEER);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::DEREGISTER_RPC_PEER);
+
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::CONSENSUS::ROUTER);
     keto::server_common::deregisterEventHandler (

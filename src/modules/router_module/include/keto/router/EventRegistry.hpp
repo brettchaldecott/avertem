@@ -33,6 +33,7 @@ public:
     
     static keto::event::Event registerService(const keto::event::Event& event);
     static keto::event::Event registerRpcPeer(const keto::event::Event& event);
+    static keto::event::Event deregisterRpcPeer(const keto::event::Event& event);
     static keto::event::Event routeMessage(const keto::event::Event& event);
     static keto::event::Event updateStateRouteMessage(const keto::event::Event& event);
     
@@ -41,6 +42,7 @@ public:
     static keto::event::Event consensusSessionAccepted(const keto::event::Event& event);
     static keto::event::Event consensusProtocolCheck(const keto::event::Event& event);
     static keto::event::Event consensusHeartbeat(const keto::event::Event& event);
+    static keto::event::Event electRouterPeer(const keto::event::Event& event);
 
     static void registerEventHandlers();
     static void deregisterEventHandlers();

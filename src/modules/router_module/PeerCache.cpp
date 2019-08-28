@@ -14,7 +14,7 @@
 #include <condition_variable>
 
 #include "keto/router/PeerCache.hpp"
-#include "include/keto/router/PeerCache.hpp"
+#include "keto/router/Exception.hpp"
 
 namespace keto {
 namespace router {
@@ -48,6 +48,11 @@ void PeerCache::addPeer(keto::router_utils::RpcPeerHelper& rpcPeerHelper) {
     this->entries[rpcPeerHelper.getAccountHashBytes()] = rpcPeerHelper;
 }
 
+void PeerCache::removePeer(keto::router_utils::RpcPeerHelper& rpcPeerHelper) {
+    std::lock_guard<std::mutex> guard(classMutex);
+    this->entries.erase(rpcPeerHelper.getAccountHashBytes());
+}
+
 keto::router_utils::RpcPeerHelper& PeerCache::getPeer(
         const std::vector<uint8_t>& accountHash) {
     std::lock_guard<std::mutex> guard(classMutex);
@@ -60,6 +65,39 @@ bool PeerCache::contains(const std::vector<uint8_t>& accountHash) {
         return true;
     }
     return false;
+}
+
+
+std::vector<uint8_t> PeerCache::electPeer(const std::vector<uint8_t>& accountHash) {
+    std::vector<std::vector<uint8_t>> peers = getAccounts();
+    if (!peers.size()) {
+        BOOST_THROW_EXCEPTION(NoPeersRegistered("There are no peers in the cache"));
+    } else if (peers.size() == 1 && peers[0] == accountHash) {
+        BOOST_THROW_EXCEPTION(NoPeersRegistered("The only peer available is the current master."));
+    }
+
+    std::default_random_engine stdGenerator;
+    stdGenerator.seed(std::chrono::system_clock::now().time_since_epoch().count());
+    std::uniform_int_distribution<int> distribution(0,peers.size());
+    distribution(stdGenerator);
+
+
+    std::vector<uint8_t> result;
+    do {
+        result = peers[distribution(stdGenerator)];
+    } while(accountHash == result);
+    return result;
+}
+
+
+std::vector<std::vector<uint8_t>> PeerCache::getAccounts() {
+    std::lock_guard<std::mutex> guard(classMutex);
+    std::vector<std::vector<uint8_t>> result;
+    transform(begin(this->entries), end(this->entries), back_inserter(result),
+              [](decltype(this->entries)::value_type const& pair) {
+                  return pair.first;
+              });
+    return result;
 }
 
 

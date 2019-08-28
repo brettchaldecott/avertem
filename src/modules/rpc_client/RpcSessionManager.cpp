@@ -29,10 +29,14 @@
 
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
+#include "keto/server_common/Constants.hpp"
 #include "keto/rpc_client/PeerStore.hpp"
 
 #include "keto/rpc_client/Exception.hpp"
 #include "keto/rpc_client/PeerStore.hpp"
+
+#include "keto/election_common/ElectionMessageProtoHelper.hpp"
+
 
 namespace keto {
 namespace rpc_client {
@@ -326,6 +330,48 @@ keto::event::Event RpcSessionManager::routeTransaction(const keto::event::Event&
     
     return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
 }
+
+
+keto::event::Event RpcSessionManager::electBlockProducer(const keto::event::Event& event) {
+    std::default_random_engine stdGenerator;
+    stdGenerator.seed(std::chrono::system_clock::now().time_since_epoch().count());
+
+    keto::election_common::ElectionMessageProtoHelper electionMessageProtoHelper(
+        keto::server_common::fromEvent<keto::proto::ElectionMessage>(event));
+
+    std::vector<std::string> peers = this->listPeers();
+    for (int index = 0; (index < keto::server_common::Constants::ELECTION::ELECTOR_COUNT) && (peers.size()); index++) {
+
+        // distribution
+        std::uniform_int_distribution<int> distribution(0,peers.size());
+        distribution(stdGenerator);
+        int pos = distribution(stdGenerator);
+        std::string peer = peers[pos];
+        peers.erase(peers.begin() + pos);
+
+        // get the account
+        if (getAccountSessionMapping(peer)) {
+            try {
+                getAccountSessionMapping(peer)->electBlockProducer();
+                electionMessageProtoHelper.addAccount(keto::asn1::HashHelper(peer));
+            } catch (keto::common::Exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducer] Failed to push block : " << ex.what();
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducer] Cause : " << boost::diagnostic_information(ex,true);
+            } catch (boost::exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducer] Failed to push block : " << boost::diagnostic_information(ex,true);
+            } catch (std::exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducer] Failed to push block : " << ex.what();
+            } catch (...) {
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducer] Failed to push block : unknown cause";
+            }
+        }
+    }
+
+    return keto::server_common::toEvent<keto::proto::ElectionMessage>(electionMessageProtoHelper);
+}
+
+
+
 
 }
 }

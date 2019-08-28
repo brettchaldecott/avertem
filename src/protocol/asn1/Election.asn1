@@ -1,0 +1,39 @@
+ElectionModule DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+    IMPORTS Number, Version, Hash
+    FROM BasicModule
+    SoftwareConsensus
+    FROM SofwareConsensusModule;
+
+
+Election ::= SEQUENCE {
+    version             Version,
+    date                UTCTime,
+    accountHash         Hash,
+    acceptedCheck       SoftwareConsensus,
+    validateCheck       SoftwareConsensus
+}
+
+SignedElection ::= SEQUENCE {
+    version             Version,
+    election            Election,
+    electionHash        Hash,
+    signature           Signature
+}
+
+ElectNode ::= SEQUENCE {
+    version             Version,
+    date                UTCTime,
+    electedNode         SignedElection,
+    alternatives        SEQUENCE OF SignedElection,
+    acceptedCheck       SoftwareConsensus,
+    validateCheck       SoftwareConsensus
+}
+
+SignedElectNode ::= SEQUENCE {
+   version              Version,
+   electedNode          ElectNode,
+   electedHash          Hash,
+   signature            Signature
+}
+
+END

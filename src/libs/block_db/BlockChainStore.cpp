@@ -222,5 +222,18 @@ keto::asn1::HashHelper BlockChainStore::getParentHash(const keto::asn1::HashHelp
     return this->masterChain->getParentHash(transactionHash);
 }
 
+
+std::vector<keto::asn1::HashHelper> BlockChainStore::getActiveTangles() {
+    return this->masterChain->getActiveTangles();
+}
+
+void BlockChainStore::setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles) {
+    this->masterChain->setActiveTangles(tangles);
+}
+
+void BlockChainStore::setCurrentTangle(const keto::asn1::HashHelper& tangle) {
+    this->masterChain->setCurrentTangle(tangle);
+}
+
 }
 }

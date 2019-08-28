@@ -45,6 +45,15 @@ public:
     ProtocolHeartbeatMessageHelper& setNetworkSlot(int networkSlot);
     int getNetworkSlot();
 
+    ProtocolHeartbeatMessageHelper& setElectionPublishSlot(int electionPublishSlot);
+    int getElectionPublishSlot();
+
+    ProtocolHeartbeatMessageHelper& setElectionSlot(int electionSlot);
+    int getElectionSlot();
+
+    ProtocolHeartbeatMessageHelper& setConfirmationSlot(int confirmationSlot);
+    int getConfirmationSlot();
+
 
     ProtocolHeartbeatMessageHelper& setMsg(const keto::proto::ProtocolHeartbeatMessage& msg);
     keto::proto::ProtocolHeartbeatMessage getMsg();

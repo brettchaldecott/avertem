@@ -55,7 +55,11 @@ ConsensusServer::ConsensusServer() :
     currentPos(-1),netwokSessionLength(Constants::NETWORK_SESSION_LENGTH_DEFAULT),
     netwokProtocolDelay(keto::software_consensus::Constants::NETWORK_PROTOCOL_DELAY_DEFAULT),
     networkHeartbeatDelay(Constants::NETWORK_CONSENSUS_HEARTBEAT_DEFAULT),
-    networkHeartbeatSlot(0) {
+    networkHeartbeatCurrentSlot(0),
+    networkHeartbeatElectionSlot(Constants::NETWORK_CONSENSUS_HEARTBEAT_ELECTION_SLOT_DEFAULT),
+    networkHeartbeatElectionPublishSlot(Constants::NETWORK_CONSENSUS_HEARTBEAT_ELECTION_PUBLISH_SLOT_DEFAULT),
+    networkHeartbeatConfirmationSlot(Constants::NETWORK_CONSENSUS_HEARTBEAT_CONFIRMATION_SLOT_DEFAULT)
+    {
     networkHeartbeatPoint = networkPoint = sessionkeyPoint = std::chrono::system_clock::now();
 
     // retrieve the configuration
@@ -77,7 +81,22 @@ ConsensusServer::ConsensusServer() :
         this->networkHeartbeatDelay =std::stol(
                 config->getVariablesMap()[Constants::NETWORK_CONSENSUS_HEARTBEAT_CONFIGURATION].as<std::string>());
     }
-
+    if (config->getVariablesMap().count(Constants::NETWORK_CONSENSUS_HEARTBEAT_CONFIGURATION)) {
+        this->networkHeartbeatDelay =std::stol(
+                config->getVariablesMap()[Constants::NETWORK_CONSENSUS_HEARTBEAT_CONFIGURATION].as<std::string>());
+    }
+    if (config->getVariablesMap().count(Constants::NETWORK_CONSENSUS_HEARTBEAT_NETWORK_ELECTION_SLOT)) {
+        this->networkHeartbeatElectionSlot =std::stol(
+                config->getVariablesMap()[Constants::NETWORK_CONSENSUS_HEARTBEAT_NETWORK_ELECTION_SLOT].as<std::string>());
+    }
+    if (config->getVariablesMap().count(Constants::NETWORK_CONSENSUS_HEARTBEAT_NETWORK_ELECTION_PUBLISH_SLOT)) {
+        this->networkHeartbeatElectionPublishSlot =std::stol(
+                config->getVariablesMap()[Constants::NETWORK_CONSENSUS_HEARTBEAT_NETWORK_ELECTION_PUBLISH_SLOT].as<std::string>());
+    }
+    if (config->getVariablesMap().count(Constants::NETWORK_CONSENSUS_HEARTBEAT_NETWORK_CONFIRMATION_SLOT)) {
+        this->networkHeartbeatConfirmationSlot =std::stol(
+                config->getVariablesMap()[Constants::NETWORK_CONSENSUS_HEARTBEAT_NETWORK_CONFIRMATION_SLOT].as<std::string>());
+    }
 
 
     consensusServerPtr = this;
@@ -146,7 +165,7 @@ void ConsensusServer::process() {
             keto::software_consensus::ConsensusSessionManager::getInstance()->updateSessionKey(initVector);
             internalConsensusInit(keto::crypto::HashGenerator().generateHash(initVector));
             this->networkHeartbeatPoint = this->networkPoint = this->sessionkeyPoint = currentTime;
-            this->networkHeartbeatSlot = 0;
+            this->networkHeartbeatCurrentSlot = 0;
         } else if (networkDiff.count() > this->netwokProtocolDelay) {
             std::cout << "Time to retest the network." << std::endl;
             keto::crypto::SecureVector initVector = Botan::hex_decode_locked(
@@ -157,7 +176,7 @@ void ConsensusServer::process() {
             initVector.insert(initVector.begin(),timeBytesVector.begin(),timeBytesVector.end());
             internalConsensusProtocolCheck(keto::crypto::HashGenerator().generateHash(initVector));
             this->networkHeartbeatPoint = this->networkPoint = currentTime;
-            this->networkHeartbeatSlot = 0;
+            this->networkHeartbeatCurrentSlot = 0;
         } else if (heartbeatDiff.count() > this->networkHeartbeatDelay) {
             std::cout << "The network heartbeat." << std::endl;
             initNetworkHeartbeat();
@@ -214,7 +233,8 @@ void ConsensusServer::internalConsensusProtocolCheck(const keto::crypto::SecureV
 
 void ConsensusServer::initNetworkHeartbeat() {
     keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
-    keto::software_consensus::ConsensusSessionManager::getInstance()->initNetworkHeartbeat(this->networkHeartbeatSlot++);
+    keto::software_consensus::ConsensusSessionManager::getInstance()->initNetworkHeartbeat(
+            this->networkHeartbeatCurrentSlot++, this->networkHeartbeatElectionSlot, this->networkHeartbeatElectionPublishSlot, this->networkHeartbeatConfirmationSlot);
     transactionPtr->commit();
 }
 

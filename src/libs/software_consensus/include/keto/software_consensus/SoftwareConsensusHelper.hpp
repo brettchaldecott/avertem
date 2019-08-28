@@ -61,6 +61,7 @@ public:
             const std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr);
     
     operator SoftwareConsensus_t*();
+    operator SoftwareConsensus_t() const;
     
     
 private:

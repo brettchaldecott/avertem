@@ -11,6 +11,7 @@
  * Created on March 8, 2018, 3:15 AM
  */
 
+#include <keto/block/ElectionManager.hpp>
 #include "keto/block/EventRegistry.hpp"
 #include "keto/block/BlockService.hpp"
 #include "keto/block/BlockSyncManager.hpp"
@@ -85,6 +86,13 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::GET_ACCOUNT_TANGLE,
             &keto::block::EventRegistry::getAccountBlockTangle);
+
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_REQUEST,
+            &keto::block::EventRegistry::electRpcRequest);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_RESPONSE,
+            &keto::block::EventRegistry::electRpcResponse);
 }
 
 void EventRegistry::deregisterEventHandlers() {
@@ -122,6 +130,11 @@ void EventRegistry::deregisterEventHandlers() {
             keto::server_common::Events::BLOCK_MESSAGE);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::ENABLE_BLOCK_PRODUCER);
+
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_REQUEST);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_RESPONSE);
 }
 
 keto::event::Event EventRegistry::persistBlockMessage(const keto::event::Event& event) {
@@ -155,7 +168,7 @@ keto::event::Event EventRegistry::consensusProtocolCheck(const keto::event::Even
 }
 
 keto::event::Event EventRegistry::consensusHeartbeat(const keto::event::Event& event) {
-    return BlockProducer::getInstance()->consensusHeartbeat(event);
+    return ElectionManager::getInstance()->consensusHeartbeat(event);
 }
 
 keto::event::Event EventRegistry::enableBlockProducer(const keto::event::Event& event) {
@@ -185,6 +198,14 @@ keto::event::Event EventRegistry::processRequestBlockSyncRetry(const keto::event
 
 keto::event::Event EventRegistry::getAccountBlockTangle(const keto::event::Event& event) {
     return BlockService::getInstance()->getAccountBlockTangle(event);
+}
+
+keto::event::Event EventRegistry::electRpcRequest(const keto::event::Event& event) {
+    return ElectionManager::getInstance()->electRpcRequest(event);
+}
+
+keto::event::Event EventRegistry::electRpcResponse(const keto::event::Event& event) {
+    return ElectionManager::getInstance()->electRpcResponse(event);
 }
 
 }

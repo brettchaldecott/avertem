@@ -64,6 +64,10 @@ public:
     keto::asn1::HashHelper getParentHash();
     keto::asn1::HashHelper getParentHash(const keto::asn1::HashHelper& transactionHash);
 
+    std::vector<keto::asn1::HashHelper> getActiveTangles();
+    void setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles);
+    void setCurrentTangle(const keto::asn1::HashHelper& tangle);
+
 private:
     std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr;
     BlockResourceManagerPtr blockResourceManagerPtr;

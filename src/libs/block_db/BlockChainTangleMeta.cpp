@@ -42,6 +42,13 @@ void BlockChainTangleMeta::setLastModified(const std::time_t& lastModified) {
     this->lastModified = lastModified;
 }
 
+int BlockChainTangleMeta::incrementNumberOfAccounts() {
+    return this->numberOfAccounts++;
+}
+
+int BlockChainTangleMeta::getNumberOfAccounts() {
+    return this->numberOfAccounts;
+}
 
 BlockChainTangleMeta::operator keto::proto::BlockChainTangleMeta() {
     keto::proto::BlockChainTangleMeta result;
@@ -51,18 +58,21 @@ BlockChainTangleMeta::operator keto::proto::BlockChainTangleMeta() {
     timestamp.set_seconds(this->lastModified);
     timestamp.set_nanos(0);
     *result.mutable_last_modified() = timestamp;
+    result.set_number_of_accounts(this->numberOfAccounts);
     return result;
 }
 
 BlockChainTangleMeta::BlockChainTangleMeta(BlockChainMeta* blockChainMeta, const keto::asn1::HashHelper& hash) : blockChainMeta(blockChainMeta) {
     this->hash = hash;
     this->lastBlockHash = hash;
+    this->numberOfAccounts = 0;
 }
 
 BlockChainTangleMeta::BlockChainTangleMeta(BlockChainMeta* blockChainMeta, const keto::proto::BlockChainTangleMeta& blockChainTangleMeta) : blockChainMeta(blockChainMeta) {
     this->hash = blockChainTangleMeta.hash_id();
     this->lastBlockHash = blockChainTangleMeta.last_block_hash();
     this->lastModified = blockChainTangleMeta.last_modified().seconds();
+    this->numberOfAccounts = blockChainTangleMeta.number_of_accounts();
 }
 
 

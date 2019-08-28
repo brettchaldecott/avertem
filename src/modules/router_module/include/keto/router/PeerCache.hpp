@@ -49,13 +49,18 @@ public:
     static PeerCachePtr getInstance();
     
     void addPeer(keto::router_utils::RpcPeerHelper& rpcPeerHelper);
+    void removePeer(keto::router_utils::RpcPeerHelper& rpcPeerHelper);
     keto::router_utils::RpcPeerHelper& getPeer(
             const std::vector<uint8_t>& accountHash);
     bool contains(const std::vector<uint8_t>& accountHash);
+    std::vector<uint8_t> electPeer(const std::vector<uint8_t>& accountHash);
     
 private:
     std::mutex classMutex;
     std::map<std::vector<uint8_t>,keto::router_utils::RpcPeerHelper> entries;
+
+
+    std::vector<std::vector<uint8_t>> getAccounts();
 };
 
 

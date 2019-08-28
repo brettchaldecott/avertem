@@ -81,5 +81,8 @@ const char* Constants::RPC_COMMANDS::PROTOCOL_CHECK_RESPONSE = "PROTOCOL_CHECK_R
 const char* Constants::RPC_COMMANDS::PROTOCOL_CHECK_ACCEPT = "PROTOCOL_CHECK_ACCEPT";
 const char* Constants::RPC_COMMANDS::PROTOCOL_HEARTBEAT = "PROTOCOL_HEARTBEAT";
 
+// election constants
+const int Constants::ELECTION::ELECTOR_COUNT = 7;
+
 }
 }

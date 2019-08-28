@@ -32,6 +32,7 @@ const char* Events::UPDATE_STATUS_ROUTE_MESSSAGE  = "UPDATE_STATUS_ROUTE_MESSSAG
 const char* Events::ROUTE_MESSAGE = "ROUTE_MESSAGE";
 const char* Events::REGISTER_SERVICE_MESSAGE = "REGISTER_SERVICE_MESSAGE";
 const char* Events::REGISTER_RPC_PEER = "REGISTER_RPC_PEER";
+const char* Events::DEREGISTER_RPC_PEER = "DEREGISTER_RPC_PEER";
 
 // get account tangle
 const char* Events::GET_ACCOUNT_TANGLE = "GET_ACCOUNT_TANGLE";
@@ -186,6 +187,13 @@ const char* Events::MEMORY_VAULT::REMOVE_ENTRY  = "REMOVE_ENTRY";
 const char* Events::NETWORK_FEE_INFO::GET_NETWORK_FEE   ="GET_NETWORK_FEE";
 const char* Events::NETWORK_FEE_INFO::SET_NETWORK_FEE   ="SET_NETWORK_FEE";
 
+const char* Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_CLIENT       = "ELECT_RPC_CLIENT";
+const char* Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_SERVER       = "ELECT_RPC_SERVER";
+const char* Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_REQUEST     = "ELECT_RPC_REQUEST";
+const char* Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_RESPONSE     = "ELECT_RPC_RESPONSE";
+
+const char* Events::ROUTER_QUERY::ELECT_ROUTER_PEER = "ELECT_ROUTER_PEER";
+
 const char* Events::GET_SOFTWARE_CONSENSUS_MESSAGE
                                             = "GET_SOFTWARE_CONSENSUS_MESSAGE";
 const char* Events::VALIDATE_SOFTWARE_CONSENSUS_MESSAGE
@@ -201,6 +209,10 @@ const char* Events::GET_NETWORK_KEYS        = "GET_NETWORK_KEYS";
 const char* Events::SET_NETWORK_KEYS        = "SET_NETWORK_KEYS";
 
 const char* Events::IS_MASTER               = "IS_MASTER";
+
+
+const char* Events::PEER_TYPES::CLIENT      = "CLIENT";
+const char* Events::PEER_TYPES::SERVER      = "SERVER";
 
 }
 }
