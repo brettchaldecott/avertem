@@ -11,17 +11,19 @@
  * Created on February 16, 2018, 11:21 AM
  */
 
-#ifndef SERVER_COMMON_VECTORUTILS_HPP
-#define SERVER_COMMON_VECTORUTILS_HPP
+#ifndef KETO_SERVER_COMMON_VECTORUTILS_HPP
+#define KETO_SERVER_COMMON_VECTORUTILS_HPP
 
+
+#include <memory>
 #include <vector>
 #include <string>
 
 #include "keto/obfuscate/MetaString.hpp"
+#include "keto/server_common/Exception.hpp"
 
 namespace keto {
 namespace server_common {
-
 
 class VectorUtils {
 public:

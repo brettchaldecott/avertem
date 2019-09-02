@@ -28,6 +28,12 @@ typedef std::shared_ptr<ElectionManager> ElectionManagerPtr;
 
 class ElectionManager {
 public:
+    enum State {
+        PROCESSING,
+        ELECT,
+        PUBLISH,
+        CONFIRMATION,
+    };
 
     static std::string getHeaderVersion() {
         return OBFUSCATED("$Id$");
@@ -68,20 +74,22 @@ public:
     keto::event::Event consensusHeartbeat(const keto::event::Event& event);
     keto::event::Event electRpcRequest(const keto::event::Event& event);
     keto::event::Event electRpcResponse(const keto::event::Event& event);
-
+    keto::event::Event electRpcProcessPublish(const keto::event::Event& event);
+    keto::event::Event electRpcProcessConfirmation(const keto::event::Event& event);
 
 private:
     std::mutex classMutex;
+    ElectionManager::State state;
     std::map<std::vector<uint8_t>,ElectorPtr> accountElectionResult;
     int responseCount;
-
+    std::vector<keto::asn1::HashHelper> nextWindow;
 
     void invokeElection(const std::string& event, const std::string& type);
     void publishElection();
     void confirmElection();
     std::vector<std::vector<uint8_t>> listAccounts();
 
-    keto::election_common::SignedElectNodeHelperPtr generateSignedElectedNode();
+    keto::election_common::SignedElectNodeHelperPtr generateSignedElectedNode(std::vector<std::vector<uint8_t>>& accounts);
 
 };
 

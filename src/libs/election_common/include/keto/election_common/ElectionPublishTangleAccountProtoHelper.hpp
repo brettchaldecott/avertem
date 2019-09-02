@@ -39,11 +39,14 @@ public:
     keto::asn1::HashHelper getAccount();
     ElectionPublishTangleAccountProtoHelper& setAccount(const keto::asn1::HashHelper& account);
 
-    keto::asn1::HashHelper getTangle();
-    ElectionPublishTangleAccountProtoHelper& setTangle(const keto::asn1::HashHelper& tangleHash);
+    std::vector<keto::asn1::HashHelper> getTangles();
+    ElectionPublishTangleAccountProtoHelper& addTangle(const keto::asn1::HashHelper& tangleHash);
 
-    operator keto::proto::ElectionPublishTangleAccount();
-    operator std::string();
+    bool isGrowing();
+    ElectionPublishTangleAccountProtoHelper& setGrowing(bool growing);
+
+    operator keto::proto::ElectionPublishTangleAccount() const;
+    operator std::string() const;
 
 private:
     keto::proto::ElectionPublishTangleAccount electionPublishTangleAccount;

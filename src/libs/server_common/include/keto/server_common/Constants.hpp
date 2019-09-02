@@ -69,6 +69,7 @@ public:
         static const char* HELLO_CONSENSUS;
         static const char* PEERS;
         static const char* REGISTER;
+        static const char* ACTIVATE;
         static const char* TRANSACTION;
         static const char* TRANSACTION_PROCESSED;
         static const char* BLOCK;
@@ -92,6 +93,7 @@ public:
         static const char* REQUEST_NETWORK_KEYS;
         static const char* RESPONSE_NETWORK_KEYS;
         static const char* REQUEST_NETWORK_FEES;
+        static const char* CLIENT_NETWORK_COMPLETE;
         static const char* RESPONSE_NETWORK_FEES;
         static const char* RESPONSE_RETRY;
 

@@ -376,8 +376,12 @@ RpcSession::on_read(
             return;
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REGISTER) == 0) {
             message = registerResponse(command, stringVector[1]);
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ACTIVATE) == 0) {
+            KETO_LOG_INFO << "[RpcSession] handle the activate";
+            handleActivatePeer(command,stringVector[1]);
+            KETO_LOG_INFO << "[RpcSession] handle the activate";
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
-            KETO_LOG_INFO << "[RpcSession] handle a transaction";
+            KETO_LOG_INFO << "[RpcSession] handle a block";
             message = handleTransaction(command,stringVector[1]);
             KETO_LOG_INFO << "[RpcSession] Transaction processed";
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED) == 0) {
@@ -399,7 +403,7 @@ RpcSession::on_read(
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_KEYS) == 0) {
             message = requestNetworkKeysResponse(command,stringVector[1]);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_FEES) == 0) {
-            requestNetworkFeesResponse(command,stringVector[1]);
+            message = requestNetworkFeesResponse(command,stringVector[1]);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ROUTE) == 0) {
 
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ROUTE_UPDATE) == 0) {
@@ -746,7 +750,7 @@ std::string RpcSession::requestNetworkKeysResponse(const std::string& command, c
                   keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES);
 }
 
-void RpcSession::requestNetworkFeesResponse(const std::string& command, const std::string& message) {
+std::string RpcSession::requestNetworkFeesResponse(const std::string& command, const std::string& message) {
     keto::transaction_common::FeeInfoMsgProtoHelper feeInfoMsgProtoHelper(
             Botan::hex_decode(message));
 
@@ -760,6 +764,9 @@ void RpcSession::requestNetworkFeesResponse(const std::string& command, const st
     KETO_LOG_INFO << "[RpcSession::requestNetworkFeesResponse][" << this->getPeer().getHost() << "][" << this->sessionNumber << "] ######## Network intialization is now complete ########";
     KETO_LOG_INFO << "[RpcSession::requestNetworkFeesResponse][" << this->getPeer().getHost() << "][" << this->sessionNumber << "] #######################################################";
 
+
+    return serverRequest(keto::server_common::Constants::RPC_COMMANDS::CLIENT_NETWORK_COMPLETE,
+                         keto::server_common::Constants::RPC_COMMANDS::CLIENT_NETWORK_COMPLETE);
 }
 
 bool RpcSession::handleRetryResponse(const std::string& command, const std::string& message, std::string& result) {
@@ -802,6 +809,28 @@ bool RpcSession::handleRetryResponse(const std::string& command, const std::stri
         KETO_LOG_INFO << this->sessionNumber << ": Setup connection for read : " << command << std::endl;
     }
     return close;
+}
+
+void RpcSession::handleActivatePeer(const std::string& command, const std::string& message) {
+    KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::handleActivatePeer]: Activate the peer";
+    keto::router_utils::RpcPeerHelper rpcPeerHelper;
+    rpcPeerHelper.setAccountHash(this->accountHash);
+    keto::server_common::triggerEvent(
+            keto::server_common::toEvent<keto::proto::RpcPeer>(
+                    keto::server_common::Events::ACTIVATE_RPC_PEER,rpcPeerHelper));
+    KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::handleActivatePeer]: After activating the peer";
+}
+
+void RpcSession::activatePeer() {
+
+    keto::router_utils::RpcPeerHelper rpcPeerHelper;
+    rpcPeerHelper.setAccountHash(keto::server_common::ServerInfo::getInstance()->getAccountHash());
+
+    keto::proto::RpcPeer rpcPeer = rpcPeerHelper;
+    std::string rpcValue;
+    rpcPeer.SerializePartialToString(&rpcValue);
+
+    send(serverRequest(keto::server_common::Constants::RPC_COMMANDS::ACTIVATE, Botan::hex_encode((uint8_t*)rpcValue.data(),rpcValue.size(),true)));
 }
 
 void RpcSession::routeTransaction(keto::proto::MessageWrapper&  messageWrapper) {

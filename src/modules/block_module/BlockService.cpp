@@ -153,8 +153,7 @@ keto::event::Event BlockService::blockMessage(const keto::event::Event& event) {
 
     {
         std::lock_guard<std::mutex> guard(getAccountLock(
-            keto::server_common::VectorUtils().copyStringToVector(
-                    transactionProtoHelperPtr->operator keto::proto::Transaction&().active_account())));
+                    transactionProtoHelperPtr->getActiveAccount()));
 
         //std::cout << "###### Process the transaction" << std::endl;
         *transactionProtoHelperPtr =

@@ -59,6 +59,10 @@ keto::event::Event EventRegistry::deregisterRpcPeer(const keto::event::Event& ev
     return RouterService::getInstance()->deregisterRpcPeer(event);
 }
 
+keto::event::Event EventRegistry::activateRpcPeer(const keto::event::Event& event) {
+    return RouterService::getInstance()->activateRpcPeer(event);
+}
+
 keto::event::Event EventRegistry::registerService(const keto::event::Event& event) {
     return RouterService::getInstance()->registerService(event);
 }
@@ -116,6 +120,9 @@ void EventRegistry::registerEventHandlers() {
             keto::server_common::Events::DEREGISTER_RPC_PEER,
             &keto::router::EventRegistry::deregisterRpcPeer);
     keto::server_common::registerEventHandler (
+            keto::server_common::Events::ACTIVATE_RPC_PEER,
+            &keto::router::EventRegistry::activateRpcPeer);
+    keto::server_common::registerEventHandler (
             keto::server_common::Events::CONSENSUS::ROUTER,
             &keto::router::EventRegistry::generateSoftwareHash);
     keto::server_common::registerEventHandler (
@@ -146,6 +153,8 @@ void EventRegistry::deregisterEventHandlers() {
             keto::server_common::Events::REGISTER_RPC_PEER);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::DEREGISTER_RPC_PEER);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::ACTIVATE_RPC_PEER);
 
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::CONSENSUS::ROUTER);

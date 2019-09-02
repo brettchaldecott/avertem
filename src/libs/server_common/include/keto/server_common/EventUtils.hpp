@@ -11,14 +11,14 @@
  * Created on February 17, 2018, 10:33 AM
  */
 
-#ifndef EVENTUTILS_HPP
-#define EVENTUTILS_HPP
+#ifndef KETO_EVENTUTILS_HPP
+#define KETO_EVENTUTILS_HPP
 
 #include <string>
 #include <vector>
 
-#include "keto/event/Event.hpp"
 #include "keto/server_common/VectorUtils.hpp"
+#include "keto/event/Event.hpp"
 #include "keto/server_common/Exception.hpp"
 #include "keto/obfuscate/MetaString.hpp"
 

@@ -73,6 +73,9 @@ public:
             const keto::proto::RpcPeer& child);
     int numberOfChildren() const;
     RpcPeerHelperPtr getChild(int index) const;
+
+    bool isActive();
+    RpcPeerHelper& setActive(bool active);
     
     operator keto::proto::RpcPeer() const;
     operator std::string() const;

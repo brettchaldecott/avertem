@@ -217,6 +217,7 @@ private:
     std::shared_ptr<Botan::AutoSeeded_RNG> generatorPtr;
     std::queue<std::shared_ptr<std::string>> queue_;
     bool registered;
+    bool active;
 
 public:
     // Take ownership of the socket
@@ -226,6 +227,7 @@ public:
         , strand_(ws_.get_executor())
         , rpcServer(rpcServer)
         , registered(false)
+        , active(false)
     {
         //ws_.auto_fragment(false);
         this->generatorPtr = std::shared_ptr<Botan::AutoSeeded_RNG>(new Botan::AutoSeeded_RNG());
@@ -237,6 +239,10 @@ public:
 
     keto::crypto::SecureVector getSessionId() {
         return this->sessionId;
+    }
+
+    bool isActive() {
+        return this->active;
     }
 
     // Start the asynchronous operation
@@ -372,6 +378,10 @@ public:
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REGISTER) == 0) {
                 KETO_LOG_INFO << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " register";
                 message = handleRegister(keto::server_common::Constants::RPC_COMMANDS::REGISTER, payload);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ACTIVATE) == 0) {
+                KETO_LOG_INFO << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " activate";
+                handleActivate(keto::server_common::Constants::RPC_COMMANDS::ACTIVATE, payload);
+                return do_read();
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
                 KETO_LOG_INFO << "[RpcServer][" << getAccount() << "] handle a transaction";
                 message = handleTransaction(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION, payload);
@@ -402,6 +412,9 @@ public:
                 message = handleRequestNetworkKeys(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES) == 0) {
                 message = handleRequestNetworkFees(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES, payload);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLIENT_NETWORK_COMPLETE) == 0) {
+                handleClientNetworkComplete(keto::server_common::Constants::RPC_COMMANDS::CLIENT_NETWORK_COMPLETE, payload);
+                return do_read();
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK) == 0) {
                 handleBlockPush(keto::server_common::Constants::RPC_COMMANDS::BLOCK, payload);
                 return do_read();
@@ -440,7 +453,21 @@ public:
         do_read();
         KETO_LOG_INFO << "[RpcServer][" << getAccount() << "] Finished processing.";
     }
-    
+
+    void
+    activatePeer() {
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "] Activate this node with its peer";
+        keto::router_utils::RpcPeerHelper rpcPeerHelper;
+        rpcPeerHelper.setAccountHash(keto::server_common::ServerInfo::getInstance()->getAccountHash());
+
+        keto::proto::RpcPeer rpcPeer = rpcPeerHelper;
+        std::string rpcValue;
+        rpcPeer.SerializePartialToString(&rpcValue);
+
+        clientRequest(keto::server_common::Constants::RPC_COMMANDS::ACTIVATE, Botan::hex_encode((uint8_t*)rpcValue.data(),rpcValue.size(),true));
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "] Activate this node with its peer";
+    }
+
     void
     routeTransaction(keto::proto::MessageWrapper&  messageWrapper) {
         KETO_LOG_INFO << "[RpcServer][" << getAccount() << "]Route transaction";
@@ -702,6 +729,17 @@ public:
                 keto::server_common::ServerInfo::getInstance()->getAccountHash());
         return ss.str();
     }
+
+
+    void handleActivate(const std::string& command, const std::string& payload) {
+        this->active = true;
+        keto::router_utils::RpcPeerHelper rpcPeerHelper;
+        rpcPeerHelper.setAccountHash(serverHelloProtoHelperPtr->getAccountHash());
+
+        keto::server_common::triggerEvent(
+                keto::server_common::toEvent<keto::proto::RpcPeer>(
+                        keto::server_common::Events::ACTIVATE_RPC_PEER,rpcPeerHelper));
+    }
     
     
     std::string handleTransaction(const std::string& command, const std::string& payload) {
@@ -813,6 +851,15 @@ public:
                                        << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
         KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleRequestNetworkFees] request network fees";
         return ss.str();
+    }
+
+    void handleClientNetworkComplete(const std::string& command, const std::string& payload) {
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleClientNetworkComplete] The client has completed networking";
+        std::stringstream ss;
+        if (RpcServer::getInstance()->isServerActive()) {
+            activatePeer();
+        }
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleClientNetworkComplete] Finished post network configuration";
     }
 
     void handleBlockPush(const std::string& command, const std::string& payload) {
@@ -1004,7 +1051,7 @@ std::string RpcServer::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
-RpcServer::RpcServer() {
+RpcServer::RpcServer() : serverActive(false) {
     // retrieve the configuration
     std::shared_ptr<ketoEnv::Config> config = ketoEnv::EnvironmentManager::getInstance()->getConfig();
     
@@ -1287,7 +1334,7 @@ keto::event::Event RpcServer::electBlockProducer(const keto::event::Event& event
 
         sessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
                 account);
-        if (sessionPtr_) {
+        if (sessionPtr_ && sessionPtr_->isActive()) {
             try {
                 sessionPtr_->electBlockProducer();
                 electionMessageProtoHelper.addAccount(keto::asn1::HashHelper(account));
@@ -1305,6 +1352,35 @@ keto::event::Event RpcServer::electBlockProducer(const keto::event::Event& event
     }
 
     return keto::server_common::toEvent<keto::proto::ElectionMessage>(electionMessageProtoHelper);
+}
+
+keto::event::Event RpcServer::activatePeers(const keto::event::Event& event) {
+    serverActive = true;
+    std::vector<std::string> peers = AccountSessionCache::getInstance()->getSessions();
+    for (std::string peer : peers)
+    {
+        sessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
+                peer);
+        if (sessionPtr_) {
+            try {
+                sessionPtr_->activatePeer();
+            } catch (keto::common::Exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::activatePeer] Failed to activate the peer : " << ex.what();
+                KETO_LOG_ERROR << "[RpcSessionManager::activatePeer] Cause : " << boost::diagnostic_information(ex,true);
+            } catch (boost::exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::activatePeer] Failed to activate the peer : " << boost::diagnostic_information(ex,true);
+            } catch (std::exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::activatePeer] Failed to activate the peer : " << ex.what();
+            } catch (...) {
+                KETO_LOG_ERROR << "[RpcSessionManager::activatePeer] Failed to activate the peer : unknown cause";
+            }
+        }
+    }
+    return event;
+}
+
+bool RpcServer::isServerActive() {
+    return this->serverActive;
 }
 
 }

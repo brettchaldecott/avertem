@@ -75,26 +75,6 @@ void BlockChainStore::load() {
 }
 
 bool BlockChainStore::requireGenesis() {
-    /*BlockResourcePtr resource = blockResourceManagerPtr->getResource();
-    keto::asn1::HashHelper parentHash(Constants::GENESIS_KEY,keto::common::HEX);
-    keto::crypto::SecureVector vector = 
-            parentHash.operator keto::crypto::SecureVector();
-    keto::rocks_db::SliceHelper keyHelper(keto::crypto::SecureVectorUtils().copyFromSecure(vector));
-    rocksdb::Transaction* childTransaction = resource->getTransaction(Constants::CHILD_INDEX);
-    rocksdb::ReadOptions readOptions;
-    std::string value;
-    auto status = childTransaction->Get(readOptions,keyHelper,&value);
-    if (rocksdb::Status::OK() != status || rocksdb::Status::NotFound() == status) {
-        return true;
-    }
-    if (value.empty()) {
-        return true;
-    }
-    //std::cout << "The value is [" << value << "]" << std::endl;
-    // init the block and header 
-    this->getBlockCount();
-    this->getParentHash();
-    return false; */
     return this->masterChain->requireGenesis();
 }
 
@@ -156,82 +136,61 @@ keto::proto::AccountChainTangle BlockChainStore::getAccountBlockTangle(const ket
     return this->masterChain->getAccountBlockTangle(accountChainTangle);
 }
 
-/*
-void BlockChainStore::writeBlock(SignedBlock& signedBlock) {
-    
-    // write the block
-    BlockResourcePtr resource = blockResourceManagerPtr->getResource();
-    rocksdb::Transaction* blockTransaction = resource->getTransaction(Constants::BLOCKS_INDEX);
-    rocksdb::Transaction* childTransaction = resource->getTransaction(Constants::CHILD_INDEX);
-    rocksdb::Transaction* transactionTransaction = resource->getTransaction(Constants::TRANSACTIONS_INDEX);
-    std::shared_ptr<keto::asn1::SerializationHelper<SignedBlock>> serializationHelperPtr =
-            std::make_shared<keto::asn1::SerializationHelper<SignedBlock>>(
-                &signedBlock,&asn_DEF_SignedBlock);
-    keto::rocks_db::SliceHelper valueHelper((const std::vector<uint8_t>)(*serializationHelperPtr));
-    keto::rocks_db::SliceHelper blockHashHelper(keto::crypto::SecureVectorUtils().copyFromSecure(
-        keto::asn1::HashHelper(signedBlock.hash)));
-    keto::rocks_db::SliceHelper parentHashHelper(keto::crypto::SecureVectorUtils().copyFromSecure(
-        keto::asn1::HashHelper(signedBlock.parent)));
-    blockTransaction->Put(blockHashHelper,valueHelper);
-    childTransaction->Put(parentHashHelper,blockHashHelper);
-    
-    // update the key tracking the parent key
-    keto::rocks_db::SliceHelper parentKeyHelper((std::string(Constants::PARENT_KEY)));
-    blockTransaction->Put(parentKeyHelper,blockHashHelper);
-    
-    parentBlock = keto::asn1::HashHelper(blockHashHelper);
-    
-    // write the block count
-    if (this->blockCount == -1) {
-        this->blockCount = 0;
+bool BlockChainStore::getAccountTangle(const keto::asn1::HashHelper& accountHash, keto::asn1::HashHelper& tangleHash) {
+    if (!masterChain) {
+        BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
     }
-    keto::rocks_db::SliceHelper blockCountKeyHelper((std::string(Constants::BLOCK_COUNT)));
-    std::stringstream ss;
-    ss << ++this->blockCount;
-    keto::rocks_db::SliceHelper blockCountValueHelper(ss.str());
-    blockTransaction->Put(blockCountKeyHelper,blockCountValueHelper);
+    return this->masterChain->getAccountTangle(accountHash,tangleHash);
+}
 
-    // setup the transaction indexing for the block
-    for (int index = 0; index < signedBlock.block.transactions.list.count; index++) {
-        transactionTransaction->Put(keto::rocks_db::SliceHelper(
-            keto::crypto::SecureVectorUtils().copyFromSecure(
-            keto::asn1::HashHelper(
-            signedBlock.block.transactions.list.array[index]->transactionHash))),blockHashHelper);
+BlockChainTangleMetaPtr  BlockChainStore::getTangleInfo(const keto::asn1::HashHelper& tangleHash) {
+    if (!masterChain) {
+        BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
     }
+    return this->masterChain->getTangleInfo(tangleHash);
+}
 
-}*/
 
 keto::asn1::HashHelper BlockChainStore::getParentHash() {
-    /*if (this->parentBlock.empty()) {
-        BlockResourcePtr resource = blockResourceManagerPtr->getResource();
-        keto::rocks_db::SliceHelper keyHelper((std::string(Constants::PARENT_KEY)));
-        std::string value;
-        rocksdb::Transaction* blockTransaction = resource->getTransaction(Constants::BLOCKS_INDEX);
-        rocksdb::ReadOptions readOptions;
-        if (rocksdb::Status::OK() != blockTransaction->Get(readOptions,keyHelper,&value)) {
-            BOOST_THROW_EXCEPTION(keto::block_db::InvalidParentKeyIdentifierException());
-        }
-        return this->parentBlock = keto::asn1::HashHelper(value);
-    } else {
-        return this->parentBlock;
-    }*/
+    if (!masterChain) {
+        BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
+    }
     return this->masterChain->getParentHash();
 }
 
 keto::asn1::HashHelper BlockChainStore::getParentHash(const keto::asn1::HashHelper& transactionHash) {
+    if (!masterChain) {
+        BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
+    }
     return this->masterChain->getParentHash(transactionHash);
 }
 
 
 std::vector<keto::asn1::HashHelper> BlockChainStore::getActiveTangles() {
+    if (!masterChain) {
+        BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
+    }
     return this->masterChain->getActiveTangles();
 }
 
+keto::asn1::HashHelper BlockChainStore::getGrowTangle() {
+    if (!masterChain) {
+        BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
+    }
+    return this->masterChain->getGrowTangle();
+}
+
 void BlockChainStore::setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles) {
+    if (!masterChain) {
+        BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
+    }
     this->masterChain->setActiveTangles(tangles);
 }
 
 void BlockChainStore::setCurrentTangle(const keto::asn1::HashHelper& tangle) {
+    if (!masterChain) {
+        BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
+    }
     this->masterChain->setCurrentTangle(tangle);
 }
 

@@ -17,8 +17,8 @@
 //
 // Get latest version on https://github.com/andrivet/ADVobfuscator
 
-#ifndef Indexes_h
-#define Indexes_h
+#ifndef KETO_Indexes_h
+#define KETO_Indexes_h
 
 // std::index_sequence will be available with C++14 (C++1y). For the moment, implement a (very) simplified and partial version. You can find more complete versions on the Internet
 // MakeIndex<N>::type generates Indexes<0, 1, 2, 3, ..., N>

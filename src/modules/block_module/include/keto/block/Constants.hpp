@@ -52,6 +52,13 @@ public:
     static constexpr const char* STATE_STORAGE_DEFAULT = "data/block/state.ini";
 
     static constexpr const char* PERSISTED_STATE = "BlockProducer.state";
+
+    // tangle configuration
+    static const int MAX_TANGLE_ACCOUNTS;
+    static const int MAX_TANGLES_TO_ACCOUNT;
+
+    // the delay values
+    static const int ACTIVATE_PRODUCER_DELAY;
 };
 
 

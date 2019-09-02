@@ -66,7 +66,7 @@ public:
     static void fin();
     static TransactionProcessorPtr getInstance();
     
-    keto::proto::Transaction processTransaction(keto::proto::Transaction& transaction);
+    keto::proto::Transaction processTransaction(const keto::proto::Transaction& transaction);
     
 private:
 

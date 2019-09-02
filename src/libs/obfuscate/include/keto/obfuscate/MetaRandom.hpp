@@ -17,8 +17,8 @@
 //
 // Get latest version on https://github.com/andrivet/ADVobfuscator
 
-#ifndef MetaRandom_h
-#define MetaRandom_h
+#ifndef KETO_MetaRandom_h
+#define KETO_MetaRandom_h
 
 // Very simple compile-time random numbers generator.
 

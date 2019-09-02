@@ -5,8 +5,8 @@
  * Created on January 12, 2018, 7:32 AM
  */
 
-#ifndef LOG_H
-#define LOG_H
+#ifndef KETO_LOG_H
+#define KETO_LOG_H
 
 #include <boost/log/trivial.hpp>
 

@@ -82,6 +82,9 @@ public:
     keto::event::Event performProtocoCheck(const keto::event::Event& event);
     keto::event::Event performConsensusHeartbeat(const keto::event::Event& event);
     keto::event::Event electBlockProducer(const keto::event::Event& event);
+    keto::event::Event activatePeers(const keto::event::Event& event);
+
+    bool isServerActive();
 
 protected:
     keto::crypto::SecureVector getSecret();
@@ -97,6 +100,7 @@ private:
     std::shared_ptr<boost::asio::io_context> ioc;
     std::vector<std::thread> threadsVector;
     keto::crypto::SecureVector secret;
+    bool serverActive;
     
 };
 

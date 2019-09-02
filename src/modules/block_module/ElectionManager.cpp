@@ -4,6 +4,7 @@
 
 #include "keto/block/BlockProducer.hpp"
 #include "keto/block/ElectionManager.hpp"
+#include "keto/block/Constants.hpp"
 
 #include "keto/server_common/EventUtils.hpp"
 #include "keto/server_common/Events.hpp"
@@ -19,7 +20,8 @@
 
 #include "keto/election_common/ElectNodeHelper.hpp"
 #include "keto/election_common/ElectionPublishTangleAccountProtoHelper.hpp"
-
+#include "keto/election_common/ElectionUtils.hpp"
+#include "keto/election_common/Constants.hpp"
 
 #include "keto/software_consensus/ModuleConsensusHelper.hpp"
 #include "keto/software_consensus/ModuleHashMessageHelper.hpp"
@@ -65,7 +67,7 @@ void ElectionManager::Elector::setElectionResult(
     this->electionResultMessageProtoHelperPtr = result;
 }
 
-ElectionManager::ElectionManager(){
+ElectionManager::ElectionManager() : state(ElectionManager::State::PROCESSING) {
 
 }
 
@@ -98,8 +100,8 @@ keto::event::Event ElectionManager::consensusHeartbeat(const keto::event::Event&
         accountElectionResult.clear();
         this->responseCount = 0;
         invokeElection(keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_CLIENT, keto::server_common::Events::PEER_TYPES::CLIENT);
-        invokeElection(keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_SERVER, keto::server_common::Events::PEER_TYPES::CLIENT);
-
+        invokeElection(keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_SERVER, keto::server_common::Events::PEER_TYPES::SERVER);
+        this->state = ElectionManager::State::ELECT;
         KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] election is now running";
     } else if (state == BlockProducer::State::block_producer &&
                protocolHeartbeatMessageHelper.getNetworkSlot() == protocolHeartbeatMessageHelper.getElectionPublishSlot()){
@@ -174,6 +176,31 @@ keto::event::Event ElectionManager::electRpcResponse(const keto::event::Event& e
     return event;
 }
 
+keto::event::Event ElectionManager::electRpcProcessPublish(const keto::event::Event& event) {
+    std::lock_guard<std::mutex> guard(classMutex);
+    keto::election_common::ElectionPublishTangleAccountProtoHelper electionPublishTangleAccountProtoHelper(
+            keto::server_common::fromEvent<keto::proto::ElectionPublishTangleAccount>(event));
+    if (!nextWindow.empty()) {
+        return event;
+    }
+    if ((std::vector<uint8_t>)electionPublishTangleAccountProtoHelper.getAccount() ==
+        keto::server_common::ServerInfo::getInstance()->getAccountHash()) {
+        nextWindow = electionPublishTangleAccountProtoHelper.getTangles();
+    }
+    this->state = ElectionManager::State::CONFIRMATION;
+    return event;
+}
+
+keto::event::Event ElectionManager::electRpcProcessConfirmation(const keto::event::Event& event) {
+    std::lock_guard<std::mutex> guard(classMutex);
+    if (this->state == ElectionManager::State::CONFIRMATION) {
+        BlockProducer::getInstance()->setActiveTangles(nextWindow);
+        nextWindow.clear();
+    }
+    this->state == ElectionManager::State::PROCESSING;
+    return event;
+}
+
 void ElectionManager::invokeElection(const std::string& event, const std::string& type) {
     keto::election_common::ElectionMessageProtoHelper requestElectionMessageProtoHelper;
     requestElectionMessageProtoHelper.setSource(type);
@@ -190,7 +217,7 @@ void ElectionManager::invokeElection(const std::string& event, const std::string
 
 void ElectionManager::publishElection() {
     if (!this->responseCount) {
-        KETO_LOG_ERROR << "[ElectionManager::publishElection] None of the peers responded";
+        KETO_LOG_ERROR << "[ElectionManager::publishElection] None of the peers responded this node will remain master until the next election";
         return;
     }
     if (this->responseCount != this->accountElectionResult.size()) {
@@ -198,25 +225,37 @@ void ElectionManager::publishElection() {
             << "] got [" << this->responseCount << "]";
     }
 
-    keto::election_common::SignedElectNodeHelperPtr signedElectNodeHelperPtr = generateSignedElectedNode();
-    keto::asn1::HashHelper accountHash =
-            signedElectNodeHelperPtr->getElectedNode()->getElectedNode()->getElectionHelper()->getAccountHash();
+    std::vector<keto::asn1::HashHelper> tangles = BlockProducer::getInstance()->getActiveTangles();
+    std::vector<std::vector<uint8_t>> accounts = this->listAccounts();
 
+    while (tangles.size()) {
+        keto::election_common::SignedElectNodeHelperPtr signedElectNodeHelperPtr = generateSignedElectedNode(accounts);
+        keto::asn1::HashHelper accountHash =
+                signedElectNodeHelperPtr->getElectedNode()->getElectedNode()->getElectionHelper()->getAccountHash();
+        // push to network
+        keto::election_common::ElectionPublishTangleAccountProtoHelperPtr electionPublishTangleAccountProtoHelperPtr(
+                new keto::election_common::ElectionPublishTangleAccountProtoHelper());
+        electionPublishTangleAccountProtoHelperPtr->setAccount(accountHash);
+        for(int index = 0;(index < Constants::MAX_TANGLES_TO_ACCOUNT) && (tangles.size()); index++) {
+            electionPublishTangleAccountProtoHelperPtr->addTangle(tangles[0]);
+            tangles.erase(tangles.begin());
+        }
 
-    // push to network
-    keto::election_common::ElectionPublishTangleAccountProtoHelper electionPublishTangleAccountProtoHelper;
-    electionPublishTangleAccountProtoHelper.setAccount(accountHash);
-    electionPublishTangleAccountProtoHelper.setTangle();
-
-    // generate transaction and push
-
-
+        // generate transaction and push
+        keto::election_common::ElectionUtils(keto::election_common::Constants::ELECTION_INTERNAL_PUBLISH).
+                publish(electionPublishTangleAccountProtoHelperPtr);
+    }
 
 }
 
 void ElectionManager::confirmElection() {
-
-
+    if (!this->responseCount) {
+        KETO_LOG_ERROR << "[ElectionManager::confirmElection] this node will have to remain the master until the next cycle";
+        return;
+    }
+    state == BlockProducer::State::sync_blocks;
+    keto::election_common::ElectionUtils(keto::election_common::Constants::ELECTION_PROCESS_CONFIRMATION).
+            confirmation();
 
 }
 
@@ -233,9 +272,7 @@ std::vector<std::vector<uint8_t>> ElectionManager::listAccounts() {
 }
 
 
-keto::election_common::SignedElectNodeHelperPtr ElectionManager::generateSignedElectedNode() {
-    std::vector<std::vector<uint8_t>> accounts = listAccounts();
-
+keto::election_common::SignedElectNodeHelperPtr ElectionManager::generateSignedElectedNode(std::vector<std::vector<uint8_t>>& accounts) {
     // setup the random number generator
     std::default_random_engine stdGenerator;
     stdGenerator.seed(std::chrono::system_clock::now().time_since_epoch().count());

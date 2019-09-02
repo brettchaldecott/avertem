@@ -11,8 +11,8 @@
  * Created on February 28, 2018, 1:27 PM
  */
 
-#ifndef SLICEHELPER_HPP
-#define SLICEHELPER_HPP
+#ifndef KETO_SLICEHELPER_HPP
+#define KETO_SLICEHELPER_HPP
 
 #include <string>
 #include <memory>

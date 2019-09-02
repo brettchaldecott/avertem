@@ -129,7 +129,12 @@ public:
 
     void
     on_close(boost::system::error_code ec);
-    
+
+    void
+    handleActivatePeer(const std::string& command, const std::string& message);
+
+    void
+    activatePeer();
     
     void
     routeTransaction(keto::proto::MessageWrapper&  messageWrapper);
@@ -190,7 +195,7 @@ private:
     std::string requestNetworkSessionKeysResponse(const std::string& command, const std::string& message);
     std::string requestNetworkMasterKeyResponse(const std::string& command, const std::string& message);
     std::string requestNetworkKeysResponse(const std::string& command, const std::string& message);
-    void requestNetworkFeesResponse(const std::string& command, const std::string& message);
+    std::string requestNetworkFeesResponse(const std::string& command, const std::string& message);
     bool handleRetryResponse(const std::string& command, const std::string& message, std::string& result);
     std::string handleRegisterRequest(const std::string& command, const std::string& message);
     std::string handleTransaction(const std::string& command, const std::string& message);

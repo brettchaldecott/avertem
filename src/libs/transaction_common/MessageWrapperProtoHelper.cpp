@@ -113,7 +113,7 @@ MessageWrapperProtoHelper& MessageWrapperProtoHelper::setTransaction(Transaction
     std::vector<uint8_t> accountVectorHash = keto::crypto::SecureVectorUtils().copyFromSecure(accountHash);
     wrapper.set_account_hash(accountVectorHash.data(),accountVectorHash.size());
     google::protobuf::Any* any = new google::protobuf::Any();
-    keto::proto::Transaction transactionProto = transaction.operator keto::proto::Transaction&(); 
+    keto::proto::Transaction transactionProto = transaction;
     any->PackFrom(transactionProto);
     wrapper.set_allocated_msg(any);
     return *this;

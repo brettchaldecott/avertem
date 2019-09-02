@@ -32,6 +32,7 @@ KETO_DECLARE_DERIVED_EXCEPTION (BlockException, NotBlockProducerException , "Not
 KETO_DECLARE_DERIVED_EXCEPTION (BlockException, BlockProducerNotAcceptedByNetworkException , "Block producer not accepted by network.");
 KETO_DECLARE_DERIVED_EXCEPTION (BlockException, NetworkFeeRatioNotSetException , "The master node network fee ratio was not set.");
 KETO_DECLARE_DERIVED_EXCEPTION (BlockException, UnsupportedTransactionStatusException , "The transaction status is unsupported.");
+KETO_DECLARE_DERIVED_EXCEPTION (BlockException, UnprocessedTransactionsException , "Unprocessed transactions in the pending queue.");
 
 
     

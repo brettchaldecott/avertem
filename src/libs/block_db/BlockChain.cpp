@@ -7,6 +7,10 @@
 #include <keto/server_common/Events.hpp>
 #include "BlockChain.pb.h"
 
+#include "keto/block_db/BlockChain.hpp"
+#include "keto/block_db/Exception.hpp"
+#include "keto/block_db/Constants.hpp"
+
 #include "keto/rocks_db/DBManager.hpp"
 #include "keto/server_common/TransactionHelper.hpp"
 #include "keto/asn1/SerializationHelper.hpp"
@@ -16,16 +20,14 @@
 #include "keto/block_db/BlockResourceManager.hpp"
 #include "keto/block_db/BlockResource.hpp"
 #include "keto/rocks_db/SliceHelper.hpp"
+
 #include "keto/server_common/StringUtils.hpp"
-#include "keto/server_common/VectorUtils.hpp"
 #include "keto/server_common/EventUtils.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
+
 #include "keto/key_store_utils/EncryptionResponseProtoHelper.hpp"
 #include "keto/key_store_utils/EncryptionRequestProtoHelper.hpp"
 
-#include "keto/block_db/BlockChain.hpp"
-#include "keto/block_db/Exception.hpp"
-#include "keto/block_db/Constants.hpp"
 #include "keto/transaction_common/AccountTransactionInfoProtoHelper.hpp"
 
 #include "keto/block_db/SignedBlockWrapperProtoHelper.hpp"
@@ -761,8 +763,16 @@ bool BlockChain::getAccountTangle(const keto::asn1::HashHelper& accountHash, ket
     }
 }
 
+BlockChainTangleMetaPtr BlockChain::getTangleInfo(const keto::asn1::HashHelper& tangleHash) {
+    return this->blockChainMetaPtr->getTangleEntry(tangleHash);
+}
+
 std::vector<keto::asn1::HashHelper> BlockChain::getActiveTangles() {
     return this->tangleManagerInterfacePtr->getActiveTangles();
+}
+
+keto::asn1::HashHelper BlockChain::getGrowTangle() {
+    return this->tangleManagerInterfacePtr->getActiveTangles().back();
 }
 
 void BlockChain::setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles) {

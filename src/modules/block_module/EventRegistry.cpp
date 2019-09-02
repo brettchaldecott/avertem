@@ -93,6 +93,12 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_RESPONSE,
             &keto::block::EventRegistry::electRpcResponse);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_PROCESS_PUBLISH,
+            &keto::block::EventRegistry::electRpcProcessPublish);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_PROCESS_CONFIRMATION,
+            &keto::block::EventRegistry::electRpcProcessConfirmation);
 }
 
 void EventRegistry::deregisterEventHandlers() {
@@ -135,6 +141,10 @@ void EventRegistry::deregisterEventHandlers() {
             keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_REQUEST);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_RESPONSE);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_PROCESS_PUBLISH);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_PROCESS_CONFIRMATION);
 }
 
 keto::event::Event EventRegistry::persistBlockMessage(const keto::event::Event& event) {
@@ -206,6 +216,14 @@ keto::event::Event EventRegistry::electRpcRequest(const keto::event::Event& even
 
 keto::event::Event EventRegistry::electRpcResponse(const keto::event::Event& event) {
     return ElectionManager::getInstance()->electRpcResponse(event);
+}
+
+keto::event::Event EventRegistry::electRpcProcessPublish(const keto::event::Event& event) {
+    return ElectionManager::getInstance()->electRpcProcessPublish(event);
+}
+
+keto::event::Event EventRegistry::electRpcProcessConfirmation(const keto::event::Event& event) {
+    return ElectionManager::getInstance()->electRpcProcessConfirmation(event);
 }
 
 }

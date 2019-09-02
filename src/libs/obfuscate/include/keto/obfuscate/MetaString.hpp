@@ -17,8 +17,8 @@
 //
 // Get latest version on https://github.com/andrivet/ADVobfuscator
 
-#ifndef MetaString_h
-#define MetaString_h
+#ifndef KETO_MetaString_h
+#define KETO_MetaString_h
 
 #include <iostream>
 
@@ -27,7 +27,9 @@
 #include "keto/obfuscate/Indexes.hpp"
 #include "keto/obfuscate/MetaRandom.hpp"
 
-namespace keto { namespace obfuscate {
+namespace keto {
+namespace obfuscate {
+
   
   // Represents an obfuscated string, parametrized with an alrorithm number N, a list of indexes Indexes and a key Key
 
@@ -143,7 +145,8 @@ namespace keto { namespace obfuscate {
   };
 
 
-}}
+}
+}
 
 // Prefix notation
 #define DEF_OBFUSCATED(str) keto::obfuscate::MetaString<keto::obfuscate::MetaRandom<__COUNTER__, 3>::value, keto::obfuscate::MetaRandomChar<__COUNTER__>::value, keto::obfuscate::Make_Indexes<sizeof(str) - 1>::type>(str)

@@ -165,6 +165,15 @@ keto::event::Event RouterService::deregisterRpcPeer(const keto::event::Event& ev
     return event;
 }
 
+keto::event::Event RouterService::activateRpcPeer(const keto::event::Event& event) {
+    keto::router_utils::RpcPeerHelper  rpcPeerHelper(
+            keto::server_common::fromEvent<keto::proto::RpcPeer>(event));
+
+    PeerCache::getInstance()->activateRpcPeer(rpcPeerHelper);
+    return event;
+}
+
+
 keto::event::Event RouterService::updateStateRouteMessage(const keto::event::Event& event) {
     
     keto::proto::MessageWrapper  messageWrapper = 
@@ -186,7 +195,7 @@ keto::event::Event RouterService::updateStateRouteMessage(const keto::event::Eve
     }
     
     transactionProtoHelper->setTransaction(transactionMessageHelper);
-    keto::proto::Transaction transaction = transactionProtoHelper->operator keto::proto::Transaction&();
+    keto::proto::Transaction transaction = *transactionProtoHelper;
     messageWrapperProtoHelper.setTransaction(transactionProtoHelper);
     
     messageWrapper = messageWrapperProtoHelper.operator keto::proto::MessageWrapper();

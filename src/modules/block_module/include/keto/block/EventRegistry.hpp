@@ -56,6 +56,8 @@ public:
 
     static keto::event::Event electRpcRequest(const keto::event::Event& event);
     static keto::event::Event electRpcResponse(const keto::event::Event& event);
+    static keto::event::Event electRpcProcessPublish(const keto::event::Event& event);
+    static keto::event::Event electRpcProcessConfirmation(const keto::event::Event& event);
 
 private:
     EventRegistry();

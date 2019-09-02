@@ -200,13 +200,17 @@ TransactionProtoHelper& TransactionProtoHelper::setTransaction(
     return (*this);
 }
 
+keto::asn1::HashHelper TransactionProtoHelper::getActiveAccount() {
+    return this->transaction.active_account();
+}
+
 TransactionProtoHelper::operator std::string() const {
     std::string buffer;
     transaction.SerializeToString(&buffer);
     return buffer;
 }
 
-TransactionProtoHelper::operator keto::proto::Transaction&() {
+TransactionProtoHelper::operator keto::proto::Transaction() const {
     return this->transaction;
 }
 

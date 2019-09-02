@@ -225,6 +225,28 @@ void RpcSessionManager::stop() {
     this->sessionMap.clear();
 }
 
+keto::event::Event RpcSessionManager::activatePeer(const keto::event::Event& event) {
+    std::vector<std::string> peers = this->listPeers();
+    for (std::string peer : peers)
+    {
+        RpcSessionPtr rpcSessionPtr = getAccountSessionMapping(peer);
+        if (rpcSessionPtr) {
+            try {
+                rpcSessionPtr->activatePeer();
+            } catch (keto::common::Exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::activatePeer] Failed to activate the peer : " << ex.what();
+                KETO_LOG_ERROR << "[RpcSessionManager::activatePeer] Cause : " << boost::diagnostic_information(ex,true);
+            } catch (boost::exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::activatePeer] Failed to activate the peer : " << boost::diagnostic_information(ex,true);
+            } catch (std::exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::activatePeer] Failed to activate the peer : " << ex.what();
+            } catch (...) {
+                KETO_LOG_ERROR << "[RpcSessionManager::activatePeer] Failed to activate the peer : unknown cause";
+            }
+        }
+    }
+    return event;
+}
 
 keto::event::Event RpcSessionManager::requestBlockSync(const keto::event::Event& event) {
 

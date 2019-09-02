@@ -41,6 +41,7 @@ message RpcPeer {
     bytes peer_account_hash = 3;
     bool server = 4;
     repeated RpcPeer rpc_children = 5;
+    bool active = 6;
 }
 
 

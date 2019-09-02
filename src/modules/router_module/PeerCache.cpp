@@ -53,6 +53,12 @@ void PeerCache::removePeer(keto::router_utils::RpcPeerHelper& rpcPeerHelper) {
     this->entries.erase(rpcPeerHelper.getAccountHashBytes());
 }
 
+void PeerCache::activateRpcPeer(keto::router_utils::RpcPeerHelper& rpcPeerHelper) {
+    std::lock_guard<std::mutex> guard(classMutex);
+    this->entries[rpcPeerHelper.getAccountHashBytes()].setActive(true);
+}
+
+
 keto::router_utils::RpcPeerHelper& PeerCache::getPeer(
         const std::vector<uint8_t>& accountHash) {
     std::lock_guard<std::mutex> guard(classMutex);
@@ -93,10 +99,11 @@ std::vector<uint8_t> PeerCache::electPeer(const std::vector<uint8_t>& accountHas
 std::vector<std::vector<uint8_t>> PeerCache::getAccounts() {
     std::lock_guard<std::mutex> guard(classMutex);
     std::vector<std::vector<uint8_t>> result;
-    transform(begin(this->entries), end(this->entries), back_inserter(result),
-              [](decltype(this->entries)::value_type const& pair) {
-                  return pair.first;
-              });
+    for (std::pair<std::vector<uint8_t>,keto::router_utils::RpcPeerHelper> pair : this->entries) {
+        if (pair.second.isActive()) {
+            result.push_back(pair.first);
+        }
+    }
     return result;
 }
 

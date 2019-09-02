@@ -137,6 +137,15 @@ RpcPeerHelperPtr RpcPeerHelper::getChild(int index) const {
 }
 
 
+bool RpcPeerHelper::isActive() {
+    return rpcPeer.active();
+}
+
+RpcPeerHelper& RpcPeerHelper::setActive(bool active) {
+    rpcPeer.set_active(active);
+    return *this;
+}
+
 RpcPeerHelper::operator keto::proto::RpcPeer() const {
     return this->rpcPeer;
 }

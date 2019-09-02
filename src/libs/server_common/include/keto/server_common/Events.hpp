@@ -44,6 +44,9 @@ public:
     static const char* REGISTER_SERVICE_MESSAGE;
     static const char* REGISTER_RPC_PEER;
     static const char* DEREGISTER_RPC_PEER;
+    static const char* ACTIVATE_RPC_PEER;
+    static const char* RPC_CLIENT_ACTIVATE_RPC_PEER;
+    static const char* RPC_SERVER_ACTIVATE_RPC_PEER;
 
     // get the chain tangle information
     static const char* GET_ACCOUNT_TANGLE;
@@ -236,12 +239,22 @@ public:
         static const char* ELECT_RPC_SERVER;
         static const char* ELECT_RPC_REQUEST;
         static const char* ELECT_RPC_RESPONSE;
+        static const char* ELECT_RPC_PUBLISH_SERVER;
+        static const char* ELECT_RPC_PUBLISH_CLIENT;
+        static const char* ELECT_RPC_PROCESS_PUBLISH;
+        static const char* ELECT_RPC_CONFIRMATION_SERVER;
+        static const char* ELECT_RPC_CONFIRMATION_CLIENT;
+        static const char* ELECT_RPC_PROCESS_CONFIRMATION;
     };
 
     class ROUTER_QUERY {
     public:
         static const char* ELECT_ROUTER_PEER;
+        static const char* ELECT_RPC_PROCESS_PUBLISH;
+        static const char* ELECT_RPC_PROCESS_CONFIRMATION;
     };
+
+
 
     static const char* GET_SOFTWARE_CONSENSUS_MESSAGE;
     static const char* VALIDATE_SOFTWARE_CONSENSUS_MESSAGE;

@@ -55,8 +55,7 @@ public:
 
     // block count limit
     static const int MAX_BLOCK_REQUEST;
-    
-    
+
 };
 
 

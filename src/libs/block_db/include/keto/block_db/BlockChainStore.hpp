@@ -59,17 +59,22 @@ public:
     keto::proto::SignedBlockBatchMessage requestBlocks(const std::vector<keto::asn1::HashHelper>& tangledHashes);
     bool processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage, const BlockChainCallback& callback);
 
+    // tangle methods
     keto::proto::AccountChainTangle getAccountBlockTangle(const keto::proto::AccountChainTangle& accountChainTangle);
+    bool getAccountTangle(const keto::asn1::HashHelper& accountHash, keto::asn1::HashHelper& tangleHash);
+    BlockChainTangleMetaPtr getTangleInfo(const keto::asn1::HashHelper& tangleHash);
 
     keto::asn1::HashHelper getParentHash();
     keto::asn1::HashHelper getParentHash(const keto::asn1::HashHelper& transactionHash);
 
     std::vector<keto::asn1::HashHelper> getActiveTangles();
+    keto::asn1::HashHelper getGrowTangle();
     void setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles);
     void setCurrentTangle(const keto::asn1::HashHelper& tangle);
 
 private:
     std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr;
+
     BlockResourceManagerPtr blockResourceManagerPtr;
     BlockChainPtr masterChain;
 };

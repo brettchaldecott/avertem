@@ -50,6 +50,7 @@ public:
     
     void addPeer(keto::router_utils::RpcPeerHelper& rpcPeerHelper);
     void removePeer(keto::router_utils::RpcPeerHelper& rpcPeerHelper);
+    void activateRpcPeer(keto::router_utils::RpcPeerHelper& rpcPeerHelper);
     keto::router_utils::RpcPeerHelper& getPeer(
             const std::vector<uint8_t>& accountHash);
     bool contains(const std::vector<uint8_t>& accountHash);

@@ -11,8 +11,8 @@
  * Created on May 24, 2018, 8:12 AM
  */
 
-#ifndef STRINGUTILS_HPP
-#define STRINGUTILS_HPP
+#ifndef KETO_STRINGUTILS_HPP
+#define KETO_STRINGUTILS_HPP
 
 #include <string>
 #include <vector>

@@ -59,6 +59,7 @@ public:
     void postStart();
     void stop();
 
+    keto::event::Event activatePeer(const keto::event::Event& event);
     keto::event::Event requestBlockSync(const keto::event::Event& event);
     keto::event::Event routeTransaction(const keto::event::Event& event);
     keto::event::Event pushBlock(const keto::event::Event& event);

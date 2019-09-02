@@ -32,6 +32,9 @@ public:
     Constants(const Constants& orig) = delete;
     virtual ~Constants() = delete;
 
+    static const std::vector<std::string> ELECTION_INTERNAL_PUBLISH;
+    static const std::vector<std::string> ELECTION_PROCESS_PUBLISH;
+    static const std::vector<std::string> ELECTION_PROCESS_CONFIRMATION;
 
 private:
 

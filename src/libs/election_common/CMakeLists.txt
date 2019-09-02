@@ -15,6 +15,8 @@ add_library( keto_election_common
 		ElectionPublishTangleAccountProtoHelper.cpp
 		ElectNodeHelper.cpp
 		SignedElectNodeHelper.cpp
+		ElectionUtils.cpp
+		ElectionConfirmationHelper.cpp
 
              ${HEADERS}
            )

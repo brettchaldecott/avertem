@@ -45,6 +45,69 @@ public:
     
     static std::string getSourceVersion();
 
+    class TangleFutureStateManager {
+    public:
+        TangleFutureStateManager(const keto::asn1::HashHelper& tangleHash, bool existing = true);
+        TangleFutureStateManager(const TangleFutureStateManager& orig) = delete;
+        ~TangleFutureStateManager();
+
+        bool isExisting();
+        keto::asn1::HashHelper getTangleHash();
+        keto::asn1::HashHelper getLastBlockHash();
+        int getNumerOfAccounts();
+        int incrementNumberOfAccounts();
+
+    private:
+        keto::asn1::HashHelper tangleHash;
+        bool existing;
+        keto::asn1::HashHelper lastBlockHash;
+        int numberOfAccounts;
+
+    };
+    typedef std::shared_ptr<TangleFutureStateManager> TangleFutureStateManagerPtr;
+
+    class PendingTransactionsTangle {
+    public:
+        PendingTransactionsTangle(const keto::asn1::HashHelper& tangleHash, bool existing = true);
+        PendingTransactionsTangle(const PendingTransactionsTangle& orig) = delete;
+        virtual ~PendingTransactionsTangle();
+
+
+        TangleFutureStateManagerPtr getTangle();
+        void addTransaction(const keto::transaction_common::TransactionProtoHelperPtr& transactionProtoHelperPtr);
+        std::deque<keto::transaction_common::TransactionProtoHelperPtr> getTransactions();
+        std::deque<keto::transaction_common::TransactionProtoHelperPtr> takeTransactions();
+        bool empty();
+
+    private:
+        TangleFutureStateManagerPtr tangleFutureStateManagerPtr;
+        std::deque<keto::transaction_common::TransactionProtoHelperPtr> transactions;
+    };
+    typedef std::shared_ptr<PendingTransactionsTangle> PendingTransactionsTanglePtr;
+
+    class PendingTransactionManager {
+    public:
+        PendingTransactionManager();
+        PendingTransactionManager(const PendingTransactionManager& orig) = delete;
+        virtual ~PendingTransactionManager();
+
+        void addTransaction(const keto::transaction_common::TransactionProtoHelperPtr& transactionProtoHelperPtr);
+        std::deque<PendingTransactionsTanglePtr> takeTransactions();
+        bool empty();
+
+    private:
+        std::mutex classMutex;
+        std::map<std::vector<uint8_t>,PendingTransactionsTanglePtr> tangleTransactions;
+        std::deque<PendingTransactionsTanglePtr> pendingTransactions;
+        PendingTransactionsTanglePtr growTanglePtr;
+
+        PendingTransactionsTanglePtr getPendingTransactionTangle(const keto::asn1::HashHelper& tangleHash, bool existing = true);
+        PendingTransactionsTanglePtr getGrowingPendingTransactionTangle();
+
+    };
+    typedef std::shared_ptr<PendingTransactionManager> PendingTransactionManagerPtr;
+
+
     /**
      * The state enum containing the various states that the module manager can
      * be in.
@@ -86,17 +149,18 @@ public:
 private:
     bool enabled;
     bool loaded;
+    int delay;
     State currentState;
     std::condition_variable stateCondition;
     std::mutex classMutex;
-    std::deque<keto::proto::Transaction> transactions;
+    PendingTransactionManagerPtr pendingTransactionManagerPtr;
     std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr;
     keto::software_consensus::ConsensusMessageHelper consensusMessageHelper;
 
 
     State checkState();
-    std::deque<keto::proto::Transaction> getTransactions();
-    void generateBlock(std::deque<keto::proto::Transaction> transactions);
+    void processTransactions();
+    void generateBlock(const BlockProducer::PendingTransactionsTanglePtr& pendingTransactionTanglePtr);
 
     void load();
     void sync();

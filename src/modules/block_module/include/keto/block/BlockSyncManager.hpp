@@ -49,6 +49,8 @@ public:
     processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage);
     void
     processRequestBlockSyncRetry();
+    void
+    notifyPeers();
 
 private:
     Status status;

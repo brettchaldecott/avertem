@@ -73,15 +73,155 @@ namespace keto {
 namespace block {
 
 static BlockProducerPtr singleton;
-static std::shared_ptr<std::thread> producerThreadPtr; 
+static std::shared_ptr<std::thread> producerThreadPtr;
 
 std::string BlockProducer::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
+BlockProducer::TangleFutureStateManager::TangleFutureStateManager(const keto::asn1::HashHelper& tangleHash, bool existing) :
+    tangleHash(tangleHash), existing(existing), numberOfAccounts(0) {
+    if (existing) {
+        keto::block_db::BlockChainTangleMetaPtr blockChainTangleMetaPtr =
+                keto::block_db::BlockChainStore::getInstance()->getTangleInfo(tangleHash);
+        this->lastBlockHash = blockChainTangleMetaPtr->getLastBlockHash();
+        this->numberOfAccounts = blockChainTangleMetaPtr->getNumberOfAccounts();
+    } else {
+        this->lastBlockHash = tangleHash;
+    }
+}
+
+BlockProducer::TangleFutureStateManager::~TangleFutureStateManager() {
+}
+
+bool BlockProducer::TangleFutureStateManager::isExisting() {
+    return this->existing;
+}
+
+keto::asn1::HashHelper BlockProducer::TangleFutureStateManager::getTangleHash() {
+    return this->tangleHash;
+}
+
+keto::asn1::HashHelper BlockProducer::TangleFutureStateManager::getLastBlockHash() {
+    return this->lastBlockHash;
+}
+
+int BlockProducer::TangleFutureStateManager::getNumerOfAccounts() {
+    return this->numberOfAccounts;
+}
+
+int BlockProducer::TangleFutureStateManager::incrementNumberOfAccounts() {
+    return this->numberOfAccounts;
+}
+
+BlockProducer::PendingTransactionsTangle::PendingTransactionsTangle(const keto::asn1::HashHelper& tangleHash, bool existing) {
+    this->tangleFutureStateManagerPtr =
+            BlockProducer::TangleFutureStateManagerPtr(new BlockProducer::TangleFutureStateManager(tangleHash,existing));
+
+}
+
+BlockProducer::PendingTransactionsTangle::~PendingTransactionsTangle() {
+}
+
+
+BlockProducer::TangleFutureStateManagerPtr BlockProducer::PendingTransactionsTangle::getTangle() {
+    return this->tangleFutureStateManagerPtr;
+}
+
+void BlockProducer::PendingTransactionsTangle::addTransaction(const keto::transaction_common::TransactionProtoHelperPtr& transactionProtoHelperPtr) {
+    this->transactions.push_back(transactionProtoHelperPtr);
+}
+
+std::deque<keto::transaction_common::TransactionProtoHelperPtr> BlockProducer::PendingTransactionsTangle::getTransactions() {
+    return this->transactions;
+}
+
+std::deque<keto::transaction_common::TransactionProtoHelperPtr> BlockProducer::PendingTransactionsTangle::takeTransactions() {
+    std::deque<keto::transaction_common::TransactionProtoHelperPtr> transactions(this->transactions);
+    this->transactions.clear();
+    return transactions;
+}
+
+bool BlockProducer::PendingTransactionsTangle::empty() {
+    return !this->transactions.size();
+}
+
+BlockProducer::PendingTransactionManager::PendingTransactionManager() {
+
+}
+
+BlockProducer::PendingTransactionManager::~PendingTransactionManager() {
+
+}
+
+
+void BlockProducer::PendingTransactionManager::addTransaction(const keto::transaction_common::TransactionProtoHelperPtr& transactionProtoHelperPtr) {
+    std::lock_guard<std::mutex> uniqueLock(this->classMutex);
+    keto::asn1::HashHelper tangleHash;
+    BlockProducer::PendingTransactionsTanglePtr pendingTransactionsTanglePtr;
+    if (keto::block_db::BlockChainStore::getInstance()->getAccountTangle(
+            transactionProtoHelperPtr->getTransactionMessageHelper()->getTransactionWrapper()->getCurrentAccount(),tangleHash)) {
+        pendingTransactionsTanglePtr = getPendingTransactionTangle(tangleHash);
+    } else {
+        pendingTransactionsTanglePtr = getGrowingPendingTransactionTangle();
+    }
+    pendingTransactionsTanglePtr->addTransaction(transactionProtoHelperPtr);
+}
+
+std::deque<BlockProducer::PendingTransactionsTanglePtr> BlockProducer::PendingTransactionManager::takeTransactions() {
+    std::lock_guard<std::mutex> uniqueLock(this->classMutex);
+    std::deque<BlockProducer::PendingTransactionsTanglePtr> result(this->pendingTransactions);
+    this->pendingTransactions.clear();
+    this->growTanglePtr.reset();
+    this->tangleTransactions.clear();
+    return result;
+}
+
+bool BlockProducer::PendingTransactionManager::empty() {
+    std::lock_guard<std::mutex> uniqueLock(this->classMutex);
+    return this->tangleTransactions.empty();
+}
+
+BlockProducer::PendingTransactionsTanglePtr BlockProducer::PendingTransactionManager::getPendingTransactionTangle(
+        const keto::asn1::HashHelper& tangleHash, bool existing) {
+    if (!this->tangleTransactions.count(tangleHash)) {
+        BlockProducer::PendingTransactionsTanglePtr pendingTransactionsTanglePtr(new BlockProducer::PendingTransactionsTangle(tangleHash,existing));
+        this->tangleTransactions.insert(std::pair<std::vector<uint8_t>,PendingTransactionsTanglePtr>(tangleHash,
+                                                                                                     pendingTransactionsTanglePtr));
+        this->pendingTransactions.push_back(pendingTransactionsTanglePtr);
+    }
+    return this->tangleTransactions[tangleHash];
+}
+
+BlockProducer::PendingTransactionsTanglePtr BlockProducer::PendingTransactionManager::getGrowingPendingTransactionTangle() {
+    if (this->growTanglePtr && !this->growTanglePtr->getTangle()->isExisting()) {
+        return this->growTanglePtr;
+    } else if (this->growTanglePtr && this->growTanglePtr->getTangle()->getNumerOfAccounts() < Constants::MAX_TANGLE_ACCOUNTS) {
+        this->growTanglePtr->getTangle()->incrementNumberOfAccounts();
+        return this->growTanglePtr;
+    } else if (this->growTanglePtr) {
+        BlockProducer::PendingTransactionsTanglePtr pendingTransactionsTanglePtr(new BlockProducer::PendingTransactionsTangle(
+                this->growTanglePtr->getTangle()->getLastBlockHash(),false));
+        this->tangleTransactions.insert(std::pair<std::vector<uint8_t>,PendingTransactionsTanglePtr>(
+                this->growTanglePtr->getTangle()->getLastBlockHash(),
+                pendingTransactionsTanglePtr));
+        this->pendingTransactions.push_back(pendingTransactionsTanglePtr);
+        return this->growTanglePtr = pendingTransactionsTanglePtr;
+    } else {
+        BlockProducer::PendingTransactionsTanglePtr pendingTransactionsTanglePtr(new BlockProducer::PendingTransactionsTangle(
+                keto::block_db::BlockChainStore::getInstance()->getGrowTangle(),true));
+        this->tangleTransactions.insert(std::pair<std::vector<uint8_t>,PendingTransactionsTanglePtr>(
+                pendingTransactionsTanglePtr->getTangle()->getTangleHash(),
+                pendingTransactionsTanglePtr));
+        this->pendingTransactions.push_back(pendingTransactionsTanglePtr);
+        return this->growTanglePtr = pendingTransactionsTanglePtr;
+    }
+}
+
 BlockProducer::BlockProducer() : 
         enabled(false),
         loaded(false),
+        delay(0),
         currentState(State::unloaded) {
     std::shared_ptr<keto::environment::Config> config = 
             keto::environment::EnvironmentManager::getInstance()->getConfig();
@@ -104,7 +244,8 @@ BlockProducer::BlockProducer() :
                 Constants::BLOCK_PRODUCER_ENABLED_TRUE) == 0;
     }
 
-
+    this->pendingTransactionManagerPtr =
+            BlockProducer::PendingTransactionManagerPtr(new BlockProducer::PendingTransactionManager());
 }
 
 BlockProducer::~BlockProducer() {
@@ -143,7 +284,7 @@ void BlockProducer::run() {
         keto::software_consensus::ConsensusStateManager::getInstance()->getState()
         == keto::software_consensus::ConsensusStateManager::State::ACCEPTED) {
             load();
-            generateBlock(this->getTransactions());
+            processTransactions();
         } else if (currentState == BlockProducer::State::sync_blocks &&
                    keto::software_consensus::ConsensusStateManager::getInstance()->getState()
                    == keto::software_consensus::ConsensusStateManager::State::ACCEPTED) {
@@ -235,7 +376,7 @@ void BlockProducer::addTransaction(keto::transaction_common::TransactionProtoHel
             BlockChainCallbackImpl());
 
     // add a processed transaction
-    this->transactions.push_back(*transactionProtoHelperPtr);
+    this->pendingTransactionManagerPtr->addTransaction(transactionProtoHelperPtr);
 }
 
 bool BlockProducer::isEnabled() {
@@ -257,43 +398,55 @@ std::vector<keto::asn1::HashHelper> BlockProducer::getActiveTangles() {
 }
 
 void BlockProducer::setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles) {
+    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
     keto::block_db::BlockChainStore::getInstance()->setActiveTangles(tangles);
+    if (tangles.size()) {
+        _setState(BlockProducer::State::block_producer);
+        this->delay = Constants::ACTIVATE_PRODUCER_DELAY;
+    }
 }
 
 BlockProducer::State BlockProducer::checkState() {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    if (this->currentState == State::terminated) {
+        return this->currentState;
+    }
+    State result = this->currentState;
     KETO_LOG_DEBUG << "[BlockProducer] wait";
-    this->stateCondition.wait_for(uniqueLock,std::chrono::milliseconds(20 * 1000));
+    if (delay) {
+        this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(delay));
+        delay = 0;
+    } else {
+        this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(20));
+    }
     KETO_LOG_DEBUG << "[Block Producer] run";
-    return this->currentState;
+    return result;
 }
 
 
-std::deque<keto::proto::Transaction> BlockProducer::getTransactions() {
-    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
-
+void BlockProducer::processTransactions() {
     // clear the account cache
     keto::proto::ClearDirtyCache clearDirtyCache;
     keto::server_common::triggerEvent(
             keto::server_common::toEvent<keto::proto::ClearDirtyCache>(
                     keto::server_common::Events::CLEAR_DIRTY_CACHE,clearDirtyCache));
 
+    for (BlockProducer::PendingTransactionsTanglePtr pendingTransactionTanglePtr : this->pendingTransactionManagerPtr->takeTransactions()) {
+        keto::block_db::BlockChainStore::getInstance()->setCurrentTangle(pendingTransactionTanglePtr->getTangle()->getTangleHash());
+        generateBlock(pendingTransactionTanglePtr);
+    }
 
-    std::deque<keto::proto::Transaction> transactions = this->transactions;
-    this->transactions.clear();
-
-    return transactions;
 }
 
 
-void BlockProducer::generateBlock(std::deque<keto::proto::Transaction> transactions) {
+void BlockProducer::generateBlock(const BlockProducer::PendingTransactionsTanglePtr& pendingTransactionTanglePtr) {
 
     try {
 
         // create a new transaction
         keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
 
-        keto::asn1::HashHelper parentHash = keto::block_db::BlockChainStore::getInstance()->getParentHash();
+        keto::asn1::HashHelper parentHash = pendingTransactionTanglePtr->getTangle()->getLastBlockHash();
         if (parentHash.empty()) {
             KETO_LOG_INFO << "The block producer is not initialized";
             return;
@@ -301,9 +454,8 @@ void BlockProducer::generateBlock(std::deque<keto::proto::Transaction> transacti
         keto::block_db::BlockBuilderPtr blockBuilderPtr =
                 std::make_shared<keto::block_db::BlockBuilder>(parentHash);
 
-        for (keto::proto::Transaction &transaction : transactions) {
-            keto::transaction_common::TransactionProtoHelper transactionProtoHelper(transaction);
-            blockBuilderPtr->addTransactionMessage(transactionProtoHelper.getTransactionMessageHelper());
+        for (keto::transaction_common::TransactionProtoHelperPtr transaction : pendingTransactionTanglePtr->takeTransactions()) {
+            blockBuilderPtr->addTransactionMessage(transaction->getTransactionMessageHelper());
         }
         blockBuilderPtr->setAcceptedCheck(this->consensusMessageHelper.getMsg());
 
@@ -364,6 +516,7 @@ void BlockProducer::load() {
         // check if this is a block producer
         if (this->getState() == BlockProducer::State::block_producer) {
             BlockService::getInstance()->genesis();
+            BlockSyncManager::getInstance()->notifyPeers();
         }
         transactionPtr->commit();
     } catch (keto::common::Exception& ex) {

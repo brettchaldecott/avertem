@@ -84,7 +84,7 @@ TransactionProcessorPtr TransactionProcessor::getInstance() {
     return singleton;
 }
 
-keto::proto::Transaction TransactionProcessor::processTransaction(keto::proto::Transaction& transaction) {
+keto::proto::Transaction TransactionProcessor::processTransaction(const keto::proto::Transaction& transaction) {
     keto::transaction_common::TransactionProtoHelper transactionProtoHelper(transaction);
 
     // calculate the available time based

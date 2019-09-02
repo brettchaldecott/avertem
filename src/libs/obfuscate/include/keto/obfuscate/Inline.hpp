@@ -17,8 +17,8 @@
 //
 // Get latest version on https://github.com/andrivet/ADVobfuscator
 
-#ifndef Inline_h
-#define Inline_h
+#ifndef KETO_Inline_h
+#define KETO_Inline_h
 
 #if defined(_MSC_VER)
 #define ALWAYS_INLINE __forceinline
