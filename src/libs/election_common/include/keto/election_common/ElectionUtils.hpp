@@ -13,6 +13,7 @@
 #include "keto/obfuscate/MetaString.hpp"
 
 #include "keto/election_common/ElectionPublishTangleAccountProtoHelper.hpp"
+#include "keto/election_common/ElectionConfirmationHelper.hpp"
 
 namespace keto {
 namespace election_common {
@@ -31,8 +32,10 @@ public:
     ElectionUtils(const ElectionUtils& orig) = delete;
     virtual ~ElectionUtils();
 
+    void publish(const ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper);
     void publish(const ElectionPublishTangleAccountProtoHelperPtr& electionPublishTangleAccountProtoHelperPtr);
-    void confirmation();
+    void confirmation(const ElectionConfirmationHelper& electionConfirmationHelper);
+    void confirmation(const keto::asn1::HashHelper& accountHash);
 
 private:
     std::vector<std::string> events;

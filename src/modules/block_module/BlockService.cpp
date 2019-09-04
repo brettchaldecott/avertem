@@ -54,7 +54,7 @@ std::string BlockService::getSourceVersion() {
 }
 
 BlockService::BlockService() {
-    BlockSyncManager::createInstance();
+    BlockSyncManager::createInstance(BlockProducer::getInstance()->isEnabled());
 
     std::shared_ptr<keto::environment::Config> config =
             keto::environment::EnvironmentManager::getInstance()->getConfig();

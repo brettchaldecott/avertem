@@ -149,10 +149,34 @@ keto::event::Event RouterService::registerRpcPeer(const keto::event::Event& even
 
     PeerCache::getInstance()->addPeer(rpcPeerHelper);
 
-    keto::router_db::RouterStore::getInstance()->pushPeerRouting(rpcPeerHelper);
+    keto::router_db::RouterStore::getInstance()->persistPeerRouting(rpcPeerHelper);
+
+    keto::router_utils::RpcPeerHelper  parentRpcPeerHelper;
+    parentRpcPeerHelper.setAccountHash(keto::server_common::ServerInfo::getInstance()->getAccountHash());
+    parentRpcPeerHelper.addChild(rpcPeerHelper);
+
+    // push to peers
+    keto::server_common::triggerEvent(
+            keto::server_common::toEvent<keto::proto::RpcPeer>(
+                    keto::server_common::Events::ROUTER_QUERY::PUSH_RPC_PEER,parentRpcPeerHelper));
+
+    return event;
+}
 
 
-    
+
+keto::event::Event RouterService::processPushRpcPeer(const keto::event::Event& event) {
+    keto::router_utils::RpcPeerHelper  rpcPeerHelper(
+            keto::server_common::fromEvent<keto::proto::RpcPeer>(event));
+    rpcPeerHelper.setPeerAccountHash(keto::server_common::ServerInfo::getInstance()->getAccountHash());
+
+    keto::router_db::RouterStore::getInstance()->persistPeerRouting(rpcPeerHelper);
+
+    // push up the tree
+    keto::server_common::triggerEvent(
+            keto::server_common::toEvent<keto::proto::RpcPeer>(
+                    keto::server_common::Events::ROUTER_QUERY::PUSH_RPC_PEER,rpcPeerHelper));
+
     return event;
 }
 

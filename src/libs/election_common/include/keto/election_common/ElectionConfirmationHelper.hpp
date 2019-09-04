@@ -34,6 +34,9 @@ public:
     ElectionConfirmationHelper(const ElectionConfirmationHelper& orig) = default;
     virtual ~ElectionConfirmationHelper();
 
+    keto::asn1::HashHelper getAccount() const;
+    ElectionConfirmationHelper& setAccount(const keto::asn1::HashHelper& account);
+
     operator keto::proto::ElectionConfirmation() const;
     operator std::string() const;
 

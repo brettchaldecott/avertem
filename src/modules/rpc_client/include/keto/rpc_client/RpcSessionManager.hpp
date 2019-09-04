@@ -66,6 +66,10 @@ public:
 
 
     keto::event::Event electBlockProducer(const keto::event::Event& event);
+    keto::event::Event electBlockProducerPublish(const keto::event::Event& event);
+    keto::event::Event electBlockProducerConfirmation(const keto::event::Event& event);
+
+    keto::event::Event pushRpcPeer(const keto::event::Event& event);
     
     
 protected:

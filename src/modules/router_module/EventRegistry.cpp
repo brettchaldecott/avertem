@@ -55,6 +55,10 @@ keto::event::Event EventRegistry::registerRpcPeer(const keto::event::Event& even
     return RouterService::getInstance()->registerRpcPeer(event);
 }
 
+keto::event::Event EventRegistry::processPushRpcPeer(const keto::event::Event& event) {
+    return RouterService::getInstance()->processPushRpcPeer(event);
+}
+
 keto::event::Event EventRegistry::deregisterRpcPeer(const keto::event::Event& event) {
     return RouterService::getInstance()->deregisterRpcPeer(event);
 }
@@ -103,6 +107,17 @@ keto::event::Event EventRegistry::electRouterPeer(const keto::event::Event& even
     return event;
 }
 
+keto::event::Event EventRegistry::electRpcProcessPublish(const keto::event::Event& event) {
+
+    return event;
+}
+
+keto::event::Event EventRegistry::electRpcProcessConfirmation(const keto::event::Event& event) {
+
+    return event;
+}
+
+
 void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::ROUTE_MESSAGE,
@@ -116,6 +131,9 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::REGISTER_RPC_PEER,
             &keto::router::EventRegistry::registerRpcPeer);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::ROUTER_QUERY::PROCESS_PUSH_RPC_PEER,
+            &keto::router::EventRegistry::processPushRpcPeer);
     keto::server_common::registerEventHandler (
             keto::server_common::Events::DEREGISTER_RPC_PEER,
             &keto::router::EventRegistry::deregisterRpcPeer);
@@ -141,11 +159,20 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::ROUTER_QUERY::ELECT_ROUTER_PEER,
             &keto::router::EventRegistry::electRouterPeer);
-
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::ROUTER_QUERY::ELECT_RPC_PROCESS_PUBLISH,
+            &keto::router::EventRegistry::electRpcProcessPublish);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::ROUTER_QUERY::ELECT_RPC_PROCESS_CONFIRMATION,
+            &keto::router::EventRegistry::electRpcProcessConfirmation);
 }
 
 void EventRegistry::deregisterEventHandlers() {
 
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::ROUTER_QUERY::ELECT_RPC_PROCESS_PUBLISH);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::ROUTER_QUERY::ELECT_RPC_PROCESS_CONFIRMATION);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::ROUTER_QUERY::ELECT_ROUTER_PEER);
 

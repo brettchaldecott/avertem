@@ -83,6 +83,7 @@ private:
     std::map<std::vector<uint8_t>,ElectorPtr> accountElectionResult;
     int responseCount;
     std::vector<keto::asn1::HashHelper> nextWindow;
+    std::set<std::vector<uint8_t>> electedAccounts;
 
     void invokeElection(const std::string& event, const std::string& type);
     void publishElection();

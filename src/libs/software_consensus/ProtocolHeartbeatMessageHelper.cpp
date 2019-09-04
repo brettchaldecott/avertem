@@ -55,7 +55,7 @@ ProtocolHeartbeatMessageHelper& ProtocolHeartbeatMessageHelper::setNetworkSlot(i
     return *this;
 }
 
-int ProtocolHeartbeatMessageHelper::getNetworkSlot() {
+int ProtocolHeartbeatMessageHelper::getNetworkSlot() const {
     return protocolHeartbeatMessage.network_slot();
 }
 
@@ -65,7 +65,7 @@ ProtocolHeartbeatMessageHelper& ProtocolHeartbeatMessageHelper::setElectionSlot(
     return *this;
 }
 
-int ProtocolHeartbeatMessageHelper::getElectionSlot() {
+int ProtocolHeartbeatMessageHelper::getElectionSlot() const {
     return protocolHeartbeatMessage.network_election_slot();
 }
 
@@ -74,7 +74,7 @@ ProtocolHeartbeatMessageHelper& ProtocolHeartbeatMessageHelper::setElectionPubli
     return *this;
 }
 
-int ProtocolHeartbeatMessageHelper::getElectionPublishSlot() {
+int ProtocolHeartbeatMessageHelper::getElectionPublishSlot() const {
     return protocolHeartbeatMessage.network_election_publish_slot();
 }
 
@@ -84,7 +84,7 @@ ProtocolHeartbeatMessageHelper& ProtocolHeartbeatMessageHelper::setConfirmationS
     return *this;
 }
 
-int ProtocolHeartbeatMessageHelper::getConfirmationSlot() {
+int ProtocolHeartbeatMessageHelper::getConfirmationSlot() const {
     return protocolHeartbeatMessage.network_confirmation_slot();
 }
 

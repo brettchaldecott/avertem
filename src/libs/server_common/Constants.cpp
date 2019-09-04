@@ -83,6 +83,14 @@ const char* Constants::RPC_COMMANDS::PROTOCOL_CHECK_RESPONSE = "PROTOCOL_CHECK_R
 const char* Constants::RPC_COMMANDS::PROTOCOL_CHECK_ACCEPT = "PROTOCOL_CHECK_ACCEPT";
 const char* Constants::RPC_COMMANDS::PROTOCOL_HEARTBEAT = "PROTOCOL_HEARTBEAT";
 
+// elect node rpc commands
+const char* Constants::RPC_COMMANDS::ELECT_NODE_REQUEST         = "ELECT_NODE_REQUEST";
+const char* Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE        = "ELECT_NODE_RESPONSE";
+const char* Constants::RPC_COMMANDS::ELECT_NODE_PUBLISH         = "ELECT_NODE_PUBLISH";
+const char* Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION    = "ELECT_NODE_CONFIRMATION";
+
+const char* Constants::RPC_COMMANDS::PUSH_RPC_PEERS             = "PUSH_RPC_PEERS";
+
 // election constants
 const int Constants::ELECTION::ELECTOR_COUNT = 7;
 

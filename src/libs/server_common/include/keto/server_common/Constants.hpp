@@ -104,6 +104,10 @@ public:
 
         static const char* ELECT_NODE_REQUEST;
         static const char* ELECT_NODE_RESPONSE;
+        static const char* ELECT_NODE_PUBLISH;
+        static const char* ELECT_NODE_CONFIRMATION;
+
+        static const char* PUSH_RPC_PEERS;
     };
 
     class ELECTION {

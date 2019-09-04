@@ -32,11 +32,11 @@ public:
         COMPLETE
     };
 
-    BlockSyncManager();
+    BlockSyncManager(bool enabled);
     BlockSyncManager(const BlockSyncManager& orig) = delete;
     virtual ~BlockSyncManager();
 
-    static BlockSyncManagerPtr createInstance();
+    static BlockSyncManagerPtr createInstance(bool enabled);
     static BlockSyncManagerPtr getInstance();
     static void finInstance();
 
@@ -51,8 +51,11 @@ public:
     processRequestBlockSyncRetry();
     void
     notifyPeers();
+    bool
+    isEnabled();
 
 private:
+    bool enabled;
     Status status;
     std::time_t startTime;
     std::vector<keto::asn1::HashHelper> tangleHashes;

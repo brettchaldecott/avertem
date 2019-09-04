@@ -29,6 +29,16 @@ ElectionConfirmationHelper::~ElectionConfirmationHelper() {
 
 }
 
+keto::asn1::HashHelper ElectionConfirmationHelper::getAccount() const {
+    return this->electionConfirmation.account_hash();
+}
+
+ElectionConfirmationHelper& ElectionConfirmationHelper::setAccount(const keto::asn1::HashHelper& account) {
+    this->electionConfirmation.set_account_hash(account);
+    return *this;
+}
+
+
 ElectionConfirmationHelper::operator keto::proto::ElectionConfirmation() const {
     return this->electionConfirmation;
 }

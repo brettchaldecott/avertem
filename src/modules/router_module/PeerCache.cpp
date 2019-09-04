@@ -55,7 +55,7 @@ void PeerCache::removePeer(keto::router_utils::RpcPeerHelper& rpcPeerHelper) {
 
 void PeerCache::activateRpcPeer(keto::router_utils::RpcPeerHelper& rpcPeerHelper) {
     std::lock_guard<std::mutex> guard(classMutex);
-    this->entries[rpcPeerHelper.getAccountHashBytes()].setActive(true);
+    this->entries[rpcPeerHelper.getAccountHashBytes()].setActive(rpcPeerHelper.isActive());
 }
 
 

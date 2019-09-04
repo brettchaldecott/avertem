@@ -42,6 +42,10 @@ public:
 
 
     static keto::event::Event electBlockProducer(const keto::event::Event& event);
+    static keto::event::Event electBlockProducerPublish(const keto::event::Event& event);
+    static keto::event::Event electBlockProducerConfirmation(const keto::event::Event& event);
+
+    static keto::event::Event pushRpcPeer(const keto::event::Event& event);
 
     static keto::event::Event routeTransaction(const keto::event::Event& event);
     static keto::event::Event activatePeer(const keto::event::Event& event);

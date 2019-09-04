@@ -80,6 +80,19 @@ keto::event::Event EventRegistry::electBlockProducer(const keto::event::Event& e
     return RpcSessionManager::getInstance()->electBlockProducer(event);
 }
 
+keto::event::Event EventRegistry::electBlockProducerPublish(const keto::event::Event& event) {
+    return RpcSessionManager::getInstance()->electBlockProducerPublish(event);
+}
+
+keto::event::Event EventRegistry::electBlockProducerConfirmation(const keto::event::Event& event) {
+    return RpcSessionManager::getInstance()->electBlockProducerConfirmation(event);
+}
+
+keto::event::Event EventRegistry::pushRpcPeer(const keto::event::Event& event) {
+    return RpcSessionManager::getInstance()->pushRpcPeer(event);
+}
+
+
 void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::CONSENSUS::RPC_CLIENT,
@@ -113,11 +126,24 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_CLIENT,
             &keto::rpc_client::EventRegistry::electBlockProducer);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_PUBLISH_CLIENT,
+            &keto::rpc_client::EventRegistry::electBlockProducerPublish);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_CONFIRMATION_CLIENT,
+            &keto::rpc_client::EventRegistry::electBlockProducerPublish);
 
+    // peer push methods
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::ROUTER_QUERY::PUSH_RPC_PEER,
+            &keto::rpc_client::EventRegistry::pushRpcPeer);
 
 }
 
 void EventRegistry::deregisterEventHandlers() {
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::ROUTER_QUERY::PUSH_RPC_PEER);
+
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::RPC_CLIENT_ACTIVATE_RPC_PEER);
     keto::server_common::deregisterEventHandler (
@@ -140,6 +166,10 @@ void EventRegistry::deregisterEventHandlers() {
     // election methods
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_CLIENT);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_PUBLISH_CLIENT);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_CONFIRMATION_CLIENT);
 }
 
 }

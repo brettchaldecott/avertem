@@ -43,16 +43,16 @@ public:
     long getTimestamp();
 
     ProtocolHeartbeatMessageHelper& setNetworkSlot(int networkSlot);
-    int getNetworkSlot();
+    int getNetworkSlot() const;
 
     ProtocolHeartbeatMessageHelper& setElectionPublishSlot(int electionPublishSlot);
-    int getElectionPublishSlot();
+    int getElectionPublishSlot() const;
 
     ProtocolHeartbeatMessageHelper& setElectionSlot(int electionSlot);
-    int getElectionSlot();
+    int getElectionSlot() const;
 
     ProtocolHeartbeatMessageHelper& setConfirmationSlot(int confirmationSlot);
-    int getConfirmationSlot();
+    int getConfirmationSlot() const;
 
 
     ProtocolHeartbeatMessageHelper& setMsg(const keto::proto::ProtocolHeartbeatMessage& msg);

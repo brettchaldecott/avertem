@@ -15,28 +15,31 @@
 #include <chrono>
 #include <thread>
 
-#include "keto/rpc_client/RpcSessionManager.hpp"
-#include "include/keto/rpc_client/RpcSessionManager.hpp"
-#include "include/keto/rpc_client/RpcSession.hpp"
-#include "keto/environment/EnvironmentManager.hpp"
 #include "keto/ssl/RootCertificate.hpp"
-#include "keto/server_common/StringUtils.hpp"
+
+#include "keto/rpc_client/RpcSessionManager.hpp"
+#include "keto/rpc_client/RpcSession.hpp"
+
+#include "keto/environment/EnvironmentManager.hpp"
 
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
 
 #include "keto/transaction/Transaction.hpp"
 #include "keto/transaction_common/MessageWrapperProtoHelper.hpp"
 
+#include "keto/server_common/StringUtils.hpp"
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
 #include "keto/server_common/Constants.hpp"
-#include "keto/rpc_client/PeerStore.hpp"
 
+#include "keto/rpc_client/PeerStore.hpp"
 #include "keto/rpc_client/Exception.hpp"
 #include "keto/rpc_client/PeerStore.hpp"
 
 #include "keto/election_common/ElectionMessageProtoHelper.hpp"
+#include "keto/election_common/ElectionPublishTangleAccountProtoHelper.hpp"
 
+#include "keto/router_utils/RpcPeerHelper.hpp"
 
 namespace keto {
 namespace rpc_client {
@@ -226,13 +229,15 @@ void RpcSessionManager::stop() {
 }
 
 keto::event::Event RpcSessionManager::activatePeer(const keto::event::Event& event) {
+    keto::router_utils::RpcPeerHelper rpcPeerHelper(
+            keto::server_common::fromEvent<keto::proto::RpcPeer>(event));
     std::vector<std::string> peers = this->listPeers();
     for (std::string peer : peers)
     {
         RpcSessionPtr rpcSessionPtr = getAccountSessionMapping(peer);
         if (rpcSessionPtr) {
             try {
-                rpcSessionPtr->activatePeer();
+                rpcSessionPtr->activatePeer(rpcPeerHelper);
             } catch (keto::common::Exception& ex) {
                 KETO_LOG_ERROR << "[RpcSessionManager::activatePeer] Failed to activate the peer : " << ex.what();
                 KETO_LOG_ERROR << "[RpcSessionManager::activatePeer] Cause : " << boost::diagnostic_information(ex,true);
@@ -392,6 +397,89 @@ keto::event::Event RpcSessionManager::electBlockProducer(const keto::event::Even
     return keto::server_common::toEvent<keto::proto::ElectionMessage>(electionMessageProtoHelper);
 }
 
+keto::event::Event RpcSessionManager::electBlockProducerPublish(const keto::event::Event& event) {
+    keto::election_common::ElectionPublishTangleAccountProtoHelper electionPublishTangleAccountProtoHelper(
+            keto::server_common::fromEvent<keto::proto::ElectionPublishTangleAccount>(event));
+
+    std::vector<std::string> peers = this->listPeers();
+    for (std::string peer : peers) {
+
+        // get the account
+        RpcSessionPtr rpcSessionPtr = getAccountSessionMapping(peer);
+        if (rpcSessionPtr) {
+            try {
+                rpcSessionPtr->electBlockProducerPublish(electionPublishTangleAccountProtoHelper);
+            } catch (keto::common::Exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerPublish] Failed to publish the tangle change: " << ex.what();
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerPublish] Cause : " << boost::diagnostic_information(ex,true);
+            } catch (boost::exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerPublish] Failed to publish the tangle changes : " << boost::diagnostic_information(ex,true);
+            } catch (std::exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerPublish] Failed to publish the tangle changes : " << ex.what();
+            } catch (...) {
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerPublish] Failed to publish the tangle changes : unknown cause";
+            }
+        }
+    }
+
+    return event;
+}
+
+
+keto::event::Event RpcSessionManager::electBlockProducerConfirmation(const keto::event::Event& event) {
+    keto::election_common::ElectionConfirmationHelper electionConfirmationHelper(
+            keto::server_common::fromEvent<keto::proto::ElectionConfirmation>(event));
+    std::vector<std::string> peers = this->listPeers();
+    for (std::string peer : peers) {
+
+        // get the account
+        RpcSessionPtr rpcSessionPtr = getAccountSessionMapping(peer);
+        if (rpcSessionPtr) {
+            try {
+                rpcSessionPtr->electBlockProducerConfirmation(electionConfirmationHelper);
+            } catch (keto::common::Exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerConfirmation] Failed to publish the tangle change: " << ex.what();
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerConfirmation] Cause : " << boost::diagnostic_information(ex,true);
+            } catch (boost::exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerConfirmation] Failed to publish the tangle changes : " << boost::diagnostic_information(ex,true);
+            } catch (std::exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerConfirmation] Failed to publish the tangle changes : " << ex.what();
+            } catch (...) {
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerConfirmation] Failed to publish the tangle changes : unknown cause";
+            }
+        }
+    }
+
+    return event;
+}
+
+
+keto::event::Event RpcSessionManager::pushRpcPeer(const keto::event::Event& event) {
+    keto::router_utils::RpcPeerHelper rpcPeerHelper(
+            keto::server_common::fromEvent<keto::proto::RpcPeer>(event));
+    std::vector<std::string> peers = this->listPeers();
+    for (std::string peer : peers) {
+
+        // get the account
+        RpcSessionPtr rpcSessionPtr = getAccountSessionMapping(peer);
+        if (rpcSessionPtr) {
+            try {
+                rpcSessionPtr->pushRpcPeer(rpcPeerHelper);
+            } catch (keto::common::Exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::pushToRpcPeer] Failed to push peer to rpc peers: " << ex.what();
+                KETO_LOG_ERROR << "[RpcSessionManager::pushToRpcPeer] Cause : " << boost::diagnostic_information(ex,true);
+            } catch (boost::exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::pushToRpcPeer] Failed to push peer to rpc peers : " << boost::diagnostic_information(ex,true);
+            } catch (std::exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::pushToRpcPeer] Failed to push peer to rpc peers : " << ex.what();
+            } catch (...) {
+                KETO_LOG_ERROR << "[RpcSessionManager::pushToRpcPeer] Failed to push peer to rpc peers : unknown cause";
+            }
+        }
+    }
+
+    return event;
+}
 
 
 

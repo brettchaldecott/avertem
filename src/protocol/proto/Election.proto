@@ -52,4 +52,6 @@ message ElectionPublishTangleAccount {
 message ElectionConfirmation {
     // the version for this protocol
     uint32 version = 1;
+    // the account hash the request is being performed for
+    bytes account_hash = 2;
 }

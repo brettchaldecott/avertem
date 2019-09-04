@@ -44,6 +44,11 @@
 #include "keto/asn1/HashHelper.hpp"
 
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
+#include "keto/election_common/ElectionPublishTangleAccountProtoHelper.hpp"
+#include "keto/election_common/ElectionConfirmationHelper.hpp"
+#include "keto/election_common/ElectionResultCache.hpp"
+
+#include "keto/router_utils/RpcPeerHelper.hpp"
 
 #include "keto/common/MetaInfo.hpp"
 
@@ -134,7 +139,7 @@ public:
     handleActivatePeer(const std::string& command, const std::string& message);
 
     void
-    activatePeer();
+    activatePeer(const keto::router_utils::RpcPeerHelper& rpcPeerHelper);
     
     void
     routeTransaction(keto::proto::MessageWrapper&  messageWrapper);
@@ -147,6 +152,13 @@ public:
 
     void
     electBlockProducer();
+    void
+    electBlockProducerPublish(const keto::election_common::ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper);
+    void
+    electBlockProducerConfirmation(const keto::election_common::ElectionConfirmationHelper& electionConfirmationHelper);
+
+    void
+    pushRpcPeer(const keto::router_utils::RpcPeerHelper& rpcPeerHelper);
     
     RpcPeer getPeer();
     
@@ -165,6 +177,7 @@ private:
     std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr;
     std::string accountHash;
     int sessionNumber;
+    keto::election_common::ElectionResultCache electionResultCache;
 
     std::vector<uint8_t> buildHeloMessage();
     
@@ -190,6 +203,8 @@ private:
     // elect node request
     void handleElectionRequest(const std::string& command, const std::string& message);
     void handleElectionResponse(const std::string& command, const std::string& message);
+    void handleElectionPublish(const std::string& command, const std::string& message);
+    void handleElectionConfirmation(const std::string& command, const std::string& message);
 
     std::string registerResponse(const std::string& command, const std::string& message);
     std::string requestNetworkSessionKeysResponse(const std::string& command, const std::string& message);

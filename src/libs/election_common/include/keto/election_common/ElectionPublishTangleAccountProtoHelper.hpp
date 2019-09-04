@@ -36,7 +36,7 @@ public:
     ElectionPublishTangleAccountProtoHelper(const ElectionPublishTangleAccountProtoHelper& orig) = default;
     virtual ~ElectionPublishTangleAccountProtoHelper();
 
-    keto::asn1::HashHelper getAccount();
+    keto::asn1::HashHelper getAccount() const;
     ElectionPublishTangleAccountProtoHelper& setAccount(const keto::asn1::HashHelper& account);
 
     std::vector<keto::asn1::HashHelper> getTangles();

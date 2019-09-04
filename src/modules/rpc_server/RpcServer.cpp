@@ -60,7 +60,11 @@
 #include "keto/election_common/ElectionMessageProtoHelper.hpp"
 #include "keto/election_common/ElectionPeerMessageProtoHelper.hpp"
 #include "keto/election_common/ElectionResultMessageProtoHelper.hpp"
-
+#include "keto/election_common/ElectionPublishTangleAccountProtoHelper.hpp"
+#include "keto/election_common/ElectionConfirmationHelper.hpp"
+#include "keto/election_common/ElectionResultCache.hpp"
+#include "keto/election_common/ElectionUtils.hpp"
+#include "keto/election_common/Constants.hpp"
 
 
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
@@ -216,6 +220,7 @@ private:
     keto::crypto::SecureVector sessionId;
     std::shared_ptr<Botan::AutoSeeded_RNG> generatorPtr;
     std::queue<std::shared_ptr<std::string>> queue_;
+    keto::election_common::ElectionResultCache electionResultCache;
     bool registered;
     bool active;
 
@@ -378,6 +383,9 @@ public:
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REGISTER) == 0) {
                 KETO_LOG_INFO << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " register";
                 message = handleRegister(keto::server_common::Constants::RPC_COMMANDS::REGISTER, payload);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PUSH_RPC_PEERS) == 0) {
+                KETO_LOG_INFO << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " push rpc peers";
+                handlePushRpcPeers(keto::server_common::Constants::RPC_COMMANDS::PUSH_RPC_PEERS, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ACTIVATE) == 0) {
                 KETO_LOG_INFO << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " activate";
                 handleActivate(keto::server_common::Constants::RPC_COMMANDS::ACTIVATE, payload);
@@ -427,6 +435,10 @@ public:
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE) == 0) {
                 handleElectionResponse(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE, payload);
                 return do_read();
+            }else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_PUBLISH) == 0) {
+                handleElectionPublish(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_PUBLISH, stringVector[1]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION) == 0) {
+                handleElectionConfirmation(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION, stringVector[1]);
             }
             KETO_LOG_INFO << "[RpcServer][" << getAccount() << "] processed the command : " << command;
             transactionPtr->commit();
@@ -455,17 +467,43 @@ public:
     }
 
     void
-    activatePeer() {
+    activatePeer(const keto::router_utils::RpcPeerHelper& rpcPeerHelper) {
         KETO_LOG_INFO << "[RpcServer][" << getAccount() << "] Activate this node with its peer";
-        keto::router_utils::RpcPeerHelper rpcPeerHelper;
-        rpcPeerHelper.setAccountHash(keto::server_common::ServerInfo::getInstance()->getAccountHash());
 
-        keto::proto::RpcPeer rpcPeer = rpcPeerHelper;
-        std::string rpcValue;
-        rpcPeer.SerializePartialToString(&rpcValue);
-
+        std::string rpcValue = rpcPeerHelper;
         clientRequest(keto::server_common::Constants::RPC_COMMANDS::ACTIVATE, Botan::hex_encode((uint8_t*)rpcValue.data(),rpcValue.size(),true));
         KETO_LOG_INFO << "[RpcServer][" << getAccount() << "] Activate this node with its peer";
+    }
+
+    void
+    electBlockProducerPublish(const keto::election_common::ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper) {
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "[session::electBlockProducerPublish]: publish the election result";
+        // prevent echo propergation at the boundary
+        if (this->electionResultCache.containsPublishAccount(electionPublishTangleAccountProtoHelper.getAccount())) {
+            return;
+        }
+
+        std::vector<uint8_t> messageBytes =  keto::server_common::VectorUtils().copyStringToVector(
+                electionPublishTangleAccountProtoHelper);
+        clientRequest(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_PUBLISH,
+                      Botan::hex_encode((uint8_t*)messageBytes.data(),messageBytes.size(),true));
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "[session::electBlockProducerPublish]: published the election result";
+    }
+
+    void
+    electBlockProducerConfirmation(const keto::election_common::ElectionConfirmationHelper& electionConfirmationHelper) {
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "[session::electBlockProducerConfirmation]: confirmation of the election results";
+        // prevent echo propergation at the boundary
+        if (this->electionResultCache.containsConfirmationAccount(electionConfirmationHelper.getAccount())) {
+            return;
+        }
+
+        std::vector<uint8_t> messageBytes =  keto::server_common::VectorUtils().copyStringToVector(
+                electionConfirmationHelper);
+
+        clientRequest(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION,
+                      Botan::hex_encode((uint8_t*)messageBytes.data(),messageBytes.size(),true));
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "[session::electBlockProducerConfirmation]: confirmation sent for election results";
     }
 
     void
@@ -518,6 +556,7 @@ public:
     void
     performNetworkHeartbeat(const keto::proto::ProtocolHeartbeatMessage& protocolHeartbeatMessage) {
         KETO_LOG_INFO << "Attempt to perform the protocol heartbeat";
+        this->electionResultCache.heartBeat(protocolHeartbeatMessage);
         std::string messageWrapperStr;
         protocolHeartbeatMessage.SerializeToString(&messageWrapperStr);
         clientRequest(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_HEARTBEAT,
@@ -596,6 +635,36 @@ public:
                         keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_RESPONSE,electionResultMessageProtoHelper));
         KETO_LOG_INFO << "[RpcServer::handleElectionResponse] handled the election response : " << command;
     }
+
+    void handleElectionPublish(const std::string& command, const std::string& message) {
+        keto::election_common::ElectionPublishTangleAccountProtoHelper electionPublishTangleAccountProtoHelper(
+                keto::server_common::VectorUtils().copyVectorToString(
+                        Botan::hex_decode(message)));
+
+        // prevent echo propergation at the boundary
+        if (this->electionResultCache.containsPublishAccount(electionPublishTangleAccountProtoHelper.getAccount())) {
+            return;
+        }
+
+        keto::election_common::ElectionUtils(keto::election_common::Constants::ELECTION_PROCESS_PUBLISH).
+                publish(electionPublishTangleAccountProtoHelper);
+    }
+
+
+    void handleElectionConfirmation(const std::string& command, const std::string& message) {
+        keto::election_common::ElectionConfirmationHelper electionConfirmationHelper(
+                keto::server_common::VectorUtils().copyVectorToString(
+                        Botan::hex_decode(message)));
+
+        // prevent echo propergation at the boundary
+        if (this->electionResultCache.containsConfirmationAccount(electionConfirmationHelper.getAccount())) {
+            return;
+        }
+
+        keto::election_common::ElectionUtils(keto::election_common::Constants::ELECTION_PROCESS_CONFIRMATION).
+                confirmation(electionConfirmationHelper);
+    }
+
 
     void clientRequest(const std::string& command, const std::vector<uint8_t>& message) {
         KETO_LOG_INFO << "[RpcServer] Send the server request : " << command;
@@ -731,10 +800,24 @@ public:
     }
 
 
+    void handlePushRpcPeers(const std::string& command, const std::string& payload) {
+        std::string rpcVector = keto::server_common::VectorUtils().copyVectorToString(
+                Botan::hex_decode(payload));
+        keto::router_utils::RpcPeerHelper rpcPeerHelper(rpcVector);
+
+
+        keto::server_common::triggerEvent(
+                keto::server_common::toEvent<keto::proto::RpcPeer>(
+                        keto::server_common::Events::ROUTER_QUERY::PROCESS_PUSH_RPC_PEER,rpcPeerHelper));
+
+    }
+
+
     void handleActivate(const std::string& command, const std::string& payload) {
-        this->active = true;
-        keto::router_utils::RpcPeerHelper rpcPeerHelper;
-        rpcPeerHelper.setAccountHash(serverHelloProtoHelperPtr->getAccountHash());
+        std::string rpcVector = keto::server_common::VectorUtils().copyVectorToString(
+                Botan::hex_decode(payload));
+        keto::router_utils::RpcPeerHelper rpcPeerHelper(rpcVector);
+        this->active = rpcPeerHelper.isActive();
 
         keto::server_common::triggerEvent(
                 keto::server_common::toEvent<keto::proto::RpcPeer>(
@@ -857,7 +940,10 @@ public:
         KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleClientNetworkComplete] The client has completed networking";
         std::stringstream ss;
         if (RpcServer::getInstance()->isServerActive()) {
-            activatePeer();
+            keto::router_utils::RpcPeerHelper rpcPeerHelper;
+            rpcPeerHelper.setAccountHash(keto::server_common::ServerInfo::getInstance()->getAccountHash());
+            rpcPeerHelper.setActive(RpcServer::getInstance()->isServerActive());
+            activatePeer(rpcPeerHelper);
         }
         KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleClientNetworkComplete] Finished post network configuration";
     }
@@ -1355,7 +1441,9 @@ keto::event::Event RpcServer::electBlockProducer(const keto::event::Event& event
 }
 
 keto::event::Event RpcServer::activatePeers(const keto::event::Event& event) {
-    serverActive = true;
+    keto::router_utils::RpcPeerHelper rpcPeerHelper(
+            keto::server_common::fromEvent<keto::proto::RpcPeer>(event));
+    serverActive = rpcPeerHelper.isActive();
     std::vector<std::string> peers = AccountSessionCache::getInstance()->getSessions();
     for (std::string peer : peers)
     {
@@ -1363,7 +1451,7 @@ keto::event::Event RpcServer::activatePeers(const keto::event::Event& event) {
                 peer);
         if (sessionPtr_) {
             try {
-                sessionPtr_->activatePeer();
+                sessionPtr_->activatePeer(rpcPeerHelper);
             } catch (keto::common::Exception& ex) {
                 KETO_LOG_ERROR << "[RpcSessionManager::activatePeer] Failed to activate the peer : " << ex.what();
                 KETO_LOG_ERROR << "[RpcSessionManager::activatePeer] Cause : " << boost::diagnostic_information(ex,true);
@@ -1382,6 +1470,64 @@ keto::event::Event RpcServer::activatePeers(const keto::event::Event& event) {
 bool RpcServer::isServerActive() {
     return this->serverActive;
 }
+
+
+keto::event::Event RpcServer::electBlockProducerPublish(const keto::event::Event& event) {
+    keto::election_common::ElectionPublishTangleAccountProtoHelper electionPublishTangleAccountProtoHelper(
+            keto::server_common::fromEvent<keto::proto::ElectionPublishTangleAccount>(event));
+
+    std::vector<std::string> peers = AccountSessionCache::getInstance()->getSessions();
+    for (std::string peer : peers) {
+
+        // get the account
+        sessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(peer);
+        if (sessionPtr_) {
+            try {
+                sessionPtr_->electBlockProducerPublish(electionPublishTangleAccountProtoHelper);
+            } catch (keto::common::Exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerPublish] Failed to publish the tangle change: " << ex.what();
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerPublish] Cause : " << boost::diagnostic_information(ex,true);
+            } catch (boost::exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerPublish] Failed to publish the tangle changes : " << boost::diagnostic_information(ex,true);
+            } catch (std::exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerPublish] Failed to publish the tangle changes : " << ex.what();
+            } catch (...) {
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerPublish] Failed to publish the tangle changes : unknown cause";
+            }
+        }
+    }
+
+    return event;
+}
+
+
+keto::event::Event RpcServer::electBlockProducerConfirmation(const keto::event::Event& event) {
+    keto::election_common::ElectionConfirmationHelper electionConfirmationHelper(
+            keto::server_common::fromEvent<keto::proto::ElectionConfirmation>(event));
+    std::vector<std::string> peers = AccountSessionCache::getInstance()->getSessions();
+    for (std::string peer : peers) {
+
+        // get the account
+        sessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(peer);
+        if (sessionPtr_) {
+            try {
+                sessionPtr_->electBlockProducerConfirmation(electionConfirmationHelper);
+            } catch (keto::common::Exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerConfirmation] Failed to publish the tangle change: " << ex.what();
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerConfirmation] Cause : " << boost::diagnostic_information(ex,true);
+            } catch (boost::exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerConfirmation] Failed to publish the tangle changes : " << boost::diagnostic_information(ex,true);
+            } catch (std::exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerConfirmation] Failed to publish the tangle changes : " << ex.what();
+            } catch (...) {
+                KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerConfirmation] Failed to publish the tangle changes : unknown cause";
+            }
+        }
+    }
+
+    return event;
+}
+
 
 }
 }

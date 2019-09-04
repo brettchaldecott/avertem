@@ -227,6 +227,7 @@ void ElectionManager::publishElection() {
 
     std::vector<keto::asn1::HashHelper> tangles = BlockProducer::getInstance()->getActiveTangles();
     std::vector<std::vector<uint8_t>> accounts = this->listAccounts();
+    this->electedAccounts.clear();
 
     while (tangles.size()) {
         keto::election_common::SignedElectNodeHelperPtr signedElectNodeHelperPtr = generateSignedElectedNode(accounts);
@@ -244,6 +245,8 @@ void ElectionManager::publishElection() {
         // generate transaction and push
         keto::election_common::ElectionUtils(keto::election_common::Constants::ELECTION_INTERNAL_PUBLISH).
                 publish(electionPublishTangleAccountProtoHelperPtr);
+
+        this->electedAccounts.insert(accountHash);
     }
 
 }
@@ -254,9 +257,11 @@ void ElectionManager::confirmElection() {
         return;
     }
     state == BlockProducer::State::sync_blocks;
-    keto::election_common::ElectionUtils(keto::election_common::Constants::ELECTION_PROCESS_CONFIRMATION).
-            confirmation();
-
+    for (std::vector<std::uint8_t> account : this->electedAccounts) {
+            keto::election_common::ElectionUtils(keto::election_common::Constants::ELECTION_PROCESS_CONFIRMATION).
+                    confirmation(account);
+    }
+    this->electedAccounts.clear();
 }
 
 

@@ -8,7 +8,6 @@
 #include "keto/block/BlockChainCallbackImpl.hpp"
 #include "keto/block/Constants.hpp"
 #include "keto/block/BlockSyncManager.hpp"
-#include "keto/block/BlockProducer.hpp"
 #include "keto/block_db/BlockChainStore.hpp"
 #include "keto/block_db/SignedBlockBatchRequestProtoHelper.hpp"
 #include "keto/router_utils/RpcPeerHelper.hpp"
@@ -18,7 +17,7 @@ namespace block {
 
     static BlockSyncManagerPtr singleton;
 
-BlockSyncManager::BlockSyncManager() : status(INIT), startTime(0) {
+BlockSyncManager::BlockSyncManager(bool enabled) : enabled(enabled), status(INIT), startTime(0) {
 
 }
 
@@ -26,8 +25,8 @@ BlockSyncManager::~BlockSyncManager() {
 
 }
 
-BlockSyncManagerPtr BlockSyncManager::createInstance() {
-    return singleton = BlockSyncManagerPtr(new BlockSyncManager());
+BlockSyncManagerPtr BlockSyncManager::createInstance(bool enabled) {
+    return singleton = BlockSyncManagerPtr(new BlockSyncManager(enabled));
 }
 
 BlockSyncManagerPtr BlockSyncManager::getInstance() {
@@ -99,7 +98,7 @@ keto::proto::MessageWrapperResponse  BlockSyncManager::processBlockSyncResponse(
         KETO_LOG_INFO << "[BlockProducer::processBlockSyncResponse]" << " ########################################################";
         KETO_LOG_INFO << "[BlockProducer::processBlockSyncResponse]" << " ######## Synchronization has now been completed ########";
         KETO_LOG_INFO << "[BlockProducer::processBlockSyncResponse]" << " ########################################################";
-        if (BlockProducer::getInstance()->isEnabled()) {
+        if (this->isEnabled()) {
             notifyPeers();
         }
 
@@ -124,6 +123,9 @@ void
 BlockSyncManager::notifyPeers() {
     keto::router_utils::RpcPeerHelper rpcPeerHelper;
     rpcPeerHelper.setAccountHash(keto::server_common::ServerInfo::getInstance()->getAccountHash());
+    rpcPeerHelper.setActive(true);
+
+    rpcPeerHelper.setAccountHash(keto::server_common::ServerInfo::getInstance()->getAccountHash());
     keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::RpcPeer>(
             keto::server_common::Events::RPC_CLIENT_ACTIVATE_RPC_PEER,rpcPeerHelper));
     keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::RpcPeer>(
@@ -131,6 +133,11 @@ BlockSyncManager::notifyPeers() {
     KETO_LOG_INFO << "[BlockProducer::processBlockSyncResponse]" << " ########################################################";
     KETO_LOG_INFO << "[BlockProducer::processBlockSyncResponse]" << " ######## Notify peers of status                 ########";
     KETO_LOG_INFO << "[BlockProducer::processBlockSyncResponse]" << " ########################################################";
+}
+
+bool
+BlockSyncManager::isEnabled() {
+    return this->enabled;
 }
 
 bool BlockSyncManager::isExpired() {

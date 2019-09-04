@@ -17,6 +17,7 @@ add_library( keto_election_common
 		SignedElectNodeHelper.cpp
 		ElectionUtils.cpp
 		ElectionConfirmationHelper.cpp
+		ElectionResultCache.cpp
 
              ${HEADERS}
            )

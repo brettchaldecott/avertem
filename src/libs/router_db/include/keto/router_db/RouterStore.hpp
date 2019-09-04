@@ -52,13 +52,15 @@ public:
     bool getAccountRouting(
             const keto::asn1::HashHelper& helper,
             keto::proto::RpcPeer& result);
-    void pushPeerRouting(
+    void persistPeerRouting(
             const keto::router_utils::RpcPeerHelper& rpcPeerHelper);
 
 private:
     std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr;
     RouterResourceManagerPtr routerResourceManagerPtr;
-    
+
+    bool checkForPeer(const keto::router_utils::RpcPeerHelper& node, const keto::asn1::HashHelper& hash);
+
 };
 
 

@@ -30,7 +30,7 @@ ElectionPublishTangleAccountProtoHelper::~ElectionPublishTangleAccountProtoHelpe
 
 }
 
-keto::asn1::HashHelper ElectionPublishTangleAccountProtoHelper::getAccount() {
+keto::asn1::HashHelper ElectionPublishTangleAccountProtoHelper::getAccount() const {
     return this->electionPublishTangleAccount.account_hash();
 }
 

@@ -69,6 +69,8 @@
 
 #include "keto/election_common/ElectionPeerMessageProtoHelper.hpp"
 #include "keto/election_common/ElectionResultMessageProtoHelper.hpp"
+#include "keto/election_common/ElectionUtils.hpp"
+#include "keto/election_common/Constants.hpp"
 
 namespace keto {
 namespace rpc_client {
@@ -430,6 +432,10 @@ RpcSession::on_read(
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE) == 0) {
             handleElectionResponse(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE, stringVector[1]);
             return;
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_PUBLISH) == 0) {
+            handleElectionPublish(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_PUBLISH, stringVector[1]);
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION) == 0) {
+            handleElectionConfirmation(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION, stringVector[1]);
         }
         transactionPtr->commit();
     } catch (keto::common::Exception& ex) {
@@ -650,7 +656,8 @@ void RpcSession::handleProtocolHeartbeat(const std::string& command, const std::
     keto::proto::ProtocolHeartbeatMessage protocolHeartbeatMessage;
     protocolHeartbeatMessage.ParseFromString(keto::server_common::VectorUtils().copyVectorToString(
             Botan::hex_decode(message)));
-
+    // clear out the election result cache every type a new election begins.
+    electionResultCache.heartBeat(protocolHeartbeatMessage);
     keto::software_consensus::ConsensusSessionManager::getInstance()->initNetworkHeartbeat(protocolHeartbeatMessage);
 }
 
@@ -678,6 +685,36 @@ void RpcSession::handleElectionResponse(const std::string& command, const std::s
     keto::server_common::triggerEvent(
             keto::server_common::toEvent<keto::proto::ElectionResultMessage>(
                     keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_RESPONSE,electionResultMessageProtoHelper));
+}
+
+
+void RpcSession::handleElectionPublish(const std::string& command, const std::string& message) {
+    keto::election_common::ElectionPublishTangleAccountProtoHelper electionPublishTangleAccountProtoHelper(
+            keto::server_common::VectorUtils().copyVectorToString(
+                    Botan::hex_decode(message)));
+
+    // prevent echo propergation at the boundary
+    if (this->electionResultCache.containsPublishAccount(electionPublishTangleAccountProtoHelper.getAccount())) {
+        return;
+    }
+
+    keto::election_common::ElectionUtils(keto::election_common::Constants::ELECTION_PROCESS_PUBLISH).
+            publish(electionPublishTangleAccountProtoHelper);
+}
+
+
+void RpcSession::handleElectionConfirmation(const std::string& command, const std::string& message) {
+    keto::election_common::ElectionConfirmationHelper electionConfirmationHelper(
+            keto::server_common::VectorUtils().copyVectorToString(
+                    Botan::hex_decode(message)));
+
+    // prevent echo propergation at the boundary
+    if (this->electionResultCache.containsConfirmationAccount(electionConfirmationHelper.getAccount())) {
+        return;
+    }
+
+    keto::election_common::ElectionUtils(keto::election_common::Constants::ELECTION_PROCESS_CONFIRMATION).
+            confirmation(electionConfirmationHelper);
 }
 
 
@@ -813,23 +850,18 @@ bool RpcSession::handleRetryResponse(const std::string& command, const std::stri
 
 void RpcSession::handleActivatePeer(const std::string& command, const std::string& message) {
     KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::handleActivatePeer]: Activate the peer";
-    keto::router_utils::RpcPeerHelper rpcPeerHelper;
-    rpcPeerHelper.setAccountHash(this->accountHash);
+    std::string rpcVector = keto::server_common::VectorUtils().copyVectorToString(
+            Botan::hex_decode(message));
+    keto::router_utils::RpcPeerHelper rpcPeerHelper(rpcVector);
     keto::server_common::triggerEvent(
             keto::server_common::toEvent<keto::proto::RpcPeer>(
                     keto::server_common::Events::ACTIVATE_RPC_PEER,rpcPeerHelper));
     KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::handleActivatePeer]: After activating the peer";
 }
 
-void RpcSession::activatePeer() {
+void RpcSession::activatePeer(const keto::router_utils::RpcPeerHelper& rpcPeerHelper) {
 
-    keto::router_utils::RpcPeerHelper rpcPeerHelper;
-    rpcPeerHelper.setAccountHash(keto::server_common::ServerInfo::getInstance()->getAccountHash());
-
-    keto::proto::RpcPeer rpcPeer = rpcPeerHelper;
-    std::string rpcValue;
-    rpcPeer.SerializePartialToString(&rpcValue);
-
+    std::string rpcValue = rpcPeerHelper;
     send(serverRequest(keto::server_common::Constants::RPC_COMMANDS::ACTIVATE, Botan::hex_encode((uint8_t*)rpcValue.data(),rpcValue.size(),true)));
 }
 
@@ -881,6 +913,52 @@ RpcSession::electBlockProducer() {
                        messageBytes));
     KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::electBlockProducer]: call the block ";
 }
+
+void
+RpcSession::electBlockProducerPublish(const keto::election_common::ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper) {
+    KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::electBlockProducerPublish]: publish the election result";
+    // prevent echo propergation at the boundary
+    if (this->electionResultCache.containsPublishAccount(electionPublishTangleAccountProtoHelper.getAccount())) {
+        return;
+    }
+
+    std::vector<uint8_t> messageBytes =  keto::server_common::VectorUtils().copyStringToVector(
+            electionPublishTangleAccountProtoHelper);
+
+    send(serverRequest(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_PUBLISH,
+                       messageBytes));
+    KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::electBlockProducerPublish]: published the election result";
+}
+
+void
+RpcSession::electBlockProducerConfirmation(const keto::election_common::ElectionConfirmationHelper& electionConfirmationHelper) {
+    KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::electBlockProducerConfirmation]: confirmation of the election results";
+    // prevent echo propergation at the boundary
+    if (this->electionResultCache.containsConfirmationAccount(electionConfirmationHelper.getAccount())) {
+        return;
+    }
+
+    std::vector<uint8_t> messageBytes =  keto::server_common::VectorUtils().copyStringToVector(
+            electionConfirmationHelper);
+
+    send(serverRequest(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION,
+                       messageBytes));
+    KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::electBlockProducerConfirmation]: confirmation sent for election results";
+}
+
+
+void
+RpcSession::pushRpcPeer(const keto::router_utils::RpcPeerHelper& rpcPeerHelper) {
+    KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::pushToRpcPeer]: confirmation of the election results";
+
+    std::vector<uint8_t> messageBytes =  keto::server_common::VectorUtils().copyStringToVector(
+            rpcPeerHelper);
+
+    send(serverRequest(keto::server_common::Constants::RPC_COMMANDS::PUSH_RPC_PEERS,
+                       messageBytes));
+    KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::pushToRpcPeer]: confirmation sent for election results";
+}
+
 
 RpcPeer RpcSession::getPeer() {
     return this->rpcPeer;

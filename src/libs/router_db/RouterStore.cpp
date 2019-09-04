@@ -77,7 +77,7 @@ bool RouterStore::getAccountRouting(
 }
 
 
-void RouterStore::pushPeerRouting(
+void RouterStore::persistPeerRouting(
         const keto::router_utils::RpcPeerHelper& rpcPeerHelper) {
     keto::router_utils::RpcPeerHelper newRpcPeerHelper(rpcPeerHelper);
     RouterResourcePtr resource = routerResourceManagerPtr->getResource();
@@ -89,16 +89,30 @@ void RouterStore::pushPeerRouting(
     if (rocksdb::Status::OK() != status && rocksdb::Status::NotFound() != status) {
         keto::router_utils::RpcPeerHelper existingEntryRpcPeerHelper(value);
         for (int index = 0; index < existingEntryRpcPeerHelper.numberOfChildren(); index++) {
-            newRpcPeerHelper.addChild(*existingEntryRpcPeerHelper.getChild(index));
+            keto::router_utils::RpcPeerHelperPtr child = existingEntryRpcPeerHelper.getChild(index);
+            if (checkForPeer(newRpcPeerHelper,child->getAccountHash())) {
+                continue;
+            }
+            newRpcPeerHelper.addChild(*child);
         }
     }
     keto::rocks_db::SliceHelper rpcPeerSliceHelper(newRpcPeerHelper.toString());
     routerTransaction->Put(accountSliceHelper,rpcPeerSliceHelper);
     for (int index = 0; index < rpcPeerHelper.numberOfChildren(); index++) {
-        pushPeerRouting(*rpcPeerHelper.getChild(index));
+        persistPeerRouting(*rpcPeerHelper.getChild(index));
     }
 }
 
+
+bool RouterStore::checkForPeer(const keto::router_utils::RpcPeerHelper& node, const keto::asn1::HashHelper& hash) {
+    for (int index = 0; index < node.numberOfChildren(); index++) {
+        keto::router_utils::RpcPeerHelperPtr child = node.getChild(index);
+        if (child->getAccountHash() == hash) {
+            return true;
+        }
+    }
+    return false;
+}
 
 }
 }

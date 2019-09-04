@@ -22,6 +22,14 @@ ElectionUtils::~ElectionUtils() {
 
 }
 
+void ElectionUtils::publish(const ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper) {
+    for (std::string event : events) {
+        keto::server_common::triggerEvent(
+                keto::server_common::toEvent<keto::proto::ElectionPublishTangleAccount>(
+                        event,electionPublishTangleAccountProtoHelper));
+    }
+}
+
 void ElectionUtils::publish(const ElectionPublishTangleAccountProtoHelperPtr &electionPublishTangleAccountProtoHelperPtr) {
     for (std::string event : events) {
         keto::server_common::triggerEvent(
@@ -30,12 +38,21 @@ void ElectionUtils::publish(const ElectionPublishTangleAccountProtoHelperPtr &el
     }
 }
 
-
-void ElectionUtils::confirmation() {
+void ElectionUtils::confirmation(const ElectionConfirmationHelper& electionConfirmationHelper) {
     for (std::string event : events) {
         keto::server_common::triggerEvent(
                 keto::server_common::toEvent<keto::proto::ElectionConfirmation>(
-                        event,ElectionConfirmationHelper()));
+                        event,electionConfirmationHelper));
+    }
+}
+
+void ElectionUtils::confirmation(const keto::asn1::HashHelper& accountHash) {
+    ElectionConfirmationHelper electionConfirmationHelper;
+    electionConfirmationHelper.setAccount(accountHash);
+    for (std::string event : events) {
+        keto::server_common::triggerEvent(
+                keto::server_common::toEvent<keto::proto::ElectionConfirmation>(
+                        event,electionConfirmationHelper));
     }
 }
 

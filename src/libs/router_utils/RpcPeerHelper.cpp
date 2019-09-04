@@ -24,6 +24,7 @@ std::string RpcPeerHelper::getSourceVersion() {
 
 RpcPeerHelper::RpcPeerHelper() {
     this->rpcPeer.set_version(keto::common::MetaInfo::PROTOCOL_VERSION);
+    this->rpcPeer.set_active(false);
 }
 
 RpcPeerHelper::RpcPeerHelper(const keto::proto::RpcPeer& orig) : rpcPeer(orig) {
@@ -31,7 +32,7 @@ RpcPeerHelper::RpcPeerHelper(const keto::proto::RpcPeer& orig) : rpcPeer(orig) {
 }
 
 RpcPeerHelper::RpcPeerHelper(const std::string& value) {
-    rpcPeer.ParseFromString(value);
+    this->rpcPeer.ParseFromString(value);
 }
 
 RpcPeerHelper::~RpcPeerHelper() {

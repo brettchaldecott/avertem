@@ -45,6 +45,7 @@ public:
     static const char* REGISTER_RPC_PEER;
     static const char* DEREGISTER_RPC_PEER;
     static const char* ACTIVATE_RPC_PEER;
+    static const char* PUSH_RPC_PEER;
     static const char* RPC_CLIENT_ACTIVATE_RPC_PEER;
     static const char* RPC_SERVER_ACTIVATE_RPC_PEER;
 
@@ -252,6 +253,8 @@ public:
         static const char* ELECT_ROUTER_PEER;
         static const char* ELECT_RPC_PROCESS_PUBLISH;
         static const char* ELECT_RPC_PROCESS_CONFIRMATION;
+        static const char* PUSH_RPC_PEER;
+        static const char* PROCESS_PUSH_RPC_PEER;
     };
 
 
