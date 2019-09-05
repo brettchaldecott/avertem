@@ -27,7 +27,8 @@ KETO_DECLARE_EXCEPTION( RouterModuleException, "Keto Router Module Exception." )
 // the 
 KETO_DECLARE_DERIVED_EXCEPTION (RouterModuleException, NoServicesRegisteredException , "No services registered.");
 KETO_DECLARE_DERIVED_EXCEPTION (RouterModuleException, NoAccountsForServiceException , "No accounts for the service.");
-KETO_DECLARE_DERIVED_EXCEPTION (RouterModuleException, NoPeersRegistered , "No .");
+KETO_DECLARE_DERIVED_EXCEPTION (RouterModuleException, NoPeersRegistered , "No Registered Peers.");
+KETO_DECLARE_DERIVED_EXCEPTION (RouterModuleException, NoGrowingTangle , "No growing tangle.");
 
 }
 }

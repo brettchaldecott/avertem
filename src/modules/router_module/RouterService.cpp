@@ -77,51 +77,48 @@ std::shared_ptr<RouterService> RouterService::getInstance() {
 
 
 keto::event::Event RouterService::routeMessage(const keto::event::Event& event) {
-    keto::proto::MessageWrapper  messageWrapper = 
+    keto::transaction_common::MessageWrapperProtoHelper  messageWrapperProtoHelper =
             keto::server_common::fromEvent<keto::proto::MessageWrapper>(event);
-    
-    keto::asn1::HashHelper accountHash(messageWrapper.account_hash());
-    std::cout << "Attempt to route the account hash : " 
-            << accountHash.getHash(keto::common::StringEncoding::HEX) << std::endl;
+
+    KETO_LOG_INFO << "Attempt to route the account hash : "
+            << messageWrapperProtoHelper.getAccountHash().getHash(keto::common::StringEncoding::HEX);
+
+    if (!TangleServiceCache::getInstance()->containsAccount(messageWrapperProtoHelper.getAccountHash())) {
+        keto::proto::AccountChainTangle accountChainTangle;
+        accountChainTangle.set_account_id(messageWrapperProtoHelper.getSourceAccountHash());
+        accountChainTangle =
+                keto::server_common::fromEvent<keto::proto::AccountChainTangle>(
+                        keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::AccountChainTangle>(
+                                keto::server_common::Events::GET_ACCOUNT_TANGLE,accountChainTangle)));
+        if (!accountChainTangle.found()) {
+            messageWrapperProtoHelper.setAccountHash(
+                    TangleServiceCache::getInstance()->getGrowing()->getAccountHash());
+        } else {
+            messageWrapperProtoHelper.setAccountHash(
+                    TangleServiceCache::getInstance()->getTangle(accountChainTangle.chain_tangle_id())->getAccountHash());
+        }
+    }
+
     // look to see if the message account is for this server
-    if (keto::crypto::SecureVectorUtils().copyFromSecure(
-            accountHash.operator keto::crypto::SecureVector()) == keto::server_common::ServerInfo::getInstance()->getAccountHash()) {
-        
-        routeLocal(messageWrapper);
-        // the result of the local routing 
+    if (messageWrapperProtoHelper.getAccountHash() == keto::server_common::ServerInfo::getInstance()->getAccountHash()) {
+
+        routeLocal(messageWrapperProtoHelper);
+        // the result of the local routing
         keto::proto::MessageWrapperResponse response;
         response.set_success(true);
         response.set_result("local");
         return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
     }
 
-    if (!TangleServiceCache::getInstance()->containsAccount(messageWrapper.account_hash())) {
-        keto::proto::AccountChainTangle accountChainTangle;
-        accountChainTangle.set_account_id(messageWrapper.account_hash());
-        accountChainTangle =
-                keto::server_common::fromEvent<keto::proto::AccountChainTangle>(
-                        keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::AccountChainTangle>(
-                                keto::server_common::Events::GET_ACCOUNT_TANGLE,accountChainTangle)));
-        if (!accountChainTangle.found()) {
-            messageWrapper.set_account_hash(
-                    TangleServiceCache::getInstance()->getGrowTangle()->
-                            getService(keto::server_common::Constants::SERVICE::BALANCE)->getAccountHash());
-        } else {
-            messageWrapper.set_account_hash(
-                    TangleServiceCache::getInstance()->getTangle(accountChainTangle.chain_tangle_id())->
-                    getService(keto::server_common::Constants::SERVICE::BALANCE)->getAccountHash());
-        }
-    }
-
     // check if we can rout to a peer
     keto::proto::RpcPeer rpcPeer;
-    keto::asn1::HashHelper peerAccountHash(messageWrapper.account_hash());
+    keto::asn1::HashHelper peerAccountHash = messageWrapperProtoHelper.getAccountHash();
     while (keto::router_db::RouterStore::getInstance()->getAccountRouting(
             peerAccountHash,rpcPeer)) {
         keto::router_utils::RpcPeerHelper rpcPeerHelper(
                 rpcPeer);
         if (PeerCache::getInstance()->contains(rpcPeerHelper.getAccountHash())) {
-            this->routeToRpcClient(messageWrapper,
+            this->routeToRpcClient(messageWrapperProtoHelper,
                     PeerCache::getInstance()->getPeer(rpcPeerHelper.getAccountHash()));
 
             // route
@@ -134,7 +131,7 @@ keto::event::Event RouterService::routeMessage(const keto::event::Event& event) 
         }
     }
     
-    this->routeToRpcPeer(messageWrapper);
+    this->routeToRpcPeer(messageWrapperProtoHelper);
     
     keto::proto::MessageWrapperResponse response;
     response.set_success(true);
@@ -243,116 +240,126 @@ keto::event::Event RouterService::registerService(const keto::event::Event& even
 }
 
 
-void RouterService::routeLocal(keto::proto::MessageWrapper&  messageWrapper) {
-    keto::proto::Transaction transaction;
-    messageWrapper.msg().UnpackTo(&transaction);
-    if (transaction.status() == keto::proto::TransactionStatus::DEBIT || 
-            transaction.status() == keto::proto::TransactionStatus::INIT) {
-        if (messageWrapper.message_operation() == keto::proto::MessageOperation::MESSAGE_INIT ||
-                messageWrapper.message_operation() == keto::proto::MessageOperation::MESSAGE_ROUTE) {
-            messageWrapper.set_message_operation(keto::proto::MessageOperation::MESSAGE_BALANCE);
+void RouterService::routeLocal(keto::transaction_common::MessageWrapperProtoHelper&  messageWrapperProtoHelper) {
+    keto::transaction_common::TransactionProtoHelperPtr transactionProtoHelperPtr = messageWrapperProtoHelper.getTransaction();
+    if (transactionProtoHelperPtr->getStatus() == keto::proto::TransactionStatus::DEBIT ||
+            transactionProtoHelperPtr->getStatus() == keto::proto::TransactionStatus::INIT) {
+        if (messageWrapperProtoHelper.getOperation() == keto::proto::MessageOperation::MESSAGE_INIT ||
+                messageWrapperProtoHelper.getOperation() == keto::proto::MessageOperation::MESSAGE_ROUTE) {
+            messageWrapperProtoHelper.setOperation(keto::proto::MessageOperation::MESSAGE_BALANCE);
+
+            // at present the only services registered are for the local service.
+            // nothing is propigated. This means we are balancing locally on a single account
             AccountHashVector accountHashVector = 
                     RouterRegistry::getInstance()->getAccount(
                     keto::server_common::Constants::SERVICE::BALANCE);
-            messageWrapper.set_account_hash(keto::server_common::VectorUtils().copyVectorToString(accountHashVector));
+            messageWrapperProtoHelper.setAccountHash(keto::server_common::VectorUtils().copyVectorToString(accountHashVector));
             if (RouterRegistry::getInstance()->isAccountLocal(accountHashVector)) {
                 keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
-                        keto::server_common::Events::BALANCER_MESSAGE,messageWrapper));
+                        keto::server_common::Events::BALANCER_MESSAGE,messageWrapperProtoHelper));
             } else {
                 keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
-                        keto::server_common::Events::RPC_SEND_MESSAGE,messageWrapper));
+                        keto::server_common::Events::RPC_SEND_MESSAGE,messageWrapperProtoHelper));
             }
-        } else if (messageWrapper.message_operation() == 
+        } else if (messageWrapperProtoHelper.getOperation() ==
                 keto::proto::MessageOperation::MESSAGE_BALANCE) {
             keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
-                        keto::server_common::Events::BALANCER_MESSAGE,messageWrapper));
-        } else if (messageWrapper.message_operation() == 
+                        keto::server_common::Events::BALANCER_MESSAGE,messageWrapperProtoHelper));
+        } else if (messageWrapperProtoHelper.getOperation() ==
                 keto::proto::MessageOperation::MESSAGE_BLOCK) {
             
-        } else if (messageWrapper.message_operation() == 
+        } else if (messageWrapperProtoHelper.getOperation() ==
                 keto::proto::MessageOperation::MESSAGE_PROCESS) {
             
         }
         
-    } else if (transaction.status() == keto::proto::TransactionStatus::CREDIT) {
-        if (messageWrapper.message_operation() == keto::proto::MessageOperation::MESSAGE_INIT ||
-                messageWrapper.message_operation() == keto::proto::MessageOperation::MESSAGE_ROUTE) {
-            messageWrapper.set_message_operation(keto::proto::MessageOperation::MESSAGE_BALANCE);
+    } else if (transactionProtoHelperPtr->getStatus() == keto::proto::TransactionStatus::CREDIT) {
+        if (messageWrapperProtoHelper.getOperation() == keto::proto::MessageOperation::MESSAGE_INIT ||
+                messageWrapperProtoHelper.getOperation() == keto::proto::MessageOperation::MESSAGE_ROUTE) {
+            messageWrapperProtoHelper.setOperation(keto::proto::MessageOperation::MESSAGE_BALANCE);
+
+            // at present the only services registered are for the local service.
+            // nothing is propigated. This means we are balancing locally on a single account
             AccountHashVector accountHashVector = 
                     RouterRegistry::getInstance()->getAccount(
                     keto::server_common::Constants::SERVICE::BALANCE);
-            messageWrapper.set_account_hash(keto::server_common::VectorUtils().copyVectorToString(accountHashVector));
+            messageWrapperProtoHelper.setAccountHash(keto::server_common::VectorUtils().copyVectorToString(accountHashVector));
             if (RouterRegistry::getInstance()->isAccountLocal(accountHashVector)) {
                 keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
-                        keto::server_common::Events::BALANCER_MESSAGE,messageWrapper));
+                        keto::server_common::Events::BALANCER_MESSAGE,messageWrapperProtoHelper));
             } else {
                 keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
-                        keto::server_common::Events::RPC_SEND_MESSAGE,messageWrapper));
+                        keto::server_common::Events::RPC_SEND_MESSAGE,messageWrapperProtoHelper));
             }
-        } else if (messageWrapper.message_operation() == 
+        } else if (messageWrapperProtoHelper.getOperation() ==
                 keto::proto::MessageOperation::MESSAGE_BALANCE) {
             keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
-                        keto::server_common::Events::BALANCER_MESSAGE,messageWrapper));
-        } else if (messageWrapper.message_operation() == 
+                        keto::server_common::Events::BALANCER_MESSAGE,messageWrapperProtoHelper));
+        } else if (messageWrapperProtoHelper.getOperation() ==
                 keto::proto::MessageOperation::MESSAGE_BLOCK) {
-            
-        } else if (messageWrapper.message_operation() == 
+            // not implemented at present
+        } else if (messageWrapperProtoHelper.getOperation() ==
                 keto::proto::MessageOperation::MESSAGE_PROCESS) {
-            
+            // implememnted at present
         }
         
     }
 }
 
-void RouterService::routeToAccount(keto::proto::MessageWrapper&  messageWrapper) {
-    keto::proto::Transaction transaction;
-    messageWrapper.msg().UnpackTo(&transaction);
-    if (transaction.status() == keto::proto::TransactionStatus::DEBIT || 
-            transaction.status() == keto::proto::TransactionStatus::INIT) {
-        if (messageWrapper.message_operation() == keto::proto::MessageOperation::MESSAGE_INIT ||
-                messageWrapper.message_operation() == keto::proto::MessageOperation::MESSAGE_ROUTE) {
-            messageWrapper.set_message_operation(keto::proto::MessageOperation::MESSAGE_BALANCE);
-            AccountHashVector accountHashVector = 
+void RouterService::routeToAccount(keto::transaction_common::MessageWrapperProtoHelper&  messageWrapperProtoHelper) {
+    keto::transaction_common::TransactionProtoHelperPtr transactionProtoHelperPtr = messageWrapperProtoHelper.getTransaction();
+    if (transactionProtoHelperPtr->getStatus() == keto::proto::TransactionStatus::DEBIT ||
+            transactionProtoHelperPtr->getStatus() == keto::proto::TransactionStatus::INIT) {
+        if (messageWrapperProtoHelper.getOperation() == keto::proto::MessageOperation::MESSAGE_INIT ||
+                messageWrapperProtoHelper.getOperation() == keto::proto::MessageOperation::MESSAGE_ROUTE) {
+            messageWrapperProtoHelper.setOperation(keto::proto::MessageOperation::MESSAGE_BALANCE);
+
+            // at present the only services registered are for the local service.
+            // nothing is propigated. This means we are balancing locally on a single account
+            AccountHashVector accountHashVector =
                     RouterRegistry::getInstance()->getAccount(
                     keto::server_common::Constants::SERVICE::BALANCE);
-            messageWrapper.set_account_hash(keto::server_common::VectorUtils().copyVectorToString(accountHashVector));
+            messageWrapperProtoHelper.setAccountHash(keto::server_common::VectorUtils().copyVectorToString(accountHashVector));
             if (RouterRegistry::getInstance()->isAccountLocal(accountHashVector)) {
                 keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
-                        keto::server_common::Events::BALANCER_MESSAGE,messageWrapper));
+                        keto::server_common::Events::BALANCER_MESSAGE,messageWrapperProtoHelper));
             } else {
                 keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
-                        keto::server_common::Events::RPC_SEND_MESSAGE,messageWrapper));
+                        keto::server_common::Events::RPC_SEND_MESSAGE,messageWrapperProtoHelper));
             }
         }
         
-    } else if (transaction.status() == keto::proto::TransactionStatus::CREDIT) {
-        if (messageWrapper.message_operation() == keto::proto::MessageOperation::MESSAGE_ROUTE) {
-            messageWrapper.set_message_operation(keto::proto::MessageOperation::MESSAGE_BALANCE);
+    } else if (transactionProtoHelperPtr->getStatus() == keto::proto::TransactionStatus::CREDIT) {
+        if (messageWrapperProtoHelper.getOperation() == keto::proto::MessageOperation::MESSAGE_ROUTE) {
+            messageWrapperProtoHelper.setOperation(keto::proto::MessageOperation::MESSAGE_BALANCE);
+
+            // at present the only services registered are for the local service.
+            // nothing is propigated. This means we are balancing locally on a single account
             AccountHashVector accountHashVector = 
                     RouterRegistry::getInstance()->getAccount(
                     keto::server_common::Constants::SERVICE::BALANCE);
-            messageWrapper.set_account_hash(keto::server_common::VectorUtils().copyVectorToString(accountHashVector));
+            messageWrapperProtoHelper.setAccountHash(keto::server_common::VectorUtils().copyVectorToString(accountHashVector));
             if (RouterRegistry::getInstance()->isAccountLocal(accountHashVector)) {
                 keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
-                        keto::server_common::Events::BALANCER_MESSAGE,messageWrapper));
+                        keto::server_common::Events::BALANCER_MESSAGE,messageWrapperProtoHelper));
             } else {
                 keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
-                        keto::server_common::Events::RPC_SEND_MESSAGE,messageWrapper));
+                        keto::server_common::Events::RPC_SEND_MESSAGE,messageWrapperProtoHelper));
             }
         }
     }
 }
 
 
-void RouterService::routeToRpcClient(keto::proto::MessageWrapper&  messageWrapper,
+void RouterService::routeToRpcClient(keto::transaction_common::MessageWrapperProtoHelper&  messageWrapperProtoHelper,
         keto::router_utils::RpcPeerHelper& rpcPeerHelper) {
     
     if (!rpcPeerHelper.isServer()) {
-        messageWrapper.set_account_hash(rpcPeerHelper.getAccountHashString());
+        messageWrapperProtoHelper.setAccountHash(rpcPeerHelper.getAccountHashString());
 
         try {
             keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
-                            keto::server_common::Events::RPC_SERVER_TRANSACTION,messageWrapper));
+                            keto::server_common::Events::RPC_SERVER_TRANSACTION,messageWrapperProtoHelper));
         } catch (...) {
             // must place in a queue here
             KETO_LOG_INFO << "[RouterService] " << 
@@ -362,14 +369,14 @@ void RouterService::routeToRpcClient(keto::proto::MessageWrapper&  messageWrappe
         }
     } else {
         // route to a peer
-        routeToRpcPeer(messageWrapper);
+        routeToRpcPeer(messageWrapperProtoHelper);
     }
 }
 
-void RouterService::routeToRpcPeer(keto::proto::MessageWrapper&  messageWrapper) {
+void RouterService::routeToRpcPeer(keto::transaction_common::MessageWrapperProtoHelper& messageWrapperProtoHelper) {
     try {
         keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
-                        keto::server_common::Events::RPC_CLIENT_TRANSACTION,messageWrapper));
+                        keto::server_common::Events::RPC_CLIENT_TRANSACTION,messageWrapperProtoHelper));
     } catch (...) {
         // must place in a queue here
         KETO_LOG_INFO << "[RouterService] Failed to dispatch to an approriate peer";

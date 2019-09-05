@@ -180,9 +180,6 @@ keto::event::Event ElectionManager::electRpcProcessPublish(const keto::event::Ev
     std::lock_guard<std::mutex> guard(classMutex);
     keto::election_common::ElectionPublishTangleAccountProtoHelper electionPublishTangleAccountProtoHelper(
             keto::server_common::fromEvent<keto::proto::ElectionPublishTangleAccount>(event));
-    if (!nextWindow.empty()) {
-        return event;
-    }
     if ((std::vector<uint8_t>)electionPublishTangleAccountProtoHelper.getAccount() ==
         keto::server_common::ServerInfo::getInstance()->getAccountHash()) {
         nextWindow = electionPublishTangleAccountProtoHelper.getTangles();
@@ -193,11 +190,15 @@ keto::event::Event ElectionManager::electRpcProcessPublish(const keto::event::Ev
 
 keto::event::Event ElectionManager::electRpcProcessConfirmation(const keto::event::Event& event) {
     std::lock_guard<std::mutex> guard(classMutex);
-    if (this->state == ElectionManager::State::CONFIRMATION) {
+    keto::election_common::ElectionConfirmationHelper electionConfirmationHelper(
+            keto::server_common::fromEvent<keto::proto::ElectionConfirmation>(event));
+    if ( (electionConfirmationHelper.getAccount() ==
+            keto::server_common::ServerInfo::getInstance()->getAccountHash()) &&
+            (this->state == ElectionManager::State::CONFIRMATION) ) {
         BlockProducer::getInstance()->setActiveTangles(nextWindow);
         nextWindow.clear();
     }
-    this->state == ElectionManager::State::PROCESSING;
+    this->state = ElectionManager::State::PROCESSING;
     return event;
 }
 
@@ -241,6 +242,9 @@ void ElectionManager::publishElection() {
             electionPublishTangleAccountProtoHelperPtr->addTangle(tangles[0]);
             tangles.erase(tangles.begin());
         }
+        if (!(electionPublishTangleAccountProtoHelperPtr->size() >= Constants::MAX_TANGLES_TO_ACCOUNT)) {
+            electionPublishTangleAccountProtoHelperPtr->setGrowing(false);
+        }
 
         // generate transaction and push
         keto::election_common::ElectionUtils(keto::election_common::Constants::ELECTION_INTERNAL_PUBLISH).
@@ -256,7 +260,7 @@ void ElectionManager::confirmElection() {
         KETO_LOG_ERROR << "[ElectionManager::confirmElection] this node will have to remain the master until the next cycle";
         return;
     }
-    state == BlockProducer::State::sync_blocks;
+
     for (std::vector<std::uint8_t> account : this->electedAccounts) {
             keto::election_common::ElectionUtils(keto::election_common::Constants::ELECTION_PROCESS_CONFIRMATION).
                     confirmation(account);

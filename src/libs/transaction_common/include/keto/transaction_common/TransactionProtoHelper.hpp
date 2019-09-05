@@ -54,6 +54,9 @@ public:
             keto::transaction_common::TransactionEncryptionHandler& transactionEncryptionHandler);
     TransactionProtoHelper& setTransaction(const std::string& buffer);
     keto::asn1::HashHelper getActiveAccount();
+
+    keto::proto::TransactionStatus getStatus();
+    TransactionProtoHelper& setStatus(const keto::proto::TransactionStatus& status);
     
     operator std::string() const;
     operator keto::proto::Transaction() const;

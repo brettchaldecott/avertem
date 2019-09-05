@@ -204,6 +204,15 @@ keto::asn1::HashHelper TransactionProtoHelper::getActiveAccount() {
     return this->transaction.active_account();
 }
 
+keto::proto::TransactionStatus TransactionProtoHelper::getStatus() {
+    return this->transaction.status();
+}
+
+TransactionProtoHelper& TransactionProtoHelper::setStatus(const keto::proto::TransactionStatus& status) {
+    this->transaction.set_status(status);
+    return *this;
+}
+
 TransactionProtoHelper::operator std::string() const {
     std::string buffer;
     transaction.SerializeToString(&buffer);

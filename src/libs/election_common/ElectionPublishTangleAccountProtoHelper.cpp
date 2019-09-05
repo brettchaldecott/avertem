@@ -15,6 +15,7 @@ std::string ElectionPublishTangleAccountProtoHelper::getSourceVersion() {
 
 ElectionPublishTangleAccountProtoHelper::ElectionPublishTangleAccountProtoHelper() {
     this->electionPublishTangleAccount.set_version(keto::common::MetaInfo::PROTOCOL_VERSION);
+    setGrowing(true);
 }
 
 ElectionPublishTangleAccountProtoHelper::ElectionPublishTangleAccountProtoHelper(const keto::proto::ElectionPublishTangleAccount& electionPublishTangleAccount) :
@@ -39,7 +40,7 @@ ElectionPublishTangleAccountProtoHelper& ElectionPublishTangleAccountProtoHelper
     return *this;
 }
 
-std::vector<keto::asn1::HashHelper> ElectionPublishTangleAccountProtoHelper::getTangles() {
+std::vector<keto::asn1::HashHelper> ElectionPublishTangleAccountProtoHelper::getTangles() const {
     std::vector<keto::asn1::HashHelper> hashes;
     for (int index = 0; index < this->electionPublishTangleAccount.tangle_hashes_size(); index++) {
         hashes.push_back(keto::asn1::HashHelper(this->electionPublishTangleAccount.tangle_hashes(index)));
@@ -52,8 +53,18 @@ ElectionPublishTangleAccountProtoHelper& ElectionPublishTangleAccountProtoHelper
     return *this;
 }
 
-bool isGrowing();
-ElectionPublishTangleAccountProtoHelper& setGrowing(bool growing);
+int ElectionPublishTangleAccountProtoHelper::size() {
+    return this->electionPublishTangleAccount.tangle_hashes_size();
+}
+
+bool ElectionPublishTangleAccountProtoHelper::isGrowing() const {
+    return this->electionPublishTangleAccount.growing();
+}
+
+ElectionPublishTangleAccountProtoHelper& ElectionPublishTangleAccountProtoHelper::setGrowing(bool growing) {
+    this->electionPublishTangleAccount.set_growing(growing);
+    return *this;
+}
 
 
 ElectionPublishTangleAccountProtoHelper::operator keto::proto::ElectionPublishTangleAccount() const {

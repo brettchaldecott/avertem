@@ -24,6 +24,8 @@
 
 #include "keto/router_utils/RpcPeerHelper.hpp"
 
+#include "keto/transaction_common/MessageWrapperProtoHelper.hpp"
+
 
 namespace keto {
 namespace router {
@@ -62,20 +64,20 @@ private:
      * 
      * @param messageWrapper The message wrapper
      */
-    void routeLocal(keto::proto::MessageWrapper&  messageWrapper);
+    void routeLocal(keto::transaction_common::MessageWrapperProtoHelper&  messageWrapperProtoHelper);
     
     /**
      * This method is called to route a message locally.
      * 
      * @param messageWrapper The message wrapper
      */
-    void routeToAccount(keto::proto::MessageWrapper&  messageWrapper);
+    void routeToAccount(keto::transaction_common::MessageWrapperProtoHelper&  messageWrapperProtoHelper);
     
     
-    void routeToRpcClient(keto::proto::MessageWrapper&  messageWrapper,
+    void routeToRpcClient(keto::transaction_common::MessageWrapperProtoHelper&  messageWrapperProtoHelper,
             keto::router_utils::RpcPeerHelper& rpcPeerHelper);
     
-    void routeToRpcPeer(keto::proto::MessageWrapper&  messageWrapper);
+    void routeToRpcPeer(keto::transaction_common::MessageWrapperProtoHelper&  messageWrapperProtoHelper);
 };
 
 

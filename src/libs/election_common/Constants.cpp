@@ -34,10 +34,10 @@ const std::vector<std::string> Constants::ELECTION_PROCESS_PUBLISH          ={
         keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_PUBLISH_SERVER,
         keto::server_common::Events::ROUTER_QUERY::ELECT_RPC_PROCESS_PUBLISH};
 const std::vector<std::string> Constants::ELECTION_PROCESS_CONFIRMATION     ={
-        keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_PROCESS_CONFIRMATION,
+        keto::server_common::Events::ROUTER_QUERY::ELECT_RPC_PROCESS_CONFIRMATION,
         keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_CONFIRMATION_CLIENT,
         keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_CONFIRMATION_SERVER,
-        keto::server_common::Events::ROUTER_QUERY::ELECT_RPC_PROCESS_CONFIRMATION};
+        keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_PROCESS_CONFIRMATION};
 
 
 }

@@ -403,6 +403,13 @@ void BlockProducer::setActiveTangles(const std::vector<keto::asn1::HashHelper>& 
     if (tangles.size()) {
         _setState(BlockProducer::State::block_producer);
         this->delay = Constants::ACTIVATE_PRODUCER_DELAY;
+    } else if (getState() == BlockProducer::State::block_producer) {
+        for(int retries = 0; (!this->pendingTransactionManagerPtr->empty()) &&
+            (retries < Constants::BLOCK_PRODUCER_RETRY_MAX); retries++) {
+            this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(
+                    Constants::BLOCK_PRDUCER_DEACTIVATE_CHECK_DELAY));
+        }
+        _setState(BlockProducer::State::sync_blocks);
     }
 }
 
@@ -417,7 +424,7 @@ BlockProducer::State BlockProducer::checkState() {
         this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(delay));
         delay = 0;
     } else {
-        this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(20));
+        this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(Constants::BLOCK_TIME));
     }
     KETO_LOG_DEBUG << "[Block Producer] run";
     return result;

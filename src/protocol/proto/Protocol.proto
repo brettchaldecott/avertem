@@ -29,10 +29,11 @@ message MessageWrapper {
     uint32 version = 1;
     bytes session_hash = 2;
     bytes account_hash = 3;
-    MessageType message_type = 4;
-    MessageOperation message_operation = 5;
+    bytes source_account_hash = 4;
+    MessageType message_type = 5;
+    MessageOperation message_operation = 6;
     
-    google.protobuf.Any msg = 6;
+    google.protobuf.Any msg = 7;
 }
 
 message MessageWrapperResponse {

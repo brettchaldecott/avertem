@@ -105,20 +105,29 @@ void BalancerService::_setState(const BalancerService::State& state) {
 }
 
 keto::event::Event BalancerService::balanceMessage(const keto::event::Event& event) {
-    keto::proto::MessageWrapper  messageWrapper = 
+
+    // at present
+    KETO_LOG_DEBUG << "[BalancerService::balanceMessage] balance the message";
+    keto::proto::MessageWrapper  messageWrapper =
             keto::server_common::fromEvent<keto::proto::MessageWrapper>(event);
-    std::cout << "The balancer says hi" << std::endl;
     messageWrapper.set_message_operation(keto::proto::MessageOperation::MESSAGE_BLOCK);
-    AccountHashVector accountHashVector = BlockRouting::getInstance()->getBlockAccount(
-            keto::server_common::VectorUtils().copyStringToVector(messageWrapper.account_hash()));
-    messageWrapper.set_account_hash(keto::server_common::VectorUtils().copyVectorToString(accountHashVector));
-    if (accountHashVector == keto::server_common::ServerInfo::getInstance()->getAccountHash()) {
-        keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
-                    keto::server_common::Events::BLOCK_MESSAGE,messageWrapper));
-    } else {
-        keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
-                    keto::server_common::Events::RPC_SEND_MESSAGE,messageWrapper));
-    }
+    keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
+            keto::server_common::Events::BLOCK_MESSAGE,messageWrapper));
+
+    // at present this is not implemented as originally praposed
+    // this will change as the network requirements grow
+    //
+    //AccountHashVector accountHashVector = BlockRouting::getInstance()->getBlockAccount(
+    //        keto::server_common::VectorUtils().copyStringToVector(messageWrapper.account_hash()));
+    //messageWrapper.set_account_hash(keto::server_common::VectorUtils().copyVectorToString(accountHashVector));
+    //if (accountHashVector == keto::server_common::ServerInfo::getInstance()->getAccountHash()) {
+    //    keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
+    //                keto::server_common::Events::BLOCK_MESSAGE,messageWrapper));
+    //} else {
+    //    keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
+    //                keto::server_common::Events::RPC_SEND_MESSAGE,messageWrapper));
+    //}
+
     keto::proto::MessageWrapperResponse response;
     response.set_success(true);
     response.set_result("balanced");
@@ -128,7 +137,7 @@ keto::event::Event BalancerService::balanceMessage(const keto::event::Event& eve
 
 keto::event::Event BalancerService::consensusHeartbeat(const keto::event::Event& event) {
 
-    std::cout << "[BalancerService][consensusHeartbeat] balance [ not available yet ]" << std::endl;
+    KETO_LOG_DEBUG << "[BalancerService][consensusHeartbeat] balance [ not available yet ]";
     return event;
 }
 

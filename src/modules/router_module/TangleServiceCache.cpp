@@ -3,71 +3,63 @@
 //
 
 #include "keto/router/TangleServiceCache.hpp"
+#include "keto/router/Exception.hpp"
 
 
 namespace keto {
 namespace router {
 
-TangleServiceCache::Service::Service(const std::string& name, const std::string& accountHash) : name(name), accountHash(accountHash) {
-    TangleServiceCache::getInstance()->addAccount(accountHash);
+std::string TangleServiceCache::getSourceVersion() {
+    return OBFUSCATED("$Id$");
 }
 
-TangleServiceCache::Service::~Service() {
-    TangleServiceCache::getInstance()->removeAccount(accountHash);
-}
-
-std::string TangleServiceCache::Service::getName() {
-    return this->name;
-}
-
-std::string TangleServiceCache::Service::getAccountHash() {
-    return this->accountHash;
-}
-
-
-TangleServiceCache::Tangle::Tangle(const std::string& tangle) : tangle(tangle){
+TangleServiceCache::Tangle::Tangle(const keto::asn1::HashHelper& tangle) : tangle(tangle) {
 }
 
 TangleServiceCache::Tangle::~Tangle() {
 
 }
 
-
-std::string TangleServiceCache::Tangle::getTangle() {
+keto::asn1::HashHelper TangleServiceCache::Tangle::getTangle() {
     return this->tangle;
 }
 
-TangleServiceCache::ServicePtr TangleServiceCache::Tangle::getService(const std::string& name) {
-    if (services.count(name)) {
-        return this->services[name];
+TangleServiceCache::AccountTangle::AccountTangle(
+        const keto::election_common::ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper) {
+    this->accountHash = electionPublishTangleAccountProtoHelper.getAccount();
+    this->growing = electionPublishTangleAccountProtoHelper.isGrowing();
+    for (keto::asn1::HashHelper account : electionPublishTangleAccountProtoHelper.getTangles()) {
+        TangleServiceCache::TanglePtr tanglePtr(new TangleServiceCache::Tangle(account));
+        this->tangleList.push_back(tanglePtr);
+        this->tangleMap.insert(std::pair<std::string,TangleServiceCache::TanglePtr>(account,tanglePtr));
     }
-    return TangleServiceCache::ServicePtr();
 }
 
-TangleServiceCache::ServicePtr TangleServiceCache::Tangle::setService(const std::string& name, const std::string& accountHash) {
-    return this->services[name] = TangleServiceCache::ServicePtr(new TangleServiceCache::Service(name,accountHash));
+TangleServiceCache::AccountTangle::~AccountTangle() {
+
 }
 
-std::vector<std::string> TangleServiceCache::Tangle::getServices() {
-    std::vector<std::string> results;
-    for(std::map<std::string,ServicePtr>::iterator it = this->services.begin(); it != this->services.end(); ++it) {
-        results.push_back(it->first);
+bool TangleServiceCache::AccountTangle::containsTangle(const keto::asn1::HashHelper& tangle) {
+    if (this->tangleMap.count(tangle)) {
+        return true;
     }
-    return results;
+    return false;
+}
+
+TangleServiceCache::TanglePtr TangleServiceCache::AccountTangle::getTangle(const keto::asn1::HashHelper& tangle) {
+    return this->tangleMap[tangle];
+}
+
+bool TangleServiceCache::AccountTangle::isGrowing() {
+    return this->growing;
 }
 
 static TangleServiceCachePtr singleton;
 
-std::string TangleServiceCache::getSourceVersion() {
-    return OBFUSCATED("$Id$");
-}
-
 TangleServiceCache::TangleServiceCache() {
-
 }
 
 TangleServiceCache::~TangleServiceCache() {
-
 }
 
 TangleServiceCachePtr TangleServiceCache::init() {
@@ -82,59 +74,51 @@ TangleServiceCachePtr TangleServiceCache::getInstance() {
     return singleton;
 }
 
-
-TangleServiceCache::TanglePtr TangleServiceCache::addTangle(const std::string& tangle, bool grow) {
-    std::lock_guard<std::mutex> guard(this->classMutex);
-    if (grow) {
-        return this->growTanglePtr = this->tangles[tangle] = TangleServiceCache::TanglePtr(new TangleServiceCache::Tangle(tangle));
-    } else {
-        return this->tangles[tangle] = TangleServiceCache::TanglePtr(new TangleServiceCache::Tangle(tangle));
-    }
-}
-
-TangleServiceCache::TanglePtr TangleServiceCache::getTangle(const std::string& tangle) {
-    std::lock_guard<std::mutex> guard(this->classMutex);
-    return this->tangles[tangle];
-}
-
-TangleServiceCache::TanglePtr TangleServiceCache::getGrowTangle() {
-    std::lock_guard<std::mutex> guard(this->classMutex);
-    return this->growTanglePtr;
-}
-
-void TangleServiceCache::clear() {
-    std::lock_guard<std::mutex> guard(this->classMutex);
-    this->tangles.clear();
-}
-
-bool TangleServiceCache::containsAccount(const std::string& account) {
-    std::lock_guard<std::mutex> guard(this->classMutex);
-    if (this->accounts.count(account)) {
+bool TangleServiceCache::containsAccount(const keto::asn1::HashHelper& account) {
+    std::lock_guard<std::mutex> guard(classMutex);
+    if (this->sessionAccounts.count(account)) {
         return true;
     }
     return false;
 }
 
-int TangleServiceCache::addAccount(const std::string& account) {
-    if (!this->accounts.count(account)) {
-        this->accounts[account] = 1;
-    } else {
-        this->accounts[account]++;
+bool TangleServiceCache::containTangle(const keto::asn1::HashHelper& tangle) {
+    std::lock_guard<std::mutex> guard(classMutex);
+    for (std::map<std::string, AccountTanglePtr>::iterator iter = this->sessionAccounts.begin(); iter != this->sessionAccounts.end(); iter++) {
+        if (iter->second->containsTangle(tangle)) {
+            return true;
+        }
     }
-    return this->accounts.size();
+    return false;
 }
 
-int TangleServiceCache::removeAccount(const std::string& account) {
-    if (!this->accounts.count(account)) {
-        return 0;
+TangleServiceCache::AccountTanglePtr TangleServiceCache::getGrowing() {
+    std::lock_guard<std::mutex> guard(classMutex);
+    for (std::map<std::string, AccountTanglePtr>::iterator iter = this->sessionAccounts.begin(); iter != this->sessionAccounts.end(); iter++) {
+        if (iter->second->isGrowing()) {
+            return iter->second;
+        }
     }
-    int count = this->accounts[account]--;
-    if (count <= 0) {
-        this->accounts.erase(account);
-    }
-    return count;
+    BOOST_THROW_EXCEPTION(NoGrowingTangle());
 }
 
+TangleServiceCache::AccountTanglePtr TangleServiceCache::getTangle(const keto::asn1::HashHelper& tangle) {
+    std::lock_guard<std::mutex> guard(classMutex);
+    return this->sessionAccounts[tangle];
+}
+
+void TangleServiceCache::publish(const keto::election_common::ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper) {
+    std::lock_guard<std::mutex> guard(classMutex);
+    this->nextSessionAccounts[electionPublishTangleAccountProtoHelper.getAccount()] =
+            AccountTanglePtr(new AccountTangle(electionPublishTangleAccountProtoHelper));
+}
+
+
+void TangleServiceCache::confirmation(const keto::election_common::ElectionConfirmationHelper& electionPublishTangleAccountProtoHelper) {
+    std::lock_guard<std::mutex> guard(classMutex);
+    this->sessionAccounts[electionPublishTangleAccountProtoHelper.getAccount()] = this->nextSessionAccounts[electionPublishTangleAccountProtoHelper.getAccount()];
+    this->nextSessionAccounts.erase(electionPublishTangleAccountProtoHelper.getAccount());
+}
 
 }
 }

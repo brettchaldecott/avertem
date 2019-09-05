@@ -68,16 +68,26 @@ MessageWrapperProtoHelper::MessageWrapperProtoHelper(const TransactionProtoHelpe
 MessageWrapperProtoHelper::~MessageWrapperProtoHelper() {
 }
 
-MessageWrapperProtoHelper& MessageWrapperProtoHelper::setAccountHash(const keto::asn1::HashHelper accountHash) {
+
+MessageWrapperProtoHelper& MessageWrapperProtoHelper::setAccountHash(const keto::asn1::HashHelper& accountHash) {
     wrapper.set_account_hash(accountHash);
     return *this;
 }
 
 keto::asn1::HashHelper MessageWrapperProtoHelper::getAccountHash() {
-    return keto::asn1::HashHelper(wrapper.account_hash());
+    return wrapper.account_hash();
 }
 
-MessageWrapperProtoHelper& MessageWrapperProtoHelper::setSessionHash(const keto::asn1::HashHelper sessionHash) {
+MessageWrapperProtoHelper& MessageWrapperProtoHelper::setSourceAccountHash(const keto::asn1::HashHelper& sourceAccountHash) {
+    wrapper.set_source_account_hash(sourceAccountHash);
+    return *this;
+}
+
+keto::asn1::HashHelper MessageWrapperProtoHelper::getSourceAccountHash() {
+    return wrapper.source_account_hash();
+}
+
+MessageWrapperProtoHelper& MessageWrapperProtoHelper::setSessionHash(const keto::asn1::HashHelper& sessionHash) {
     wrapper.set_session_hash(sessionHash);
     return *this;
 }
@@ -112,6 +122,7 @@ MessageWrapperProtoHelper& MessageWrapperProtoHelper::setTransaction(Transaction
             transaction.getTransactionMessageHelper()->getTransactionWrapper()->getCurrentAccount();
     std::vector<uint8_t> accountVectorHash = keto::crypto::SecureVectorUtils().copyFromSecure(accountHash);
     wrapper.set_account_hash(accountVectorHash.data(),accountVectorHash.size());
+    wrapper.set_source_account_hash(accountVectorHash.data(),accountVectorHash.size());
     google::protobuf::Any* any = new google::protobuf::Any();
     keto::proto::Transaction transactionProto = transaction;
     any->PackFrom(transactionProto);
@@ -142,6 +153,9 @@ keto::proto::MessageOperation MessageWrapperProtoHelper::incrementOperation() {
     return this->wrapper.message_operation();
 }
 
+keto::proto::MessageOperation MessageWrapperProtoHelper::getOperation() {
+    return this->wrapper.message_operation();
+}
 
 TransactionProtoHelperPtr MessageWrapperProtoHelper::getTransaction() {
     keto::proto::Transaction transaction;

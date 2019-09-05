@@ -38,6 +38,8 @@ message AccountRoutingStore {
 message RpcPeer {
     uint32 version = 1;
     bytes account_hash = 2;
+    // this is effectively a double link list. The parent has this node as a child
+    // this node has the has as a parent. Used in the routing to walk the tree from child to reachable peer.
     bytes peer_account_hash = 3;
     bool server = 4;
     repeated RpcPeer rpc_children = 5;

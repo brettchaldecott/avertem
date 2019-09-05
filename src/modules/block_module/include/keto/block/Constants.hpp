@@ -59,6 +59,9 @@ public:
 
     // the delay values
     static const int ACTIVATE_PRODUCER_DELAY;
+    static const int BLOCK_TIME;
+    static const int BLOCK_PRDUCER_DEACTIVATE_CHECK_DELAY;
+    static const int BLOCK_PRODUCER_RETRY_MAX;
 };
 
 

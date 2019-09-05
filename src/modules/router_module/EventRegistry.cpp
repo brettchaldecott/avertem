@@ -23,8 +23,11 @@
 
 #include "keto/router/ConsensusService.hpp"
 #include "keto/router/PeerCache.hpp"
+#include "keto/router/TangleServiceCache.hpp"
 
 #include "keto/election_common/ElectionPeerMessageProtoHelper.hpp"
+#include "keto/election_common/ElectionPublishTangleAccountProtoHelper.hpp"
+#include "keto/election_common/ElectionConfirmationHelper.hpp"
 
 
 namespace keto {
@@ -108,12 +111,16 @@ keto::event::Event EventRegistry::electRouterPeer(const keto::event::Event& even
 }
 
 keto::event::Event EventRegistry::electRpcProcessPublish(const keto::event::Event& event) {
-
+    keto::election_common::ElectionPublishTangleAccountProtoHelper electionPublishTangleAccountProtoHelper(
+            keto::server_common::fromEvent<keto::proto::ElectionPublishTangleAccount>(event));
+    TangleServiceCache::getInstance()->publish(electionPublishTangleAccountProtoHelper);
     return event;
 }
 
 keto::event::Event EventRegistry::electRpcProcessConfirmation(const keto::event::Event& event) {
-
+    keto::election_common::ElectionConfirmationHelper electionConfirmationHelper(
+            keto::server_common::fromEvent<keto::proto::ElectionConfirmation>(event));
+    TangleServiceCache::getInstance()->confirmation(electionConfirmationHelper);
     return event;
 }
 
