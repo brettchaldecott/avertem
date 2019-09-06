@@ -54,6 +54,7 @@ public:
     
     // the list of peers
     std::vector<std::string> listPeers();
+    std::vector<std::string> listAccountPeers();
     
     void start();
     void postStart();

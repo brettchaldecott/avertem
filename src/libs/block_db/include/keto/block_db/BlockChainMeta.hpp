@@ -47,6 +47,7 @@ public:
 
     int tangleCount();
     BlockChainTangleMetaPtr selectTangleEntry();
+    bool containsTangleInfo(const keto::asn1::HashHelper& id);
     BlockChainTangleMetaPtr getTangleEntry(int id);
     BlockChainTangleMetaPtr getTangleEntry(const keto::asn1::HashHelper& id);
     BlockChainTangleMetaPtr getTangleEntryByLastBlock(const keto::asn1::HashHelper& id);

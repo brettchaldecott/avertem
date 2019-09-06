@@ -71,6 +71,13 @@ BlockChainTangleMetaPtr BlockChainMeta::selectTangleEntry() {
     return this->tangles[distribution(stdGenerator)];
 }
 
+bool BlockChainMeta::containsTangleInfo(const keto::asn1::HashHelper& id) {
+    if (this->tangleMap.count(id)) {
+        return true;
+    }
+    return false;
+}
+
 BlockChainTangleMetaPtr BlockChainMeta::getTangleEntry(int id) {
     return this->tangles[id];
 }

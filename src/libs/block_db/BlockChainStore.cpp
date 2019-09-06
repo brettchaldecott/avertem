@@ -143,6 +143,13 @@ bool BlockChainStore::getAccountTangle(const keto::asn1::HashHelper& accountHash
     return this->masterChain->getAccountTangle(accountHash,tangleHash);
 }
 
+bool BlockChainStore::containsTangleInfo(const keto::asn1::HashHelper& tangleHash) {
+    if (!masterChain) {
+        BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
+    }
+    return this->masterChain->containsTangleInfo(tangleHash);
+}
+
 BlockChainTangleMetaPtr  BlockChainStore::getTangleInfo(const keto::asn1::HashHelper& tangleHash) {
     if (!masterChain) {
         BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());

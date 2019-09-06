@@ -103,6 +103,11 @@ keto::asn1::HashHelper BlockProducer::TangleFutureStateManager::getTangleHash() 
 }
 
 keto::asn1::HashHelper BlockProducer::TangleFutureStateManager::getLastBlockHash() {
+    if (keto::block_db::BlockChainStore::getInstance()->containsTangleInfo(this->tangleHash)) {
+        keto::block_db::BlockChainTangleMetaPtr blockChainTangleMetaPtr =
+                keto::block_db::BlockChainStore::getInstance()->getTangleInfo(tangleHash);
+        this->lastBlockHash = blockChainTangleMetaPtr->getLastBlockHash();
+    }
     return this->lastBlockHash;
 }
 
@@ -111,7 +116,7 @@ int BlockProducer::TangleFutureStateManager::getNumerOfAccounts() {
 }
 
 int BlockProducer::TangleFutureStateManager::incrementNumberOfAccounts() {
-    return this->numberOfAccounts;
+    return this->numberOfAccounts++;
 }
 
 BlockProducer::PendingTransactionsTangle::PendingTransactionsTangle(const keto::asn1::HashHelper& tangleHash, bool existing) {
@@ -146,7 +151,7 @@ bool BlockProducer::PendingTransactionsTangle::empty() {
     return !this->transactions.size();
 }
 
-BlockProducer::PendingTransactionManager::PendingTransactionManager() {
+BlockProducer::PendingTransactionManager::PendingTransactionManager() : _empty(true) {
 
 }
 
@@ -166,20 +171,25 @@ void BlockProducer::PendingTransactionManager::addTransaction(const keto::transa
         pendingTransactionsTanglePtr = getGrowingPendingTransactionTangle();
     }
     pendingTransactionsTanglePtr->addTransaction(transactionProtoHelperPtr);
+    this->_empty = false;
 }
 
 std::deque<BlockProducer::PendingTransactionsTanglePtr> BlockProducer::PendingTransactionManager::takeTransactions() {
     std::lock_guard<std::mutex> uniqueLock(this->classMutex);
     std::deque<BlockProducer::PendingTransactionsTanglePtr> result(this->pendingTransactions);
-    this->pendingTransactions.clear();
-    this->growTanglePtr.reset();
-    this->tangleTransactions.clear();
+    this->_empty = true;
     return result;
 }
 
 bool BlockProducer::PendingTransactionManager::empty() {
     std::lock_guard<std::mutex> uniqueLock(this->classMutex);
-    return this->tangleTransactions.empty();
+    return this->_empty;
+}
+
+void BlockProducer::PendingTransactionManager::clear() {
+    this->pendingTransactions.clear();
+    this->growTanglePtr.reset();
+    this->tangleTransactions.clear();
 }
 
 BlockProducer::PendingTransactionsTanglePtr BlockProducer::PendingTransactionManager::getPendingTransactionTangle(
@@ -409,6 +419,7 @@ void BlockProducer::setActiveTangles(const std::vector<keto::asn1::HashHelper>& 
             this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(
                     Constants::BLOCK_PRDUCER_DEACTIVATE_CHECK_DELAY));
         }
+        this->pendingTransactionManagerPtr->clear();
         _setState(BlockProducer::State::sync_blocks);
     }
 }

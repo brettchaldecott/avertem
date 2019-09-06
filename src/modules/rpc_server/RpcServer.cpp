@@ -566,7 +566,7 @@ public:
 
     void
     electBlockProducer() {
-        KETO_LOG_DEBUG << getAccount() << "[electBlockProducer]: call the block producer";
+        KETO_LOG_DEBUG << getAccount() << "[electBlockProducer]: elect block producer";
         keto::election_common::ElectionPeerMessageProtoHelper electionPeerMessageProtoHelper;
         electionPeerMessageProtoHelper.setAccount(keto::server_common::ServerInfo::getInstance()->getAccountHash());
 
@@ -575,7 +575,7 @@ public:
 
         clientRequest(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_REQUEST,
                            messageBytes);
-        KETO_LOG_DEBUG << getAccount() << "[electBlockProducer]: call the block ";
+        KETO_LOG_DEBUG << getAccount() << "[electBlockProducer]: after invoking election ";
     }
 
     std::string
@@ -817,6 +817,7 @@ public:
         std::string rpcVector = keto::server_common::VectorUtils().copyVectorToString(
                 Botan::hex_decode(payload));
         keto::router_utils::RpcPeerHelper rpcPeerHelper(rpcVector);
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleActivate] activate the node : " << rpcPeerHelper.isActive();
         this->active = rpcPeerHelper.isActive();
 
         keto::server_common::triggerEvent(
@@ -1411,28 +1412,35 @@ keto::event::Event RpcServer::electBlockProducer(const keto::event::Event& event
     std::vector<std::string> accounts = AccountSessionCache::getInstance()->getSessions();
     for (int index = 0; (index < keto::server_common::Constants::ELECTION::ELECTOR_COUNT) && (accounts.size()); index++) {
 
-        // distribution
-        std::uniform_int_distribution<int> distribution(0,accounts.size());
-        distribution(stdGenerator);
-        int pos = distribution(stdGenerator);
-        std::string account = accounts[pos];
-        accounts.erase(accounts.begin() + pos);
+        std::string account;
+        if (accounts.size() > 1) {
+            std::uniform_int_distribution<int> distribution(0, accounts.size() - 1);
+            distribution(stdGenerator);
+            int pos = distribution(stdGenerator);
+            account = accounts[pos];
+            accounts.erase(accounts.begin() + pos);
+        } else {
+            account = accounts[0];
+            accounts.clear();
+        }
 
         sessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
                 account);
+        KETO_LOG_DEBUG << "[RpcServer::electBlockProducer] elect an account ["
+            << keto::asn1::HashHelper(account).getHash(keto::common::StringEncoding::HEX) << "][" << sessionPtr_->isActive() << "]";
         if (sessionPtr_ && sessionPtr_->isActive()) {
             try {
                 sessionPtr_->electBlockProducer();
                 electionMessageProtoHelper.addAccount(keto::asn1::HashHelper(account));
             } catch (keto::common::Exception& ex) {
-                KETO_LOG_ERROR << "[RpcServer::electBlockProducer] Failed to push block : " << ex.what();
+                KETO_LOG_ERROR << "[RpcServer::electBlockProducer] Failed call the election : " << ex.what();
                 KETO_LOG_ERROR << "[RpcServer::electBlockProducer] Cause : " << boost::diagnostic_information(ex,true);
             } catch (boost::exception& ex) {
-                KETO_LOG_ERROR << "[RpcServer::electBlockProducer] Failed to push block : " << boost::diagnostic_information(ex,true);
+                KETO_LOG_ERROR << "[RpcServer::electBlockProducer] Failed call the election : " << boost::diagnostic_information(ex,true);
             } catch (std::exception& ex) {
-                KETO_LOG_ERROR << "[RpcServer::electBlockProducer] Failed to push block : " << ex.what();
+                KETO_LOG_ERROR << "[RpcServer::electBlockProducer] Failed call the election : " << ex.what();
             } catch (...) {
-                KETO_LOG_ERROR << "[RpcServer::electBlockProducer] Failed to push block : unknown cause";
+                KETO_LOG_ERROR << "[RpcServer::electBlockProducer] Failed call the election : unknown cause";
             }
         }
     }

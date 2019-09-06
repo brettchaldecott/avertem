@@ -94,9 +94,11 @@ public:
         void addTransaction(const keto::transaction_common::TransactionProtoHelperPtr& transactionProtoHelperPtr);
         std::deque<PendingTransactionsTanglePtr> takeTransactions();
         bool empty();
+        void clear();
 
     private:
         std::mutex classMutex;
+        bool _empty;
         std::map<std::vector<uint8_t>,PendingTransactionsTanglePtr> tangleTransactions;
         std::deque<PendingTransactionsTanglePtr> pendingTransactions;
         PendingTransactionsTanglePtr growTanglePtr;

@@ -311,8 +311,13 @@ bool BlockChain::writeBlock(const keto::proto::SignedBlockWrapperMessage& signed
     SignedBlockWrapperProtoHelperPtr signedBlockWrapperProtoHelperPtr =
             signedBlockWrapperMessageProtoHelper.getSignedBlockWrapper();
 
+    // write the block and broadcast it if the block was written
     bool result = writeBlock(signedBlockWrapperProtoHelperPtr, callback);
-    broadcastBlock(*signedBlockWrapperProtoHelperPtr);
+    if (result) {
+        // broadcast the block if we had to write it
+        // if we did not the broadcast will not be proppergated
+        broadcastBlock(*signedBlockWrapperProtoHelperPtr);
+    }
     return result;
 }
 
@@ -337,6 +342,9 @@ bool BlockChain::writeBlock(const SignedBlockWrapperProtoHelperPtr& signedBlockW
     }
 
     bool result = writeBlock(resource, signedBlock, callback);
+    if (!result) {
+        return result;
+    }
 
     rocksdb::Transaction* nestedTransaction = resource->getTransaction(Constants::NESTED_INDEX);
 
@@ -377,7 +385,10 @@ bool BlockChain::writeBlock(const SignedBlockBuilderPtr& signedBlockBuilderPtr, 
     SignedBlock& signedBlock = *signedBlockBuilderPtr;
 
     BlockResourcePtr resource = blockResourceManagerPtr->getResource();
-    writeBlock(resource, signedBlock, callback);
+
+    if (!writeBlock(resource, signedBlock, callback)) {
+        return false;
+    }
 
     rocksdb::Transaction* nestedTransaction = resource->getTransaction(Constants::NESTED_INDEX);
 
@@ -765,6 +776,10 @@ bool BlockChain::getAccountTangle(const keto::asn1::HashHelper& accountHash, ket
 
 BlockChainTangleMetaPtr BlockChain::getTangleInfo(const keto::asn1::HashHelper& tangleHash) {
     return this->blockChainMetaPtr->getTangleEntry(tangleHash);
+}
+
+bool BlockChain::containsTangleInfo(const keto::asn1::HashHelper& tangleHash) {
+    return this->blockChainMetaPtr->containsTangleInfo(tangleHash);
 }
 
 std::vector<keto::asn1::HashHelper> BlockChain::getActiveTangles() {

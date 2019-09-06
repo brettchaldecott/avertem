@@ -146,6 +146,7 @@ public:
     keto::proto::AccountChainTangle getAccountBlockTangle(const keto::proto::AccountChainTangle& accountChainTangle);
     bool getAccountTangle(const keto::asn1::HashHelper& accountHash, keto::asn1::HashHelper& tangeHash);
     BlockChainTangleMetaPtr getTangleInfo(const keto::asn1::HashHelper& tangleHash);
+    bool containsTangleInfo(const keto::asn1::HashHelper& tangleHash);
 
     std::vector<keto::asn1::HashHelper> getActiveTangles();
     keto::asn1::HashHelper getGrowTangle();

@@ -393,7 +393,7 @@ RpcSession::on_read(
             message = handleBlock(command,stringVector[1]);
             KETO_LOG_INFO << "[RpcSession] block processed";
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK_PROCESSED) == 0) {
-            KETO_LOG_INFO << "The transaction has been processed : " << stringVector[1];
+            KETO_LOG_INFO << "The block has been processed : " << stringVector[1];
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS_SESSION) == 0) {
             message = consensusSessionResponse(command,stringVector[1]);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS) == 0) {

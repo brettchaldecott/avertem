@@ -14,7 +14,9 @@
 #include "keto/keystore/NetworkSessionKeyManager.hpp"
 #include "keto/crypto/CipherBuilder.hpp"
 #include "keto/crypto/SecureVectorUtils.hpp"
+
 #include "keto/keystore/Constants.hpp"
+#include "keto/keystore/Exception.hpp"
 
 namespace keto {
 namespace keystore {
@@ -41,11 +43,20 @@ keto::crypto::SecureVector NetworkSessionKeyDecryptor::decrypt(const std::vector
 
         //std::cout << "[NetworkSessionKeyDecryptor::decrypt][" <<
         //    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "get base index [" << (int)baseIndex << std::endl;
-        keto::crypto::CipherBuilder cipherBuilder(this->networkSessionKeyManager->getKey(baseIndex)->getPrivateKey());
+        keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr memoryVaultSessionKeyWrapperPtr =
+                this->networkSessionKeyManager->getKey(baseIndex);
+        if (!memoryVaultSessionKeyWrapperPtr) {
+            BOOST_THROW_EXCEPTION(NetworkSessionKeyNotFoundException());
+        }
+        keto::crypto::CipherBuilder cipherBuilder(memoryVaultSessionKeyWrapperPtr->getPrivateKey());
         std::unique_ptr<Botan::StreamCipher> cipher(Botan::StreamCipher::create(keto::crypto::Constants::CIPHER_STREAM));
         //std::cout << "[NetworkSessionKeyDecryptor::decrypt][" <<
         //    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] pIndex [" << (int)pIndex << "]" << std::endl;
-        cipher->set_key(cipherBuilder.derive(32,this->networkSessionKeyManager->getKey(pIndex)->getPrivateKey()));
+        keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr pIndexKeyWrapperPtr = this->networkSessionKeyManager->getKey(pIndex);
+        if (!pIndexKeyWrapperPtr) {
+            BOOST_THROW_EXCEPTION(NetworkSessionKeyNotFoundException());
+        }
+        cipher->set_key(cipherBuilder.derive(32,pIndexKeyWrapperPtr->getPrivateKey()));
         cipher->set_iv(NULL,0);
         //std::cout << "[NetworkSessionKeyDecryptor::decrypt][" <<
         //    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] before decryption" << std::endl;

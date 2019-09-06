@@ -84,7 +84,7 @@ std::vector<uint8_t> PeerCache::electPeer(const std::vector<uint8_t>& accountHas
 
     std::default_random_engine stdGenerator;
     stdGenerator.seed(std::chrono::system_clock::now().time_since_epoch().count());
-    std::uniform_int_distribution<int> distribution(0,peers.size());
+    std::uniform_int_distribution<int> distribution(0,peers.size()-1);
     distribution(stdGenerator);
 
 

@@ -39,7 +39,7 @@ std::vector<keto::asn1::HashHelper> ElectionMessageProtoHelper::getAccounts() {
 }
 
 ElectionMessageProtoHelper& ElectionMessageProtoHelper::addAccount(const keto::asn1::HashHelper& account) {
-    *this->electionMessage.add_account_hashes() = (std::string&)account;
+    *this->electionMessage.add_account_hashes() = (std::string)account;
     return *this;
 }
 

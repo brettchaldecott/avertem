@@ -203,6 +203,7 @@ keto::event::Event ElectionManager::electRpcProcessConfirmation(const keto::even
 }
 
 void ElectionManager::invokeElection(const std::string& event, const std::string& type) {
+    KETO_LOG_ERROR << "[ElectionManager::invokeElection] invoke the election for [" << event << "][" << type << "]";
     keto::election_common::ElectionMessageProtoHelper requestElectionMessageProtoHelper;
     requestElectionMessageProtoHelper.setSource(type);
     keto::election_common::ElectionMessageProtoHelper responseElectionMessageProtoHelper(
@@ -210,9 +211,11 @@ void ElectionManager::invokeElection(const std::string& event, const std::string
                     keto::server_common::processEvent(
                             keto::server_common::toEvent<keto::proto::ElectionMessage>(
                                     event,requestElectionMessageProtoHelper))));
+    KETO_LOG_ERROR << "[ElectionManager::invokeElection] after invoking the election for [" << responseElectionMessageProtoHelper.getAccounts().size() << "]";
     for (keto::asn1::HashHelper hash : responseElectionMessageProtoHelper.getAccounts()) {
         this->accountElectionResult[hash] = ElectorPtr(new Elector(hash,type));
     }
+    KETO_LOG_ERROR << "[ElectionManager::invokeElection] after invoking the election for [" << event << "][" << type << "]";
 }
 
 
@@ -285,7 +288,7 @@ keto::election_common::SignedElectNodeHelperPtr ElectionManager::generateSignedE
     // setup the random number generator
     std::default_random_engine stdGenerator;
     stdGenerator.seed(std::chrono::system_clock::now().time_since_epoch().count());
-    std::uniform_int_distribution<int> distribution(0,accounts.size());
+    std::uniform_int_distribution<int> distribution(0,accounts.size()-1);
     // seed
     distribution(stdGenerator);
 
