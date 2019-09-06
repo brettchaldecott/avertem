@@ -81,6 +81,7 @@ keto::event::Event ConsensusService::setModuleSession(const keto::event::Event& 
     this->consensusHashGenerator->setSession(moduleSessionHelper.getSecret());
     MasterKeyManager::getInstance()->clearSession();
     keto::memory_vault_session::MemoryVaultSession::getInstance()->clearSession();
+    NetworkSessionKeyManager::getInstance()->clearSession();
     return event;
 }
 

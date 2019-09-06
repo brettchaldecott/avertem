@@ -36,7 +36,7 @@ SignedElectNodeHelper::SignedElectNodeHelper(const SignedElectNodeHelper& signed
 
 SignedElectNodeHelper::~SignedElectNodeHelper() {
     if (this->signedElectNode) {
-        ASN_STRUCT_FREE(asn_DEF_ElectNode, signedElectNode);
+        ASN_STRUCT_FREE(asn_DEF_SignedElectNode, signedElectNode);
         signedElectNode = NULL;
     }
 }

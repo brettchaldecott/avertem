@@ -58,7 +58,8 @@ void MemoryVaultStorage::setEntry(const keto::crypto::SecureVector& id,
         KETO_LOG_INFO << "[MemoryVaultStorage][setEntry] Increment the reference count for [" << Botan::hex_encode(id) << "]";
         this->store[id]->incrementRefCount();
     } else {
-        KETO_LOG_INFO << "[MemoryVaultStorage][setEntry] Add the entry [" << Botan::hex_encode(id) << "][" << this->store.count(id) << "]";
+        KETO_LOG_INFO << "[MemoryVaultStorage][setEntry] Add the entry [" << Botan::hex_encode(id) << "]["
+            << this->store.size() << "][" << this->store.count(id) << "]";
         this->store[id] = MemoryVaultStorageEntryPtr(new MemoryVaultStorageEntry(bytes));
     }
 

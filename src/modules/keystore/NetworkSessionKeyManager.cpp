@@ -70,7 +70,7 @@ void NetworkSessionKeyManager::fin() {
 void NetworkSessionKeyManager::clearSession() {
     sessionKeys.clear();
     this->hashIndex.clear();
-
+    this->networkSessionConfigured = false;
 }
 
 void NetworkSessionKeyManager::generateSession() {
@@ -89,7 +89,7 @@ void NetworkSessionKeyManager::generateSession() {
         this->sessionKeys[hash] = memoryVaultSessionKeyWrapperPtr;
         this->hashIndex.push_back(hash);
     }
-    networkSessionConfigured = true;
+    this->networkSessionConfigured = true;
     std::sort(this->hashIndex.begin(),this->hashIndex.end());
 }
 

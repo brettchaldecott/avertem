@@ -33,6 +33,7 @@ KETO_DECLARE_DERIVED_EXCEPTION (BlockException, BlockProducerNotAcceptedByNetwor
 KETO_DECLARE_DERIVED_EXCEPTION (BlockException, NetworkFeeRatioNotSetException , "The master node network fee ratio was not set.");
 KETO_DECLARE_DERIVED_EXCEPTION (BlockException, UnsupportedTransactionStatusException , "The transaction status is unsupported.");
 KETO_DECLARE_DERIVED_EXCEPTION (BlockException, UnprocessedTransactionsException , "Unprocessed transactions in the pending queue.");
+KETO_DECLARE_DERIVED_EXCEPTION (BlockException, ElectionFailedException , "The election failed.");
 
 
     

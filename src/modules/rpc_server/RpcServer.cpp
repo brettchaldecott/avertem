@@ -421,8 +421,7 @@ public:
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES) == 0) {
                 message = handleRequestNetworkFees(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLIENT_NETWORK_COMPLETE) == 0) {
-                handleClientNetworkComplete(keto::server_common::Constants::RPC_COMMANDS::CLIENT_NETWORK_COMPLETE, payload);
-                return do_read();
+                message = handleClientNetworkComplete(keto::server_common::Constants::RPC_COMMANDS::CLIENT_NETWORK_COMPLETE, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK) == 0) {
                 handleBlockPush(keto::server_common::Constants::RPC_COMMANDS::BLOCK, payload);
                 return do_read();
@@ -937,16 +936,19 @@ public:
         return ss.str();
     }
 
-    void handleClientNetworkComplete(const std::string& command, const std::string& payload) {
+    std::string handleClientNetworkComplete(const std::string& command, const std::string& payload) {
         KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleClientNetworkComplete] The client has completed networking";
         std::stringstream ss;
         if (RpcServer::getInstance()->isServerActive()) {
             keto::router_utils::RpcPeerHelper rpcPeerHelper;
             rpcPeerHelper.setAccountHash(keto::server_common::ServerInfo::getInstance()->getAccountHash());
             rpcPeerHelper.setActive(RpcServer::getInstance()->isServerActive());
-            activatePeer(rpcPeerHelper);
+            std::string rpcValue = rpcPeerHelper;
+            ss << keto::server_common::Constants::RPC_COMMANDS::ACTIVATE << " "
+                << Botan::hex_encode((uint8_t*)rpcValue.data(),rpcValue.size(),true);
         }
         KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleClientNetworkComplete] Finished post network configuration";
+        return ss.str();
     }
 
     void handleBlockPush(const std::string& command, const std::string& payload) {

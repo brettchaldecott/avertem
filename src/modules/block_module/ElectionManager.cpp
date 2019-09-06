@@ -2,9 +2,12 @@
 // Created by Brett Chaldecott on 2019-08-23.
 //
 
+#include <sstream>
+
 #include "keto/block/BlockProducer.hpp"
 #include "keto/block/ElectionManager.hpp"
 #include "keto/block/Constants.hpp"
+#include "keto/block/Exception.hpp"
 
 #include "keto/server_common/EventUtils.hpp"
 #include "keto/server_common/Events.hpp"
@@ -12,12 +15,10 @@
 
 #include "keto/election_common/ElectionMessageProtoHelper.hpp"
 #include "keto/election_common/ElectionPeerMessageProtoHelper.hpp"
-
 #include "keto/election_common/ElectionHelper.hpp"
 #include "keto/election_common/SignedElectionHelper.hpp"
 #include "keto/election_common/ElectionResultMessageProtoHelper.hpp"
 #include "keto/election_common/ElectionPublishTangleAccountProtoHelper.hpp"
-
 #include "keto/election_common/ElectNodeHelper.hpp"
 #include "keto/election_common/ElectionPublishTangleAccountProtoHelper.hpp"
 #include "keto/election_common/ElectionUtils.hpp"
@@ -25,6 +26,8 @@
 
 #include "keto/software_consensus/ModuleConsensusHelper.hpp"
 #include "keto/software_consensus/ModuleHashMessageHelper.hpp"
+
+
 
 namespace keto {
 namespace block {
@@ -166,7 +169,7 @@ keto::event::Event ElectionManager::electRpcResponse(const keto::event::Event& e
     keto::election_common::ElectionResultMessageProtoHelperPtr electionResultMessageProtoHelperPtr(
             new keto::election_common::ElectionResultMessageProtoHelper(
                     keto::server_common::fromEvent<keto::proto::ElectionResultMessage>(event)));
-    if (this->accountElectionResult.count(electionResultMessageProtoHelperPtr->getSourceAccountHash())) {
+    if (!this->accountElectionResult.count(electionResultMessageProtoHelperPtr->getSourceAccountHash())) {
         KETO_LOG_DEBUG << "[ElectionManager::electRpcResponse] The account hash is unknown [" <<
             electionResultMessageProtoHelperPtr->getSourceAccountHash().getHash(keto::common::StringEncoding::HEX) << "]";
         return event;
@@ -234,25 +237,30 @@ void ElectionManager::publishElection() {
     this->electedAccounts.clear();
 
     while (tangles.size()) {
+        KETO_LOG_DEBUG << "[ElectionManager::publishElection] generate the signed elect node";
         keto::election_common::SignedElectNodeHelperPtr signedElectNodeHelperPtr = generateSignedElectedNode(accounts);
         keto::asn1::HashHelper accountHash =
                 signedElectNodeHelperPtr->getElectedNode()->getElectedNode()->getElectionHelper()->getAccountHash();
         // push to network
+        KETO_LOG_DEBUG << "[ElectionManager::publishElection] get the tangle information associated with elected node";
         keto::election_common::ElectionPublishTangleAccountProtoHelperPtr electionPublishTangleAccountProtoHelperPtr(
                 new keto::election_common::ElectionPublishTangleAccountProtoHelper());
         electionPublishTangleAccountProtoHelperPtr->setAccount(accountHash);
+        KETO_LOG_DEBUG << "[ElectionManager::publishElection] loop through and add the tangles [" << tangles.size() << "]";
         for(int index = 0;(index < Constants::MAX_TANGLES_TO_ACCOUNT) && (tangles.size()); index++) {
             electionPublishTangleAccountProtoHelperPtr->addTangle(tangles[0]);
             tangles.erase(tangles.begin());
         }
+        KETO_LOG_DEBUG << "[ElectionManager::publishElection] set the grow flag tangles [" << tangles.size() << "]";
         if (!(electionPublishTangleAccountProtoHelperPtr->size() >= Constants::MAX_TANGLES_TO_ACCOUNT)) {
             electionPublishTangleAccountProtoHelperPtr->setGrowing(false);
         }
 
         // generate transaction and push
+        KETO_LOG_DEBUG << "[ElectionManager::publishElection] publish the results";
         keto::election_common::ElectionUtils(keto::election_common::Constants::ELECTION_INTERNAL_PUBLISH).
                 publish(electionPublishTangleAccountProtoHelperPtr);
-
+        KETO_LOG_DEBUG << "[ElectionManager::publishElection] set the elected accounts";
         this->electedAccounts.insert(accountHash);
     }
 
@@ -285,46 +293,72 @@ std::vector<std::vector<uint8_t>> ElectionManager::listAccounts() {
 
 
 keto::election_common::SignedElectNodeHelperPtr ElectionManager::generateSignedElectedNode(std::vector<std::vector<uint8_t>>& accounts) {
-    // setup the random number generator
-    std::default_random_engine stdGenerator;
-    stdGenerator.seed(std::chrono::system_clock::now().time_since_epoch().count());
-    std::uniform_int_distribution<int> distribution(0,accounts.size()-1);
-    // seed
-    distribution(stdGenerator);
+    try {
+        // setup the random number generator
+        std::default_random_engine stdGenerator;
+        stdGenerator.seed(std::chrono::system_clock::now().time_since_epoch().count());
+        std::uniform_int_distribution<int> distribution(0, accounts.size() - 1);
+        // seed
+        distribution(stdGenerator);
 
-    // retrieve
-    int pos = distribution(stdGenerator);
-    std::vector<uint8_t> account = accounts[pos];
-    accounts.erase(accounts.begin() + pos);
-    ElectorPtr electorPtr = this->accountElectionResult[account];
-    keto::asn1::HashHelper electedHash = electorPtr->getElectionResult()->getElectionMsg().getElectionHash();
+        // retrieve
+        int pos = distribution(stdGenerator);
+        std::vector<uint8_t> account = accounts[pos];
+        accounts.erase(accounts.begin() + pos);
+        ElectorPtr electorPtr = this->accountElectionResult[account];
+        keto::asn1::HashHelper electedHash = electorPtr->getElectionResult()->getElectionMsg().getElectionHash();
 
-    // setup the electnode and signed elect node structure
-    keto::election_common::ElectNodeHelper electNodeHelper;
-    electNodeHelper.setElectedNode(*electorPtr->getElectionResult()->getElectionMsg());
-    for (std::vector<uint8_t> account: accounts) {
-        electNodeHelper.addAlternative(*this->accountElectionResult[account]->getElectionResult()->getElectionMsg());
+        // setup the electnode and signed elect node structure
+        keto::election_common::ElectNodeHelper electNodeHelper;
+        electNodeHelper.setElectedNode(*electorPtr->getElectionResult()->getElectionMsg());
+        for (std::vector<uint8_t> account: accounts) {
+            electNodeHelper.addAlternative(
+                    *this->accountElectionResult[account]->getElectionResult()->getElectionMsg());
+        }
+
+        electNodeHelper.setAcceptedCheck(BlockProducer::getInstance()->getAcceptedCheck().getMsg());
+
+        keto::software_consensus::ModuleHashMessageHelper moduleHashMessageHelper;
+        moduleHashMessageHelper.setHash(electedHash);
+        keto::software_consensus::ConsensusMessageHelper consensusMessageHelper(
+                keto::server_common::fromEvent<keto::proto::ConsensusMessage>(
+                        keto::server_common::processEvent(
+                                keto::server_common::toEvent<keto::proto::ModuleHashMessage>(
+                                        keto::server_common::Events::GET_SOFTWARE_CONSENSUS_MESSAGE,
+                                        moduleHashMessageHelper))));
+        electNodeHelper.setValidateCheck(consensusMessageHelper.getMsg());
+
+        // generate the signed object
+        keto::election_common::SignedElectNodeHelperPtr signedElectNodeHelperPtr(
+                new keto::election_common::SignedElectNodeHelper());
+        signedElectNodeHelperPtr->setElectedNode(electNodeHelper);
+        signedElectNodeHelperPtr->sign(BlockProducer::getInstance()->getKeyLoader());
+
+        return signedElectNodeHelperPtr;
+    } catch (keto::common::Exception& ex) {
+        KETO_LOG_ERROR << "[generateSignedElectedNode] The election failed : " << ex.what();
+        KETO_LOG_ERROR << "[generateSignedElectedNode] Cause: " << boost::diagnostic_information(ex,true);
+        std::stringstream ss;
+        ss << "The election failed : " << boost::diagnostic_information(ex,true);
+        BOOST_THROW_EXCEPTION(keto::block::ElectionFailedException(ss.str()));
+    } catch (boost::exception& ex) {
+        KETO_LOG_ERROR << "[generateSignedElectedNode] The election failed";
+        KETO_LOG_ERROR << "[generateSignedElectedNode] Cause: " << boost::diagnostic_information(ex,true);
+        std::stringstream ss;
+        ss << "The election failed : " << boost::diagnostic_information(ex,true);
+        BOOST_THROW_EXCEPTION(keto::block::ElectionFailedException(ss.str()));
+    } catch (std::exception& ex) {
+        KETO_LOG_ERROR << "[generateSignedElectedNode] The election failed";
+        KETO_LOG_ERROR << "[generateSignedElectedNode] The cause is : " << ex.what();
+        std::stringstream ss;
+        ss << "The election failed : " << ex.what();
+        BOOST_THROW_EXCEPTION(keto::block::ElectionFailedException(ss.str()));
+    } catch (...) {
+        KETO_LOG_ERROR << "[generateSignedElectedNode] The election failed";
+        std::stringstream ss;
+        ss << "The election failed";
+        BOOST_THROW_EXCEPTION(keto::block::ElectionFailedException(ss.str()));
     }
-
-    electNodeHelper.setAcceptedCheck(BlockProducer::getInstance()->getAcceptedCheck().getMsg());
-
-    keto::software_consensus::ModuleHashMessageHelper moduleHashMessageHelper;
-    moduleHashMessageHelper.setHash(electedHash);
-    keto::software_consensus::ConsensusMessageHelper consensusMessageHelper(
-            keto::server_common::fromEvent<keto::proto::ConsensusMessage>(
-                    keto::server_common::processEvent(
-                            keto::server_common::toEvent<keto::proto::ModuleHashMessage>(
-                                    keto::server_common::Events::GET_SOFTWARE_CONSENSUS_MESSAGE,
-                                    moduleHashMessageHelper))));
-    electNodeHelper.setValidateCheck(consensusMessageHelper.getMsg());
-
-    // generate the signed object
-    keto::election_common::SignedElectNodeHelperPtr signedElectNodeHelperPtr(
-            new keto::election_common::SignedElectNodeHelper());
-    signedElectNodeHelperPtr->setElectedNode(electNodeHelper);
-    signedElectNodeHelperPtr->sign(BlockProducer::getInstance()->getKeyLoader());
-
-    return signedElectNodeHelperPtr;
 }
 
 }

@@ -351,16 +351,16 @@ RpcSession::on_read(
     }
 
     // Clear the buffer
-    KETO_LOG_INFO << this->sessionNumber << ": [RpcSession][on_read] consume the buffer command is : " << command;
+    KETO_LOG_DEBUG << this->sessionNumber << ": [RpcSession][on_read] consume the buffer command is : " << command;
     buffer_.consume(buffer_.size());
-    KETO_LOG_INFO << "Size of the buffer is : " << buffer_.size();
+    KETO_LOG_DEBUG << "Size of the buffer is : " << buffer_.size();
     std::string message;
     try {
-        KETO_LOG_INFO << this->sessionNumber << ": [RpcSession][on_read] create a new transaction";
+        KETO_LOG_DEBUG << this->sessionNumber << ": [RpcSession][on_read] create a new transaction";
         keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
         
         // Close the WebSocket connection
-        KETO_LOG_INFO << this->sessionNumber << ": [RpcSession][on_read] process the command :" << command;
+        KETO_LOG_DEBUG << this->sessionNumber << ": [RpcSession][on_read] process the command :" << command;
         if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS) == 0) {
             message = helloConsensusResponse(command,stringVector[1],stringVector[2]);
         } if (command.compare(keto::server_common::Constants::RPC_COMMANDS::GO_AWAY) == 0) {
@@ -428,7 +428,7 @@ RpcSession::on_read(
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_HEARTBEAT) == 0) {
             handleProtocolHeartbeat(command,stringVector[1]);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_REQUEST) == 0) {
-            handleElectionRequest(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_REQUEST, stringVector[1]);
+            message = handleElectionRequest(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_REQUEST, stringVector[1]);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE) == 0) {
             handleElectionResponse(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE, stringVector[1]);
             return;
@@ -458,7 +458,7 @@ RpcSession::on_read(
     do_read();
 
     // Read a message into our buffer
-    KETO_LOG_INFO << this->sessionNumber << ": Finished the command : " << command;
+    KETO_LOG_DEBUG << this->sessionNumber << ": Finished the command : " << command;
 }
 
 
@@ -661,7 +661,8 @@ void RpcSession::handleProtocolHeartbeat(const std::string& command, const std::
     keto::software_consensus::ConsensusSessionManager::getInstance()->initNetworkHeartbeat(protocolHeartbeatMessage);
 }
 
-void RpcSession::handleElectionRequest(const std::string& command, const std::string& message) {
+std::string RpcSession::handleElectionRequest(const std::string& command, const std::string& message) {
+    KETO_LOG_DEBUG << this->sessionNumber << ": [RpcSession][handleElectionRequest] the elect request has been received";
     keto::election_common::ElectionPeerMessageProtoHelper electionPeerMessageProtoHelper(
             keto::server_common::VectorUtils().copyVectorToString(
                     Botan::hex_decode(message)));
@@ -673,8 +674,10 @@ void RpcSession::handleElectionRequest(const std::string& command, const std::st
                             keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_REQUEST,electionPeerMessageProtoHelper))));
 
     std::string result = electionResultMessageProtoHelper;
-    serverRequest(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE,
+    KETO_LOG_DEBUG << this->sessionNumber << ": [RpcSession][handleElectionRequest] the election is complete return the result";
+    return serverRequest(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE,
                          Botan::hex_encode((uint8_t*)result.data(),result.size(),true));
+
 }
 
 void RpcSession::handleElectionResponse(const std::string& command, const std::string& message) {

@@ -201,7 +201,7 @@ private:
     void handleProtocolHeartbeat(const std::string& command, const std::string& message);
 
     // elect node request
-    void handleElectionRequest(const std::string& command, const std::string& message);
+    std::string handleElectionRequest(const std::string& command, const std::string& message);
     void handleElectionResponse(const std::string& command, const std::string& message);
     void handleElectionPublish(const std::string& command, const std::string& message);
     void handleElectionConfirmation(const std::string& command, const std::string& message);
