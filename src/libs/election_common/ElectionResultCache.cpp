@@ -30,19 +30,19 @@ void ElectionResultCache::heartBeat(const keto::software_consensus::ProtocolHear
 
 bool ElectionResultCache::containsPublishAccount(const keto::asn1::HashHelper& hashHelper) {
     std::lock_guard<std::mutex> guard(classMutex);
-    if (this->confirmationCache.count(hashHelper)) {
+    if (this->publishCache.count(hashHelper)) {
         return true;
     }
-    this->confirmationCache.insert(hashHelper);
+    this->publishCache.insert(hashHelper);
     return false;
 }
 
 bool ElectionResultCache::containsConfirmationAccount(const keto::asn1::HashHelper& hashHelper) {
     std::lock_guard<std::mutex> guard(classMutex);
-    if (this->publishCache.count(hashHelper)) {
+    if (this->confirmationCache.count(hashHelper)) {
         return true;
     }
-    this->publishCache.insert(hashHelper);
+    this->confirmationCache.insert(hashHelper);
     return false;
 }
 

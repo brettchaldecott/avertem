@@ -78,7 +78,7 @@ public:
     keto::event::Event electRpcProcessConfirmation(const keto::event::Event& event);
 
 private:
-    std::mutex classMutex;
+    std::recursive_mutex classMutex;
     ElectionManager::State state;
     std::map<std::vector<uint8_t>,ElectorPtr> accountElectionResult;
     int responseCount;

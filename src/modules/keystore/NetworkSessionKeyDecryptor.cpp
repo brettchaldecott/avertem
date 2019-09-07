@@ -31,6 +31,9 @@ NetworkSessionKeyDecryptor::~NetworkSessionKeyDecryptor() {
 
 keto::crypto::SecureVector NetworkSessionKeyDecryptor::decrypt(const std::vector<uint8_t>& value) const {
     keto::crypto::SecureVector content = keto::crypto::SecureVectorUtils().copyToSecure(value);
+    if (content.empty()) {
+        BOOST_THROW_EXCEPTION(EmptyDataToDecryptException());
+    }
     //std::cout << "The content decrypt : " << content.size() << std::endl;
     for (int level = 0; level < Constants::ONION_LEVELS; level++) {
         //auto start = std::chrono::steady_clock::now();

@@ -97,31 +97,37 @@ keto::event::Event ElectionManager::consensusHeartbeat(const keto::event::Event&
     keto::software_consensus::ProtocolHeartbeatMessageHelper protocolHeartbeatMessageHelper(
             keto::server_common::fromEvent<keto::proto::ProtocolHeartbeatMessage>(event));
 
-    if (state == BlockProducer::State::block_producer &&
-        protocolHeartbeatMessageHelper.getNetworkSlot() == protocolHeartbeatMessageHelper.getElectionSlot()) {
+    if (protocolHeartbeatMessageHelper.getNetworkSlot() == protocolHeartbeatMessageHelper.getElectionSlot()) {
         KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] elect a new block producer";
-        accountElectionResult.clear();
+        this->accountElectionResult.clear();
         this->responseCount = 0;
-        invokeElection(keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_CLIENT, keto::server_common::Events::PEER_TYPES::CLIENT);
-        invokeElection(keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_SERVER, keto::server_common::Events::PEER_TYPES::SERVER);
+        this->nextWindow.clear();
         this->state = ElectionManager::State::ELECT;
+        if (state == BlockProducer::State::block_producer) {
+            invokeElection(keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_CLIENT,
+                           keto::server_common::Events::PEER_TYPES::CLIENT);
+            invokeElection(keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_SERVER,
+                           keto::server_common::Events::PEER_TYPES::SERVER);
+        }
         KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] election is now running";
-    } else if (state == BlockProducer::State::block_producer &&
-               protocolHeartbeatMessageHelper.getNetworkSlot() == protocolHeartbeatMessageHelper.getElectionPublishSlot()){
-        KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] the election publish has been called";
-        publishElection();
-        KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] the publish has been started";
-    } else if (state == BlockProducer::State::block_producer &&
-               protocolHeartbeatMessageHelper.getNetworkSlot() == protocolHeartbeatMessageHelper.getConfirmationSlot()){
-        KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] the confirmation has been called";
-        confirmElection();
-        KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] the confirmation has been completed";
+    } else if (protocolHeartbeatMessageHelper.getNetworkSlot() == protocolHeartbeatMessageHelper.getElectionPublishSlot()){
+        if (state == BlockProducer::State::block_producer) {
+            KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] the election publish has been called";
+            publishElection();
+            KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] the publish has been started";
+        }
+    } else if (protocolHeartbeatMessageHelper.getNetworkSlot() == protocolHeartbeatMessageHelper.getConfirmationSlot()){
+        if (state == BlockProducer::State::block_producer) {
+            KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] the confirmation has been called";
+            confirmElection();
+            KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] the confirmation has been completed";
+        }
     } else {
         KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] ignore the slot [" << protocolHeartbeatMessageHelper.getNetworkSlot() <<
                        "][" << protocolHeartbeatMessageHelper.getElectionSlot() << "][" <<
                        protocolHeartbeatMessageHelper.getElectionPublishSlot() << "][" <<
                        protocolHeartbeatMessageHelper.getConfirmationSlot() << "]";
-
+        this->state = ElectionManager::State::PROCESSING;
     }
 
     return event;
@@ -165,7 +171,7 @@ keto::event::Event ElectionManager::electRpcRequest(const keto::event::Event& ev
 }
 
 keto::event::Event ElectionManager::electRpcResponse(const keto::event::Event& event) {
-    std::lock_guard<std::mutex> guard(classMutex);
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     keto::election_common::ElectionResultMessageProtoHelperPtr electionResultMessageProtoHelperPtr(
             new keto::election_common::ElectionResultMessageProtoHelper(
                     keto::server_common::fromEvent<keto::proto::ElectionResultMessage>(event)));
@@ -180,7 +186,7 @@ keto::event::Event ElectionManager::electRpcResponse(const keto::event::Event& e
 }
 
 keto::event::Event ElectionManager::electRpcProcessPublish(const keto::event::Event& event) {
-    std::lock_guard<std::mutex> guard(classMutex);
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     keto::election_common::ElectionPublishTangleAccountProtoHelper electionPublishTangleAccountProtoHelper(
             keto::server_common::fromEvent<keto::proto::ElectionPublishTangleAccount>(event));
     if ((std::vector<uint8_t>)electionPublishTangleAccountProtoHelper.getAccount() ==
@@ -192,16 +198,25 @@ keto::event::Event ElectionManager::electRpcProcessPublish(const keto::event::Ev
 }
 
 keto::event::Event ElectionManager::electRpcProcessConfirmation(const keto::event::Event& event) {
-    std::lock_guard<std::mutex> guard(classMutex);
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     keto::election_common::ElectionConfirmationHelper electionConfirmationHelper(
             keto::server_common::fromEvent<keto::proto::ElectionConfirmation>(event));
+    KETO_LOG_DEBUG << "[ElectionManager::electRpcProcessConfirmation] confirm the election";
     if ( (electionConfirmationHelper.getAccount() ==
             keto::server_common::ServerInfo::getInstance()->getAccountHash()) &&
-            (this->state == ElectionManager::State::CONFIRMATION) ) {
+            (this->state == ElectionManager::State::CONFIRMATION) &&
+            this->nextWindow.size()) {
+        KETO_LOG_DEBUG << "[ElectionManager::electRpcProcessConfirmation] this node has been elected set the active tangels.";
         BlockProducer::getInstance()->setActiveTangles(nextWindow);
-        nextWindow.clear();
+        this->state = ElectionManager::State::PROCESSING;
+        KETO_LOG_DEBUG << "[ElectionManager::electRpcProcessConfirmation] node will be a producer ";
+    } else if (!this->nextWindow.size() && this->state == ElectionManager::State::CONFIRMATION) {
+        KETO_LOG_DEBUG << "[ElectionManager::electRpcProcessConfirmation] this node is not elected clear it.";
+        BlockProducer::getInstance()->setActiveTangles(nextWindow);
+        this->state = ElectionManager::State::PROCESSING;
+        KETO_LOG_DEBUG << "[ElectionManager::electRpcProcessConfirmation] node cleared and will no longer be a producer";
     }
-    this->state = ElectionManager::State::PROCESSING;
+
     return event;
 }
 
@@ -268,13 +283,14 @@ void ElectionManager::publishElection() {
 
 void ElectionManager::confirmElection() {
     if (!this->responseCount) {
-        KETO_LOG_ERROR << "[ElectionManager::confirmElection] this node will have to remain the master until the next cycle";
+        KETO_LOG_INFO << "[ElectionManager::confirmElection] this node will have to remain the master until the next cycle";
         return;
     }
 
     for (std::vector<std::uint8_t> account : this->electedAccounts) {
-            keto::election_common::ElectionUtils(keto::election_common::Constants::ELECTION_PROCESS_CONFIRMATION).
-                    confirmation(account);
+        KETO_LOG_INFO << "[ElectionManager::confirmElection] send confirmation for an elected account";
+        keto::election_common::ElectionUtils(keto::election_common::Constants::ELECTION_PROCESS_CONFIRMATION).
+        confirmation(account);
     }
     this->electedAccounts.clear();
 }

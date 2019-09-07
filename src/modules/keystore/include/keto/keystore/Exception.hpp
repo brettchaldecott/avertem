@@ -33,6 +33,7 @@ KETO_DECLARE_DERIVED_EXCEPTION (KeyStoreModuleException, KeyStoreWrapIndexContai
 KETO_DECLARE_DERIVED_EXCEPTION (KeyStoreModuleException, InvalidKeyIndexConfigured , "There are no keys in the key store wrap index");
 KETO_DECLARE_DERIVED_EXCEPTION (KeyStoreModuleException, NetworkSessionNotStartedException , "The network session has not been started yet");
 KETO_DECLARE_DERIVED_EXCEPTION (KeyStoreModuleException, NetworkSessionKeyNotFoundException , "The network session key has not been found");
+KETO_DECLARE_DERIVED_EXCEPTION (KeyStoreModuleException, EmptyDataToDecryptException , "Empty data cannot decrypt");
 
 
 }

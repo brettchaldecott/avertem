@@ -139,8 +139,10 @@ public:
     private:
         // slave keys
         std::mutex classMutex;
-        keto::proto::NetworkKeysWrapper* slaveMasterKeys;
-        keto::proto::NetworkKeysWrapper* slaveWrapperKeys;
+        bool slaveMaster;
+        keto::proto::NetworkKeysWrapper slaveMasterKeys;
+        bool slaveWrapper;
+        keto::proto::NetworkKeysWrapper slaveWrapperKeys;
     };
 
 
