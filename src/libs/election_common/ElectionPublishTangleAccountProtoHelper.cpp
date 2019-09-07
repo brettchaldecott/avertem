@@ -49,7 +49,7 @@ std::vector<keto::asn1::HashHelper> ElectionPublishTangleAccountProtoHelper::get
 }
 
 ElectionPublishTangleAccountProtoHelper& ElectionPublishTangleAccountProtoHelper::addTangle(const keto::asn1::HashHelper& tangleHash) {
-    *this->electionPublishTangleAccount.add_tangle_hashes() = (std::string&)tangleHash;
+    *this->electionPublishTangleAccount.add_tangle_hashes() = (std::string)tangleHash;
     return *this;
 }
 
