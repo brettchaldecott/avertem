@@ -13,7 +13,7 @@ std::string ElectionUtils::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
-ElectionUtils::ElectionUtils(const std::vector<std::string> &events) {
+ElectionUtils::ElectionUtils(const std::vector<std::string> &events) : events(events) {
 
 }
 

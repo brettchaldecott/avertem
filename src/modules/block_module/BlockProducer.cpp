@@ -426,18 +426,19 @@ void BlockProducer::setActiveTangles(const std::vector<keto::asn1::HashHelper>& 
 
 BlockProducer::State BlockProducer::checkState() {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    KETO_LOG_DEBUG << "[BlockProducer::checkState] check the state";
     if (this->currentState == State::terminated) {
         return this->currentState;
     }
+    KETO_LOG_DEBUG << "[BlockProducer::checkState] perform the delay";
     State result = this->currentState;
-    KETO_LOG_DEBUG << "[BlockProducer] wait";
     if (delay) {
         this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(delay));
         delay = 0;
     } else {
         this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(Constants::BLOCK_TIME));
     }
-    KETO_LOG_DEBUG << "[Block Producer] run";
+    KETO_LOG_DEBUG << "[BlockProducer::checkState] return the state";
     return result;
 }
 
