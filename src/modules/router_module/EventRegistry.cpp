@@ -107,7 +107,7 @@ keto::event::Event EventRegistry::electRouterPeer(const keto::event::Event& even
     electionPeerMessageProtoHelper.setPeer(
             PeerCache::getInstance()->electPeer(electionPeerMessageProtoHelper.getAccount()));
 
-    return event;
+    return keto::server_common::toEvent<keto::proto::ElectionPeerMessage>(electionPeerMessageProtoHelper);
 }
 
 keto::event::Event EventRegistry::electRpcProcessPublish(const keto::event::Event& event) {

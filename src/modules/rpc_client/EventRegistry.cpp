@@ -131,7 +131,7 @@ void EventRegistry::registerEventHandlers() {
             &keto::rpc_client::EventRegistry::electBlockProducerPublish);
     keto::server_common::registerEventHandler (
             keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_CONFIRMATION_CLIENT,
-            &keto::rpc_client::EventRegistry::electBlockProducerPublish);
+            &keto::rpc_client::EventRegistry::electBlockProducerConfirmation);
 
     // peer push methods
     keto::server_common::registerEventHandler (

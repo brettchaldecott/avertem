@@ -4,6 +4,8 @@
 
 #include <sstream>
 
+#include <botan/hex.h>
+
 #include "keto/block/BlockProducer.hpp"
 #include "keto/block/ElectionManager.hpp"
 #include "keto/block/Constants.hpp"
@@ -189,6 +191,9 @@ keto::event::Event ElectionManager::electRpcProcessPublish(const keto::event::Ev
     std::lock_guard<std::recursive_mutex> guard(classMutex);
     keto::election_common::ElectionPublishTangleAccountProtoHelper electionPublishTangleAccountProtoHelper(
             keto::server_common::fromEvent<keto::proto::ElectionPublishTangleAccount>(event));
+    KETO_LOG_DEBUG << "[ElectionManager::electRpcProcessPublish] confirm the election [" <<
+        electionPublishTangleAccountProtoHelper.getAccount().getHash(keto::common::StringEncoding::HEX) << "][" <<
+        Botan::hex_encode(keto::server_common::ServerInfo::getInstance()->getAccountHash(),true) << "]";
     if ((std::vector<uint8_t>)electionPublishTangleAccountProtoHelper.getAccount() ==
         keto::server_common::ServerInfo::getInstance()->getAccountHash()) {
         nextWindow = electionPublishTangleAccountProtoHelper.getTangles();
@@ -201,7 +206,9 @@ keto::event::Event ElectionManager::electRpcProcessConfirmation(const keto::even
     std::lock_guard<std::recursive_mutex> guard(classMutex);
     keto::election_common::ElectionConfirmationHelper electionConfirmationHelper(
             keto::server_common::fromEvent<keto::proto::ElectionConfirmation>(event));
-    KETO_LOG_DEBUG << "[ElectionManager::electRpcProcessConfirmation] confirm the election";
+    KETO_LOG_DEBUG << "[ElectionManager::electRpcProcessConfirmation] confirm the election [" <<
+        electionConfirmationHelper.getAccount().getHash(keto::common::StringEncoding::HEX) << "][" <<
+        Botan::hex_encode(keto::server_common::ServerInfo::getInstance()->getAccountHash(),true) << "]";
     if ( (electionConfirmationHelper.getAccount() ==
             keto::server_common::ServerInfo::getInstance()->getAccountHash()) &&
             (this->state == ElectionManager::State::CONFIRMATION) &&
@@ -257,7 +264,8 @@ void ElectionManager::publishElection() {
         keto::asn1::HashHelper accountHash =
                 signedElectNodeHelperPtr->getElectedNode()->getElectedNode()->getElectionHelper()->getAccountHash();
         // push to network
-        KETO_LOG_DEBUG << "[ElectionManager::publishElection] get the tangle information associated with elected node";
+        KETO_LOG_DEBUG << "[ElectionManager::publishElection] get the tangle information associated with elected node ["
+            << accountHash.getHash(keto::common::StringEncoding::HEX) << "]";
         keto::election_common::ElectionPublishTangleAccountProtoHelperPtr electionPublishTangleAccountProtoHelperPtr(
                 new keto::election_common::ElectionPublishTangleAccountProtoHelper());
         electionPublishTangleAccountProtoHelperPtr->setAccount(accountHash);

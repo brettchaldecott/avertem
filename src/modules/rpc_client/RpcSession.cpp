@@ -707,30 +707,36 @@ void RpcSession::handleElectionResponse(const std::string& command, const std::s
 
 
 void RpcSession::handleElectionPublish(const std::string& command, const std::string& message) {
+    KETO_LOG_DEBUG << "[RpcSession::handleElectionPublish] handle election confirmation";
     keto::election_common::ElectionPublishTangleAccountProtoHelper electionPublishTangleAccountProtoHelper(
             keto::server_common::VectorUtils().copyVectorToString(
                     Botan::hex_decode(message)));
 
     // prevent echo propergation at the boundary
     if (this->electionResultCache.containsPublishAccount(electionPublishTangleAccountProtoHelper.getAccount())) {
+        KETO_LOG_DEBUG << "[RpcSession::handleElectionPublish] ignore the publish request";
         return;
     }
 
+    KETO_LOG_DEBUG << "[RpcSession::handleElectionPublish] election process publish";
     keto::election_common::ElectionUtils(keto::election_common::Constants::ELECTION_PROCESS_PUBLISH).
             publish(electionPublishTangleAccountProtoHelper);
 }
 
 
 void RpcSession::handleElectionConfirmation(const std::string& command, const std::string& message) {
+    KETO_LOG_DEBUG << "[RpcSession::handleElectionConfirmation] Handle election confirmation";
     keto::election_common::ElectionConfirmationHelper electionConfirmationHelper(
             keto::server_common::VectorUtils().copyVectorToString(
                     Botan::hex_decode(message)));
 
     // prevent echo propergation at the boundary
     if (this->electionResultCache.containsConfirmationAccount(electionConfirmationHelper.getAccount())) {
+        KETO_LOG_DEBUG << "[RpcSession::handleElectionConfirmation] ignoring confirmation";
         return;
     }
 
+    KETO_LOG_DEBUG << "[RpcSession::handleElectionConfirmation] election process confirmation";
     keto::election_common::ElectionUtils(keto::election_common::Constants::ELECTION_PROCESS_CONFIRMATION).
             confirmation(electionConfirmationHelper);
 }

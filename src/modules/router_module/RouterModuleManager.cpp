@@ -17,6 +17,7 @@
 
 #include "keto/common/Log.hpp"
 #include "keto/common/MetaInfo.hpp"
+
 #include "keto/router/RouterModuleManager.hpp"
 #include "keto/router/RouterModuleManagerMisc.hpp"
 #include "keto/router/ConsensusService.hpp"
@@ -25,7 +26,7 @@
 #include "keto/router/EventRegistry.hpp"
 #include "keto/router/StorageManager.hpp"
 #include "keto/router/PeerCache.hpp"
-#include "include/keto/router/PeerCache.hpp"
+#include "keto/router/TangleServiceCache.hpp"
 
 namespace keto {
 namespace router {
@@ -64,6 +65,7 @@ void RouterModuleManager::start() {
     RouterService::init();
     ConsensusService::init(getConsensusHash());
     PeerCache::init();
+    TangleServiceCache::init();
     modules["routerModule"] = std::make_shared<RouterModule>();
     EventRegistry::registerEventHandlers();
     KETO_LOG_INFO << "[RouterModuleManager] Started the RouterModuleManager";
@@ -78,6 +80,7 @@ void RouterModuleManager::stop() {
     RouterService::fin();
     StorageManager::fin();
     RouterRegistry::fin();
+    TangleServiceCache::fin();
     KETO_LOG_INFO << "[RouterModuleManager] The RouterModuleManager is being stopped";
 }
 

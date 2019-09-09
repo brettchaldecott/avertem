@@ -636,30 +636,36 @@ public:
     }
 
     void handleElectionPublish(const std::string& command, const std::string& message) {
+        KETO_LOG_DEBUG << "[handleElectionPublish] handle the election";
         keto::election_common::ElectionPublishTangleAccountProtoHelper electionPublishTangleAccountProtoHelper(
                 keto::server_common::VectorUtils().copyVectorToString(
                         Botan::hex_decode(message)));
 
         // prevent echo propergation at the boundary
         if (this->electionResultCache.containsPublishAccount(electionPublishTangleAccountProtoHelper.getAccount())) {
+            KETO_LOG_DEBUG << "[handleElectionPublish] handle the election";
             return;
         }
 
+        KETO_LOG_DEBUG << "[handleElectionPublish] publish the election";
         keto::election_common::ElectionUtils(keto::election_common::Constants::ELECTION_PROCESS_PUBLISH).
                 publish(electionPublishTangleAccountProtoHelper);
     }
 
 
     void handleElectionConfirmation(const std::string& command, const std::string& message) {
+        KETO_LOG_DEBUG << "[handleElectionConfirmation] confirm the election";
         keto::election_common::ElectionConfirmationHelper electionConfirmationHelper(
                 keto::server_common::VectorUtils().copyVectorToString(
                         Botan::hex_decode(message)));
 
         // prevent echo propergation at the boundary
         if (this->electionResultCache.containsConfirmationAccount(electionConfirmationHelper.getAccount())) {
+            KETO_LOG_DEBUG << "[handleElectionConfirmation] ignore the confirmation election";
             return;
         }
 
+        KETO_LOG_DEBUG << "[handleElectionConfirmation] process the confirmation";
         keto::election_common::ElectionUtils(keto::election_common::Constants::ELECTION_PROCESS_CONFIRMATION).
                 confirmation(electionConfirmationHelper);
     }
