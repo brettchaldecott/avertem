@@ -167,6 +167,7 @@ private:
     void load();
     void sync();
     void _setState(const State& state);
+    State _getState();
 };
 
 

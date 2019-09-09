@@ -61,6 +61,9 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::RPC_SERVER_BLOCK,
             &keto::rpc_server::EventRegistry::pushBlock);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::RPC_SERVER_REQUEST_BLOCK_SYNC,
+            &keto::rpc_server::EventRegistry::requestBlockSync);
 
     keto::server_common::registerEventHandler (
             keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_SERVER,
@@ -103,6 +106,8 @@ void EventRegistry::deregisterEventHandlers() {
             keto::server_common::Events::CONSENSUS_SESSION::RPC_SERVER);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::RPC_SEND_MESSAGE);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::RPC_SERVER_REQUEST_BLOCK_SYNC);
 }
 
 keto::event::Event EventRegistry::sendMessage(const keto::event::Event& event) {
@@ -128,32 +133,32 @@ keto::event::Event EventRegistry::pushBlock(const keto::event::Event& event) {
 keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Event& event) {
     keto::software_consensus::ConsensusStateManager::getInstance()->setState(
             keto::software_consensus::ConsensusStateManager::ACCEPTED);
-    std::cout << "[RpcServer][EventRegistry::consensusSessionAccepted] the node has been accepted" << std::endl;
+    KETO_LOG_DEBUG << "[RpcServer][EventRegistry::consensusSessionAccepted] the node has been accepted";
     return RpcServer::getInstance()->performNetworkSessionReset(event);
 }
 
 keto::event::Event EventRegistry::consensusProtocolCheck(const keto::event::Event& event) {
-    std::cout << "[RpcServer][EventRegistry::consensusSessionAccepted] the node has been accepted" << std::endl;
+    KETO_LOG_DEBUG << "[RpcServer][EventRegistry::consensusSessionAccepted] the node has been accepted";
     return RpcServer::getInstance()->performProtocoCheck(event);
 }
 
 keto::event::Event EventRegistry::consensusHeartbeat(const keto::event::Event& event) {
-    std::cout << "[RpcServer][EventRegistry::consensusHeartbeat] the node has been accepted" << std::endl;
+    KETO_LOG_DEBUG << "[RpcServer][EventRegistry::consensusHeartbeat] the node has been accepted";
     return RpcServer::getInstance()->performConsensusHeartbeat(event);
 }
 
 keto::event::Event EventRegistry::electBlockProducer(const keto::event::Event& event) {
-    std::cout << "[RpcServer][EventRegistry::consensusHeartbeat] the node has been accepted" << std::endl;
+    KETO_LOG_DEBUG << "[RpcServer][EventRegistry::consensusHeartbeat] the node has been accepted";
     return RpcServer::getInstance()->electBlockProducer(event);
 }
 
 keto::event::Event EventRegistry::electRpcPublishServer(const keto::event::Event& event) {
-    std::cout << "[RpcServer][EventRegistry::consensusHeartbeat] the node has been accepted" << std::endl;
+    KETO_LOG_DEBUG << "[RpcServer][EventRegistry::consensusHeartbeat] the node has been accepted";
     return RpcServer::getInstance()->electBlockProducerPublish(event);
 }
 
 keto::event::Event EventRegistry::electRpcConfirmationServer(const keto::event::Event& event) {
-    std::cout << "[RpcServer][EventRegistry::consensusHeartbeat] the node has been accepted" << std::endl;
+    KETO_LOG_DEBUG << "[RpcServer][EventRegistry::consensusHeartbeat] the node has been accepted" << std::endl;
     return RpcServer::getInstance()->electBlockProducerConfirmation(event);
 }
 
@@ -162,6 +167,11 @@ keto::event::Event EventRegistry::activatePeers(const keto::event::Event& event)
     std::cout << "[RpcServer][EventRegistry::activatePeers] the node has been accepted" << std::endl;
     return RpcServer::getInstance()->activatePeers(event);
 }
+
+keto::event::Event EventRegistry::requestBlockSync(const keto::event::Event& event) {
+    return RpcServer::getInstance()->requestBlockSync(event);
+}
+
 
 }
 }

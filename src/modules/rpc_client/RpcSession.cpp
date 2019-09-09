@@ -431,9 +431,11 @@ RpcSession::on_read(
             closeResponse(command,stringVector[1]);
             return;
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_RETRY) == 0) {
-            if (handleRetryResponse(command,stringVector[1],message)) {
+            if (handleRetryResponse(command, stringVector[1], message)) {
                 return;
             }
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST) == 0) {
+            message = handleBlockSyncRequest(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST, stringVector[1]);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_RESPONSE) == 0) {
             message = handleBlockSyncResponse(command,stringVector[1]);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_REQUEST) == 0) {
@@ -633,6 +635,25 @@ std::string RpcSession::handleBlock(const std::string& command, const std::strin
 
     std::string result = messageWrapperResponse.SerializeAsString();
     return serverRequest(keto::server_common::Constants::RPC_COMMANDS::BLOCK_PROCESSED, Botan::hex_encode((uint8_t*)result.data(),result.size(),true));
+}
+
+
+std::string RpcSession::handleBlockSyncRequest(const std::string& command, const std::string& payload) {
+    KETO_LOG_DEBUG << "[RpcSession::handleBlockSyncRequest] handle the block sync request : " << command;
+    keto::proto::SignedBlockBatchRequest signedBlockBatchRequest;
+    std::string rpcVector = keto::server_common::VectorUtils().copyVectorToString(
+            Botan::hex_decode(payload));
+    signedBlockBatchRequest.ParseFromString(rpcVector);
+
+    keto::proto::SignedBlockBatchMessage signedBlockBatchMessage;
+    signedBlockBatchMessage =
+            keto::server_common::fromEvent<keto::proto::SignedBlockBatchMessage>(
+                    keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SignedBlockBatchRequest>(
+                            keto::server_common::Events::BLOCK_DB_REQUEST_BLOCK_SYNC,signedBlockBatchRequest)));
+
+    std::string result = signedBlockBatchMessage.SerializeAsString();
+    KETO_LOG_INFO << "[RpcSession::handleBlockSyncRequest] Setup the block sync reply";
+    return serverRequest(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_RESPONSE, Botan::hex_encode((uint8_t*)result.data(),result.size(),true));
 }
 
 

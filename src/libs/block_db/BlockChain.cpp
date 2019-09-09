@@ -621,7 +621,7 @@ bool BlockChain::processBlockSyncResponse(const keto::proto::SignedBlockBatch& s
     for (int index = 0; index < signedBlockBatch.blocks_size(); index++) {
         bool write = this->writeBlock(signedBlockBatch.blocks(index),callback);
         if (complete) {
-            complete = write;
+            complete = !write;
         }
     }
     KETO_LOG_DEBUG << "[BlockChain::processBlockSyncResponse] process the tangle block : " << signedBlockBatch.tangle_batches_size();

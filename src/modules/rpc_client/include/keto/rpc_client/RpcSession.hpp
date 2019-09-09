@@ -215,6 +215,7 @@ private:
     std::string handleRegisterRequest(const std::string& command, const std::string& message);
     std::string handleTransaction(const std::string& command, const std::string& message);
     std::string handleBlock(const std::string& command, const std::string& message);
+    std::string handleBlockSyncRequest(const std::string& command, const std::string& payload);
     std::string handleBlockSyncResponse(const std::string& command, const std::string& message);
 
     void fail(boost::system::error_code ec, const std::string& what);

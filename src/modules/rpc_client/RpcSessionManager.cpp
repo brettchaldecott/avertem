@@ -267,11 +267,11 @@ keto::event::Event RpcSessionManager::activatePeer(const keto::event::Event& eve
 }
 
 keto::event::Event RpcSessionManager::requestBlockSync(const keto::event::Event& event) {
-
+    keto::proto::SignedBlockBatchRequest request = keto::server_common::fromEvent<keto::proto::SignedBlockBatchRequest>(event);
     RpcSessionPtr rcpSessionPtr = getDefaultPeer();
     if (rcpSessionPtr) {
         try {
-            rcpSessionPtr->requestBlockSync(keto::server_common::fromEvent<keto::proto::SignedBlockBatchRequest>(event));
+            rcpSessionPtr->requestBlockSync(request);
         } catch (keto::common::Exception& ex) {
             KETO_LOG_ERROR << "[RpcSessionManager::requestBlockSync] Failed to request a block sync : " << ex.what();
             KETO_LOG_ERROR << "[RpcSessionManager::requestBlockSync] Cause : " << boost::diagnostic_information(ex,true);
@@ -283,7 +283,10 @@ keto::event::Event RpcSessionManager::requestBlockSync(const keto::event::Event&
             KETO_LOG_ERROR << "[RpcSessionManager::requestBlockSync] Failed to request a block sync : unknown cause";
         }
     } else {
-        KETO_LOG_ERROR << "No peers to request block sync from";
+        // this will force a call to the RPC server to sync
+        KETO_LOG_INFO << "[RpcSessionManager::requestBlockSync] No upstream connections forcing the request down stream";
+        keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::SignedBlockBatchRequest>(
+                keto::server_common::Events::RPC_SERVER_REQUEST_BLOCK_SYNC,request));
     }
 
     return event;

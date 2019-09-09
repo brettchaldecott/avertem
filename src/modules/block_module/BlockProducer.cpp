@@ -365,6 +365,10 @@ void BlockProducer::_setState(const State& state) {
     this->stateCondition.notify_all();
 }
 
+BlockProducer::State BlockProducer::_getState() {
+    return this->currentState;
+}
+
 keto::event::Event BlockProducer::setupNodeConsensusSession(const keto::event::Event& event) {
     std::lock_guard<std::mutex> uniqueLock(this->classMutex);
     this->consensusMessageHelper = keto::software_consensus::ConsensusMessageHelper(
@@ -413,7 +417,7 @@ void BlockProducer::setActiveTangles(const std::vector<keto::asn1::HashHelper>& 
     if (tangles.size()) {
         _setState(BlockProducer::State::block_producer);
         this->delay = Constants::ACTIVATE_PRODUCER_DELAY;
-    } else if (getState() == BlockProducer::State::block_producer) {
+    } else if (_getState() == BlockProducer::State::block_producer) {
         for(int retries = 0; (!this->pendingTransactionManagerPtr->empty()) &&
             (retries < Constants::BLOCK_PRODUCER_RETRY_MAX); retries++) {
             this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(

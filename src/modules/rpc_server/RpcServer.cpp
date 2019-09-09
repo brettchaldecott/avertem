@@ -127,8 +127,21 @@ fail(boost::system::error_code ec, char const* what)
     std::cerr << what << ": " << ec.message() << "\n";
 }
 
-class session;
-typedef std::shared_ptr<session> sessionPtr;
+class SessionBase {
+public:
+    virtual bool isActive() = 0;
+    virtual void routeTransaction(keto::proto::MessageWrapper&  messageWrapper) = 0;
+    virtual void pushBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage) = 0;
+    virtual void performNetworkSessionReset() = 0;
+    virtual void performProtocolCheck() = 0;
+    virtual void activatePeer(const keto::router_utils::RpcPeerHelper& rpcPeerHelper) = 0;
+    virtual void performNetworkHeartbeat(const keto::proto::ProtocolHeartbeatMessage& protocolHeartbeatMessage) = 0;
+    virtual void electBlockProducer() = 0;
+    virtual void electBlockProducerPublish(const keto::election_common::ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper) = 0;
+    virtual void electBlockProducerConfirmation(const keto::election_common::ElectionConfirmationHelper& electionConfirmationHelper) = 0;
+    virtual void requestBlockSync(const keto::proto::SignedBlockBatchRequest& request) = 0;
+};
+typedef std::shared_ptr<SessionBase> SessionBasePtr;
 
 class AccountSessionCache;
 typedef std::shared_ptr<AccountSessionCache> AccountSessionCachePtr;
@@ -138,7 +151,7 @@ static AccountSessionCachePtr accountSessionSingleton;
 class AccountSessionCache {
 private:
     std::recursive_mutex classMutex;
-    std::map<std::string,sessionPtr> accountSessionMap;
+    std::map<std::string,SessionBasePtr> accountSessionMap;
 
 public:
     AccountSessionCache() {
@@ -163,12 +176,12 @@ public:
     }
     
     void addAccount(const std::string& account, 
-            const sessionPtr sessionRef) {
+            const SessionBasePtr sessionRef) {
         std::lock_guard<std::recursive_mutex> guard(classMutex);
         accountSessionMap[account] = sessionRef;
     }
     
-    void removeAccount(const std::string& account,const session* session) {
+    void removeAccount(const std::string& account,const SessionBase* session) {
         std::lock_guard<std::recursive_mutex> guard(classMutex);
         if (!accountSessionMap.count(account)) {
             return;
@@ -185,8 +198,8 @@ public:
         }
         return false;
     }
-    
-    sessionPtr getSession(const std::string& account) {
+
+    SessionBasePtr getSession(const std::string& account) {
         std::lock_guard<std::recursive_mutex> guard(this->classMutex);
         return this->accountSessionMap[account];
     }
@@ -194,18 +207,28 @@ public:
     std::vector<std::string> getSessions() {
         std::lock_guard<std::recursive_mutex> guard(classMutex);
         std::vector<std::string> keys;
-        for(std::map<std::string,sessionPtr>::iterator it = this->accountSessionMap.begin();
+        for(std::map<std::string,SessionBasePtr>::iterator it = this->accountSessionMap.begin();
             it != this->accountSessionMap.end(); ++it) {
             keys.push_back(it->first);
         }
         return keys;
     }
-    
+
+    SessionBasePtr getFirstActive() {
+        for(std::map<std::string,SessionBasePtr>::iterator it = this->accountSessionMap.begin();
+            it != this->accountSessionMap.end(); ++it) {
+            SessionBasePtr _sessionPtr = it->second;
+            if (_sessionPtr->isActive()) {
+                return _sessionPtr;
+            }
+        }
+        return NULL;
+    }
 };
 
 
 // Echoes back all received WebSocket messages
-class session : public std::enable_shared_from_this<session>
+class session : public SessionBase, public std::enable_shared_from_this<session>
 {
 private:
     std::recursive_mutex classMutex;
@@ -427,6 +450,8 @@ public:
                 return do_read();
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST) == 0) {
                 message = handleBlockSyncRequest(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST, payload);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_RESPONSE) == 0) {
+                message = handleBlockSyncResponse(command,payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_RESPONSE) == 0) {
                 message = handleProtocolCheckResponse(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_RESPONSE, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_REQUEST) == 0) {
@@ -503,6 +528,18 @@ public:
         clientRequest(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION,
                       Botan::hex_encode((uint8_t*)messageBytes.data(),messageBytes.size(),true));
         KETO_LOG_INFO << "[RpcServer][" << getAccount() << "[session::electBlockProducerConfirmation]: confirmation sent for election results";
+    }
+
+    void requestBlockSync(const keto::proto::SignedBlockBatchRequest& signedBlockBatchRequest) {
+        std::string messageWrapperStr = signedBlockBatchRequest.SerializeAsString();
+        std::vector<uint8_t> messageBytes =  keto::server_common::VectorUtils().copyStringToVector(
+                messageWrapperStr);
+
+        KETO_LOG_INFO << "[session::requestBlockSync][" << getAccount() << "] request the block sync from a";
+        clientRequest(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST,
+                      Botan::hex_encode((uint8_t*)messageBytes.data(),messageBytes.size(),true));
+        KETO_LOG_INFO << "[session::requestBlockSync][" << getAccount() << "] The request for [" <<
+                      keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST << "]";
     }
 
     void
@@ -973,7 +1010,7 @@ public:
     }
 
     std::string handleBlockSyncRequest(const std::string& command, const std::string& payload) {
-        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleBlockSyncRequest] handle the block sync request : " << command;
+        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleBlockSyncRequest] handle the block sync request : " << command;
         keto::proto::SignedBlockBatchRequest signedBlockBatchRequest;
         std::string rpcVector = keto::server_common::VectorUtils().copyVectorToString(
                 Botan::hex_decode(payload));
@@ -986,11 +1023,30 @@ public:
                                 keto::server_common::Events::BLOCK_DB_REQUEST_BLOCK_SYNC,signedBlockBatchRequest)));
 
         std::string result = signedBlockBatchMessage.SerializeAsString();
-        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleBlockSyncRequest] Setup the block sync reply";
+        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleBlockSyncRequest] Setup the block sync reply";
         std::stringstream ss;
         ss << keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_RESPONSE
                                        << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
-        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleBlockSyncRequest] The block data returned [" << result.size() << "]";
+        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleBlockSyncRequest] The block data returned [" << result.size() << "]";
+        return ss.str();
+    }
+
+    std::string handleBlockSyncResponse(const std::string& command, const std::string& payload) {
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleBlockSyncResponse] handle the block sync request : " << command;
+        keto::proto::SignedBlockBatchMessage signedBlockBatchMessage;
+        signedBlockBatchMessage.ParseFromString(keto::server_common::VectorUtils().copyVectorToString(
+                Botan::hex_decode(payload)));
+
+        keto::proto::MessageWrapperResponse messageWrapperResponse =
+                keto::server_common::fromEvent<keto::proto::MessageWrapperResponse>(
+                        keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SignedBlockBatchMessage>(
+                                keto::server_common::Events::BLOCK_DB_RESPONSE_BLOCK_SYNC,signedBlockBatchMessage)));
+
+        std::string result = messageWrapperResponse.SerializeAsString();
+        std::stringstream ss;
+        ss << keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_PROCESSED
+           << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleBlockSyncResponse] block sync response processed : " << command;
         return ss.str();
     }
 
@@ -1294,7 +1350,7 @@ keto::event::Event RpcServer::pushBlock(const keto::event::Event& event) {
     for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
         try {
             KETO_LOG_INFO << "[RpcServer::pushBlock] push block to node [" << Botan::hex_encode((const uint8_t*)account.c_str(),account.size(),true) << "]";
-            sessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
+            SessionBasePtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
                             account);
             if (sessionPtr_) {
                 sessionPtr_->pushBlock(keto::server_common::fromEvent<keto::proto::SignedBlockWrapperMessage>(event));
@@ -1323,7 +1379,7 @@ keto::event::Event RpcServer::pushBlock(const keto::event::Event& event) {
 keto::event::Event RpcServer::performNetworkSessionReset(const keto::event::Event& event) {
     for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
         try {
-            sessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
+            SessionBasePtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
                     account);
             if (sessionPtr_) {
                 sessionPtr_->performNetworkSessionReset();
@@ -1353,7 +1409,7 @@ keto::event::Event RpcServer::performNetworkSessionReset(const keto::event::Even
 keto::event::Event RpcServer::performProtocoCheck(const keto::event::Event& event) {
     for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
         try {
-            sessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
+            SessionBasePtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
                     account);
             if (sessionPtr_) {
                 sessionPtr_->performProtocolCheck();
@@ -1383,7 +1439,7 @@ keto::event::Event RpcServer::performConsensusHeartbeat(const keto::event::Event
     for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
         try {
             KETO_LOG_INFO << "[RpcServer::performConsensusHeartbeat] perform consensus heart beat on [" << Botan::hex_encode((const uint8_t*)account.c_str(),account.size(),true) << "]";
-            sessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
+            SessionBasePtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
                     account);
             if (sessionPtr_) {
                 sessionPtr_->performNetworkHeartbeat(
@@ -1432,7 +1488,7 @@ keto::event::Event RpcServer::electBlockProducer(const keto::event::Event& event
             accounts.clear();
         }
 
-        sessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
+        SessionBasePtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
                 account);
         KETO_LOG_DEBUG << "[RpcServer::electBlockProducer] elect an account ["
             << keto::asn1::HashHelper(account).getHash(keto::common::StringEncoding::HEX) << "][" << sessionPtr_->isActive() << "]";
@@ -1463,7 +1519,7 @@ keto::event::Event RpcServer::activatePeers(const keto::event::Event& event) {
     std::vector<std::string> peers = AccountSessionCache::getInstance()->getSessions();
     for (std::string peer : peers)
     {
-        sessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
+        SessionBasePtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
                 peer);
         if (sessionPtr_) {
             try {
@@ -1483,6 +1539,31 @@ keto::event::Event RpcServer::activatePeers(const keto::event::Event& event) {
     return event;
 }
 
+
+keto::event::Event RpcServer::requestBlockSync(const keto::event::Event& event) {
+    keto::proto::SignedBlockBatchRequest request = keto::server_common::fromEvent<keto::proto::SignedBlockBatchRequest>(event);
+    SessionBasePtr sessionBasePtr = AccountSessionCache::getInstance()->getFirstActive();
+    if (sessionBasePtr) {
+        try {
+            sessionBasePtr->requestBlockSync(request);
+        } catch (keto::common::Exception& ex) {
+            KETO_LOG_ERROR << "[RpcServer::requestBlockSync] Failed to request a block sync : " << ex.what();
+            KETO_LOG_ERROR << "[RpcServer::requestBlockSync] Cause : " << boost::diagnostic_information(ex,true);
+        } catch (boost::exception& ex) {
+            KETO_LOG_ERROR << "[RpcServer::requestBlockSync] Failed to request a block sync : " << boost::diagnostic_information(ex,true);
+        } catch (std::exception& ex) {
+            KETO_LOG_ERROR << "[RpcServer::requestBlockSync] Failed to request a block sync : " << ex.what();
+        } catch (...) {
+            KETO_LOG_ERROR << "[RpcServer::requestBlockSync] Failed to request a block sync : unknown cause";
+        }
+    } else {
+        // this will force a call to the RPC server to sync
+        KETO_LOG_ERROR << "[RpcServer::requestBlockSync] Fall back failed no downstream active nodes";
+    }
+
+    return event;
+}
+
 bool RpcServer::isServerActive() {
     return this->serverActive;
 }
@@ -1496,7 +1577,7 @@ keto::event::Event RpcServer::electBlockProducerPublish(const keto::event::Event
     for (std::string peer : peers) {
 
         // get the account
-        sessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(peer);
+        SessionBasePtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(peer);
         if (sessionPtr_) {
             try {
                 sessionPtr_->electBlockProducerPublish(electionPublishTangleAccountProtoHelper);
@@ -1524,7 +1605,7 @@ keto::event::Event RpcServer::electBlockProducerConfirmation(const keto::event::
     for (std::string peer : peers) {
 
         // get the account
-        sessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(peer);
+        SessionBasePtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(peer);
         if (sessionPtr_) {
             try {
                 sessionPtr_->electBlockProducerConfirmation(electionConfirmationHelper);

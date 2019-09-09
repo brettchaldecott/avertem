@@ -83,6 +83,7 @@ public:
     keto::event::Event performConsensusHeartbeat(const keto::event::Event& event);
     keto::event::Event electBlockProducer(const keto::event::Event& event);
     keto::event::Event activatePeers(const keto::event::Event& event);
+    keto::event::Event requestBlockSync(const keto::event::Event& event);
 
     keto::event::Event electBlockProducerPublish(const keto::event::Event& event);
     keto::event::Event electBlockProducerConfirmation(const keto::event::Event& event);
