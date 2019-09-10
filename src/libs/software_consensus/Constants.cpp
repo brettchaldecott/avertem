@@ -88,8 +88,8 @@ const std::vector<std::string> Constants::CONSENSUS_SESSION_CHECK = {
         keto::server_common::Events::CONSENSUS_SESSION_CHECK::MEMORY_VAULT_MANAGER};
 
 const std::vector<std::string> Constants::CONSENSUS_HEARTBEAT = {
-        keto::server_common::Events::CONSENSUS_HEARTBEAT::RPC_CLIENT,
         keto::server_common::Events::CONSENSUS_HEARTBEAT::RPC_SERVER,
+        keto::server_common::Events::CONSENSUS_HEARTBEAT::RPC_CLIENT,
         keto::server_common::Events::CONSENSUS_HEARTBEAT::TEST,
         keto::server_common::Events::CONSENSUS_HEARTBEAT::TRANSACTION,
         keto::server_common::Events::CONSENSUS_HEARTBEAT::ROUTER,

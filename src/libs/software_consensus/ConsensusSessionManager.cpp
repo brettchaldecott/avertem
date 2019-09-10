@@ -231,9 +231,9 @@ void ConsensusSessionManager::initNetworkHeartbeat(int networkSlot, int election
 
 void ConsensusSessionManager::initNetworkHeartbeat(const keto::proto::ProtocolHeartbeatMessage& msg) {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
-    if (!checkHeartbeatTimestamp(msg)) {
-        return;
-    }
+    //if (!checkHeartbeatTimestamp(msg)) {
+    //    return;
+    //}
     for (std::string event : Constants::CONSENSUS_HEARTBEAT) {
         try {
             keto::server_common::triggerEvent(
