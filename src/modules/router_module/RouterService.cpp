@@ -139,7 +139,9 @@ keto::event::Event RouterService::routeMessage(const keto::event::Event& event) 
     return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
 }
 
-keto::event::Event RouterService::registerRpcPeer(const keto::event::Event& event) {
+
+
+keto::event::Event RouterService::registerRpcPeerClient(const keto::event::Event& event) {
     keto::router_utils::RpcPeerHelper  rpcPeerHelper(
             keto::server_common::fromEvent<keto::proto::RpcPeer>(event));
     rpcPeerHelper.setPeerAccountHash(keto::server_common::ServerInfo::getInstance()->getAccountHash());
@@ -148,14 +150,23 @@ keto::event::Event RouterService::registerRpcPeer(const keto::event::Event& even
 
     keto::router_db::RouterStore::getInstance()->persistPeerRouting(rpcPeerHelper);
 
+    // push to peers
     keto::router_utils::RpcPeerHelper  parentRpcPeerHelper;
     parentRpcPeerHelper.setAccountHash(keto::server_common::ServerInfo::getInstance()->getAccountHash());
     parentRpcPeerHelper.addChild(rpcPeerHelper);
 
-    // push to peers
     keto::server_common::triggerEvent(
             keto::server_common::toEvent<keto::proto::RpcPeer>(
                     keto::server_common::Events::ROUTER_QUERY::PUSH_RPC_PEER,parentRpcPeerHelper));
+
+    return event;
+}
+
+keto::event::Event RouterService::registerRpcPeerServer(const keto::event::Event& event) {
+    keto::router_utils::RpcPeerHelper  rpcPeerHelper(
+            keto::server_common::fromEvent<keto::proto::RpcPeer>(event));
+
+    PeerCache::getInstance()->addPeer(rpcPeerHelper);
 
     return event;
 }

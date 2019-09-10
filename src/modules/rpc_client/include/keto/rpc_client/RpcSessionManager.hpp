@@ -71,6 +71,7 @@ public:
     keto::event::Event electBlockProducerConfirmation(const keto::event::Event& event);
 
     keto::event::Event pushRpcPeer(const keto::event::Event& event);
+    bool isActivated();
     
     
 protected:
@@ -92,6 +93,7 @@ private:
     int threads;
     std::vector<std::thread> threadsVector;
     bool peered;
+    bool activated;
 
 
     bool hasAccountSessionMapping(const std::string& account);

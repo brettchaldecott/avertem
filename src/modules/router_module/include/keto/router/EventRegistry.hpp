@@ -32,7 +32,8 @@ public:
     virtual ~EventRegistry();
     
     static keto::event::Event registerService(const keto::event::Event& event);
-    static keto::event::Event registerRpcPeer(const keto::event::Event& event);
+    static keto::event::Event registerRpcPeerClient(const keto::event::Event& event);
+    static keto::event::Event registerRpcPeerServer(const keto::event::Event& event);
     static keto::event::Event processPushRpcPeer(const keto::event::Event& event);
     static keto::event::Event deregisterRpcPeer(const keto::event::Event& event);
     static keto::event::Event activateRpcPeer(const keto::event::Event& event);

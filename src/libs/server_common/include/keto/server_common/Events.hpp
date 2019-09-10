@@ -42,7 +42,8 @@ public:
     static const char* ROUTE_MESSAGE;
     static const char* PERSIST_BLOCK_MESSAGE;
     static const char* REGISTER_SERVICE_MESSAGE;
-    static const char* REGISTER_RPC_PEER;
+    static const char* REGISTER_RPC_PEER_CLIENT;
+    static const char* REGISTER_RPC_PEER_SERVER;
     static const char* DEREGISTER_RPC_PEER;
     static const char* ACTIVATE_RPC_PEER;
     static const char* PUSH_RPC_PEER;

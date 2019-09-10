@@ -100,18 +100,20 @@ keto::event::Event ElectionManager::consensusHeartbeat(const keto::event::Event&
             keto::server_common::fromEvent<keto::proto::ProtocolHeartbeatMessage>(event));
 
     if (protocolHeartbeatMessageHelper.getNetworkSlot() == protocolHeartbeatMessageHelper.getElectionSlot()) {
-        KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] elect a new block producer";
+        KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] clean out the election information : " << state;
         this->accountElectionResult.clear();
         this->responseCount = 0;
         this->nextWindow.clear();
         this->state = ElectionManager::State::ELECT;
         if (state == BlockProducer::State::block_producer) {
+            KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] run the election to choose a new node as state is : " << state;
             invokeElection(keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_CLIENT,
                            keto::server_common::Events::PEER_TYPES::CLIENT);
             invokeElection(keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_SERVER,
                            keto::server_common::Events::PEER_TYPES::SERVER);
+            KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] after running the election";
         }
-        KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] election is now running";
+
     } else if (protocolHeartbeatMessageHelper.getNetworkSlot() == protocolHeartbeatMessageHelper.getElectionPublishSlot()){
         if (state == BlockProducer::State::block_producer) {
             KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] the election publish has been called";
@@ -196,6 +198,8 @@ keto::event::Event ElectionManager::electRpcProcessPublish(const keto::event::Ev
         Botan::hex_encode(keto::server_common::ServerInfo::getInstance()->getAccountHash(),true) << "]";
     if ((std::vector<uint8_t>)electionPublishTangleAccountProtoHelper.getAccount() ==
         keto::server_common::ServerInfo::getInstance()->getAccountHash()) {
+        KETO_LOG_DEBUG << "[ElectionManager::electRpcProcessPublish] set the active tangles to [" <<
+            electionPublishTangleAccountProtoHelper.getTangles().size() << "]";
         nextWindow = electionPublishTangleAccountProtoHelper.getTangles();
     }
     this->state = ElectionManager::State::CONFIRMATION;
@@ -213,7 +217,8 @@ keto::event::Event ElectionManager::electRpcProcessConfirmation(const keto::even
             keto::server_common::ServerInfo::getInstance()->getAccountHash()) &&
             (this->state == ElectionManager::State::CONFIRMATION) &&
             this->nextWindow.size()) {
-        KETO_LOG_DEBUG << "[ElectionManager::electRpcProcessConfirmation] this node has been elected set the active tangels.";
+        KETO_LOG_DEBUG << "[ElectionManager::electRpcProcessConfirmation] this node has been elected set the active tangles [" <<
+            this->nextWindow.size() << "]";
         BlockProducer::getInstance()->setActiveTangles(nextWindow);
         this->state = ElectionManager::State::PROCESSING;
         KETO_LOG_DEBUG << "[ElectionManager::electRpcProcessConfirmation] node will be a producer ";

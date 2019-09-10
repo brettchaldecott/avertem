@@ -288,17 +288,26 @@ BlockProducerPtr BlockProducer::getInstance() {
 }
 
 void BlockProducer::run() {
+    // load the block chain first as it will need to be initialized before syncronization or processing can begin.
+    while(!isLoaded() && this->checkState() != State::terminated) {
+        // load the chain only after we have been accepted to the network
+        // it will not be possible to load it until then
+        if (keto::software_consensus::ConsensusStateManager::getInstance()->getState()
+            == keto::software_consensus::ConsensusStateManager::State::ACCEPTED) {
+            load();
+        }
+    }
+
+    // process the
     BlockProducer::State currentState;
     while((currentState = this->checkState()) != State::terminated) {
         if (currentState == BlockProducer::State::block_producer &&
         keto::software_consensus::ConsensusStateManager::getInstance()->getState()
         == keto::software_consensus::ConsensusStateManager::State::ACCEPTED) {
-            load();
             processTransactions();
         } else if (currentState == BlockProducer::State::sync_blocks &&
                    keto::software_consensus::ConsensusStateManager::getInstance()->getState()
                    == keto::software_consensus::ConsensusStateManager::State::ACCEPTED) {
-            load();
             sync();
         }
     }
@@ -348,6 +357,7 @@ void BlockProducer::_setState(const State& state) {
     }
     // the block producer has to be enabled.
     if (!this->enabled && state == State::block_producer) {
+        KETO_LOG_DEBUG << "[ElectionManager::_setState] the block producer has not been enabled, cannot be a producer";
         return;
     }
     // the block producer has to be enabled.
@@ -357,6 +367,7 @@ void BlockProducer::_setState(const State& state) {
         BOOST_THROW_EXCEPTION(keto::block::BlockProducerNotAcceptedByNetworkException());
     }
 
+    KETO_LOG_DEBUG << "[ElectionManager::_setState] set the state to : " << state;
     this->currentState = state;
     if (currentState != State::terminated) {
         (*statePersistanceManagerPtr)[Constants::PERSISTED_STATE].set((long) this->currentState);
@@ -394,7 +405,11 @@ void BlockProducer::addTransaction(keto::transaction_common::TransactionProtoHel
 }
 
 bool BlockProducer::isEnabled() {
-    return enabled;
+    return this->enabled;
+}
+
+bool BlockProducer::isLoaded() {
+    return this->loaded;
 }
 
 keto::software_consensus::ConsensusMessageHelper BlockProducer::getAcceptedCheck() {

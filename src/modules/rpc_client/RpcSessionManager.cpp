@@ -244,6 +244,7 @@ keto::event::Event RpcSessionManager::activatePeer(const keto::event::Event& eve
             keto::server_common::fromEvent<keto::proto::RpcPeer>(event));
     std::vector<std::string> peers = this->listAccountPeers();
     KETO_LOG_DEBUG << "[RpcSessionManager::activatePeer] activating the state of this node with its peer : " << peers.size();
+    this->activated = rpcPeerHelper.isActive();
     for (std::string peer : peers)
     {
         RpcSessionPtr rpcSessionPtr = getAccountSessionMapping(peer);
@@ -505,7 +506,9 @@ keto::event::Event RpcSessionManager::pushRpcPeer(const keto::event::Event& even
     return event;
 }
 
-
+bool RpcSessionManager::isActivated() {
+    return this->activated;
+}
 
 }
 }

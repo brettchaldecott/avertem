@@ -829,15 +829,21 @@ public:
         rpcPeer = keto::server_common::fromEvent<keto::proto::RpcPeer>(
                     keto::server_common::processEvent(
                     keto::server_common::toEvent<keto::proto::RpcPeer>(
-                    keto::server_common::Events::REGISTER_RPC_PEER,rpcPeer)));
+                    keto::server_common::Events::REGISTER_RPC_PEER_CLIENT,rpcPeer)));
 
         // registered
-        registered = true;
+        this->registered = true;
+        this->active = rpcPeerHelper.isActive();
+
+        // set up the peer information
+        keto::router_utils::RpcPeerHelper serverPeerHelper;
+        serverPeerHelper.setAccountHash(keto::server_common::ServerInfo::getInstance()->getAccountHash());
+        serverPeerHelper.setActive(RpcServer::getInstance()->isServerActive());
+        std::string serverPeerStr = serverPeerHelper;
 
         std::stringstream ss;
         ss << keto::server_common::Constants::RPC_COMMANDS::REGISTER
-                << " " << Botan::hex_encode(
-                keto::server_common::ServerInfo::getInstance()->getAccountHash());
+                << " " << Botan::hex_encode((uint8_t*)serverPeerStr.data(),serverPeerStr.size(),true);
         return ss.str();
     }
 
@@ -982,14 +988,15 @@ public:
     std::string handleClientNetworkComplete(const std::string& command, const std::string& payload) {
         KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleClientNetworkComplete] The client has completed networking";
         std::stringstream ss;
-        if (RpcServer::getInstance()->isServerActive()) {
-            keto::router_utils::RpcPeerHelper rpcPeerHelper;
-            rpcPeerHelper.setAccountHash(keto::server_common::ServerInfo::getInstance()->getAccountHash());
-            rpcPeerHelper.setActive(RpcServer::getInstance()->isServerActive());
-            std::string rpcValue = rpcPeerHelper;
-            ss << keto::server_common::Constants::RPC_COMMANDS::ACTIVATE << " "
-                << Botan::hex_encode((uint8_t*)rpcValue.data(),rpcValue.size(),true);
-        }
+        // at present there is no requirement to activate as this is handled in the registration response.
+        //if (RpcServer::getInstance()->isServerActive()) {
+        //    keto::router_utils::RpcPeerHelper rpcPeerHelper;
+        //    rpcPeerHelper.setAccountHash(keto::server_common::ServerInfo::getInstance()->getAccountHash());
+        //    rpcPeerHelper.setActive(RpcServer::getInstance()->isServerActive());
+        //    std::string rpcValue = rpcPeerHelper;
+        //    ss << keto::server_common::Constants::RPC_COMMANDS::ACTIVATE << " "
+        //        << Botan::hex_encode((uint8_t*)rpcValue.data(),rpcValue.size(),true);
+        //}
         KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleClientNetworkComplete] Finished post network configuration";
         return ss.str();
     }

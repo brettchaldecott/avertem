@@ -140,6 +140,7 @@ public:
     keto::event::Event setupNodeConsensusSession(const keto::event::Event& event);
     void addTransaction(keto::transaction_common::TransactionProtoHelperPtr& transactionProtoHelperPtr);
     bool isEnabled();
+    bool isLoaded();
 
     keto::software_consensus::ConsensusMessageHelper getAcceptedCheck();
     keto::crypto::KeyLoaderPtr getKeyLoader();

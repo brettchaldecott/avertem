@@ -596,6 +596,7 @@ std::string RpcSession::handleRegisterRequest(const std::string& command, const 
     // notify the accepted
     keto::router_utils::RpcPeerHelper rpcPeerHelper;
     rpcPeerHelper.setAccountHash(keto::server_common::ServerInfo::getInstance()->getAccountHash());
+    rpcPeerHelper.setActive(RpcSessionManager::getInstance()->isActivated());
 
     keto::proto::RpcPeer rpcPeer = rpcPeerHelper;
     std::string rpcValue;
@@ -764,19 +765,20 @@ void RpcSession::handleElectionConfirmation(const std::string& command, const st
 
 
 std::string RpcSession::registerResponse(const std::string& command, const std::string& message) {
-    keto::router_utils::RpcPeerHelper rpcPeerHelper;
-    rpcPeerHelper.setAccountHash(Botan::hex_decode(message));
-    
+    KETO_LOG_DEBUG << "[RpcSession::registerResponse] handle the registration response";
+    keto::router_utils::RpcPeerHelper rpcPeerHelper(keto::server_common::VectorUtils().copyVectorToString(
+            Botan::hex_decode(message)));
+
     this->accountHash = rpcPeerHelper.getAccountHash();
     RpcSessionManager::getInstance()->setAccountSessionMapping(rpcPeerHelper.getAccountHashString(),
             shared_from_this());
-    
-    keto::proto::RpcPeer rpcPeer = (keto::proto::RpcPeer)rpcPeerHelper;
-    rpcPeer = keto::server_common::fromEvent<keto::proto::RpcPeer>(
-                keto::server_common::processEvent(
-                keto::server_common::toEvent<keto::proto::RpcPeer>(
-                keto::server_common::Events::REGISTER_RPC_PEER,rpcPeer)));
 
+    KETO_LOG_DEBUG << "[RpcSession::registerResponse] update the server state with peers";
+    keto::server_common::triggerEvent(
+                keto::server_common::toEvent<keto::proto::RpcPeer>(
+                keto::server_common::Events::REGISTER_RPC_PEER_SERVER,rpcPeerHelper));
+
+    KETO_LOG_DEBUG << "[RpcSession::registerResponse] return the next command";
     return serverRequest(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS,
                   keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS);
 }

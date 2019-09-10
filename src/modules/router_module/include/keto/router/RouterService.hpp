@@ -48,7 +48,8 @@ public:
     
     
     keto::event::Event routeMessage(const keto::event::Event& event);
-    keto::event::Event registerRpcPeer(const keto::event::Event& event);
+    keto::event::Event registerRpcPeerClient(const keto::event::Event& event);
+    keto::event::Event registerRpcPeerServer(const keto::event::Event& event);
     keto::event::Event processPushRpcPeer(const keto::event::Event& event);
     keto::event::Event deregisterRpcPeer(const keto::event::Event& event);
     keto::event::Event activateRpcPeer(const keto::event::Event& event);

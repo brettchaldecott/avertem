@@ -96,7 +96,10 @@ keto::event::Event ConsensusService::consensusSessionAccepted(const keto::event:
             BlockProducer::getInstance()->loadState(BlockProducer::State::block_producer);
             NetworkFeeManager::getInstance()->load();
         }
-    } else {
+    }
+    // check if the current state is unloaded if so that means we have to sync blocks as this is not the
+    // master and will need to first catchup before becoming active.
+    else if (BlockProducer::getInstance()->getState() == BlockProducer::State::unloaded) {
         // if this node is not a master start he synchronization process.
         BlockProducer::getInstance()->loadState(BlockProducer::State::sync_blocks);
     }

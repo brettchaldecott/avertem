@@ -54,8 +54,12 @@ keto::event::Event EventRegistry::updateStateRouteMessage(const keto::event::Eve
 }
 
 
-keto::event::Event EventRegistry::registerRpcPeer(const keto::event::Event& event) {
-    return RouterService::getInstance()->registerRpcPeer(event);
+keto::event::Event EventRegistry::registerRpcPeerClient(const keto::event::Event& event) {
+    return RouterService::getInstance()->registerRpcPeerClient(event);
+}
+
+keto::event::Event EventRegistry::registerRpcPeerServer(const keto::event::Event& event) {
+    return RouterService::getInstance()->registerRpcPeerServer(event);
 }
 
 keto::event::Event EventRegistry::processPushRpcPeer(const keto::event::Event& event) {
@@ -136,8 +140,11 @@ void EventRegistry::registerEventHandlers() {
             keto::server_common::Events::REGISTER_SERVICE_MESSAGE,
             &keto::router::EventRegistry::registerService);
     keto::server_common::registerEventHandler (
-            keto::server_common::Events::REGISTER_RPC_PEER,
-            &keto::router::EventRegistry::registerRpcPeer);
+            keto::server_common::Events::REGISTER_RPC_PEER_CLIENT,
+            &keto::router::EventRegistry::registerRpcPeerClient);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::REGISTER_RPC_PEER_SERVER,
+            &keto::router::EventRegistry::registerRpcPeerServer);
     keto::server_common::registerEventHandler (
             keto::server_common::Events::ROUTER_QUERY::PROCESS_PUSH_RPC_PEER,
             &keto::router::EventRegistry::processPushRpcPeer);
@@ -184,7 +191,9 @@ void EventRegistry::deregisterEventHandlers() {
             keto::server_common::Events::ROUTER_QUERY::ELECT_ROUTER_PEER);
 
     keto::server_common::deregisterEventHandler (
-            keto::server_common::Events::REGISTER_RPC_PEER);
+            keto::server_common::Events::REGISTER_RPC_PEER_CLIENT);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::REGISTER_RPC_PEER_SERVER);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::DEREGISTER_RPC_PEER);
     keto::server_common::deregisterEventHandler (
