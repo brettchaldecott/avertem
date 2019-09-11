@@ -38,6 +38,9 @@ public:
     // block producer
     static const char* BLOCK_PRODUCER_ENABLED;
     static const char* BLOCK_PRODUCER_ENABLED_TRUE;
+    static const char* BLOCK_PRODUCER_SAFE_MODE;
+    static const char* BLOCK_PRODUCER_SAFE_MODE_ENABLED_TRUE;
+    static const long BLOCK_PRODUCER_SAFE_MODE_DELAY;
 
     // network fee manager
     static const char* NETWORK_FEE_RATIO;

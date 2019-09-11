@@ -120,8 +120,13 @@ void ModuleManager::unload() {
         loadedLibraryModule = this->loadedLibraryModuleManagers;
         
         
-    } 
-    
+    }
+
+    for (std::map<boost::filesystem::path,std::shared_ptr<ModuleWrapper>>::reverse_iterator it=loadedLibraryModule.rbegin();
+         it!=loadedLibraryModule.rend(); ++it) {
+        it->second->getModuleManagerInterface()->preStop();
+    }
+
     for (std::map<boost::filesystem::path,std::shared_ptr<ModuleWrapper>>::reverse_iterator it=loadedLibraryModule.rbegin(); 
             it!=loadedLibraryModule.rend(); ++it) {
         it->second->getModuleManagerInterface()->stop();

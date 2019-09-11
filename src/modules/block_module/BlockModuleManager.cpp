@@ -14,6 +14,7 @@
 #include <boost/dll/alias.hpp>
 #include <boost/dll/shared_library.hpp>
 #include <boost/shared_ptr.hpp>
+#include <keto/block/Constants.hpp>
 
 #include "keto/common/Log.hpp"
 #include "keto/common/MetaInfo.hpp"
@@ -85,6 +86,18 @@ void BlockModuleManager::postStart() {
     KETO_LOG_INFO << "[BlockModuleManager] Register the services";
     keto::server_common::registerService(keto::server_common::Constants::SERVICE::BLOCK);
     KETO_LOG_INFO << "[BlockModuleManager] After registering the services";
+}
+
+void BlockModuleManager::preStop() {
+    KETO_LOG_INFO << "[BlockModuleManager::preStop] Block manager post start has been called";
+    while(BlockProducer::getInstance()->getState() == BlockProducer::State::block_producer &&
+        BlockProducer::getInstance()->isSafe()) {
+        KETO_LOG_INFO << "[BlockModuleManager::preStop] Block manager is current a producer and cannot be restarted until this has been completed";
+        KETO_LOG_INFO << "[BlockModuleManager::preStop] Will re-try in : " << Constants::BLOCK_PRODUCER_SAFE_MODE_DELAY;
+        std::this_thread::sleep_for(std::chrono::seconds(Constants::BLOCK_PRODUCER_SAFE_MODE_DELAY));
+    }
+
+    KETO_LOG_INFO << "[BlockModuleManager::preStop] Block manager post start has been called";
 }
 
 void BlockModuleManager::stop() {

@@ -232,7 +232,8 @@ BlockProducer::BlockProducer() :
         enabled(false),
         loaded(false),
         delay(0),
-        currentState(State::unloaded) {
+        currentState(State::unloaded),
+        safe(true){
     std::shared_ptr<keto::environment::Config> config = 
             keto::environment::EnvironmentManager::getInstance()->getConfig();
     if (!config->getVariablesMap().count(Constants::PRIVATE_KEY)) {
@@ -252,6 +253,12 @@ BlockProducer::BlockProducer() :
         this->enabled = 
                 config->getVariablesMap()[Constants::BLOCK_PRODUCER_ENABLED].as<std::string>().compare(
                 Constants::BLOCK_PRODUCER_ENABLED_TRUE) == 0;
+    }
+
+    if (config->getVariablesMap().count(Constants::BLOCK_PRODUCER_SAFE_MODE)) {
+        this->safe =
+                config->getVariablesMap()[Constants::BLOCK_PRODUCER_SAFE_MODE].as<std::string>().compare(
+                        Constants::BLOCK_PRODUCER_SAFE_MODE_ENABLED_TRUE) != 0;
     }
 
     this->pendingTransactionManagerPtr =
@@ -344,6 +351,10 @@ void BlockProducer::loadState(const State& state) {
 BlockProducer::State BlockProducer::getState() {
     std::lock_guard<std::mutex> uniqueLock(this->classMutex);
     return this->currentState;
+}
+
+bool BlockProducer::isSafe() {
+    return this->safe;
 }
 
 

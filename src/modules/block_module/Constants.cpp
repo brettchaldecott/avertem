@@ -31,6 +31,14 @@ const char* Constants::BLOCK_PRODUCER_ENABLED
 const char* Constants::BLOCK_PRODUCER_ENABLED_TRUE
                                         = "true";
 
+const char* Constants::BLOCK_PRODUCER_SAFE_MODE
+                                        = "block_producer_safe_mode";
+const char* Constants::BLOCK_PRODUCER_SAFE_MODE_ENABLED_TRUE
+                                        = "true";
+const long Constants::BLOCK_PRODUCER_SAFE_MODE_DELAY
+                                        = 10;
+
+
 const char* Constants::NETWORK_FEE_RATIO = "network_fee_ratio";
 const long Constants::MAX_RUN_TIME      = 60 * 10;
 

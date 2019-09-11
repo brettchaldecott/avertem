@@ -31,6 +31,23 @@ boost::program_options::options_description generateOptionDescriptions() {
 }
 
 void signalHandler(int signal) {
+    std::cerr << "####################################################################" << std::endl;
+    std::cerr << "Keto has been signaled to shut down signal: " << signal << std::endl;
+    std::cerr << "####################################################################" << std::endl;
+    if (moduleManagerPtr) {
+        moduleManagerPtr->terminate();
+    }
+}
+
+void signalAbortHandler(int signal) {
+    std::cerr << "####################################################################" << std::endl;
+    std::cerr << "Keto is ABORTING: this is most likely due to an environmental issue." << std::endl;
+    std::cerr << "Please check the following : " << std::endl;
+    std::cerr << "  - enough file handles " << std::endl;
+    std::cerr << "  - enough memory " << std::endl;
+    std::cerr << "  - enough disk space " << std::endl;
+    std::cerr << "  - Keto Shell and Modules are alligned" << std::endl;
+    std::cerr << "####################################################################" << std::endl;
     if (moduleManagerPtr) {
         moduleManagerPtr->terminate();
     }
@@ -42,6 +59,9 @@ int main(int argc, char** argv)
     try {
         // setup the signal handler
         signal(SIGINT, signalHandler);
+        signal(SIGHUP, signalHandler);
+        signal(SIGTERM, signalHandler);
+        signal(SIGABRT, signalAbortHandler);
         
         // setup the environment
         boost::program_options::options_description optionDescription =

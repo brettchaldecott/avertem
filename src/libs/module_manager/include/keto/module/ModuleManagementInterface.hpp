@@ -44,8 +44,9 @@ protected:
     // lifecycle methods
     virtual void start() = 0;
     virtual void postStart() {};
+    virtual void preStop() {};
     virtual void stop() = 0;
-    
+
     virtual const std::vector<std::string> listModules() = 0;
     virtual const std::shared_ptr<ModuleInterface> getModule(const std::string& name) = 0;
     

@@ -136,6 +136,7 @@ public:
     void setState(const State& state);
     void loadState(const State& state = State::sync_blocks);
     State getState();
+    bool isSafe();
 
     keto::event::Event setupNodeConsensusSession(const keto::event::Event& event);
     void addTransaction(keto::transaction_common::TransactionProtoHelperPtr& transactionProtoHelperPtr);
@@ -154,6 +155,7 @@ private:
     bool loaded;
     int delay;
     State currentState;
+    bool safe;
     std::condition_variable stateCondition;
     std::mutex classMutex;
     PendingTransactionManagerPtr pendingTransactionManagerPtr;
