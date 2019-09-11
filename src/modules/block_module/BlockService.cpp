@@ -136,18 +136,18 @@ keto::event::Event BlockService::blockMessage(const keto::event::Event& event) {
     keto::proto::MessageWrapper  _messageWrapper =
             keto::server_common::fromEvent<keto::proto::MessageWrapper>(event);
 
-    //std::cout << "Decrypt the transaction" << std::endl;
+    //KETO_LOG_DEBUG << "Decrypt the transaction";
     keto::proto::MessageWrapper  decryptedMessageWrapper =
             keto::server_common::fromEvent<keto::proto::MessageWrapper>(
                     keto::server_common::processEvent(
                             keto::server_common::toEvent<keto::proto::MessageWrapper>(
                                     keto::key_store_utils::Events::TRANSACTION::DECRYPT_TRANSACTION,_messageWrapper)));
 
-    //std::cout << "###### Copy into the message wrapper" << std::endl;
+    //KETO_LOG_DEBUG << "###### Copy into the message wrapper";
     keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper(
             decryptedMessageWrapper);
 
-    //std::cout << "###### Get the proto tranction" << std::endl;
+    //KETO_LOG_DEBUG << "###### Get the proto tranction";
     keto::transaction_common::TransactionProtoHelperPtr transactionProtoHelperPtr
             = messageWrapperProtoHelper.getTransaction();
 
@@ -155,13 +155,13 @@ keto::event::Event BlockService::blockMessage(const keto::event::Event& event) {
         std::lock_guard<std::mutex> guard(getAccountLock(
                     transactionProtoHelperPtr->getActiveAccount()));
 
-        //std::cout << "###### Process the transaction" << std::endl;
+        //KETO_LOG_DEBUG << "###### Process the transaction";
         *transactionProtoHelperPtr =
             TransactionProcessor::getInstance()->processTransaction(
             *transactionProtoHelperPtr);
         // dirty store in the block producer
 
-        //std::cout << "###### add the transaction" << std::endl;
+        //KETO_LOG_DEBUG << "###### add the transaction";
         BlockProducer::getInstance()->addTransaction(
             transactionProtoHelperPtr);
     }
@@ -169,18 +169,18 @@ keto::event::Event BlockService::blockMessage(const keto::event::Event& event) {
 
 
     // move transaction to next phase and submit to router
-    //std::cout << "###### set the transaction" << std::endl;
+    //KETO_LOG_DEBUG << "###### set the transaction";
     messageWrapperProtoHelper.setTransaction(transactionProtoHelperPtr);
     decryptedMessageWrapper = messageWrapperProtoHelper.operator keto::proto::MessageWrapper();
 
-    //std::cout << "###### encrypt the transaction" << std::endl;
+    //KETO_LOG_DEBUG << "###### encrypt the transaction";
     keto::proto::MessageWrapper encryptedMessageWrapper =
             keto::server_common::fromEvent<keto::proto::MessageWrapper>(
                     keto::server_common::processEvent(
                             keto::server_common::toEvent<keto::proto::MessageWrapper>(
                                     keto::key_store_utils::Events::TRANSACTION::ENCRYPT_TRANSACTION,decryptedMessageWrapper)));
 
-    //std::cout << "" << std::endl;
+    //KETO_LOG_DEBUG << "";
     keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
             keto::server_common::Events::UPDATE_STATUS_ROUTE_MESSSAGE,
             encryptedMessageWrapper));

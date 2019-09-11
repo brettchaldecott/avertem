@@ -53,7 +53,7 @@ keto::event::Event RpcServerService::sendMessage(const keto::event::Event& event
     keto::proto::MessageWrapper  messageWrapper = 
             keto::server_common::fromEvent<keto::proto::MessageWrapper>(event);
     
-    std::cout << "The rpc says hi" << std::endl;
+    KETO_LOG_DEBUG << "The rpc says hi";
     
     keto::proto::MessageWrapperResponse response;
     response.set_success(true);

@@ -147,14 +147,14 @@ boost::beast::http::response<boost::beast::http::string_body> HttpSessionManager
             keto::account_query::AccountSparqlQueryHelper(keto::server_common::Events::SPARQL_QUERY_WITH_RESULTSET_MESSAGE,
                                                   uriAuthenticationParser.getAccountHash(),ss.str()).execute();
     if (resultVectorMap.size() != 1) {
-        std::cout << "Cannot find the account" << std::endl;
+        KETO_LOG_DEBUG << "Cannot find the account";
         return buildResponse("Invalid account",403);
     }
 
     if (!keto::crypto::SignatureVerification(Botan::hex_decode(resultVectorMap[0]["publicKey"]),
             (std::vector<uint8_t>)uriAuthenticationParser.getSourceHash()).check(uriAuthenticationParser.getSignature())) {
-        std::cout << "The signature is invalid [" << uriAuthenticationParser.getSourceHash().getHash(keto::common::HEX) << "][" <<
-            Botan::hex_encode(uriAuthenticationParser.getSignature(),true) << "]" << std::endl;
+        KETO_LOG_DEBUG << "The signature is invalid [" << uriAuthenticationParser.getSourceHash().getHash(keto::common::HEX) << "][" <<
+            Botan::hex_encode(uriAuthenticationParser.getSignature(),true) << "]";
         return buildResponse("Invalid signature",403);
     }
 

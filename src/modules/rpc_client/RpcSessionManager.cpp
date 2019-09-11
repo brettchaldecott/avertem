@@ -64,7 +64,7 @@ RpcSessionManager::RpcSessionManager() : peered(true) {
     // retrieve the configuration
     std::shared_ptr<ketoEnv::Config> config = ketoEnv::EnvironmentManager::getInstance()->getConfig();
     if (config->getVariablesMap().count(Constants::PEERS)) {
-        std::cout << "Load the peers" << std::endl;
+        KETO_LOG_DEBUG << "Load the peers";
         this->configuredPeersString = config->getVariablesMap()[Constants::PEERS].
                 as<std::string>();
     }
@@ -86,7 +86,7 @@ void RpcSessionManager::setPeers(const std::vector<std::string>& peers, bool pee
     this->peered = peered;
     for (std::vector<std::string>::const_iterator iter = peers.begin();
             iter != peers.end(); iter++) {
-        std::cout << "Add the new entry : " << (*iter) << std::endl;
+        KETO_LOG_DEBUG << "Add the new entry : " << (*iter);
         RpcPeer rpcPeer((*iter),this->peered);
         this->sessionMap[(*iter)] = std::make_shared<RpcSession>(
                 this->ioc,
@@ -96,7 +96,7 @@ void RpcSessionManager::setPeers(const std::vector<std::string>& peers, bool pee
 }
 
 void RpcSessionManager::reconnect(const RpcPeer& rpcPeer) {
-    std::cout << "The reconnect count : " << (std::string)rpcPeer << std::endl;
+    KETO_LOG_DEBUG << "The reconnect count : " << (std::string)rpcPeer;
     this->sessionMap.erase((std::string)rpcPeer);
     if (rpcPeer.getReconnectCount() >= Constants::SESSION::MAX_RETRY_COUNT) {
         // force a reconnect to the peers
@@ -104,7 +104,7 @@ void RpcSessionManager::reconnect(const RpcPeer& rpcPeer) {
                 this->configuredPeersString).tokenize(","),false);
         return;
     }
-    std::cout << "Setup the session" << std::endl;
+    KETO_LOG_DEBUG << "Setup the session";
     this->sessionMap[(std::string)rpcPeer] = std::make_shared<RpcSession>(
                 this->ioc,
                 this->ctx,rpcPeer);
@@ -204,7 +204,7 @@ void RpcSessionManager::postStart() {
     KETO_LOG_INFO << "After retrieving the peers.";
     for (std::vector<std::string>::iterator iter = peers.begin();
          iter != peers.end(); iter++) {
-        std::cout << "The peer is : " << (*iter) << std::endl;
+        KETO_LOG_DEBUG << "The peer is : " << (*iter);
         RpcPeer rpcPeer((*iter),this->peered);
         this->sessionMap[(*iter)] = std::make_shared<RpcSession>(
                 this->ioc,
@@ -322,23 +322,23 @@ keto::event::Event RpcSessionManager::routeTransaction(const keto::event::Event&
             keto::server_common::fromEvent<keto::proto::MessageWrapper>(event);
     keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper(messageWrapper);
     
-    std::cout << "Check if routing to a parent is possible : " <<
+    KETO_LOG_DEBUG << "Check if routing to a parent is possible : " <<
             messageWrapperProtoHelper.getAccountHash().getHash(keto::common::StringEncoding::HEX)<< std::endl;
     // check if there is a peer matching the target account hash this would be pure luck
     if (this->hasAccountSessionMapping(
             messageWrapper.account_hash())) {
-        std::cout << "The parent was found " << 
+        KETO_LOG_DEBUG << "The parent was found " << 
                 messageWrapperProtoHelper.getAccountHash().getHash(keto::common::StringEncoding::HEX)
-                << std::endl;
+               ;
         this->getAccountSessionMapping(
                 messageWrapper.account_hash())->routeTransaction(messageWrapper);
         
     } else {
         // route to the default account which is the first peer in the list
-        std::cout << "Get the default peer and route" << std::endl;
+        KETO_LOG_DEBUG << "Get the default peer and route";
         RpcSessionPtr rpcSessionPtr = getDefaultPeer();
         if (rpcSessionPtr) {
-            std::cout << "Route to the default peer" << std::endl;
+            KETO_LOG_DEBUG << "Route to the default peer";
             try {
                 rpcSessionPtr->routeTransaction(messageWrapper);
             } catch (keto::common::Exception& ex) {
@@ -352,7 +352,7 @@ keto::event::Event RpcSessionManager::routeTransaction(const keto::event::Event&
                 KETO_LOG_ERROR << "[RpcSessionManager::routeTransaction] Failed route transaction : unknown cause";
             }
         } else {
-            std::cout << "No default peer exists throw an exception" << std::endl;
+            KETO_LOG_DEBUG << "No default peer exists throw an exception";
             
             std::stringstream ss;
             ss << "No default route for [" << 
@@ -363,7 +363,7 @@ keto::event::Event RpcSessionManager::routeTransaction(const keto::event::Event&
         
     }
     
-    std::cout << "Process successfully" << std::endl;
+    KETO_LOG_DEBUG << "Process successfully";
     
     keto::proto::MessageWrapperResponse response;
     response.set_success(true);
@@ -371,7 +371,7 @@ keto::event::Event RpcSessionManager::routeTransaction(const keto::event::Event&
     ss << "Routed to the server peer [" << 
             messageWrapperProtoHelper.getAccountHash().getHash(keto::common::StringEncoding::HEX) << "]";
     response.set_result(ss.str());
-    std::cout << "Return the result of the routing" << std::endl;
+    KETO_LOG_DEBUG << "Return the result of the routing";
     
     return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
 }

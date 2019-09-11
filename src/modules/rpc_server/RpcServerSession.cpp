@@ -15,7 +15,7 @@
 #include <condition_variable>
 
 #include "keto/rpc_server/RpcServerSession.hpp"
-#include "include/keto/rpc_server/RpcServerSession.hpp"
+#include "keto/environment/LogManager.hpp"
 
 namespace keto {
 namespace rpc_server {
@@ -50,9 +50,9 @@ std::vector<std::string> RpcServerSession::getPeers(
         const std::vector<uint8_t> account) {
     std::vector<std::string> result;
     for (auto const &entry : this->accountPeerCache) {
-        std::cout << "The entry [" << entry.second << "]" << std::endl;
+        KETO_LOG_DEBUG << "The entry [" << entry.second << "]";
         if (entry.first != account) {
-            std::cout << "The entry [" << entry.second << "] is getting added" << std::endl;
+            KETO_LOG_DEBUG << "The entry [" << entry.second << "] is getting added";
             result.push_back(entry.second);
         }
     }

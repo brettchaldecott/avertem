@@ -90,12 +90,12 @@ const std::vector<std::string> Constants::CONSENSUS_SESSION_CHECK = {
 const std::vector<std::string> Constants::CONSENSUS_HEARTBEAT = {
         keto::server_common::Events::CONSENSUS_HEARTBEAT::RPC_SERVER,
         keto::server_common::Events::CONSENSUS_HEARTBEAT::RPC_CLIENT,
+        keto::server_common::Events::CONSENSUS_HEARTBEAT::BLOCK,
         keto::server_common::Events::CONSENSUS_HEARTBEAT::TEST,
         keto::server_common::Events::CONSENSUS_HEARTBEAT::TRANSACTION,
         keto::server_common::Events::CONSENSUS_HEARTBEAT::ROUTER,
         keto::server_common::Events::CONSENSUS_HEARTBEAT::HTTPD,
         keto::server_common::Events::CONSENSUS_HEARTBEAT::EVENT,
-        keto::server_common::Events::CONSENSUS_HEARTBEAT::BLOCK,
         keto::server_common::Events::CONSENSUS_HEARTBEAT::SANDBOX,
         keto::server_common::Events::CONSENSUS_HEARTBEAT::VERSION,
         keto::server_common::Events::CONSENSUS_HEARTBEAT::KEYSTORE,

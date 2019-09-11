@@ -67,7 +67,7 @@ void MemoryVaultStorage::setEntry(const keto::crypto::SecureVector& id,
 
 byteVector MemoryVaultStorage::getEntry(const keto::crypto::SecureVector& id) {
     std::lock_guard<std::mutex> guard(this->classMutex);
-    //std::cout << "Get the entry : " << Botan::hex_encode(id) << std::endl;
+    //KETO_LOG_DEBUG << "Get the entry : " << Botan::hex_encode(id);
     if (!this->store.count(id)) {
         std::stringstream ss;
         ss << "[VaultEntryNotFoundException]The entry [" << Botan::hex_encode(id) << "][" << this->store.size() << "][" << this->store.count(id) << "] was not found";

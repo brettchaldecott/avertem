@@ -40,13 +40,13 @@ ResultVectorMap AccountSparqlQueryHelper::execute() {
         ResultMap resultMap;
         for (int columnIndex = 0; columnIndex < row.entries_size(); columnIndex++) {
             const keto::proto::SparqlRowEntry& entry = row.entries(columnIndex);
-            std::cout << "Add the entry [" << entry.key() << "][" << entry.value() << "]" << std::endl;
+            KETO_LOG_DEBUG << "Add the entry [" << entry.key() << "][" << entry.value() << "]";
             resultMap[entry.key()] = entry.value();
         }
         resultVectorMap.push_back(resultMap);
     }
 
-    std::cout << "Return the query results" << std::endl;
+    KETO_LOG_DEBUG << "Return the query results";
     return resultVectorMap;
 }
 

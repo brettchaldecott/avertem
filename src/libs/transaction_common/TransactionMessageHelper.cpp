@@ -143,13 +143,13 @@ TransactionMessageHelper& TransactionMessageHelper::addNestedTransaction(
 
 std::vector<TransactionMessageHelperPtr> TransactionMessageHelper::getNestedTransactions() {
     std::vector<TransactionMessageHelperPtr> nestedTransactions;
-    //std::cout << "The size of the nested asn1 buffer : " << this->transactionMessage->nestedTransactions.list.count << std::endl;
+    //KETO_LOG_DEBUG << "The size of the nested asn1 buffer : " << this->transactionMessage->nestedTransactions.list.count;
     for (int index = 0; index < this->transactionMessage->nestedTransactions.list.count; index++) {
         TransactionMessage__nestedTransactions__Member* nestedTransaction =
                 this->transactionMessage->nestedTransactions.list.array[index];
-        //std::cout << "Retrieve the nested transactions of state : " << nestedTransaction->present << std::endl;
+        //KETO_LOG_DEBUG << "Retrieve the nested transactions of state : " << nestedTransaction->present;
         if (nestedTransaction->present == TransactionMessage__nestedTransactions__Member_PR_sideTransaction) {
-            //std::cout << "Add the side transaction : " << nestedTransaction->present << std::endl;
+            //KETO_LOG_DEBUG << "Add the side transaction : " << nestedTransaction->present;
             nestedTransactions.push_back(TransactionMessageHelperPtr(new TransactionMessageHelper(
                     keto::asn1::clone<TransactionMessage_t>(nestedTransaction->choice.sideTransaction,&asn_DEF_TransactionMessage))));
         }
@@ -210,7 +210,7 @@ TransactionMessage_t* TransactionMessageHelper::getMessage(TransactionEncryption
     for (int index = 0; index < this->transactionMessage->nestedTransactions.list.count; index++) {
         TransactionMessage__nestedTransactions__Member* currentNestedTransaction =
                 this->transactionMessage->nestedTransactions.list.array[index];
-        //std::cout << "Retrieve the nested transactions of state : " << currentNestedTransaction->present << std::endl;
+        //KETO_LOG_DEBUG << "Retrieve the nested transactions of state : " << currentNestedTransaction->present;
 
         TransactionMessage__nestedTransactions__Member* newNestedTransaction =
                 (TransactionMessage__nestedTransactions__Member*)calloc(1, sizeof *newNestedTransaction);
@@ -237,7 +237,7 @@ TransactionMessage_t* TransactionMessageHelper::getMessage(TransactionEncryption
 
         ASN_SEQUENCE_ADD(&_transactionMessage->nestedTransactions,newNestedTransaction);
     }
-    //std::cout << "Return the transaction" << std::endl;
+    //KETO_LOG_DEBUG << "Return the transaction";
     return _transactionMessage;
 }
 

@@ -153,9 +153,9 @@ void ConsensusServer::process() {
                 std::chrono::duration_cast<std::chrono::minutes>(currentTime - this->networkPoint));
         std::chrono::seconds heartbeatDiff(
                 std::chrono::duration_cast<std::chrono::seconds>(currentTime - this->networkHeartbeatPoint));
-        std::cout << "Process the event" << std::endl;
+        KETO_LOG_DEBUG << "Process the event";
         if ((this->currentPos == -1) || (diff.count() > this->netwokSessionLength)) {
-            std::cout << "Release a new session key" << std::endl;
+            KETO_LOG_DEBUG << "Release a new session key";
             this->currentPos++;
             if (this->currentPos >= this->sessionKeys.size()) {
                 this->currentPos = 0;
@@ -167,7 +167,7 @@ void ConsensusServer::process() {
             this->networkHeartbeatPoint = this->networkPoint = this->sessionkeyPoint = currentTime;
             this->networkHeartbeatCurrentSlot = 0;
         } else if (networkDiff.count() > this->netwokProtocolDelay) {
-            std::cout << "Time to retest the network." << std::endl;
+            KETO_LOG_DEBUG << "Time to retest the network.";
             keto::crypto::SecureVector initVector = Botan::hex_decode_locked(
                     this->sessionKeys[this->currentPos], true);
             long time = currentTime.time_since_epoch().count();
@@ -178,7 +178,7 @@ void ConsensusServer::process() {
             this->networkHeartbeatPoint = this->networkPoint = currentTime;
             this->networkHeartbeatCurrentSlot = 0;
         } else if (heartbeatDiff.count() > this->networkHeartbeatDelay) {
-            std::cout << "The network heartbeat." << std::endl;
+            KETO_LOG_DEBUG << "The network heartbeat.";
             initNetworkHeartbeat();
             this->networkHeartbeatPoint = currentTime;
 
@@ -192,7 +192,7 @@ void ConsensusServer::process() {
 
 
 void ConsensusServer::internalConsensusInit(const keto::crypto::SecureVector& initHash) {
-    //std::cout << "Setup the internal consensus" << std::endl;
+    //KETO_LOG_DEBUG << "Setup the internal consensus";
     keto::software_consensus::ModuleHashMessageHelper moduleHashMessageHelper;
     moduleHashMessageHelper.setHash(initHash);
     keto::proto::ModuleHashMessage moduleHashMessage = moduleHashMessageHelper.getModuleHashMessage();
@@ -214,7 +214,7 @@ void ConsensusServer::internalConsensusProtocolCheck(const keto::crypto::SecureV
     // reset the protocol check
     keto::software_consensus::ConsensusSessionManager::getInstance()->resetProtocolCheck();
 
-    //std::cout << "Setup the internal consensus" << std::endl;
+    //KETO_LOG_DEBUG << "Setup the internal consensus";
     keto::software_consensus::ModuleHashMessageHelper moduleHashMessageHelper;
     moduleHashMessageHelper.setHash(initHash);
     keto::proto::ModuleHashMessage moduleHashMessage = moduleHashMessageHelper.getModuleHashMessage();

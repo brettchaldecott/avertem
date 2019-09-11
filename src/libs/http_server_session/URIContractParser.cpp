@@ -32,7 +32,7 @@ URIContractParser::URIContractParser(const std::string &uri) : cors(false) {
     if (subUri.compare(0,strlen(keto::common::HttpEndPoints::SESSION_ID),keto::common::HttpEndPoints::SESSION_ID) == 0) {
         int sessionIdLen = strlen(keto::common::HttpEndPoints::SESSION_ID);
         this->sessionHash = subUri.substr(sessionIdLen,nextSlash - sessionIdLen);
-        std::cout << "Session hash : " << this->sessionHash << std::endl;
+        KETO_LOG_DEBUG << "Session hash : " << this->sessionHash;
         subUri = subUri.substr(nextSlash+1);
         nextSlash = subUri.find("/");
     }

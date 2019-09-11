@@ -44,22 +44,22 @@ keto::crypto::SecureVector MemoryVault::getValue(const keto::crypto::SecureVecto
 
     //auto start = std::chrono::steady_clock::now();
 
-    //std::cout << "[MemoryVault::getValue][" <<
-    //          std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "]get the key" << std::endl;
+    //KETO_LOG_DEBUG << "[MemoryVault::getValue][" <<
+    //          std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "]get the key";
 
     keto::crypto::SecureVector key = keto::crypto::SecureVectorUtils().copyToSecure(
             this->keyStoragePtr->getEntry(id));
     this->memoryVaultPasswordEncryptorPtr->decrypt(password,key);
 
-    //std::cout << "[MemoryVault::getValue][" <<
-    //          std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "]get the value" << std::endl;
+    //KETO_LOG_DEBUG << "[MemoryVault::getValue][" <<
+    //          std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "]get the value";
     keto::crypto::SecureVector valueCopy = keto::crypto::SecureVectorUtils().copyToSecure(
             this->storagePtr->getEntry(id));
-    //std::cout << "[MemoryVault::getValue][" <<
-    //          std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "]decrypt the key" << std::endl;
+    //KETO_LOG_DEBUG << "[MemoryVault::getValue][" <<
+    //          std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "]decrypt the key";
     this->encryptorPtr->decrypt(key,valueCopy);
-    //std::cout << "[MemoryVault::getValue][" <<
-    //          std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "]return the value" << std::endl;
+    //KETO_LOG_DEBUG << "[MemoryVault::getValue][" <<
+    //          std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "]return the value";
     return valueCopy;
 }
 

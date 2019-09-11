@@ -448,7 +448,6 @@ RpcSession::on_read(
             message = handleElectionRequest(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_REQUEST, stringVector[1]);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE) == 0) {
             handleElectionResponse(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE, stringVector[1]);
-            return;
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_PUBLISH) == 0) {
             handleElectionPublish(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_PUBLISH, stringVector[1]);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION) == 0) {
@@ -718,6 +717,7 @@ std::string RpcSession::handleElectionRequest(const std::string& command, const 
 }
 
 void RpcSession::handleElectionResponse(const std::string& command, const std::string& message) {
+    KETO_LOG_DEBUG << "[RpcSession::handleElectionResponse] handle the election response : " << command;
     keto::election_common::ElectionResultMessageProtoHelper electionResultMessageProtoHelper(
             keto::server_common::VectorUtils().copyVectorToString(
                     Botan::hex_decode(message)));
@@ -725,6 +725,7 @@ void RpcSession::handleElectionResponse(const std::string& command, const std::s
     keto::server_common::triggerEvent(
             keto::server_common::toEvent<keto::proto::ElectionResultMessage>(
                     keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_RESPONSE,electionResultMessageProtoHelper));
+    KETO_LOG_DEBUG << "[RpcSession::handleElectionResponse] handled the election response : " << command;
 }
 
 

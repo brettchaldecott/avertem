@@ -30,7 +30,7 @@ std::string AccountGenerator::getSourceVersion() {
 
 
 AccountGenerator::AccountGenerator() : generator(new Botan::AutoSeeded_RNG()) {
-    std::cout << "Generate a new key " << std::endl;
+    KETO_LOG_DEBUG << "Generate a new key ";
     this->privateKey = std::shared_ptr<Botan::Private_Key>(
             new Botan::RSA_PrivateKey(*generator, 2056));
     Botan::RSA_PrivateKey* privateKey = (Botan::RSA_PrivateKey*)this->privateKey.get();
@@ -41,7 +41,7 @@ AccountGenerator::AccountGenerator() : generator(new Botan::AutoSeeded_RNG()) {
 AccountGenerator::AccountGenerator(const std::string& privateKeyPath) : generator(new Botan::AutoSeeded_RNG()){
         // setup the paths using the environmental variables
     boost::filesystem::path keyPath = privateKeyPath;
-    std::cout << "Key path is : " << keyPath.string() << std::endl;
+    KETO_LOG_DEBUG << "Key path is : " << keyPath.string();
     if (!boost::filesystem::exists(keyPath)) {
         BOOST_THROW_EXCEPTION(keto::account_utils::InvalidPrivateKeyPathException());
     }

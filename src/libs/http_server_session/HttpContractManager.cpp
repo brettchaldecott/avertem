@@ -113,7 +113,7 @@ boost::beast::http::response<boost::beast::http::string_body> HttpContractManage
     response.result(boost::beast::http::int_to_status(httpResponseMessage.status()));
     response.keep_alive(false);
     response.chunked(false);
-    std::cout << "The content : " << httpResponseMessage.body() << std::endl;
+    KETO_LOG_DEBUG << "The content : " << httpResponseMessage.body();
     response.body() = httpResponseMessage.body();
     response.content_length(httpResponseMessage.content_length());
     return response;

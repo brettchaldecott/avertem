@@ -60,24 +60,24 @@ keto::crypto::SecureVector MemoryVaultSessionEntry::getValue() {
 
     //auto start = std::chrono::steady_clock::now();
 
-    //std::cout << "[MemoryVaultSessionEntry::getValue][" <<
-    //          std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "]setup to make call" << std::endl;
+    //KETO_LOG_DEBUG << "[MemoryVaultSessionEntry::getValue][" <<
+    //          std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "]setup to make call";
     keto::proto::MemoryVaultGetEntryRequest request;
     request.set_vault(this->memoryVaultSession->getVaultName());
     request.set_password(keto::crypto::SecureVectorUtils().copySecureToString(
             this->memoryVaultSession->generatePassword()));
     request.set_entry_id(keto::crypto::SecureVectorUtils().copySecureToString(this->entryId));
 
-    //std::cout << "[MemoryVaultSessionEntry::getValue][" <<
-    //          std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] make call" << std::endl;
+    //KETO_LOG_DEBUG << "[MemoryVaultSessionEntry::getValue][" <<
+    //          std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] make call";
     keto::proto::MemoryVaultGetEntryResponse response =
             keto::server_common::fromEvent<keto::proto::MemoryVaultGetEntryResponse>(
                     keto::server_common::processEvent(
                             keto::server_common::toEvent<keto::proto::MemoryVaultGetEntryRequest>(
                                     keto::server_common::Events::MEMORY_VAULT::GET_ENTRY,request)));
 
-    //std::cout << "[MemoryVaultSessionEntry::getValue][" <<
-    //          std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] return the value" << std::endl;
+    //KETO_LOG_DEBUG << "[MemoryVaultSessionEntry::getValue][" <<
+    //          std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] return the value";
     return keto::crypto::SecureVectorUtils().copyStringToSecure(response.value());
 }
 

@@ -65,14 +65,14 @@ keto::transaction_common::TransactionMessageHelperPtr TransactionLoader::load(nl
         transactionPtr->setEncrypted(true);
     }
 
-    //std::cout << element << '\n';
-    //std::cout << "Account hash : "  << element["account_hash"] << std::endl;
-    //std::cout << "Public Key : "  << element["public_key"] << std::endl;
+    //KETO_LOG_DEBUG << element << '\n';
+    //KETO_LOG_DEBUG << "Account hash : "  << element["account_hash"];
+    //KETO_LOG_DEBUG << "Public Key : "  << element["public_key"];
     for (nlohmann::json& action : transaction["actions"]) {
         nlohmann::json model = action["model"].get<nlohmann::json>();
         keto::asn1::RDFModelHelper modelHelper;
         for (nlohmann::json &element2 : model["rdf"]) {
-            //std::cout << "Change set : "  << element2 << std::endl;
+            //KETO_LOG_DEBUG << "Change set : "  << element2;
             for (nlohmann::json::iterator it = element2.begin(); it != element2.end(); ++it) {
                 nlohmann::json predicate = it.value();
                 keto::asn1::RDFSubjectHelper subjectHelper(it.key());
@@ -108,15 +108,15 @@ keto::transaction_common::TransactionMessageHelperPtr TransactionLoader::load(nl
         transactionPtr->addAction(actionBuilderPtr);
     }
 
-    std::cout << "Memory data source private key " << transaction["private_key"].get<std::string>() << std::endl;
-    std::cout << "Memory data source private key " << Botan::hex_encode(
-            Botan::hex_decode_locked(transaction["private_key"].get<std::string>(),false),true) << std::endl;
+    KETO_LOG_DEBUG << "Memory data source private key " << transaction["private_key"].get<std::string>();
+    KETO_LOG_DEBUG << "Memory data source private key " << Botan::hex_encode(
+            Botan::hex_decode_locked(transaction["private_key"].get<std::string>(),false),true);
     keto::asn1::PrivateKeyHelper privateKeyHelper(transaction["private_key"].get<std::string>(),keto::common::HEX);
     KETO_LOG_INFO << "Signed transaction builder";
     std::shared_ptr<keto::chain_common::SignedTransactionBuilder> signedTransBuild =
             keto::chain_common::SignedTransactionBuilder::createTransaction(
                     privateKeyHelper);
-    KETO_LOG_INFO << "Sign transaction" << std::endl;
+    KETO_LOG_INFO << "Sign transaction";
     signedTransBuild->setTransaction(transactionPtr).sign();
     keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelper(
             new keto::transaction_common::TransactionWrapperHelper(signedTransBuild->operator SignedTransaction*()));
@@ -128,7 +128,7 @@ keto::transaction_common::TransactionMessageHelperPtr TransactionLoader::load(nl
 
     // load the nested transactions
     for (nlohmann::json& currentTransactions : transaction["transactions"]) {
-        std::cout << "add the transactions" << std::endl;
+        KETO_LOG_DEBUG << "add the transactions";
         transactionMessageHelperPtr->addNestedTransaction(load(currentTransactions));
     }
 

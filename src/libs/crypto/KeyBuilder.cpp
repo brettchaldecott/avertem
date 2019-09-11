@@ -33,7 +33,7 @@ KeyBuilder& KeyBuilder::addBytes(
         const std::vector<uint8_t>& bytes) {
     Botan::BigInt bigInt = Botan::BigInt(bytes);
     if (bigInt.is_negative()) {
-        std::cout <<"Big int is negative" << std::endl;
+        KETO_LOG_DEBUG <<"Big int is negative";
     }
     this->privateKeys.push_back(bigInt);
 

@@ -111,13 +111,13 @@ void GenesisLoader::load() {
         transactionPtr->setParent(parentHash).setSourceAccount(sourceAccount)
                 .setTargetAccount(sourceAccount).setValue(numberHelper);
         
-        //std::cout << element << '\n';
-        //std::cout << "Account hash : "  << element["account_hash"] << std::endl;
-        //std::cout << "Public Key : "  << element["public_key"] << std::endl;
+        //KETO_LOG_DEBUG << element << '\n';
+        //KETO_LOG_DEBUG << "Account hash : "  << element["account_hash"];
+        //KETO_LOG_DEBUG << "Public Key : "  << element["public_key"];
         nlohmann::json model = element["model"].get<nlohmann::json>();
         keto::asn1::RDFModelHelper modelHelper;
         for (nlohmann::json& element2 : model["rdf"]) {
-            //std::cout << "Change set : "  << element2 << std::endl;
+            //KETO_LOG_DEBUG << "Change set : "  << element2;
             for (nlohmann::json::iterator it = element2.begin(); it != element2.end(); ++it) {
                 nlohmann::json predicate = it.value();
                 keto::asn1::RDFSubjectHelper subjectHelper(it.key()); 
@@ -155,7 +155,7 @@ void GenesisLoader::load() {
         std::shared_ptr<keto::chain_common::SignedTransactionBuilder> signedTransBuild = 
             keto::chain_common::SignedTransactionBuilder::createTransaction(
                 privateKeyHelper);
-        KETO_LOG_INFO << "Sign transaction" << std::endl;
+        KETO_LOG_INFO << "Sign transaction";
         signedTransBuild->setTransaction(transactionPtr).sign();
         keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelper(
             new keto::transaction_common::TransactionWrapperHelper(signedTransBuild->operator SignedTransaction*()));
@@ -187,7 +187,7 @@ void GenesisLoader::load() {
         //    keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::Transaction>(
         //    keto::server_common::Events::APPLY_ACCOUNT_TRANSACTION_MESSAGE,transactionProtoHelper)));
 
-        KETO_LOG_INFO << "Add the transaction" << std::endl;
+        KETO_LOG_INFO << "Add the transaction";
         blockBuilderPtr->addTransactionMessage(transactionMessageHelper);
     }
 

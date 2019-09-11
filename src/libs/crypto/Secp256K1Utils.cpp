@@ -48,18 +48,18 @@ void Secp256K1Utils::Secp256K1UtilsScope::fin() {
 bool Secp256K1Utils::verifySignature(const std::vector<uint8_t>& bits, std::vector<uint8_t> message,
                      const std::vector<uint8_t> &signature) {
     Secp256K1Utils::Secp256K1UtilsScope::init();
-    std::cout << "The key is a ecdsa key" << std::endl;
+    KETO_LOG_DEBUG << "The key is a ecdsa key";
 
-    std::cout << "validate the signature : " << std::endl;
-    std::cout << "Key : " << Botan::hex_encode(bits) << std::endl;
-    std::cout << "Message : " << Botan::hex_encode(message) << std::endl;
-    std::cout << "Signature : " << Botan::hex_encode(signature) << std::endl;
+    KETO_LOG_DEBUG << "validate the signature : ";
+    KETO_LOG_DEBUG << "Key : " << Botan::hex_encode(bits);
+    KETO_LOG_DEBUG << "Message : " << Botan::hex_encode(message);
+    KETO_LOG_DEBUG << "Signature : " << Botan::hex_encode(signature);
     if (WALLY_OK ==
             wally_ec_sig_verify(bits.data(),EC_PUBLIC_KEY_LEN,message.data(),message.size(),EC_FLAG_ECDSA,signature.data(),signature.size())) {
-        std::cout << "The signature is valid" << std::endl;
+        KETO_LOG_DEBUG << "The signature is valid";
         return true;
     }
-    std::cout << "The signature is invalid" << std::endl;
+    KETO_LOG_DEBUG << "The signature is invalid";
     return false;
 }
 

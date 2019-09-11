@@ -67,7 +67,7 @@ void MemoryVaultManager::createSession(
     this->vaults.clear();
     this->sessions.clear();
     for (keto::crypto::SecureVector vector : sessions) {
-        //std::cout << "[createSession] vectors : " << Botan::hex_encode(vector) << std::endl;
+        //KETO_LOG_DEBUG << "[createSession] vectors : " << Botan::hex_encode(vector);
         this->sessions.insert(std::pair<keto::crypto::SecureVector,MemoryVaultWrapperPtr>(vector,MemoryVaultWrapperPtr()));
     }
 }
@@ -81,7 +81,7 @@ void MemoryVaultManager::clearSession() {
 MemoryVaultPtr MemoryVaultManager::createVault(const std::string& name,
                                   const keto::crypto::SecureVector& sessionId, const keto::crypto::SecureVector& password) {
     std::lock_guard<std::mutex> guard(classMutex);
-    //std::cout << "[createVault] vectors : " << Botan::hex_encode(sessionId) << std::endl;
+    //KETO_LOG_DEBUG << "[createVault] vectors : " << Botan::hex_encode(sessionId);
     if (!this->sessions.count(sessionId)) {
         BOOST_THROW_EXCEPTION(InvalidSesssionException());
     }

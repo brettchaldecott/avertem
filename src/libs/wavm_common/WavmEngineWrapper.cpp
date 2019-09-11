@@ -65,7 +65,7 @@ bool loadBinaryModule(const std::string& wasmBytes,IR::Module& outModule)
     catch(Serialization::FatalSerializationException exception)
     {
         KETO_LOG_ERROR <<  "[WavmEngineWrapper][loadBinaryModule]Error deserializing WebAssembly binary file:";
-        KETO_LOG_ERROR <<  exception.message << std::endl;
+        KETO_LOG_ERROR <<  exception.message;
         return false;
     }
     catch(IR::ValidationException exception)
@@ -138,11 +138,11 @@ void WavmEngineWrapper::execute() {
         LinkResult linkResult = linkModule(module, *this->wavmEngineManager.getResolver());
         if (!linkResult.success) {
             std::stringstream ss;
-            ss << "Failed to link module:" << std::endl;
+            ss << "Failed to link module:";
             for (auto &missingImport : linkResult.missingImports) {
                 ss << "Missing import: module=\"" << missingImport.moduleName
                    << "\" export=\"" << missingImport.exportName
-                   << "\" type=\"" << asString(missingImport.type) << "\"" << std::endl;
+                   << "\" type=\"" << asString(missingImport.type) << "\"";
             }
             BOOST_THROW_EXCEPTION(keto::wavm_common::LinkingFailedException(ss.str()));
         }
@@ -194,7 +194,7 @@ void WavmEngineWrapper::execute() {
                     std::stringstream ss;
                     ss << "Failed to handle the exception : " << describeException(exception).c_str();
 
-                    std::cout << ss.str() << std::endl;
+                    KETO_LOG_DEBUG << ss.str();
                     BOOST_THROW_EXCEPTION(keto::wavm_common::ContactExecutionFailedException(ss.str()));
                 });
 
@@ -261,7 +261,7 @@ void WavmEngineWrapper::executeHttp() {
         LinkResult linkResult = linkModule(module, *this->wavmEngineManager.getResolver());
         if (!linkResult.success) {
             std::stringstream ss;
-            ss << "Failed to link module:" << std::endl;
+            ss << "Failed to link module:";
             for (auto &missingImport : linkResult.missingImports) {
                 ss << "Missing import: module=\"" << missingImport.moduleName
                    << "\" export=\"" << missingImport.exportName
@@ -304,7 +304,7 @@ void WavmEngineWrapper::executeHttp() {
                     std::stringstream ss;
                     ss << "Failed to handle the exception : " << describeException(exception).c_str();
 
-                    std::cout << ss.str() << std::endl;
+                    KETO_LOG_DEBUG << ss.str();
                     BOOST_THROW_EXCEPTION(keto::wavm_common::ContactExecutionFailedException(ss.str()));
                 });
 

@@ -19,14 +19,14 @@ std::string MemoryVaultSessionKeyWrapper::getSourceVersion() {
 }
 
 MemoryVaultSessionKeyWrapper::MemoryVaultSessionKeyWrapper(const std::shared_ptr<Botan::Private_Key>& privateKey) {
-    //std::cout << "Retrieve the bytes for the key" << std::endl;
+    //KETO_LOG_DEBUG << "Retrieve the bytes for the key";
     keto::crypto::SecureVector bytes = Botan::PKCS8::BER_encode(*privateKey);
-    //std::cout << "Generate hash for bytes" << std::endl;
+    //KETO_LOG_DEBUG << "Generate hash for bytes";
     this->hashId = keto::crypto::HashGenerator().generateHash(bytes);
-    //std::cout << "Create the entry in the vault" << std::endl;
+    //KETO_LOG_DEBUG << "Create the entry in the vault";
     this->memoryVaultSessionEntryPtr = MemoryVaultSession::getInstance()->createEntry(
             keto::crypto::SecureVectorUtils().copySecureToString(hashId),bytes);
-    //std::cout << "complete" << std::endl;
+    //KETO_LOG_DEBUG << "complete";
 }
 
 MemoryVaultSessionKeyWrapper::MemoryVaultSessionKeyWrapper(const std::shared_ptr<Botan::Public_Key>& publicKey) {

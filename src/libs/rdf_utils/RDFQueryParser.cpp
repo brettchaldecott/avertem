@@ -86,34 +86,34 @@ RDFQueryParser::operator const unsigned char *() {
 
 
 void RDFQueryParser::processPattern(rasqal_query *query) {
-    std::cout << "Get the pattern" << std::endl;
+    KETO_LOG_DEBUG << "Get the pattern";
     rasqal_graph_pattern* pattern =rasqal_query_get_query_graph_pattern(query);
     if (!pattern) {
         BOOST_THROW_EXCEPTION(keto::rdf_utils::InvalidQueryPatternException());
     }
 
-    std::cout << "Get the first trippled sequence" << std::endl;
+    KETO_LOG_DEBUG << "Get the first trippled sequence";
     raptor_sequence* patternTrippleSequence = rasqal_graph_pattern_get_triples(query,pattern);
     //raptor_sequence* patternTrippleSequence = rasqal_query_get_graph_pattern_sequence(query);
     if (!patternTrippleSequence) {
         BOOST_THROW_EXCEPTION(keto::rdf_utils::InvalidQueryPatternException());
     }
 
-    std::cout << "Number of entries is [" << raptor_sequence_size(patternTrippleSequence) << "]" << std::endl;
+    KETO_LOG_DEBUG << "Number of entries is [" << raptor_sequence_size(patternTrippleSequence) << "]";
     if (rasqal_query_get_wildcard(query)) {
         rasqal_query_set_wildcard(query,0);
     }
 
-    std::cout << "The account owner ref" << std::endl;
+    KETO_LOG_DEBUG << "The account owner ref";
     if (!containsUri(patternTrippleSequence, Constants::ACCOUNT_OWNER_REF)) {
-        std::cout << "Add the owner" << std::endl;
+        KETO_LOG_DEBUG << "Add the owner";
         addTripplePattern(patternTrippleSequence, Constants::ACCOUNT_OWNER_REF,
                 Constants::ACCOUNT_OWNER_URI);
     }
 
-    std::cout << "The account group ref" << std::endl;
+    KETO_LOG_DEBUG << "The account group ref";
     if (!containsUri(patternTrippleSequence, Constants::ACCOUNT_GROUP_REF)) {
-        std::cout << "Add tripples" << std::endl;
+        KETO_LOG_DEBUG << "Add tripples";
         addTripplePattern(patternTrippleSequence, Constants::ACCOUNT_GROUP_REF,
                 Constants::ACCOUNT_GROUP_URI);
     }
@@ -126,7 +126,7 @@ void RDFQueryParser::processPattern(rasqal_query *query) {
         rasqal_query_set_limit(this->query,Constants::SPARQL_DEFAULT_LIMIT);
     }
 
-    std::cout << "The raptor new iostream an store with extr data [" << raptor_sequence_size(patternTrippleSequence) << "]" << std::endl;
+    KETO_LOG_DEBUG << "The raptor new iostream an store with extr data [" << raptor_sequence_size(patternTrippleSequence) << "]";
     char* updatedQuery;
     size_t querySize;
     raptor_iostream* stream = raptor_new_iostream_to_string(
@@ -135,14 +135,14 @@ void RDFQueryParser::processPattern(rasqal_query *query) {
         BOOST_THROW_EXCEPTION(keto::rdf_utils::FailedToProcessQueryException());
     }
     raptor_free_iostream(stream);
-    std::cout << "The number of bytes written is : " << querySize << std::endl;
+    KETO_LOG_DEBUG << "The number of bytes written is : " << querySize;
 
     if (!updatedQuery) {
         BOOST_THROW_EXCEPTION(keto::rdf_utils::FailedToProcessQueryException());
     }
-    std::cout << "Update the query" << std::endl;
+    KETO_LOG_DEBUG << "Update the query";
     this->sparql = std::string(updatedQuery,querySize);
-    std::cout << "After getting they query" << std::endl;
+    KETO_LOG_DEBUG << "After getting they query";
     free(updatedQuery);
 }
 
@@ -171,7 +171,7 @@ bool RDFQueryParser::isExcludedPredicate(rasqal_triple* patternTripple) {
         return false;
     }
     std::string predicate = this->getLiteralInfo(patternTripple->predicate);
-    std::cout << "The predicate : " << predicate << std::endl;
+    KETO_LOG_DEBUG << "The predicate : " << predicate;
     for (const char* uri : Constants::EXCLUDES) {
         if (predicate.find(uri) == 0) {
             return true;
@@ -212,7 +212,7 @@ void RDFQueryParser::addTripplePattern(
     //}
     //rasqal_variables_table_add2(subjectVar[0]->value.variable,RASQAL_VARIABLE_TYPE_NORMAL,sourceVariableName.c_str(),
     //                            sourceVariableName.size(),)
-    //std::cout << "The source variable" << sourceVariableName << std::endl;
+    //KETO_LOG_DEBUG << "The source variable" << sourceVariableName;
     //char * strValue = (char *)calloc(sourceVariableName.size() + 1, 0);
     //sprintf(strValue,sourceVariableName.c_str());
     //rasqal_literal* sourceLiteral = rasqal_new_simple_literal(this->world,RASQAL_LITERAL_BLANK,
@@ -233,7 +233,7 @@ void RDFQueryParser::addTripplePattern(
     for (rasqal_literal* subject : subjectVar) {
         std::stringstream ss;
         ss << objectUri << this->account;
-        //std::cout << "Add the extra tripple to the pattern [" << predicateUri << "][" << sourceVariableLiteral->value.variable->name << "]" << std::endl;
+        //KETO_LOG_DEBUG << "Add the extra tripple to the pattern [" << predicateUri << "][" << sourceVariableLiteral->value.variable->name << "]";
         raptor_sequence_push(patternTrippleSequence, rasqal_new_triple(rasqal_new_literal_from_literal(subject),
                 rasqal_new_uri_literal(this->world, raptor_new_uri(
                         rasqal_world_get_raptor(this->world), (const unsigned char *)predicateUri.c_str())),
@@ -246,9 +246,9 @@ void RDFQueryParser::addTripplePattern(
 bool RDFQueryParser::containsUri(raptor_sequence* patternTrippleSequence, const std::string& uri) {
     for (int index = 0; index < raptor_sequence_size(patternTrippleSequence); index++) {
         rasqal_triple* variable = (rasqal_triple*)raptor_sequence_get_at(patternTrippleSequence,index);
-        //std::cout << "Tripple";
+        //KETO_LOG_DEBUG << "Tripple";
         //if (variable->subject) {
-        //    std::cout << " Subject [" <<  getLiteralInfo(variable->subject) << "]";
+        //    KETO_LOG_DEBUG << " Subject [" <<  getLiteralInfo(variable->subject) << "]";
         //}
         if (variable->predicate) {
             if (uri == getLiteralInfo(variable->predicate)) {
@@ -256,13 +256,13 @@ bool RDFQueryParser::containsUri(raptor_sequence* patternTrippleSequence, const 
             }
         }
         //if (variable->object) {
-        //    std::cout << " Object [" <<  getLiteralInfo(variable->object) << "]";
+        //    KETO_LOG_DEBUG << " Object [" <<  getLiteralInfo(variable->object) << "]";
         //}
         //if (variable->origin) {
-        //    std::cout << " Origin [" <<  getLiteralInfo(variable->origin) << "]";
+        //    KETO_LOG_DEBUG << " Origin [" <<  getLiteralInfo(variable->origin) << "]";
         //}
 
-        //std::cout << std::endl;
+        //KETO_LOG_DEBUG;
     }
     return false;
 }

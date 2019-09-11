@@ -78,7 +78,7 @@ void NetworkSessionKeyManager::generateSession() {
         return;
     }
     std::unique_ptr<Botan::RandomNumberGenerator> rng(new Botan::AutoSeeded_RNG);
-    std::cout << "Generate new session keys" << std::endl;
+    KETO_LOG_DEBUG << "Generate new session keys";
     for (int index = 0; index < this->networkSessionKeyNumber; index++) {
         std::shared_ptr<Botan::Private_Key> privateKey(new Botan::RSA_PrivateKey(*rng.get(), 2048));
         std::vector<uint8_t> hash = keto::crypto::SecureVectorUtils().copyFromSecure(

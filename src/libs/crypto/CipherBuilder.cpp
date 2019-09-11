@@ -87,7 +87,7 @@ std::shared_ptr<Botan::DH_PrivateKey> CipherBuilder::deriveKey(const PrivateKeyP
     }
     Botan::DL_Group grp("modp/ietf/2048");
     std::shared_ptr<Botan::AutoSeeded_RNG> generator(new Botan::AutoSeeded_RNG());
-    std::cout << "The p size is : " << grp.get_p().size() << std::endl;
+    KETO_LOG_DEBUG << "The p size is : " << grp.get_p().size();
     return std::shared_ptr<Botan::DH_PrivateKey>(new Botan::DH_PrivateKey(*generator, grp,
                                                                                     Botan::BigInt(sementicKey.bits_of())));
 

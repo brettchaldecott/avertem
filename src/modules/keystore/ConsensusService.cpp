@@ -88,14 +88,14 @@ keto::event::Event ConsensusService::setModuleSession(const keto::event::Event& 
 
 
 keto::event::Event ConsensusService::consensusSessionAccepted(const keto::event::Event& event) {
-    //std::cout << "[consensusSessionAccepted] consensus session accepted" << std::endl;
+    //KETO_LOG_DEBUG << "[consensusSessionAccepted] consensus session accepted";
     keto::memory_vault_session::MemoryVaultSession::getInstance()->initSession();
     NetworkSessionKeyManager::getInstance()->generateSession();
-    //std::cout << "[consensusSessionAccepted] init the store" << std::endl;
+    //KETO_LOG_DEBUG << "[consensusSessionAccepted] init the store";
     MasterKeyManager::getInstance()->initSession();
     keto::software_consensus::ConsensusStateManager::getInstance()->setState(
             keto::software_consensus::ConsensusStateManager::ACCEPTED);
-    //std::cout << "[consensusSessionAccepted] return the event" << std::endl;
+    //KETO_LOG_DEBUG << "[consensusSessionAccepted] return the event";
     return event;
 }
 

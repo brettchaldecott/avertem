@@ -43,15 +43,15 @@ std::string WavmUtils::readCString(Runtime::MemoryInstance* memory,I32 stringAdd
     // Validate the path name and make a local copy of it.
     std::string returnString;
     int size = Runtime::memoryRef<char>(memory,stringAddress);
-    std::cout << "1 Size is : " << size << std::endl;
+    KETO_LOG_DEBUG << "1 Size is : " << size;
     size += Runtime::memoryRef<char>(memory,stringAddress+1) * 100;
-    std::cout << "2 Size is : " << size << std::endl;
+    KETO_LOG_DEBUG << "2 Size is : " << size;
     size += Runtime::memoryRef<char>(memory,stringAddress+2) * 10000;
-    std::cout << "3 Size is : " << size << std::endl;
+    KETO_LOG_DEBUG << "3 Size is : " << size;
 
     for (int index = 0; index < (size * 2); index++) {
         if ((int)Runtime::memoryRef<char>(memory,stringAddress + 4 + index) != 0) {
-            std::cout << "[" << (int)Runtime::memoryRef<char>(memory,stringAddress + 4 + index) << "]" << std::endl;
+            KETO_LOG_DEBUG << "[" << (int)Runtime::memoryRef<char>(memory,stringAddress + 4 + index) << "]";
             returnString += (int)Runtime::memoryRef<char>(memory,stringAddress + 4 + index);
         }
     }

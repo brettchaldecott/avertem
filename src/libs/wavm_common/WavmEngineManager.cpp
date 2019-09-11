@@ -143,7 +143,7 @@ WavmEngineManager::WavmEngineManager() {
 
     RootResolver* rootResolver = new RootResolver(*compartment);
 
-    std::cout << "After getting the instance." << std::endl;
+    KETO_LOG_DEBUG << "After getting the instance.";
     rootResolver->moduleNameToInstanceMap["env"] = emscriptenInstance->env;
     rootResolver->moduleNameToInstanceMap["asm2wasm"] = emscriptenInstance->asm2wasm;
     rootResolver->moduleNameToInstanceMap["global"] = emscriptenInstance->global;

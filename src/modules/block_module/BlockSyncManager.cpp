@@ -95,9 +95,9 @@ keto::proto::MessageWrapperResponse  BlockSyncManager::processBlockSyncResponse(
     if (keto::block_db::BlockChainStore::getInstance()->processBlockSyncResponse(signedBlockBatchMessage,BlockChainCallbackImpl())) {
         response.set_result("complete");
         this->status = COMPLETE;
-        KETO_LOG_INFO << "[BlockProducer::processBlockSyncResponse]" << " ########################################################";
-        KETO_LOG_INFO << "[BlockProducer::processBlockSyncResponse]" << " ######## Synchronization has now been completed ########";
-        KETO_LOG_INFO << "[BlockProducer::processBlockSyncResponse]" << " ########################################################";
+        KETO_LOG_INFO << "[BlockSyncManager::processBlockSyncResponse]" << " ########################################################";
+        KETO_LOG_INFO << "[BlockSyncManager::processBlockSyncResponse]" << " ######## Synchronization has now been completed ########";
+        KETO_LOG_INFO << "[BlockSyncManager::processBlockSyncResponse]" << " ########################################################";
         if (this->isEnabled()) {
             notifyPeers();
         }
@@ -130,9 +130,9 @@ BlockSyncManager::notifyPeers() {
             keto::server_common::Events::RPC_CLIENT_ACTIVATE_RPC_PEER,rpcPeerHelper));
     keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::RpcPeer>(
             keto::server_common::Events::RPC_SERVER_ACTIVATE_RPC_PEER,rpcPeerHelper));
-    KETO_LOG_INFO << "[BlockProducer::processBlockSyncResponse]" << " ########################################################";
-    KETO_LOG_INFO << "[BlockProducer::processBlockSyncResponse]" << " ######## Notify peers of status                 ########";
-    KETO_LOG_INFO << "[BlockProducer::processBlockSyncResponse]" << " ########################################################";
+    KETO_LOG_INFO << "[BlockSyncManager::notifyPeers]" << " ########################################################";
+    KETO_LOG_INFO << "[BlockSyncManager::notifyPeers]" << " ######## Notify peers of status                 ########";
+    KETO_LOG_INFO << "[BlockSyncManager::notifyPeers]" << " ########################################################";
 }
 
 bool

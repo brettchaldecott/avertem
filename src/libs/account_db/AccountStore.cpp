@@ -115,7 +115,7 @@ void AccountStore::applyDirtyTransaction(
         keto::asn1::RDFModelHelperPtr rdfModel = accountRDFStatement->getModel();
         for (keto::asn1::RDFSubjectHelperPtr rdfSubject : rdfModel->getSubjects()) {
             if (accountRDFStatement->getOperation() == PERSIST) {
-                std::cout << "This is an attempt to persist the subject" << std::endl;
+                KETO_LOG_DEBUG << "This is an attempt to persist the subject";
                 sessionPtr->persistDirty(rdfSubject);
             }
         }
@@ -148,7 +148,7 @@ void AccountStore::applyTransaction(
         keto::asn1::RDFModelHelperPtr rdfModel = accountRDFStatement->getModel();
         for (keto::asn1::RDFSubjectHelperPtr rdfSubject : rdfModel->getSubjects()) {
             if (accountRDFStatement->getOperation() == PERSIST) {
-                std::cout << "This is an attempt to persist the subject" << std::endl;
+                KETO_LOG_DEBUG << "This is an attempt to persist the subject";
                 sessionPtr->persist(rdfSubject);
             } else {
                 sessionPtr->remove(rdfSubject);
@@ -312,7 +312,7 @@ void AccountStore::copyResultSet(
             keto::proto::SparqlRowEntry entry;
             entry.set_key(column.first);
             entry.set_value(column.second);
-            std::cout << "Key[" << column.first << "] value [" << column.second << "]" << std::endl;
+            KETO_LOG_DEBUG << "Key[" << column.first << "] value [" << column.second << "]";
             *row.add_entries() = entry;
         }
 

@@ -95,9 +95,14 @@ ElectionManagerPtr ElectionManager::getInstance() {
 
 keto::event::Event ElectionManager::consensusHeartbeat(const keto::event::Event& event) {
     BlockProducer::State state = BlockProducer::getInstance()->getState();
-    std::cout << "[BlockProducer][consensusHeartbeat] block producer [" << state << "]" << std::endl;
+    KETO_LOG_DEBUG << "[ElectionManager][consensusHeartbeat] block producer [" << state << "]";
     keto::software_consensus::ProtocolHeartbeatMessageHelper protocolHeartbeatMessageHelper(
             keto::server_common::fromEvent<keto::proto::ProtocolHeartbeatMessage>(event));
+
+    KETO_LOG_DEBUG << "[ElectionManager::consensusHeartbeat] current slot is [" << protocolHeartbeatMessageHelper.getNetworkSlot() <<
+                   "][" << protocolHeartbeatMessageHelper.getElectionSlot() << "][" <<
+                   protocolHeartbeatMessageHelper.getElectionPublishSlot() << "][" <<
+                   protocolHeartbeatMessageHelper.getConfirmationSlot() << "]";
 
     if (protocolHeartbeatMessageHelper.getNetworkSlot() == protocolHeartbeatMessageHelper.getElectionSlot()) {
         KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] clean out the election information : " << state;
@@ -127,10 +132,6 @@ keto::event::Event ElectionManager::consensusHeartbeat(const keto::event::Event&
             KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] the confirmation has been completed";
         }
     } else {
-        KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] ignore the slot [" << protocolHeartbeatMessageHelper.getNetworkSlot() <<
-                       "][" << protocolHeartbeatMessageHelper.getElectionSlot() << "][" <<
-                       protocolHeartbeatMessageHelper.getElectionPublishSlot() << "][" <<
-                       protocolHeartbeatMessageHelper.getConfirmationSlot() << "]";
         this->state = ElectionManager::State::PROCESSING;
     }
 
@@ -184,6 +185,8 @@ keto::event::Event ElectionManager::electRpcResponse(const keto::event::Event& e
             electionResultMessageProtoHelperPtr->getSourceAccountHash().getHash(keto::common::StringEncoding::HEX) << "]";
         return event;
     }
+    KETO_LOG_DEBUG << "[ElectionManager::electRpcResponse] Add a result for the account [" <<
+                   electionResultMessageProtoHelperPtr->getSourceAccountHash().getHash(keto::common::StringEncoding::HEX) << "]";
     this->accountElectionResult[electionResultMessageProtoHelperPtr->getSourceAccountHash()]->setElectionResult(electionResultMessageProtoHelperPtr);
     this->responseCount++;
     return event;
@@ -221,12 +224,19 @@ keto::event::Event ElectionManager::electRpcProcessConfirmation(const keto::even
             this->nextWindow.size() << "]";
         BlockProducer::getInstance()->setActiveTangles(nextWindow);
         this->state = ElectionManager::State::PROCESSING;
-        KETO_LOG_DEBUG << "[ElectionManager::electRpcProcessConfirmation] node will be a producer ";
+        KETO_LOG_INFO << "[ElectionManager::electRpcProcessConfirmation]####################################################################";
+        KETO_LOG_INFO << "[ElectionManager::electRpcProcessConfirmation]######## Node is now a producer [" <<
+            Botan::hex_encode(keto::server_common::ServerInfo::getInstance()->getAccountHash(),true) << "] ########";
+        KETO_LOG_INFO << "[ElectionManager::electRpcProcessConfirmation]####################################################################";
+
     } else if (!this->nextWindow.size() && this->state == ElectionManager::State::CONFIRMATION) {
         KETO_LOG_DEBUG << "[ElectionManager::electRpcProcessConfirmation] this node is not elected clear it.";
         BlockProducer::getInstance()->setActiveTangles(nextWindow);
         this->state = ElectionManager::State::PROCESSING;
-        KETO_LOG_DEBUG << "[ElectionManager::electRpcProcessConfirmation] node cleared and will no longer be a producer";
+        KETO_LOG_INFO << "[ElectionManager::electRpcProcessConfirmation]####################################################################";
+        KETO_LOG_INFO << "[ElectionManager::electRpcProcessConfirmation]######## Node is no longer a producer [" <<
+                      Botan::hex_encode(keto::server_common::ServerInfo::getInstance()->getAccountHash(),true) << "] ########";
+        KETO_LOG_INFO << "[ElectionManager::electRpcProcessConfirmation]####################################################################";
     }
 
     return event;
@@ -311,12 +321,13 @@ void ElectionManager::confirmElection() {
 
 std::vector<std::vector<uint8_t>> ElectionManager::listAccounts() {
     std::vector<std::vector<uint8_t>> keys;
-    std::transform(
-            this->accountElectionResult.begin(),
-            this->accountElectionResult.end(),
-            std::back_inserter(keys),
-            [](const std::map<std::vector<uint8_t>,ElectorPtr>::value_type
-               &pair){return pair.first;});
+    // loop through keys and add entries that have results
+    for (std::map<std::vector<uint8_t>,ElectorPtr>::iterator iter = this->accountElectionResult.begin(); iter != this->accountElectionResult.end();
+        iter++) {
+        if (iter->second->getElectionResult()) {
+            keys.push_back(iter->first);
+        }
+    }
     return keys;
 }
 

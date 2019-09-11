@@ -151,7 +151,7 @@ std::string AccountGraphSession::query(const std::string& queryStr, const std::v
 ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryStr, const std::vector<uint8_t>& accountHash) {
     //if (librdf_model_add_submodel(this->accountGraphStore->getModel(),
     //        AccountGraphDirtySessionManager::getInstance()->getDirtySession(this->accountGraphStore->dbName)->getDirtyModel())) {
-    //    std::cout << "Faild to add the sub models" << std::endl;
+    //    KETO_LOG_DEBUG << "Faild to add the sub models";
     //    BOOST_THROW_EXCEPTION(keto::account_db::UnsupportedDataTypeTransactionException());
     //}
     keto::rdf_utils::RDFQueryParser rdfQueryParser(queryStr,accountHash);
@@ -160,7 +160,7 @@ ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryS
     }
     AccountGraphDirtySession::AccountGraphDirtySessionScope accountGraphDirtySessionScope(
             this->accountGraphStore->dbName,this->accountGraphStore->getModel());
-    std::cout << "[AccountGraphSession::executeDirtyQuery]Execute the query [" << rdfQueryParser.getQuery() << "]" << std::endl;
+    KETO_LOG_DEBUG << "[AccountGraphSession::executeDirtyQuery]Execute the query [" << rdfQueryParser.getQuery() << "]";
     std::string formatedQuery = rdfQueryParser.getQuery();
     librdf_query* query;
     librdf_query_results* results;
@@ -170,7 +170,7 @@ ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryS
     results = librdf_model_query_execute(this->accountGraphStore->getModel(), query);
     ResultVectorMap resultVectorMap;
     if (!results) {
-        std::cout << "[AccountGraphSession::executeDirtyQuery]Return the empty results" << std::endl;
+        KETO_LOG_DEBUG << "[AccountGraphSession::executeDirtyQuery]Return the empty results";
         librdf_free_query(query);
         return resultVectorMap;
     }
@@ -181,7 +181,7 @@ ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryS
         librdf_node *nodes[librdf_query_results_get_bindings_count(results)];
 
         if (librdf_query_results_get_bindings(results, &names, nodes)) {
-            std::cout << "[AccountGraphSession::executeDirtyQuery]Break from the loop as no results where found" << std::endl;
+            KETO_LOG_DEBUG << "[AccountGraphSession::executeDirtyQuery]Break from the loop as no results where found";
             break;
         }
         if (names) {
@@ -205,11 +205,11 @@ ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryS
     librdf_free_query(query);
     //if (librdf_model_remove_submodel(this->accountGraphStore->getModel(),
     //                          AccountGraphDirtySessionManager::getInstance()->getDirtySession(this->accountGraphStore->dbName)->getDirtyModel())) {
-    //    std::cout << "Failed to remove the sub model" << std::endl;
+    //    KETO_LOG_DEBUG << "Failed to remove the sub model";
     //    BOOST_THROW_EXCEPTION(keto::account_db::UnsupportedDataTypeTransactionException());
     //}
 
-    std::cout << "Return the results of the query" << std::endl;
+    KETO_LOG_DEBUG << "Return the results of the query";
     return resultVectorMap;
 }
 
@@ -219,7 +219,7 @@ ResultVectorMap AccountGraphSession::executeQuery(const std::string& queryStr, c
     if (!rdfQueryParser.isValidQuery()) {
         BOOST_THROW_EXCEPTION(keto::account_db::InvalidQueryFormat());
     }
-    std::cout << "[AccountGraphSession::executeQuery]Execute the query [" << rdfQueryParser.getQuery() << "]" << std::endl;
+    KETO_LOG_DEBUG << "[AccountGraphSession::executeQuery]Execute the query [" << rdfQueryParser.getQuery() << "]";
     return this->executeQueryInternal(rdfQueryParser.getQuery());
 }
 

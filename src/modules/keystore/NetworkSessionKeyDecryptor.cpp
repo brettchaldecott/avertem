@@ -34,7 +34,7 @@ keto::crypto::SecureVector NetworkSessionKeyDecryptor::decrypt(const std::vector
     if (content.empty()) {
         BOOST_THROW_EXCEPTION(EmptyDataToDecryptException());
     }
-    //std::cout << "The content decrypt : " << content.size() << std::endl;
+    //KETO_LOG_DEBUG << "The content decrypt : " << content.size();
     for (int level = 0; level < Constants::ONION_LEVELS; level++) {
         //auto start = std::chrono::steady_clock::now();
 
@@ -44,8 +44,8 @@ keto::crypto::SecureVector NetworkSessionKeyDecryptor::decrypt(const std::vector
         uint8_t baseIndex = indexes[0];
         uint8_t pIndex = indexes[1];
 
-        //std::cout << "[NetworkSessionKeyDecryptor::decrypt][" <<
-        //    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "get base index [" << (int)baseIndex << std::endl;
+        //KETO_LOG_DEBUG << "[NetworkSessionKeyDecryptor::decrypt][" <<
+        //    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "get base index [" << (int)baseIndex;
         keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr memoryVaultSessionKeyWrapperPtr =
                 this->networkSessionKeyManager->getKey(baseIndex);
         if (!memoryVaultSessionKeyWrapperPtr) {
@@ -53,19 +53,19 @@ keto::crypto::SecureVector NetworkSessionKeyDecryptor::decrypt(const std::vector
         }
         keto::crypto::CipherBuilder cipherBuilder(memoryVaultSessionKeyWrapperPtr->getPrivateKey());
         std::unique_ptr<Botan::StreamCipher> cipher(Botan::StreamCipher::create(keto::crypto::Constants::CIPHER_STREAM));
-        //std::cout << "[NetworkSessionKeyDecryptor::decrypt][" <<
-        //    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] pIndex [" << (int)pIndex << "]" << std::endl;
+        //KETO_LOG_DEBUG << "[NetworkSessionKeyDecryptor::decrypt][" <<
+        //    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] pIndex [" << (int)pIndex << "]";
         keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr pIndexKeyWrapperPtr = this->networkSessionKeyManager->getKey(pIndex);
         if (!pIndexKeyWrapperPtr) {
             BOOST_THROW_EXCEPTION(NetworkSessionKeyNotFoundException());
         }
         cipher->set_key(cipherBuilder.derive(32,pIndexKeyWrapperPtr->getPrivateKey()));
         cipher->set_iv(NULL,0);
-        //std::cout << "[NetworkSessionKeyDecryptor::decrypt][" <<
-        //    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] before decryption" << std::endl;
+        //KETO_LOG_DEBUG << "[NetworkSessionKeyDecryptor::decrypt][" <<
+        //    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] before decryption";
         cipher->decrypt(encryptedValue);
-        //std::cout << "[NetworkSessionKeyDecryptor::decrypt][" <<
-        //    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] after decryption" << std::endl;
+        //KETO_LOG_DEBUG << "[NetworkSessionKeyDecryptor::decrypt][" <<
+        //    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] after decryption";
         content = encryptedValue;
     }
     return content;

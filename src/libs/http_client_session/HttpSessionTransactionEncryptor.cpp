@@ -54,7 +54,7 @@ EncryptedDataWrapper_t* HttpSessionTransactionEncryptor::encrypt(
         keto::asn1::SerializationHelper<TransactionMessage>(&transaction,
         &asn_DEF_TransactionMessage);
 
-    std::cout << "Attempt to load the key:" << std::endl;
+    KETO_LOG_DEBUG << "Attempt to load the key:";
     std::unique_ptr<Botan::RandomNumberGenerator> rng(new Botan::AutoSeeded_RNG);
     std::shared_ptr<Botan::Public_Key> publicKey(
              Botan::X509::load_key(this->publicKey));
@@ -74,13 +74,13 @@ EncryptedDataWrapper_t* HttpSessionTransactionEncryptor::encrypt(
     Hash_t hashT = hash;
     ASN_SEQUENCE_ADD(&result->hash.list,new Hash_t(hashT));
 
-    std::cout << "prepend the encrypted cypher : " << publicKey->message_part_size() << std::endl;
-    std::cout << "Retrieve the key length : " << (publicKey->key_length() / 8) << std::endl;
-    std::cout << "prepend the encrypted cypher : " << ct.size() << std::endl;
+    KETO_LOG_DEBUG << "prepend the encrypted cypher : " << publicKey->message_part_size();
+    KETO_LOG_DEBUG << "Retrieve the key length : " << (publicKey->key_length() / 8);
+    KETO_LOG_DEBUG << "prepend the encrypted cypher : " << ct.size();
     bytes.insert(bytes.begin(),ct.begin(),ct.end());
-    std::cout << "The size of the bytes : " << bytes.size() << std::endl;
+    KETO_LOG_DEBUG << "The size of the bytes : " << bytes.size();
 
-    std::cout << "Setup the encrypted bytes" << std::endl;
+    KETO_LOG_DEBUG << "Setup the encrypted bytes";
     EncryptedData_t* encryptedData = OCTET_STRING_new_fromBuf(&asn_DEF_EncryptedData,
             (const char *)bytes.data(),bytes.size());
     result->transaction = *encryptedData;
