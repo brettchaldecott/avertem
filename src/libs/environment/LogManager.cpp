@@ -88,6 +88,7 @@ LogManager::LogManager(
     logging::core::get()->set_filter
     (
         logging::trivial::severity >= logLevel
+        //    logging::trivial::severity >= logging::trivial::info
     );
 
     logging::add_console_log(std::cout, boost::log::keywords::format =(

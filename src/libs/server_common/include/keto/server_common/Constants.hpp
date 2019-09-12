@@ -80,9 +80,6 @@ public:
         static const char* BLOCK_SYNC_PROCESSED;
         static const char* CONSENSUS_SESSION;
         static const char* CONSENSUS;
-        static const char* ROUTE;
-        static const char* ROUTE_UPDATE;
-        static const char* SERVICES;
         static const char* CLOSE;
         static const char* GO_AWAY;
         static const char* ACCEPTED;

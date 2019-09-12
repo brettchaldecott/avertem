@@ -124,7 +124,7 @@ private:
 void
 fail(boost::system::error_code ec, char const* what)
 {
-    std::cerr << what << ": " << ec.message() << "\n";
+    KETO_LOG_ERROR << "Failed to process because : " << what << ": " << ec.message();
 }
 
 class SessionBase {
@@ -421,12 +421,6 @@ public:
                 handleTransactionProcessed(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED, payload);
                 return do_read();
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS) == 0) {
-
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ROUTE) == 0) {
-
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ROUTE_UPDATE) == 0) {
-
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::SERVICES) == 0) {
 
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLOSE) == 0) {
                 // implement

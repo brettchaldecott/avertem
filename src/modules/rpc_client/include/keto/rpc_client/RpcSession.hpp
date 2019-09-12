@@ -161,9 +161,11 @@ public:
     pushRpcPeer(const keto::router_utils::RpcPeerHelper& rpcPeerHelper);
     
     RpcPeer getPeer();
+    bool isClosed();
     
 private:
     bool reading;
+    bool closed;
     std::recursive_mutex classMutex;
     tcp::resolver resolver;
     websocket::stream<boostSsl::stream<tcp::socket>> ws_;
@@ -211,7 +213,7 @@ private:
     std::string requestNetworkMasterKeyResponse(const std::string& command, const std::string& message);
     std::string requestNetworkKeysResponse(const std::string& command, const std::string& message);
     std::string requestNetworkFeesResponse(const std::string& command, const std::string& message);
-    bool handleRetryResponse(const std::string& command, const std::string& message, std::string& result);
+    std::string handleRetryResponse(const std::string& command);
     std::string handleRegisterRequest(const std::string& command, const std::string& message);
     std::string handleTransaction(const std::string& command, const std::string& message);
     std::string handleBlock(const std::string& command, const std::string& message);
@@ -219,11 +221,13 @@ private:
     std::string handleBlockSyncResponse(const std::string& command, const std::string& message);
 
     void fail(boost::system::error_code ec, const std::string& what);
-    void processingFailed(const std::string& command);
 
     void send(const std::string& message);
     void sendMessage(std::shared_ptr<std::string> ss);
     void sendFirstQueueMessage();
+
+    // change state
+    void setClosed(bool closed);
 };
 
 
