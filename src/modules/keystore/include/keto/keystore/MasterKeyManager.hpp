@@ -126,6 +126,9 @@ public:
         SlaveSession(const SlaveSession& orig) = delete;
         virtual ~SlaveSession();
 
+        virtual void initSession();
+        virtual void clearSession();
+
         bool isMaster() const;
 
         // methods to get and set the master key

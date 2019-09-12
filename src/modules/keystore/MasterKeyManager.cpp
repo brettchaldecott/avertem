@@ -294,6 +294,20 @@ MasterKeyManager::SlaveSession::SlaveSession() : slaveMaster(false), slaveWrappe
 MasterKeyManager::SlaveSession::~SlaveSession() {
 }
 
+void MasterKeyManager::SlaveSession::initSession() {
+
+}
+
+void MasterKeyManager::SlaveSession::clearSession() {
+    std::lock_guard<std::mutex> uniqueLock(this->classMutex);
+    this->slaveMaster = false;
+    this->slaveMasterKeys.Clear();
+    this->slaveWrapper = false;
+    this->slaveWrapperKeys.Clear();
+
+}
+
+
 bool MasterKeyManager::SlaveSession::isMaster() const {
     return false;
 }
@@ -311,13 +325,18 @@ keto::event::Event MasterKeyManager::SlaveSession::getMasterKey(const keto::even
 keto::event::Event MasterKeyManager::SlaveSession::setMasterKey(const keto::event::Event& event) {
     std::lock_guard<std::mutex> uniqueLock(this->classMutex);
     KETO_LOG_INFO << "[MasterKeyManager][SlaveSession][setMasterKey] set up the slave master key";
-    this->slaveMaster = true;
-    this->slaveMasterKeys = keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(event);
-    keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(this->slaveMasterKeys);
+    if (this->slaveMaster) {
+        return event;
+    }
+    keto::proto::NetworkKeysWrapper networkKeysWrapper =
+            keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(event);
+    keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(networkKeysWrapper);
     keto::crypto::SecureVector bytes =
             NetworkSessionKeyManager::getInstance()->getDecryptor()->decrypt(networkKeysWrapperHelper);
     keto::rpc_protocol::NetworkKeysHelper networkKeysHelper(keto::crypto::SecureVectorUtils().copySecureToString(bytes));
     KeyStoreWrapIndexManager::getInstance()->setMasterKey(networkKeysHelper);
+    this->slaveMasterKeys = networkKeysWrapper;
+    this->slaveMaster = true;
     return event;
 }
 
@@ -336,13 +355,19 @@ keto::event::Event MasterKeyManager::SlaveSession::getWrappingKeys(const keto::e
 keto::event::Event MasterKeyManager::SlaveSession::setWrappingKeys(const keto::event::Event& event) {
     std::lock_guard<std::mutex> uniqueLock(this->classMutex);
     KETO_LOG_INFO << "[MasterKeyManager][SlaveSession][setWrappingKeys] set up the slave wrapping keys";
-    this->slaveWrapper = true;
-    this->slaveWrapperKeys = keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(event);
-    keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(this->slaveWrapperKeys);
+    if (this->slaveWrapper) {
+        return event;
+    }
+    keto::proto::NetworkKeysWrapper networkKeysWrapper =
+            keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(event);
+    keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(networkKeysWrapper);
     keto::crypto::SecureVector bytes =
             NetworkSessionKeyManager::getInstance()->getDecryptor()->decrypt(networkKeysWrapperHelper);
-    keto::rpc_protocol::NetworkKeysHelper networkKeysHelper(keto::crypto::SecureVectorUtils().copySecureToString(bytes));
+    keto::rpc_protocol::NetworkKeysHelper networkKeysHelper(
+            keto::crypto::SecureVectorUtils().copySecureToString(bytes));
     KeyStoreWrapIndexManager::getInstance()->setWrappingKeys(networkKeysHelper);
+    this->slaveWrapperKeys = networkKeysWrapper;
+    this->slaveWrapper = true;
     return event;
 }
 
@@ -351,7 +376,7 @@ MasterKeyManager::MasterKeyManager() {
     std::shared_ptr<keto::environment::Config> config =
             keto::environment::EnvironmentManager::getInstance()->getConfig();
     if (config->getVariablesMap().count(Constants::IS_MASTER) &&
-        config->getVariablesMap()[Constants::IS_MASTER].as<std::string>().compare(Constants::IS_MASTER_TRUE)) {
+        config->getVariablesMap()[Constants::IS_MASTER].as<std::string>().compare(Constants::IS_MASTER_TRUE) == 0) {
         this->sessionPtr = SessionPtr(new MasterSession(config));
     } else {
         this->sessionPtr = SessionPtr(new SlaveSession());

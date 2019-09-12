@@ -32,6 +32,8 @@
 #include "keto/software_consensus/Constants.hpp"
 #include "keto/software_consensus/ConsensusAcceptedMessageHelper.hpp"
 #include "keto/software_consensus/ProtocolAcceptedMessageHelper.hpp"
+#include "keto/software_consensus/Exception.hpp"
+
 #include "keto/environment/Config.hpp"
 #include "keto/environment/EnvironmentManager.hpp"
 
@@ -84,7 +86,7 @@ void ConsensusSessionManager::updateSessionKey(const keto::crypto::SecureVector&
     // the session key is zero length
     if (!sessionKey.size()) {
         KETO_LOG_ERROR << "[updateSessionKey] The session key is zero lenght ignore update";
-        return;
+        BOOST_THROW_EXCEPTION(keto::software_consensus::InvalidSessionException());
     }
     keto::crypto::SecureVector sessionHash = keto::crypto::HashGenerator().generateHash(sessionKey);
 
@@ -110,14 +112,18 @@ void ConsensusSessionManager::updateSessionKey(const keto::crypto::SecureVector&
         } catch (keto::common::Exception& ex) {
             KETO_LOG_ERROR << "[updateSessionKey]Failed to process the event [" << event  << "] : " << ex.what();
             KETO_LOG_ERROR << "[updateSessionKey]Cause: " << boost::diagnostic_information(ex,true);
+            BOOST_THROW_EXCEPTION(keto::software_consensus::InvalidSessionException());
         } catch (boost::exception& ex) {
             KETO_LOG_ERROR << "[updateSessionKey]Failed to process the event [" << event << "]";
             KETO_LOG_ERROR << "[updateSessionKey]Cause: " << boost::diagnostic_information(ex,true);
+            BOOST_THROW_EXCEPTION(keto::software_consensus::InvalidSessionException());
         } catch (std::exception& ex) {
             KETO_LOG_ERROR << "[updateSessionKey]Failed to process the event [" << event << "]";
             KETO_LOG_ERROR << "[updateSessionKey]The cause is : " << ex.what();
+            BOOST_THROW_EXCEPTION(keto::software_consensus::InvalidSessionException());
         } catch (...) {
             KETO_LOG_ERROR << "[updateSessionKey]Failed to process the event [" << event << "]";
+            BOOST_THROW_EXCEPTION(keto::software_consensus::InvalidSessionException());
         }
     }
 }

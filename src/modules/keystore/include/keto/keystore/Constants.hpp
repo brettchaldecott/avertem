@@ -23,7 +23,7 @@ public:
     static constexpr const char* MODULE_NAME = "KETO_KEY_STORE";
     static constexpr const char* ENCRYPTION_PADDING = "EME1(SHA-256)";
     static constexpr const char* IS_MASTER = "is_master";
-    static constexpr const char* IS_MASTER_TRUE = "TRUE";
+    static constexpr const char* IS_MASTER_TRUE = "true";
     static constexpr const char* MASTER_PASSWORD = "master_password";
     static constexpr const char* FALSE_MASTER_PASSWORD = "master_password";
     static constexpr const char* IS_NETWORK_SESSION_GENERATOR = "is_network_session_generator";
