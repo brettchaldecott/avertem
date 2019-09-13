@@ -38,6 +38,7 @@ public:
     
     static constexpr const char* PORT_NUMBER = "rpc-server-port-number";
     static constexpr const unsigned short DEFAULT_PORT_NUMBER = 28003;
+    static constexpr const int MIN_PEERS = 6;
     
     static constexpr const char* HTTP_THREADS = "rpc-server-thread-number";
     static constexpr const int DEFAULT_HTTP_THREADS = 10;

@@ -139,6 +139,7 @@ RpcSession::RpcSession(
         const RpcPeer& rpcPeer) :
         reading(false),
         closed(false),
+        active(false),
         resolver(*ioc),
         ws_(*ioc, *ctx),
         strand_(ws_.get_executor()),
@@ -526,7 +527,9 @@ void RpcSession::peerResponse(const std::string& command, const std::string& mes
     keto::rpc_protocol::PeerResponseHelper peerResponseHelper(response);
     
     RpcSessionManager::getInstance()->setPeers(peerResponseHelper.getPeers());
-    
+    KETO_LOG_INFO << this->sessionNumber << ": Received the list of peers will now reconnect to them : " <<
+                                                                                                         peerResponseHelper.getPeers().size();
+
     // Read a message into our buffer
     this->setClosed(true);
 }
@@ -712,6 +715,7 @@ std::string RpcSession::registerResponse(const std::string& command, const std::
             Botan::hex_decode(message)));
 
     this->accountHash = rpcPeerHelper.getAccountHash();
+    this->setActive(rpcPeerHelper.isActive());
     RpcSessionManager::getInstance()->setAccountSessionMapping(rpcPeerHelper.getAccountHashString(),
             shared_from_this());
 
@@ -855,6 +859,7 @@ void RpcSession::handleActivatePeer(const std::string& command, const std::strin
     std::string rpcVector = keto::server_common::VectorUtils().copyVectorToString(
             Botan::hex_decode(message));
     keto::router_utils::RpcPeerHelper rpcPeerHelper(rpcVector);
+    this->setActive(rpcPeerHelper.isActive());
     keto::server_common::triggerEvent(
             keto::server_common::toEvent<keto::proto::RpcPeer>(
                     keto::server_common::Events::ACTIVATE_RPC_PEER,rpcPeerHelper));
@@ -882,11 +887,12 @@ void RpcSession::requestBlockSync(const keto::proto::SignedBlockBatchRequest& si
     std::vector<uint8_t> messageBytes =  keto::server_common::VectorUtils().copyStringToVector(
             messageWrapperStr);
 
-    KETO_LOG_INFO << "[RpcSession::requestBlockSync][" << this->getPeer().getPeer() << "] request the block sync from a";
+    KETO_LOG_INFO << "[RpcSession::requestBlockSync] Requesting block sync from [" << this->getPeer().getPeer() << "] : " <<
+                  keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST;
     send(serverRequest(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST,
                   messageBytes));
-    KETO_LOG_INFO << "[RpcSession::requestBlockSync][" << this->getPeer().getPeer() << "] The request for [" <<
-    keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST << "]";
+
+
 }
 
 
@@ -970,6 +976,10 @@ bool RpcSession::isClosed() {
     return this->closed;
 }
 
+bool RpcSession::isActive() {
+    return this->active;
+}
+
 void
 RpcSession::send(const std::string& message) {
     sendMessage(std::make_shared<std::string>(message));
@@ -1014,6 +1024,11 @@ RpcSession::sendFirstQueueMessage() {
 // change state
 void RpcSession::setClosed(bool closed) {
     this->closed = closed;
+}
+
+
+void RpcSession::setActive(bool active) {
+    this->active = active;
 }
 
 }

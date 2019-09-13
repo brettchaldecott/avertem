@@ -103,6 +103,7 @@ std::vector<keto::asn1::HashHelper> BlockChainStore::getLastBlockHashs() {
 }
 
 keto::proto::SignedBlockBatchMessage BlockChainStore::requestBlocks(const std::vector<keto::asn1::HashHelper>& tangledHashes) {
+
     if (!masterChain) {
         BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
     }

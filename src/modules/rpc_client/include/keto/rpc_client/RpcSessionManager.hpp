@@ -81,7 +81,7 @@ protected:
             const RpcSessionPtr& rpcSessionPtr);
     void removeAccountSessionMapping(const std::string& account);
 private:
-    std::mutex classMutex;
+    std::recursive_mutex classMutex;
     std::map<std::string,RpcSessionPtr> sessionMap;
     std::map<std::string,RpcSessionPtr> accountSessionMap;
     // The io_context is required for all I/O
@@ -99,6 +99,8 @@ private:
     bool hasAccountSessionMapping(const std::string& account);
     RpcSessionPtr getAccountSessionMapping(const std::string& account);
     RpcSessionPtr getDefaultPeer();
+    RpcSessionPtr getActivePeer();
+    bool registeredAccounts();
 };
 
 

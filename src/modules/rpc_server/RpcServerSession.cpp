@@ -43,11 +43,13 @@ void RpcServerSession::fin() {
 
 void RpcServerSession::addPeer(const std::vector<uint8_t>& account,
         const std::string& host) {
+    std::lock_guard<std::mutex> guard(classMutex);
     this->accountPeerCache[account] = host;
 }
 
 std::vector<std::string> RpcServerSession::getPeers(
         const std::vector<uint8_t> account) {
+    std::lock_guard<std::mutex> guard(classMutex);
     std::vector<std::string> result;
     for (auto const &entry : this->accountPeerCache) {
         KETO_LOG_DEBUG << "The entry [" << entry.second << "]";
@@ -61,6 +63,7 @@ std::vector<std::string> RpcServerSession::getPeers(
 
 std::vector<std::string> RpcServerSession::getPeers(
         const std::vector<std::vector<uint8_t>>& accounts) {
+    std::lock_guard<std::mutex> guard(classMutex);
     std::vector<std::string> result;
     for (auto const &entry : accounts) {
         if (this->accountPeerCache.count(entry)) {

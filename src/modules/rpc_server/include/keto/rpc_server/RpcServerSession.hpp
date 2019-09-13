@@ -42,6 +42,7 @@ public:
             const std::vector<std::vector<uint8_t>>& accounts);
     
 private:
+    std::mutex classMutex;
     std::map<std::vector<uint8_t>,std::string> accountPeerCache; 
     
 };

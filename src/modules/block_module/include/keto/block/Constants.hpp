@@ -45,6 +45,7 @@ public:
     // network fee manager
     static const char* NETWORK_FEE_RATIO;
     static const long MAX_RUN_TIME;
+    static const long SYNC_RETRY_DELAY_MIN;
 
     // max time
     static const long SYNC_EXPIRY_TIME;

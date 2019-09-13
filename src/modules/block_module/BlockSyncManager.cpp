@@ -5,11 +5,15 @@
 
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
+
 #include "keto/block/BlockChainCallbackImpl.hpp"
 #include "keto/block/Constants.hpp"
 #include "keto/block/BlockSyncManager.hpp"
+#include "keto/block/Exception.hpp"
+
 #include "keto/block_db/BlockChainStore.hpp"
 #include "keto/block_db/SignedBlockBatchRequestProtoHelper.hpp"
+
 #include "keto/router_utils/RpcPeerHelper.hpp"
 
 namespace keto {
@@ -67,15 +71,35 @@ void BlockSyncManager::sync() {
         signedBlockBatchRequestProtoHelper.addHash(hash);
     }
 
-    KETO_LOG_DEBUG << "[BlockSyncManager::sync] make the block sync request";
-    keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::SignedBlockBatchRequest>(
-            keto::server_common::Events::RPC_CLIENT_REQUEST_BLOCK_SYNC,signedBlockBatchRequestProtoHelper));
+    try {
+        KETO_LOG_INFO << "[BlockSyncManager::sync] make the block sync request";
+        keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::SignedBlockBatchRequest>(
+                keto::server_common::Events::RPC_CLIENT_REQUEST_BLOCK_SYNC, signedBlockBatchRequestProtoHelper));
 
-    KETO_LOG_DEBUG << "[BlockSyncManager::sync] reset the start time for the sync";
-    this->startTime = time(0);
+        KETO_LOG_DEBUG << "[BlockSyncManager::sync] reset the start time for the sync";
+        this->startTime = time(0);
+        return;
+    } catch (keto::common::Exception& ex) {
+        KETO_LOG_ERROR << "[BlockSyncManager::sync]: Failed to request the block sync : " << boost::diagnostic_information(ex,true);
+        KETO_LOG_ERROR << "[BlockSyncManager::sync]: cause : " << ex.what();
+    } catch (boost::exception& ex) {
+        KETO_LOG_ERROR << "[BlockSyncManager::sync]: Failed to request the block sync : " << boost::diagnostic_information(ex,true);
+    } catch (std::exception& ex) {
+        KETO_LOG_ERROR << "[BlockSyncManager::sync]: Failed to request the block sync : " << ex.what();
+    } catch (...) {
+        KETO_LOG_ERROR << "[BlockSyncManager::sync]: Failed to request the block sync : " << std::endl;
+    }
+    processRequestBlockSyncRetry();
 }
 
 keto::proto::SignedBlockBatchMessage  BlockSyncManager::requestBlocks(const keto::proto::SignedBlockBatchRequest& signedBlockBatchRequest) {
+    //std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    if (!keto::server_common::ServerInfo::getInstance()->isMaster() && this->status != COMPLETE) {
+        KETO_LOG_DEBUG << "[BlockSyncManager::requestBlocks] This node is not synced and cannot return blocks";
+        BOOST_THROW_EXCEPTION(keto::block::UnsyncedStateCannotProvideDate());
+    }
+
+    // pull the block sync information
     keto::block_db::SignedBlockBatchRequestProtoHelper signedBlockBatchRequestProtoHelper(signedBlockBatchRequest);
     std::vector<keto::asn1::HashHelper> tangledHashes;
     KETO_LOG_DEBUG<< "[BlockSyncManager::requestBlocks]" << " Request blocks : " << signedBlockBatchRequestProtoHelper.hashCount();
@@ -103,7 +127,7 @@ keto::proto::MessageWrapperResponse  BlockSyncManager::processBlockSyncResponse(
         }
 
     } else {
-        KETO_LOG_DEBUG << "[BlockSyncManager::processBlockSyncResponse] finished process need to trigger the next request.";
+        KETO_LOG_INFO << "[BlockSyncManager::processBlockSyncResponse] finished applying a block need to trigger the next request.";
         response.set_result("applied");
         this->startTime = 0;
     }
@@ -116,7 +140,8 @@ keto::proto::MessageWrapperResponse  BlockSyncManager::processBlockSyncResponse(
 void
 BlockSyncManager::processRequestBlockSyncRetry() {
     KETO_LOG_DEBUG << "[BlockSyncManager::processRequestBlockSyncRetry] trigger the retry by resetting the start time";
-    this->startTime =0;
+    // reschedule to run in a minutes time
+    this->startTime = time(0) - Constants::SYNC_RETRY_DELAY_MIN;
 }
 
 void

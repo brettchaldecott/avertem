@@ -162,10 +162,12 @@ public:
     
     RpcPeer getPeer();
     bool isClosed();
+    bool isActive();
     
 private:
     bool reading;
     bool closed;
+    bool active;
     std::recursive_mutex classMutex;
     tcp::resolver resolver;
     websocket::stream<boostSsl::stream<tcp::socket>> ws_;
@@ -228,6 +230,9 @@ private:
 
     // change state
     void setClosed(bool closed);
+
+    // set active
+    void setActive(bool active);
 };
 
 

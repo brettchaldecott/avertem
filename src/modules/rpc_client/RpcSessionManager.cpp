@@ -138,12 +138,12 @@ std::vector<std::string> RpcSessionManager::listAccountPeers() {
 
 void RpcSessionManager::setAccountSessionMapping(const std::string& account,
             const RpcSessionPtr& rpcSessionPtr) {
-    std::lock_guard<std::mutex> guard(this->classMutex);
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     this->accountSessionMap[account] = rpcSessionPtr;
 }
 
 void RpcSessionManager::removeAccountSessionMapping(const std::string& account) {
-    std::lock_guard<std::mutex> guard(this->classMutex);
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (!this->accountSessionMap.count(account)) {
         return;
     }
@@ -153,7 +153,7 @@ void RpcSessionManager::removeAccountSessionMapping(const std::string& account) 
 }
 
 bool RpcSessionManager::hasAccountSessionMapping(const std::string& account) {
-    std::lock_guard<std::mutex> guard(this->classMutex);
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (this->accountSessionMap.count(account)) {
         return true;
     }
@@ -161,15 +161,32 @@ bool RpcSessionManager::hasAccountSessionMapping(const std::string& account) {
 }
 
 RpcSessionPtr RpcSessionManager::getAccountSessionMapping(const std::string& account) {
-    std::lock_guard<std::mutex> guard(this->classMutex);
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     return this->accountSessionMap[account];
 }
 
 RpcSessionPtr RpcSessionManager::getDefaultPeer() {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (this->sessionMap.size()) {
         return this->sessionMap.begin()->second;
     }
     return RpcSessionPtr();
+}
+
+RpcSessionPtr RpcSessionManager::getActivePeer() {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+    for (std::map<std::string,std::shared_ptr<keto::rpc_client::RpcSession>>::iterator iter =
+            this->accountSessionMap.begin(); iter != this->accountSessionMap.end(); iter++) {
+        if (iter->second->isActive()) {
+            return iter->second;
+        }
+    }
+    return RpcSessionPtr();
+}
+
+bool RpcSessionManager::registeredAccounts() {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+    return !this->accountSessionMap.empty();
 }
 
 RpcSessionManagerPtr RpcSessionManager::init() {
@@ -268,8 +285,9 @@ keto::event::Event RpcSessionManager::activatePeer(const keto::event::Event& eve
 }
 
 keto::event::Event RpcSessionManager::requestBlockSync(const keto::event::Event& event) {
+    KETO_LOG_INFO << "[RpcSessionManager::requestBlockSync] Making requet to the first active peer";
     keto::proto::SignedBlockBatchRequest request = keto::server_common::fromEvent<keto::proto::SignedBlockBatchRequest>(event);
-    RpcSessionPtr rcpSessionPtr = getDefaultPeer();
+    RpcSessionPtr rcpSessionPtr = this->getActivePeer();
     if (rcpSessionPtr) {
         try {
             rcpSessionPtr->requestBlockSync(request);
@@ -283,11 +301,14 @@ keto::event::Event RpcSessionManager::requestBlockSync(const keto::event::Event&
         } catch (...) {
             KETO_LOG_ERROR << "[RpcSessionManager::requestBlockSync] Failed to request a block sync : unknown cause";
         }
-    } else {
+    } else if (!this->registeredAccounts()) {
         // this will force a call to the RPC server to sync
         KETO_LOG_INFO << "[RpcSessionManager::requestBlockSync] No upstream connections forcing the request down stream";
         keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::SignedBlockBatchRequest>(
                 keto::server_common::Events::RPC_SERVER_REQUEST_BLOCK_SYNC,request));
+    } else {
+        KETO_LOG_INFO << "[RpcSessionManager::requestBlockSync] There are no active peers for this request, need to wait.";
+        BOOST_THROW_EXCEPTION(keto::rpc_client::NoActivePeerException());
     }
 
     return event;

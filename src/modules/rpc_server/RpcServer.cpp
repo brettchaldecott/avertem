@@ -57,6 +57,8 @@
 #include "keto/rpc_server/RpcServerSession.hpp"
 #include "keto/rpc_server/Exception.hpp"
 
+#include "keto/software_consensus/ConsensusStateManager.hpp"
+
 #include "keto/election_common/ElectionMessageProtoHelper.hpp"
 #include "keto/election_common/ElectionPeerMessageProtoHelper.hpp"
 #include "keto/election_common/ElectionResultMessageProtoHelper.hpp"
@@ -738,6 +740,12 @@ public:
     }
     
     std::string handleHello(const std::string& command, const std::string& payload) {
+        if (keto::software_consensus::ConsensusStateManager::getInstance()->getState()
+            != keto::software_consensus::ConsensusStateManager::State::ACCEPTED) {
+            KETO_LOG_INFO << "[RpcServer] This peer is currently not configured reconnection required.";
+            return handleRetryResponse(command);
+        }
+
         std::string bytes = keto::server_common::VectorUtils().copyVectorToString(
                 Botan::hex_decode(payload));
         this->serverHelloProtoHelperPtr = 
@@ -788,6 +796,9 @@ public:
             RpcServerSession::getInstance()->addPeer(
                 this->serverHelloProtoHelperPtr->getAccountHash(),str.str());
             std::vector<std::string> peers = RpcServerSession::getInstance()->getPeers(this->serverHelloProtoHelperPtr->getAccountHash());
+            if (peers.size() < Constants::MIN_PEERS) {
+                peers.push_back(this->rpcServer->getExternalPeerInfo());
+            }
             peerResponseHelper.addPeers(peers);
             
         } else {
@@ -1011,6 +1022,10 @@ public:
 
     std::string handleBlockSyncRequest(const std::string& command, const std::string& payload) {
         KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleBlockSyncRequest] handle the block sync request : " << command;
+        if (!RpcServer::getInstance()->isServerActive()) {
+            KETO_LOG_INFO << "[RpcServer] This server is inactive hand has not synced cannot handle this request.";
+            return handleRetryResponse(command);
+        }
         keto::proto::SignedBlockBatchRequest signedBlockBatchRequest;
         std::string rpcVector = keto::server_common::VectorUtils().copyVectorToString(
                 Botan::hex_decode(payload));
@@ -1306,11 +1321,11 @@ void RpcServer::setExternalIp(
         const boost::asio::ip::address& ipAddress) {
     if (this->externalIp.is_unspecified()) {
         this->externalIp = ipAddress;
-        std::stringstream sstream;
-        sstream << this->externalIp.to_string() << ":" << this->serverPort;
-        RpcServerSession::getInstance()->addPeer(
-                keto::server_common::ServerInfo::getInstance()->getAccountHash(),
-                sstream.str());
+        //std::stringstream sstream;
+        //sstream << this->externalIp.to_string() << ":" << this->serverPort;
+        //RpcServerSession::getInstance()->addPeer(
+        //        keto::server_common::ServerInfo::getInstance()->getAccountHash(),
+        //        sstream.str());
     }
 }
 
@@ -1565,9 +1580,14 @@ keto::event::Event RpcServer::requestBlockSync(const keto::event::Event& event) 
 }
 
 bool RpcServer::isServerActive() {
-    return this->serverActive;
+    return (this->serverActive || keto::server_common::ServerInfo::getInstance()->isMaster());
 }
 
+std::string RpcServer::getExternalPeerInfo() {
+    std::stringstream sstream;
+    sstream << this->externalIp.to_string() << ":" << this->serverPort;
+    return sstream.str();
+}
 
 keto::event::Event RpcServer::electBlockProducerPublish(const keto::event::Event& event) {
     keto::election_common::ElectionPublishTangleAccountProtoHelper electionPublishTangleAccountProtoHelper(

@@ -324,7 +324,7 @@ keto::event::Event MasterKeyManager::SlaveSession::getMasterKey(const keto::even
 
 keto::event::Event MasterKeyManager::SlaveSession::setMasterKey(const keto::event::Event& event) {
     std::lock_guard<std::mutex> uniqueLock(this->classMutex);
-    KETO_LOG_INFO << "[MasterKeyManager][SlaveSession][setMasterKey] set up the slave master key";
+    KETO_LOG_DEBUG << "[MasterKeyManager][SlaveSession][setMasterKey] set up the slave master key";
     if (this->slaveMaster) {
         return event;
     }
@@ -344,7 +344,7 @@ keto::event::Event MasterKeyManager::SlaveSession::setMasterKey(const keto::even
 // this method returns the wrapping keys
 keto::event::Event MasterKeyManager::SlaveSession::getWrappingKeys(const keto::event::Event& event) {
     std::lock_guard<std::mutex> uniqueLock(this->classMutex);
-    KETO_LOG_INFO << "[MasterKeyManager][SlaveSession][getWrappingKeys] get the wrapping keys";
+    KETO_LOG_DEBUG << "[MasterKeyManager][SlaveSession][getWrappingKeys] get the wrapping keys";
     if (!this->slaveWrapper) {
         KETO_LOG_ERROR << "[MasterKeyManager][SlaveSession][getWrappingKeys] the slave wrapper keys have not been set";
         BOOST_THROW_EXCEPTION(keto::keystore::NetworkSessionNotStartedException());
@@ -354,7 +354,7 @@ keto::event::Event MasterKeyManager::SlaveSession::getWrappingKeys(const keto::e
 
 keto::event::Event MasterKeyManager::SlaveSession::setWrappingKeys(const keto::event::Event& event) {
     std::lock_guard<std::mutex> uniqueLock(this->classMutex);
-    KETO_LOG_INFO << "[MasterKeyManager][SlaveSession][setWrappingKeys] set up the slave wrapping keys";
+    KETO_LOG_DEBUG << "[MasterKeyManager][SlaveSession][setWrappingKeys] set up the slave wrapping keys";
     if (this->slaveWrapper) {
         return event;
     }

@@ -44,7 +44,7 @@ PeerResponseHelper& PeerResponseHelper::addPeer(const std::string& url) {
 
 PeerResponseHelper& PeerResponseHelper::addPeers(const std::vector<std::string>& urls) {
     for(std::string url : urls) {
-        KETO_LOG_DEBUG << "The list of url : " << url;
+        //KETO_LOG_DEBUG << "The list of url : " << url;
         response.add_peers(url);
     }
     return *this;

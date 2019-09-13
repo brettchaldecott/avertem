@@ -55,6 +55,7 @@ public:
     isEnabled();
 
 private:
+    std::mutex classMutex;
     bool enabled;
     Status status;
     std::time_t startTime;
