@@ -793,38 +793,38 @@
          }
       },
       {
-        "account_hash":"A6BE65C93E089F931CB7BF87A3510FE7AB869C6DE7A62A29E7525E2E348064E0",
-        "public_key":"02840102D898C2DF686365F9D0E6865658FABE486812DCA446AD5B7898EAC89D90",
-        "private_key":"000B1E13FC0839B9884C3433D9C35A0612295C2CABCFB4ABB5F957BDF94A11E1",
+        "account_hash":"6941575F0300277CE7B37372EF50D2C24A72379B0387A99D45BB206B4DD08925",
+        "public_key":"038605E80783C4653028B42625F6AC06B01F8998B70B9C9BDE95E1F8196FECD0F4",
+        "private_key":"0096302B6470B52AF5C429FF742C190E772A2B7E746FE429E13A3D6850173A5A",
         "value":"1000000000",
         "model":{
            "rdf":[
               {
-                 "http://keto-coin.io/schema/rdf/1.0/keto/Account#Account/A6BE65C93E089F931CB7BF87A3510FE7AB869C6DE7A62A29E7525E2E348064E0":{
+                 "http://keto-coin.io/schema/rdf/1.0/keto/Account#Account/6941575F0300277CE7B37372EF50D2C24A72379B0387A99D45BB206B4DD08925":{
                     "http://keto-coin.io/schema/rdf/1.0/keto/Account#id":[
                        {
-                          "value":"A6BE65C93E089F931CB7BF87A3510FE7AB869C6DE7A62A29E7525E2E348064E0",
+                          "value":"6941575F0300277CE7B37372EF50D2C24A72379B0387A99D45BB206B4DD08925",
                           "type":"literal",
                           "datatype":"http://www.w3.org/2001/XMLSchema#string"
                        }
                     ],
                     "http://keto-coin.io/schema/rdf/1.0/keto/Account#hash":[
                        {
-                          "value":"A6BE65C93E089F931CB7BF87A3510FE7AB869C6DE7A62A29E7525E2E348064E0",
+                          "value":"6941575F0300277CE7B37372EF50D2C24A72379B0387A99D45BB206B4DD08925",
                           "type":"literal",
                           "datatype":"http://www.w3.org/2001/XMLSchema#string"
                        }
                     ],
                     "http://keto-coin.io/schema/rdf/1.0/keto/Account#name":[
                        {
-                          "value":"technical",
+                          "value":"test_acccount",
                           "type":"literal",
                           "datatype":"http://www.w3.org/2001/XMLSchema#string"
                        }
                     ],
                     "http://keto-coin.io/schema/rdf/1.0/keto/Account#public_key":[
                        {
-                          "value":"02840102D898C2DF686365F9D0E6865658FABE486812DCA446AD5B7898EAC89D90",
+                          "value":"038605E80783C4653028B42625F6AC06B01F8998B70B9C9BDE95E1F8196FECD0F4",
                           "type":"literal",
                           "datatype":"http://www.w3.org/2001/XMLSchema#string"
                        }
@@ -853,17 +853,17 @@
                  }
               },
                 {
-                   "http://keto-coin.io/schema/rdf/1.0/keto/AccountGroup#AccountGroup/A6BE65C93E089F931CB7BF87A3510FE7AB869C6DE7A62A29E7525E2E348064E0":{
+                   "http://keto-coin.io/schema/rdf/1.0/keto/AccountGroup#AccountGroup/6941575F0300277CE7B37372EF50D2C24A72379B0387A99D45BB206B4DD08925":{
                       "http://keto-coin.io/schema/rdf/1.0/keto/AccountGroup#id":[
                          {
-                            "value":"A6BE65C93E089F931CB7BF87A3510FE7AB869C6DE7A62A29E7525E2E348064E0",
+                            "value":"6941575F0300277CE7B37372EF50D2C24A72379B0387A99D45BB206B4DD08925",
                             "type":"literal",
                             "datatype":"http://www.w3.org/2001/XMLSchema#string"
                          }
                       ],
                       "http://keto-coin.io/schema/rdf/1.0/keto/AccountGroup#account":[
                          {
-                            "value":"http://keto-coin.io/schema/rdf/1.0/keto/Account#Account/A6BE65C93E089F931CB7BF87A3510FE7AB869C6DE7A62A29E7525E2E348064E0",
+                            "value":"http://keto-coin.io/schema/rdf/1.0/keto/Account#Account/6941575F0300277CE7B37372EF50D2C24A72379B0387A99D45BB206B4DD08925",
                             "type":"uri",
                             "datatype":"http://www.w3.org/2001/XMLSchema#string"
                          }
@@ -871,31 +871,31 @@
                    }
                 },
               {
-                 "http://keto-coin.io/schema/rdf/1.0/keto/AccountTransaction#AccountTransaction/A6BE65C93E089F931CB7BF87A3510FE7AB869C6DE7A62A29E7525E2E348064E0":{
+                 "http://keto-coin.io/schema/rdf/1.0/keto/AccountTransaction#AccountTransaction/6941575F0300277CE7B37372EF50D2C24A72379B0387A99D45BB206B4DD08925":{
                     "http://keto-coin.io/schema/rdf/1.0/keto/AccountTransaction#id":[
                        {
-                          "value":"A6BE65C93E089F931CB7BF87A3510FE7AB869C6DE7A62A29E7525E2E348064E0",
+                          "value":"6941575F0300277CE7B37372EF50D2C24A72379B0387A99D45BB206B4DD08925",
                           "type":"literal",
                           "datatype":"http://www.w3.org/2001/XMLSchema#string"
                        }
                     ],
                     "http://keto-coin.io/schema/rdf/1.0/keto/AccountTransaction#accountHash":[
                        {
-                          "value":"A6BE65C93E089F931CB7BF87A3510FE7AB869C6DE7A62A29E7525E2E348064E0",
+                          "value":"6941575F0300277CE7B37372EF50D2C24A72379B0387A99D45BB206B4DD08925",
                           "type":"literal",
                           "datatype":"http://www.w3.org/2001/XMLSchema#string"
                        }
                     ],
                     "http://keto-coin.io/schema/rdf/1.0/keto/Account#accountOwner":[
                     {
-                       "value":"http://keto-coin.io/schema/rdf/1.0/keto/Account#Account/A6BE65C93E089F931CB7BF87A3510FE7AB869C6DE7A62A29E7525E2E348064E0",
+                       "value":"http://keto-coin.io/schema/rdf/1.0/keto/Account#Account/6941575F0300277CE7B37372EF50D2C24A72379B0387A99D45BB206B4DD08925",
                        "type":"uri",
                        "datatype":"http://www.w3.org/2001/XMLSchema#string"
                     }
                     ],
                     "http://keto-coin.io/schema/rdf/1.0/keto/AccountGroup#accountGroup":[
                       {
-                         "value":"http://keto-coin.io/schema/rdf/1.0/keto/AccountGroup#AccountGroup/A6BE65C93E089F931CB7BF87A3510FE7AB869C6DE7A62A29E7525E2E348064E0",
+                         "value":"http://keto-coin.io/schema/rdf/1.0/keto/AccountGroup#AccountGroup/6941575F0300277CE7B37372EF50D2C24A72379B0387A99D45BB206B4DD08925",
                          "type":"uri",
                          "datatype":"http://www.w3.org/2001/XMLSchema#string"
                       }

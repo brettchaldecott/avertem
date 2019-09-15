@@ -292,6 +292,7 @@ RpcSession::on_read(
     boost::system::error_code ec,
     std::size_t bytes_transferred)
 {
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     keto::server_common::StringVector stringVector;
     std::string command;
 

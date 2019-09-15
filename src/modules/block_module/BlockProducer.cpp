@@ -271,13 +271,12 @@ BlockProducer::~BlockProducer() {
 
 BlockProducerPtr BlockProducer::init() {
     singleton = std::make_shared<BlockProducer>();
-    if (singleton->isEnabled()) {
+    // enable the block producer thread this is required for sync and for production
     producerThreadPtr = std::shared_ptr<std::thread>(new std::thread(
         []
         {
             singleton->run();
         }));
-    }
     return singleton;
 }
 

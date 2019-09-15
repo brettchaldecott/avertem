@@ -15,6 +15,9 @@
 #include <iostream>
 #include <memory>
 #include <keto/common/HttpEndPoints.hpp>
+
+#include "keto/server_common/StringUtils.hpp"
+
 #include "keto/server_session/HttpRequestManager.hpp"
 #include "keto/server_session/HttpTransactionManager.hpp"
 #include "keto/server_session/Constants.hpp"
@@ -51,7 +54,7 @@ HttpRequestManager::checkRequest(boost::beast::http::request<boost::beast::http:
     if (path.empty()) {
         return false;
     }
-    std::string target = path.to_string();
+    std::string target = keto::server_common::StringUtils(path.to_string()).replaceAll("//","/");
     if (0 == target.compare(keto::common::HttpEndPoints::HAND_SHAKE)) {
         return true;
     } else if (0 == target.compare(keto::common::HttpEndPoints::TRANSACTION)) {
@@ -74,7 +77,7 @@ boost::beast::http::response<boost::beast::http::string_body>
 HttpRequestManager::handle_request(
         boost::beast::http::request<boost::beast::http::string_body>& req) {
     boost::beast::string_view path = req.target();
-    std::string target = path.to_string();
+    std::string target = keto::server_common::StringUtils(path.to_string()).replaceAll("//","/");
     std::string result;
     if (strlen(keto::common::HttpEndPoints::AUTHENTICATE) <= target.size() &&
         0 == target.compare(0,strlen(keto::common::HttpEndPoints::AUTHENTICATE),keto::common::HttpEndPoints::AUTHENTICATE)) {

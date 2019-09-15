@@ -122,6 +122,8 @@ keto::proto::MessageWrapperResponse  BlockSyncManager::processBlockSyncResponse(
         KETO_LOG_INFO << "[BlockSyncManager::processBlockSyncResponse]" << " ########################################################";
         KETO_LOG_INFO << "[BlockSyncManager::processBlockSyncResponse]" << " ######## Synchronization has now been completed ########";
         KETO_LOG_INFO << "[BlockSyncManager::processBlockSyncResponse]" << " ########################################################";
+        // as this node is not enabled we will not notify our
+        // peers of the fact that the synchronization has been completed.
         if (this->isEnabled()) {
             notifyPeers();
         }

@@ -39,6 +39,8 @@
 #include "keto/server_session/Constants.hpp"
 #include "keto/server_session/URIAuthenticationParser.hpp"
 
+#include "keto/server_common/StringUtils.hpp"
+
 #include "keto/account_query/AccountSparqlQueryHelper.hpp"
 
 #include "keto/crypto/KeyLoader.hpp"
@@ -131,7 +133,7 @@ boost::beast::http::response<boost::beast::http::string_body> HttpSessionManager
     }
 
     boost::beast::string_view path = req.target();
-    std::string target = path.to_string();
+    std::string target = keto::server_common::StringUtils(path.to_string()).replaceAll("//","/");
     URIAuthenticationParser uriAuthenticationParser(target);
 
     keto::proto::SparqlResultSetQuery sparqlResultSetQuery;
@@ -147,13 +149,13 @@ boost::beast::http::response<boost::beast::http::string_body> HttpSessionManager
             keto::account_query::AccountSparqlQueryHelper(keto::server_common::Events::SPARQL_QUERY_WITH_RESULTSET_MESSAGE,
                                                   uriAuthenticationParser.getAccountHash(),ss.str()).execute();
     if (resultVectorMap.size() != 1) {
-        KETO_LOG_DEBUG << "Cannot find the account";
+        KETO_LOG_INFO << "Cannot find the account";
         return buildResponse("Invalid account",403);
     }
 
     if (!keto::crypto::SignatureVerification(Botan::hex_decode(resultVectorMap[0]["publicKey"]),
             (std::vector<uint8_t>)uriAuthenticationParser.getSourceHash()).check(uriAuthenticationParser.getSignature())) {
-        KETO_LOG_DEBUG << "The signature is invalid [" << uriAuthenticationParser.getSourceHash().getHash(keto::common::HEX) << "][" <<
+        KETO_LOG_INFO << "The signature is invalid [" << uriAuthenticationParser.getSourceHash().getHash(keto::common::HEX) << "][" <<
             Botan::hex_encode(uriAuthenticationParser.getSignature(),true) << "]";
         return buildResponse("Invalid signature",403);
     }

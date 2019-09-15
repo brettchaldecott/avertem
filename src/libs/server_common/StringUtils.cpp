@@ -56,5 +56,16 @@ bool StringUtils::isHexidecimal(const std::string& value) {
     return true;
 }
 
+std::string StringUtils::replaceAll(const std::string& oldVal, const std::string& newVal) {
+    std::string result = this->value;
+    int pos = 0;
+    int begin = 0;
+    while ( (begin = result.find(oldVal,pos)) != result.npos ) {
+        result.replace(begin,oldVal.size(),newVal);
+        pos = begin;
+    }
+    return result;
+}
+
 }
 }

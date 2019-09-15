@@ -82,6 +82,7 @@ RpcSessionManager::~RpcSessionManager() {
 }
 
 void RpcSessionManager::setPeers(const std::vector<std::string>& peers, bool peered) {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     PeerStore::getInstance()->setPeers(peers);
     this->peered = peered;
     for (std::vector<std::string>::const_iterator iter = peers.begin();
@@ -96,6 +97,7 @@ void RpcSessionManager::setPeers(const std::vector<std::string>& peers, bool pee
 }
 
 void RpcSessionManager::reconnect(const RpcPeer& rpcPeer) {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     KETO_LOG_DEBUG << "The reconnect count : " << (std::string)rpcPeer;
     this->sessionMap.erase((std::string)rpcPeer);
     if (rpcPeer.getReconnectCount() >= Constants::SESSION::MAX_RETRY_COUNT) {

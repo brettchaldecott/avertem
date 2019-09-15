@@ -18,6 +18,7 @@
 #include "keto/server_common/EventUtils.hpp"
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
+#include "keto/server_common/StringUtils.hpp"
 
 #include "keto/server_session/Exception.hpp"
 #include "keto/server_session/HttpContractManager.hpp"
@@ -45,7 +46,7 @@ boost::beast::http::response<boost::beast::http::string_body> HttpContractManage
         boost::beast::http::request<boost::beast::http::string_body>& req,
         const std::string& body) {
     boost::beast::string_view path = req.target();
-    std::string target = path.to_string();
+    std::string target = keto::server_common::StringUtils(path.to_string()).replaceAll("//","/");
     URIContractParser uriContract(target);
 
     std::string sessionHash;

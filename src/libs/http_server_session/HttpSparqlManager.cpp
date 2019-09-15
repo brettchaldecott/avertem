@@ -26,6 +26,7 @@
 #include "keto/server_common/EventUtils.hpp"
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
+#include "keto/server_common/StringUtils.hpp"
 
 #include "keto/server_session/Exception.hpp"
 #include "keto/server_session/HttpSparqlManager.hpp"
@@ -63,7 +64,7 @@ std::string HttpSparqlManager::processQuery(
     }
     
     boost::beast::string_view path = req.target();
-    std::string target = path.to_string();
+    std::string target = keto::server_common::StringUtils(path.to_string()).replaceAll("//","/");
     URISparqlParser uriSparql(target,body);
     
     keto::asn1::HashHelper hashHelper(uriSparql.getAccountHash(),keto::common::HEX);

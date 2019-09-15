@@ -36,6 +36,7 @@ public:
     
     StringVector tokenize(const std::string& token);
     static bool isHexidecimal(const std::string& value);
+    std::string replaceAll(const std::string& oldVal, const std::string& newVal);
 private:
     std::string value;
 };
