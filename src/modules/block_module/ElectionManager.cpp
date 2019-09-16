@@ -99,7 +99,7 @@ keto::event::Event ElectionManager::consensusHeartbeat(const keto::event::Event&
     keto::software_consensus::ProtocolHeartbeatMessageHelper protocolHeartbeatMessageHelper(
             keto::server_common::fromEvent<keto::proto::ProtocolHeartbeatMessage>(event));
 
-    KETO_LOG_DEBUG << "[ElectionManager::consensusHeartbeat] current slot is [" << protocolHeartbeatMessageHelper.getNetworkSlot() <<
+    KETO_LOG_INFO << "[ElectionManager::consensusHeartbeat] current slot is [" << protocolHeartbeatMessageHelper.getNetworkSlot() <<
                    "][" << protocolHeartbeatMessageHelper.getElectionSlot() << "][" <<
                    protocolHeartbeatMessageHelper.getElectionPublishSlot() << "][" <<
                    protocolHeartbeatMessageHelper.getConfirmationSlot() << "]";
@@ -111,25 +111,26 @@ keto::event::Event ElectionManager::consensusHeartbeat(const keto::event::Event&
         this->nextWindow.clear();
         this->state = ElectionManager::State::ELECT;
         if (state == BlockProducer::State::block_producer) {
-            KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] run the election to choose a new node as state is : " << state;
+            KETO_LOG_INFO << "[BlockProducer::consensusHeartbeat] run the election to choose a new node as state is : " << state;
             invokeElection(keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_CLIENT,
                            keto::server_common::Events::PEER_TYPES::CLIENT);
             invokeElection(keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_SERVER,
                            keto::server_common::Events::PEER_TYPES::SERVER);
-            KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] after running the election";
+            KETO_LOG_INFO << "[BlockProducer::consensusHeartbeat] after running the election";
         }
 
     } else if (protocolHeartbeatMessageHelper.getNetworkSlot() == protocolHeartbeatMessageHelper.getElectionPublishSlot()){
         if (state == BlockProducer::State::block_producer) {
-            KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] the election publish has been called";
+            KETO_LOG_INFO << "[BlockProducer::consensusHeartbeat] the election publish has been called";
             publishElection();
-            KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] the publish has been started";
+            KETO_LOG_INFO << "[BlockProducer::consensusHeartbeat] the publish has been started";
         }
     } else if (protocolHeartbeatMessageHelper.getNetworkSlot() == protocolHeartbeatMessageHelper.getConfirmationSlot()){
+        KETO_LOG_INFO << "[BlockProducer::consensusHeartbeat] In the confirmation slot : " << state;
         if (state == BlockProducer::State::block_producer) {
-            KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] the confirmation has been called";
+            KETO_LOG_INFO << "[BlockProducer::consensusHeartbeat] the confirmation has been called";
             confirmElection();
-            KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] the confirmation has been completed";
+            KETO_LOG_INFO << "[BlockProducer::consensusHeartbeat] the confirmation has been completed";
         }
     } else {
         this->state = ElectionManager::State::PROCESSING;

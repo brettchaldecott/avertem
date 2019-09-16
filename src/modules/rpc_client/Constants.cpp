@@ -11,6 +11,7 @@ namespace rpc_client {
 const int Constants::SESSION::MAX_RETRY_COUNT = 120;
 const long Constants::SESSION::RETRY_COUNT_DELAY = 10000;
 
+const int Constants::DEFAULT_RPC_CLIENT_QUEUE_DELAY = 1;
 
 const char* Constants::PEER_INDEX = "peers";
 

@@ -39,7 +39,7 @@ public:
     
     static constexpr const char* RPC_CLIENT_THREADS = "rpc-server-thread-number";
     static constexpr const int DEFAULT_RPC_CLIENT_THREADS = 10;
-    
+
     // keys for server
     static constexpr const char* PRIVATE_KEY    = "server-private-key";
     static constexpr const char* PUBLIC_KEY     = "server-public-key";
@@ -59,6 +59,9 @@ public:
     static const char* PEER_INDEX;
 
     static const std::vector<std::string> DB_LIST;
+
+    static const int DEFAULT_RPC_CLIENT_QUEUE_DELAY;
+
 };
 
 }

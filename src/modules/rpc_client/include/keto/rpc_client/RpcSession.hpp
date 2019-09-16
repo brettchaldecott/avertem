@@ -29,6 +29,8 @@
 #include <iostream>
 #include <string>
 #include <set>
+#include <thread>
+#include <condition_variable>
 
 #include "Route.pb.h"
 #include "BlockChain.pb.h"
@@ -44,9 +46,11 @@
 #include "keto/asn1/HashHelper.hpp"
 
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
+
 #include "keto/election_common/ElectionPublishTangleAccountProtoHelper.hpp"
 #include "keto/election_common/ElectionConfirmationHelper.hpp"
 #include "keto/election_common/ElectionResultCache.hpp"
+#include "keto/server_common/StringUtils.hpp"
 
 #include "keto/router_utils/RpcPeerHelper.hpp"
 
@@ -90,6 +94,49 @@ public:
         boost::beast::multi_buffer* buffer;
     };
 
+    class ReadQueueEntry {
+    public:
+        ReadQueueEntry(const std::string& command, const keto::server_common::StringVector& stringVector) :
+            command(command),stringVector(stringVector){}
+
+        ReadQueueEntry(const ReadQueueEntry& orig) = delete;
+        virtual ~ReadQueueEntry() {}
+
+
+        std::string getCommand() {return this->command;}
+        keto::server_common::StringVector getStringVector() {return this->stringVector;}
+
+    private:
+        std::string command;
+        keto::server_common::StringVector stringVector;
+    };
+    typedef std::shared_ptr<ReadQueueEntry> ReadQueueEntryPtr;
+
+    class ReadQueue {
+    public:
+        ReadQueue(RpcSession* session);
+        ReadQueue(const ReadQueue& orig) = delete;
+        virtual ~ReadQueue();
+
+        bool isActive();
+        void activate();
+        void deactivate();
+        void pushEntry(const std::string& command, const keto::server_common::StringVector& stringVector);
+
+    private:
+        RpcSession* session;
+        bool active;
+        std::mutex classMutex;
+        std::condition_variable stateCondition;
+        std::deque<ReadQueueEntryPtr> readQueue;
+        std::shared_ptr<std::thread> queueThreadPtr;
+
+        ReadQueueEntryPtr popEntry();
+        void run();
+    };
+    typedef std::shared_ptr<ReadQueue> ReadQueuePtr;
+
+
     static std::string getHeaderVersion() {
         return OBFUSCATED("$Id$");
     };
@@ -128,6 +175,8 @@ public:
     on_read(
             boost::system::error_code ec,
             std::size_t bytes_transferred);
+
+    void processQueueEntry(const ReadQueueEntryPtr& readQueueEntryPtr);
 
     void
     do_close();
@@ -174,6 +223,7 @@ private:
     boost::asio::strand<
         boost::asio::io_context::executor_type> strand_;
     boost::beast::multi_buffer buffer_;
+    ReadQueuePtr readQueuePtr;
     std::queue<std::shared_ptr<std::string>> queue_;
 
     //bool peered;

@@ -117,6 +117,7 @@ void RpcSessionManager::reconnect(const RpcPeer& rpcPeer) {
 }
 
 std::vector<std::string> RpcSessionManager::listPeers() {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     std::vector<std::string> keys;
     std::transform(
         this->sessionMap.begin(),
@@ -128,6 +129,7 @@ std::vector<std::string> RpcSessionManager::listPeers() {
 }
 
 std::vector<std::string> RpcSessionManager::listAccountPeers() {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     std::vector<std::string> keys;
     std::transform(
             this->accountSessionMap.begin(),

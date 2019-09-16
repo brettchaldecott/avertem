@@ -281,11 +281,9 @@ BlockProducerPtr BlockProducer::init() {
 }
 
 void BlockProducer::fin() {
-    if (singleton->isEnabled()) {
-        singleton->terminate();
-        producerThreadPtr->join();
-        producerThreadPtr.reset();
-    }
+    singleton->terminate();
+    producerThreadPtr->join();
+    producerThreadPtr.reset();
     singleton.reset();
 }
 

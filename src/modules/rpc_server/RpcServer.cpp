@@ -129,7 +129,27 @@ fail(boost::system::error_code ec, char const* what)
     KETO_LOG_ERROR << "Failed to process because : " << what << ": " << ec.message();
 }
 
-class SessionBase {
+class ReadQueueEntry {
+public:
+    ReadQueueEntry(const std::string& command, const std::string& payload) :
+            command(command),payload(payload){}
+
+    ReadQueueEntry(const ReadQueueEntry& orig) = delete;
+    virtual ~ReadQueueEntry() {}
+
+
+    std::string getCommand() {return this->command;}
+    std::string getPayload() {return this->payload;}
+
+private:
+    std::string command;
+    std::string payload;
+};
+typedef std::shared_ptr<ReadQueueEntry> ReadQueueEntryPtr;
+
+
+
+    class SessionBase {
 public:
     virtual bool isActive() = 0;
     virtual void routeTransaction(keto::proto::MessageWrapper&  messageWrapper) = 0;
@@ -142,6 +162,7 @@ public:
     virtual void electBlockProducerPublish(const keto::election_common::ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper) = 0;
     virtual void electBlockProducerConfirmation(const keto::election_common::ElectionConfirmationHelper& electionConfirmationHelper) = 0;
     virtual void requestBlockSync(const keto::proto::SignedBlockBatchRequest& request) = 0;
+    virtual void processQueueEntry(const ReadQueueEntryPtr& readQueueEntryPtr) = 0;
 };
 typedef std::shared_ptr<SessionBase> SessionBasePtr;
 
@@ -229,6 +250,81 @@ public:
 };
 
 
+class ReadQueue {
+public:
+    ReadQueue(SessionBase* session) : session(session) {}
+    ReadQueue(const ReadQueue& orig) = delete;
+    virtual ~ReadQueue() {
+        deactivate();
+    }
+
+    bool isActive() {
+        std::unique_lock<std::mutex> guard(classMutex);
+        return this->active;
+    }
+
+    void activate() {
+        std::unique_lock<std::mutex> guard(classMutex);
+        queueThreadPtr = std::shared_ptr<std::thread>(new std::thread(
+                [this]
+                {
+                    this->run();
+                }));
+        this->active = true;
+    }
+
+    void deactivate() {
+        {
+            std::unique_lock<std::mutex> guard(classMutex);
+            if (!this->active) {
+                return;
+            }
+            this->active = false;
+            stateCondition.notify_all();
+        }
+        queueThreadPtr->join();
+        queueThreadPtr.reset();
+    }
+
+    void pushEntry(const std::string& command, const std::string& payload) {
+        std::unique_lock<std::mutex> guard(classMutex);
+        this->readQueue.push_back(ReadQueueEntryPtr(new ReadQueueEntry(command,payload)));
+        stateCondition.notify_all();
+    }
+
+private:
+    SessionBase* session;
+    bool active;
+    std::mutex classMutex;
+    std::condition_variable stateCondition;
+    std::deque<ReadQueueEntryPtr> readQueue;
+    std::shared_ptr<std::thread> queueThreadPtr;
+
+    ReadQueueEntryPtr popEntry() {
+        std::unique_lock<std::mutex> uniqueLock(classMutex);
+        if (!this->readQueue.empty()) {
+            ReadQueueEntryPtr result = this->readQueue.front();
+            this->readQueue.pop_front();
+            return result;
+        }
+        this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(
+                Constants::DEFAULT_RPC_SERVER_QUEUE_DELAY));
+        return ReadQueueEntryPtr();
+    }
+
+    void run() {
+        while(this->isActive()) {
+            ReadQueueEntryPtr entry = popEntry();
+            if (entry) {
+                this->session->processQueueEntry(entry);
+            }
+        }
+    }
+};
+
+typedef std::shared_ptr<ReadQueue> ReadQueuePtr;
+
+
 // Echoes back all received WebSocket messages
 class session : public SessionBase, public std::enable_shared_from_this<session>
 {
@@ -245,6 +341,7 @@ private:
     keto::crypto::SecureVector sessionId;
     std::shared_ptr<Botan::AutoSeeded_RNG> generatorPtr;
     std::queue<std::shared_ptr<std::string>> queue_;
+    ReadQueuePtr readQueuePtr;
     keto::election_common::ElectionResultCache electionResultCache;
     bool registered;
     bool active;
@@ -261,10 +358,14 @@ public:
     {
         //ws_.auto_fragment(false);
         this->generatorPtr = std::shared_ptr<Botan::AutoSeeded_RNG>(new Botan::AutoSeeded_RNG());
+        // setup the read queue
+        readQueuePtr = ReadQueuePtr(new ReadQueue(this));
     }
         
     virtual ~session() {
         removeFromCache();
+        this->readQueuePtr->deactivate();
+        this->readQueuePtr.reset();
     }
 
     keto::crypto::SecureVector getSessionId() {
@@ -279,6 +380,7 @@ public:
     void
     run()
     {
+        this->readQueuePtr->activate();
         // Perform the SSL handshake
         ws_.next_layer().async_handshake(
             beastSsl::stream_base::server,
@@ -309,6 +411,7 @@ public:
     void
     on_accept(boost::system::error_code ec)
     {
+        std::lock_guard<std::recursive_mutex> guard(classMutex);
         if(ec)
             return fail(ec, "accept");
 
@@ -362,8 +465,8 @@ public:
     void
     on_read(
         boost::system::error_code ec,
-        std::size_t bytes_transferred)
-    {
+        std::size_t bytes_transferred) {
+        std::lock_guard<std::recursive_mutex> guard(classMutex);
         keto::server_common::StringVector stringVector;
 
         boost::ignore_unused(bytes_transferred);
@@ -392,6 +495,17 @@ public:
         if (stringVector.size() == 2) {
             payload = stringVector[1];
         }
+
+        this->readQueuePtr->pushEntry(command,payload);
+
+        // do a read and wait for more messages
+        do_read();
+    }
+
+    void processQueueEntry(const ReadQueueEntryPtr& readQueueEntryPtr) {
+
+        std::string command = readQueueEntryPtr->getCommand();
+        std::string payload = readQueueEntryPtr->getPayload();
         std::string message;
         
         try {
@@ -414,14 +528,12 @@ public:
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ACTIVATE) == 0) {
                 KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " activate";
                 handleActivate(keto::server_common::Constants::RPC_COMMANDS::ACTIVATE, payload);
-                return do_read();
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
                 KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] handle a transaction";
                 message = handleTransaction(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION, payload);
                 KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] Transaction processing complete";
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED) == 0) {
                 handleTransactionProcessed(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED, payload);
-                return do_read();
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS) == 0) {
 
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLOSE) == 0) {
@@ -443,7 +555,6 @@ public:
                 message = handleClientNetworkComplete(keto::server_common::Constants::RPC_COMMANDS::CLIENT_NETWORK_COMPLETE, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK) == 0) {
                 handleBlockPush(keto::server_common::Constants::RPC_COMMANDS::BLOCK, payload);
-                return do_read();
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST) == 0) {
                 message = handleBlockSyncRequest(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_RESPONSE) == 0) {
@@ -455,23 +566,23 @@ public:
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE) == 0) {
                 handleElectionResponse(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE, payload);
             }else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_PUBLISH) == 0) {
-                handleElectionPublish(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_PUBLISH, stringVector[1]);
+                handleElectionPublish(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_PUBLISH, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION) == 0) {
-                handleElectionConfirmation(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION, stringVector[1]);
+                handleElectionConfirmation(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION, payload);
             }
             KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] processed the command : " << command;
             transactionPtr->commit();
         } catch (keto::common::Exception& ex) {
-            KETO_LOG_ERROR << "[RpcServer][on_read][" << getAccount() << "] Failed to handle the request [" << command << "] on the server [keto::common::Exception]: " << boost::diagnostic_information(ex,true);
+            KETO_LOG_ERROR << "[RpcServer][processQueueEntry][" << getAccount() << "] Failed to handle the request [" << command << "] on the server [keto::common::Exception]: " << boost::diagnostic_information(ex,true);
             message = handleRetryResponse(command);
         } catch (boost::exception& ex) {
-            KETO_LOG_ERROR << "[RpcServer][on_read][" << getAccount() << "] Failed to handle the request [" << command << "]on the server [boost::exception]: " << boost::diagnostic_information(ex,true);
+            KETO_LOG_ERROR << "[RpcServer][processQueueEntry][" << getAccount() << "] Failed to handle the request [" << command << "]on the server [boost::exception]: " << boost::diagnostic_information(ex,true);
             message = handleRetryResponse(command);
         } catch (std::exception& ex) {
-            KETO_LOG_ERROR << "[RpcServer][on_read][" << getAccount() << "] Failed to handle the request [" << command << "] on the server [std::exception]: " << ex.what();
+            KETO_LOG_ERROR << "[RpcServer][processQueueEntry][" << getAccount() << "] Failed to handle the request [" << command << "] on the server [std::exception]: " << ex.what();
             message = handleRetryResponse(command);
         } catch (...) {
-            KETO_LOG_ERROR << "[RpcServer][on_read][" << getAccount() << "] Failed to handle the request [" << command << "] on the server [...]: unknown";
+            KETO_LOG_ERROR << "[RpcServer][processQueueEntry][" << getAccount() << "] Failed to handle the request [" << command << "] on the server [...]: unknown";
             message = handleRetryResponse(command);
         }
 
@@ -480,8 +591,6 @@ public:
             send(message);
         }
 
-        // do a read and wait for more messages
-        do_read();
         KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] Finished processing.";
     }
 

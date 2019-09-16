@@ -44,6 +44,9 @@ public:
     static constexpr const int DEFAULT_HTTP_THREADS = 10;
 
     static constexpr const int SESSION_ID_LENGTH = 32;
+
+    static const int DEFAULT_RPC_SERVER_QUEUE_DELAY;
+
 };
     
 }
