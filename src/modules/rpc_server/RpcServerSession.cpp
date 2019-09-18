@@ -44,9 +44,17 @@ void RpcServerSession::fin() {
     singleton.reset();
 }
 
+std::vector<std::string> RpcServerSession::handlePeers(const std::vector<uint8_t>& account,
+        const std::string& host) {
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
+    std::vector<std::string> peers = getPeers(account);
+    addPeer(account,host);
+    return peers;
+}
+
 void RpcServerSession::addPeer(const std::vector<uint8_t>& account,
         const std::string& host) {
-    std::lock_guard<std::mutex> guard(classMutex);
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     if (!this->accountPeerCache.count(account)) {
         if (this->accountPeerList.size() >= Constants::MAX_PEERS) {
             this->accountPeerList.erase(this->accountPeerList.begin());
@@ -58,7 +66,7 @@ void RpcServerSession::addPeer(const std::vector<uint8_t>& account,
 
 std::vector<std::string> RpcServerSession::getPeers(
         const std::vector<uint8_t> account) {
-    std::lock_guard<std::mutex> guard(classMutex);
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     std::set<std::string> result(this->accountPeerList.begin(),this->accountPeerList.end());
     if (this->accountPeerCache.count(account)) {
         if (result.count(this->accountPeerCache[account])) {
@@ -70,7 +78,7 @@ std::vector<std::string> RpcServerSession::getPeers(
 
 std::vector<std::string> RpcServerSession::getPeers(
         const std::vector<std::vector<uint8_t>>& accounts) {
-    std::lock_guard<std::mutex> guard(classMutex);
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     std::vector<std::string> result;
     for (auto const &entry : accounts) {
         if (this->accountPeerCache.count(entry)) {

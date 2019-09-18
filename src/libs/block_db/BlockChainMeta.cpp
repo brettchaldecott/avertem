@@ -5,7 +5,7 @@
 #include <chrono>
 
 #include "keto/block_db/BlockChainMeta.hpp"
-
+#include "keto/block_db/Exception.hpp"
 
 namespace keto {
 namespace block_db {
@@ -83,11 +83,17 @@ BlockChainTangleMetaPtr BlockChainMeta::getTangleEntry(int id) {
 }
 
 BlockChainTangleMetaPtr BlockChainMeta::getTangleEntry(const keto::asn1::HashHelper& id) {
-    return this->tangleMap[id];
+    if (this->tangleMap.count(id)) {
+        return this->tangleMap[id];
+    }
+    return BlockChainTangleMetaPtr();
 }
 
 BlockChainTangleMetaPtr BlockChainMeta::getTangleEntryByLastBlock(const keto::asn1::HashHelper& id) {
-    return this->tangleMapByLastBlock[id];
+    if (this->tangleMapByLastBlock.count(id)) {
+        return this->tangleMapByLastBlock[id];
+    }
+    return BlockChainTangleMetaPtr();
 }
 
 BlockChainTangleMetaPtr BlockChainMeta::addTangle(const keto::asn1::HashHelper& hash) {
@@ -119,6 +125,13 @@ BlockChainMeta::BlockChainMeta(
 
 void BlockChainMeta::updateTangleEntryByLastBlock(const keto::asn1::HashHelper& orig,
         const keto::asn1::HashHelper& update) {
+    if (!this->tangleMapByLastBlock.count(orig)) {
+        BOOST_THROW_EXCEPTION(keto::block_db::LastTangleNotConfiguredException());
+    }
+    // if they are the same ignore the change
+    if (orig == update) {
+        return;
+    }
     this->tangleMapByLastBlock[update] = this->tangleMapByLastBlock[orig];
     this->tangleMapByLastBlock.erase(orig);
 }

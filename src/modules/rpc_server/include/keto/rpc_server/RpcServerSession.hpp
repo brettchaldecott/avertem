@@ -33,7 +33,9 @@ public:
     static RpcServerSessionPtr init();
     static RpcServerSessionPtr getInstance();
     static void fin();
-    
+
+    std::vector<std::string> handlePeers(const std::vector<uint8_t>& account,
+            const std::string& host);
     void addPeer(const std::vector<uint8_t>& account,
             const std::string& host);
     std::vector<std::string> getPeers(
@@ -42,7 +44,7 @@ public:
             const std::vector<std::vector<uint8_t>>& accounts);
     
 private:
-    std::mutex classMutex;
+    std::recursive_mutex classMutex;
     std::map<std::vector<uint8_t>,std::string> accountPeerCache;
     std::vector<std::string> accountPeerList;
     

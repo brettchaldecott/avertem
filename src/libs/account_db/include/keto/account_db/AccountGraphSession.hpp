@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <mutex>
 
 
 #include <librdf.h>
@@ -64,6 +65,7 @@ protected:
     void rollback();
     
 private:
+    std::recursive_mutex classMutex;
     bool activeTransaction;
     AccountGraphStorePtr accountGraphStore;
     

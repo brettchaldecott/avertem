@@ -901,17 +901,13 @@ public:
         keto::rpc_protocol::PeerResponseHelper peerResponseHelper;
 
         // get the list of peers but ignore the current account
-        std::vector<std::string> peers = RpcServerSession::getInstance()->getPeers(this->serverHelloProtoHelperPtr->getAccountHash());
+        std::stringstream str;
+        str << this->socket_.remote_endpoint().address().to_string() << ":" << Constants::DEFAULT_PORT_NUMBER;
+        std::vector<std::string> peers = RpcServerSession::getInstance()->handlePeers(this->serverHelloProtoHelperPtr->getAccountHash(),str.str());
         if (peers.size() < Constants::MIN_PEERS) {
             peers.push_back(this->rpcServer->getExternalPeerInfo());
         }
         peerResponseHelper.addPeers(peers);
-
-        // this peer to the list of peers
-        std::stringstream str;
-        str << this->socket_.remote_endpoint().address().to_string() << ":" << Constants::DEFAULT_PORT_NUMBER;
-        RpcServerSession::getInstance()->addPeer(
-                this->serverHelloProtoHelperPtr->getAccountHash(),str.str());
 
         // return the list of peers
         std::string result;

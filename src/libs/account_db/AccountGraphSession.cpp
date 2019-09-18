@@ -42,10 +42,12 @@ AccountGraphSession::~AccountGraphSession() {
 }
 
 void AccountGraphSession::persistDirty(keto::asn1::RDFSubjectHelperPtr& subject) {
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     AccountGraphDirtySessionManager::getInstance()->getDirtySession(this->accountGraphStore->dbName)->persistDirty(subject);
 }
 
 void AccountGraphSession::persist(keto::asn1::RDFSubjectHelperPtr& subject) {
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     for (keto::asn1::RDFPredicateHelperPtr predicateHelper : subject->getPredicates()) {
         for (keto::asn1::RDFObjectHelperPtr objectHelper : predicateHelper->listObjects()) {
             librdf_statement* statement= 0;
@@ -82,6 +84,7 @@ void AccountGraphSession::persist(keto::asn1::RDFSubjectHelperPtr& subject) {
 }
     
 void AccountGraphSession::remove(keto::asn1::RDFSubjectHelperPtr& subject) {
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     for (keto::asn1::RDFPredicateHelperPtr predicateHelper : subject->getPredicates()) {
         for (keto::asn1::RDFObjectHelperPtr objectHelper : predicateHelper->listObjects()) {
             librdf_statement* statement= 0;
@@ -119,6 +122,7 @@ void AccountGraphSession::remove(keto::asn1::RDFSubjectHelperPtr& subject) {
 
 
 std::string AccountGraphSession::query(const std::string& queryStr, const std::vector<uint8_t>& accountHash) {
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     keto::rdf_utils::RDFQueryParser rdfQueryParser(queryStr);
     if (!rdfQueryParser.isValidQuery()) {
         BOOST_THROW_EXCEPTION(keto::account_db::InvalidQueryFormat());
@@ -149,6 +153,7 @@ std::string AccountGraphSession::query(const std::string& queryStr, const std::v
 }
 
 ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryStr, const std::vector<uint8_t>& accountHash) {
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     //if (librdf_model_add_submodel(this->accountGraphStore->getModel(),
     //        AccountGraphDirtySessionManager::getInstance()->getDirtySession(this->accountGraphStore->dbName)->getDirtyModel())) {
     //    KETO_LOG_DEBUG << "Faild to add the sub models";
@@ -215,6 +220,7 @@ ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryS
 
 
 ResultVectorMap AccountGraphSession::executeQuery(const std::string& queryStr, const std::vector<uint8_t>& accountHash) {
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     keto::rdf_utils::RDFQueryParser rdfQueryParser(queryStr,accountHash);
     if (!rdfQueryParser.isValidQuery()) {
         BOOST_THROW_EXCEPTION(keto::account_db::InvalidQueryFormat());
@@ -224,6 +230,7 @@ ResultVectorMap AccountGraphSession::executeQuery(const std::string& queryStr, c
 }
 
 ResultVectorMap AccountGraphSession::executeQueryInternal(const std::string& queryStr) {
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     keto::rdf_utils::RDFQueryParser rdfQueryParser(queryStr);
     if (!rdfQueryParser.isValidQuery()) {
         BOOST_THROW_EXCEPTION(keto::account_db::InvalidQueryFormat());
@@ -278,6 +285,7 @@ AccountGraphSession::AccountGraphSession(const AccountGraphStorePtr& accountGrap
 }
 
 void AccountGraphSession::commit() {
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     if (this->activeTransaction) {
         if (librdf_model_transaction_commit(this->accountGraphStore->getModel()) ) {
             std::stringstream ss;
@@ -293,6 +301,7 @@ void AccountGraphSession::commit() {
 }
 
 void AccountGraphSession::rollback() {
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     if (this->activeTransaction) {
         if (librdf_model_transaction_rollback(this->accountGraphStore->getModel()) ) {
             std::stringstream ss;

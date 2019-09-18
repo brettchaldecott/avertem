@@ -36,6 +36,7 @@ KETO_DECLARE_DERIVED_EXCEPTION (DBException, InvalidLastBlockHashException , "Th
 KETO_DECLARE_DERIVED_EXCEPTION (DBException, InvalidTransactionHashException , "The hash is invalid.");
 KETO_DECLARE_DERIVED_EXCEPTION (DBException, ChainNotInitializedException , "Chain not initialized exception.");
 KETO_DECLARE_DERIVED_EXCEPTION (DBException, MasterTangleNotConfiguredException , "Master tangle not configured.");
+KETO_DECLARE_DERIVED_EXCEPTION (DBException, LastTangleNotConfiguredException , "Master tangle not configured.");
 
     
 }
