@@ -58,6 +58,7 @@ public:
         AccountTangle(const AccountTangle& accountTangle) = delete;
         virtual ~AccountTangle();
 
+        keto::asn1::HashHelper getFirstTangleHash();
         keto::asn1::HashHelper getAccountHash();
         bool containsTangle(const keto::asn1::HashHelper& tangle);
         TanglePtr getTangle(const keto::asn1::HashHelper& tangle);

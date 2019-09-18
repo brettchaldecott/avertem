@@ -14,6 +14,7 @@ std::string TangleServiceCache::getSourceVersion() {
 }
 
 TangleServiceCache::Tangle::Tangle(const keto::asn1::HashHelper& tangle) : tangle(tangle) {
+    KETO_LOG_ERROR << "[TangleServiceCache::Tangle::Tangle] The constructor the tangle [" << tangle.getHash(keto::common::StringEncoding::HEX) << "]";
 }
 
 TangleServiceCache::Tangle::~Tangle() {
@@ -28,16 +29,26 @@ TangleServiceCache::AccountTangle::AccountTangle(
         const keto::election_common::ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper) {
     this->accountHash = electionPublishTangleAccountProtoHelper.getAccount();
     this->growing = electionPublishTangleAccountProtoHelper.isGrowing();
-    for (keto::asn1::HashHelper account : electionPublishTangleAccountProtoHelper.getTangles()) {
-        TangleServiceCache::TanglePtr tanglePtr(new TangleServiceCache::Tangle(account));
+    for (keto::asn1::HashHelper tangle : electionPublishTangleAccountProtoHelper.getTangles()) {
+        TangleServiceCache::TanglePtr tanglePtr(new TangleServiceCache::Tangle(tangle));
         this->tangleList.push_back(tanglePtr);
-        this->tangleMap.insert(std::pair<std::string,TangleServiceCache::TanglePtr>(account,tanglePtr));
+        this->tangleMap.insert(std::pair<std::string,TangleServiceCache::TanglePtr>(tangle,tanglePtr));
     }
 }
 
 TangleServiceCache::AccountTangle::~AccountTangle() {
 
 }
+
+
+keto::asn1::HashHelper TangleServiceCache::AccountTangle::getFirstTangleHash() {
+    return this->tangleList.front()->getTangle();
+}
+
+keto::asn1::HashHelper TangleServiceCache::AccountTangle::getAccountHash() {
+    return this->accountHash;
+}
+
 
 bool TangleServiceCache::AccountTangle::containsTangle(const keto::asn1::HashHelper& tangle) {
     if (this->tangleMap.count(tangle)) {
@@ -104,7 +115,14 @@ TangleServiceCache::AccountTanglePtr TangleServiceCache::getGrowing() {
 
 TangleServiceCache::AccountTanglePtr TangleServiceCache::getTangle(const keto::asn1::HashHelper& tangle) {
     std::lock_guard<std::mutex> guard(classMutex);
-    return this->sessionAccounts[tangle];
+    for (std::map<std::string, AccountTanglePtr>::iterator iter = this->sessionAccounts.begin(); iter != this->sessionAccounts.end(); iter++) {
+        if (iter->second->containsTangle(tangle)) {
+            return iter->second;
+        }
+    }
+    std::stringstream ss;
+    ss << "Cannot find the account [" << tangle.getHash(keto::common::StringEncoding::HEX) << "]";
+    BOOST_THROW_EXCEPTION(NoMatchingTangleFound(ss.str()));
 }
 
 void TangleServiceCache::publish(const keto::election_common::ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper) {
@@ -114,10 +132,25 @@ void TangleServiceCache::publish(const keto::election_common::ElectionPublishTan
 }
 
 
-void TangleServiceCache::confirmation(const keto::election_common::ElectionConfirmationHelper& electionPublishTangleAccountProtoHelper) {
+void TangleServiceCache::confirmation(const keto::election_common::ElectionConfirmationHelper& electionConfirmationHelper) {
     std::lock_guard<std::mutex> guard(classMutex);
-    this->sessionAccounts[electionPublishTangleAccountProtoHelper.getAccount()] = this->nextSessionAccounts[electionPublishTangleAccountProtoHelper.getAccount()];
-    this->nextSessionAccounts.erase(electionPublishTangleAccountProtoHelper.getAccount());
+    AccountTanglePtr accountTanglePtr = this->nextSessionAccounts[electionConfirmationHelper.getAccount()];
+    if (!accountTanglePtr) {
+        this->nextSessionAccounts.erase(electionConfirmationHelper.getAccount());
+        KETO_LOG_ERROR << "[TangleServiceCache::confirmation]Failed to find the account [" << electionConfirmationHelper.getAccount().getHash(keto::common::StringEncoding::HEX) << "]";
+        return;
+    }
+    for (std::map<std::string, AccountTanglePtr>::iterator iter = this->sessionAccounts.begin(); iter != this->sessionAccounts.end(); iter++) {
+        if (iter->second->containsTangle(accountTanglePtr->getFirstTangleHash())) {
+            KETO_LOG_INFO << "[TangleServiceCache::confirmation] Found previous tangle manager[" << iter->second->getAccountHash().getHash(keto::common::StringEncoding::HEX)
+                          << "] removing it";
+            this->sessionAccounts.erase(iter);
+        }
+    }
+    this->sessionAccounts[electionConfirmationHelper.getAccount()] = accountTanglePtr;
+    this->nextSessionAccounts.erase(electionConfirmationHelper.getAccount());
+    KETO_LOG_INFO << "[TangleServiceCache::confirmation] Added the account [" << electionConfirmationHelper.getAccount().getHash(keto::common::StringEncoding::HEX)
+        << "] to the tangle cache list";
 }
 
 }

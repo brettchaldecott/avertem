@@ -273,7 +273,7 @@ AccountGraphSession::AccountGraphSession(const AccountGraphStorePtr& accountGrap
     if (librdf_model_transaction_start(this->accountGraphStore->getModel())) {
         // the current back end store does not support transactions
         this->activeTransaction = false;
-        KETO_LOG_WARNING << "Bankend store for this model does not support transactions : "  << this->accountGraphStore->getDbName();
+        KETO_LOG_DEBUG << "Bankend store for this model does not support transactions : "  << this->accountGraphStore->getDbName();
     }
 }
 

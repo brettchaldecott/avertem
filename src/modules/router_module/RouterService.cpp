@@ -80,22 +80,27 @@ keto::event::Event RouterService::routeMessage(const keto::event::Event& event) 
     keto::transaction_common::MessageWrapperProtoHelper  messageWrapperProtoHelper =
             keto::server_common::fromEvent<keto::proto::MessageWrapper>(event);
 
-    KETO_LOG_INFO << "Attempt to route the account hash : "
-            << messageWrapperProtoHelper.getAccountHash().getHash(keto::common::StringEncoding::HEX);
 
     if (!TangleServiceCache::getInstance()->containsAccount(messageWrapperProtoHelper.getAccountHash())) {
-        keto::proto::AccountChainTangle accountChainTangle;
-        accountChainTangle.set_account_id(messageWrapperProtoHelper.getSourceAccountHash());
-        accountChainTangle =
+        keto::proto::AccountChainTangle requestAccountChainTangle;
+        requestAccountChainTangle.set_account_id(messageWrapperProtoHelper.getSourceAccountHash());
+        keto::proto::AccountChainTangle accountChainTangle =
                 keto::server_common::fromEvent<keto::proto::AccountChainTangle>(
                         keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::AccountChainTangle>(
-                                keto::server_common::Events::GET_ACCOUNT_TANGLE,accountChainTangle)));
+                                keto::server_common::Events::GET_ACCOUNT_TANGLE,requestAccountChainTangle)));
         if (!accountChainTangle.found()) {
             messageWrapperProtoHelper.setAccountHash(
                     TangleServiceCache::getInstance()->getGrowing()->getAccountHash());
+            KETO_LOG_INFO << "Attempt to route to a new growing tangle ["
+                          << messageWrapperProtoHelper.getAccountHash().getHash(keto::common::StringEncoding::HEX) << "] for source ["
+                          << messageWrapperProtoHelper.getSourceAccountHash().getHash(keto::common::StringEncoding::HEX) << "]";
+
         } else {
             messageWrapperProtoHelper.setAccountHash(
                     TangleServiceCache::getInstance()->getTangle(accountChainTangle.chain_tangle_id())->getAccountHash());
+            KETO_LOG_INFO << "Attempt to route to an existing tangle ["
+                          << messageWrapperProtoHelper.getAccountHash().getHash(keto::common::StringEncoding::HEX) << "] for source ["
+                          << messageWrapperProtoHelper.getSourceAccountHash().getHash(keto::common::StringEncoding::HEX) << "]";
         }
     }
 

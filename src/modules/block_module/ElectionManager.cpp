@@ -291,8 +291,8 @@ void ElectionManager::publishElection() {
             tangles.erase(tangles.begin());
         }
         KETO_LOG_DEBUG << "[ElectionManager::publishElection] set the grow flag tangles [" << tangles.size() << "]";
-        if (!(electionPublishTangleAccountProtoHelperPtr->size() >= Constants::MAX_TANGLES_TO_ACCOUNT)) {
-            electionPublishTangleAccountProtoHelperPtr->setGrowing(false);
+        if (electionPublishTangleAccountProtoHelperPtr->size() < Constants::MAX_TANGLES_TO_ACCOUNT) {
+            electionPublishTangleAccountProtoHelperPtr->setGrowing(true);
         }
 
         // generate transaction and push

@@ -462,7 +462,7 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
     BlockChainTangleMetaPtr blockChainTangleMetaPtr =
             this->blockChainMetaPtr->getTangleEntryByLastBlock(parentHash);
     if (!blockChainTangleMetaPtr) {
-        KETO_LOG_DEBUG << "[BlockChain::writeBlock] parent hash is [" << parentHash.getHash(keto::common::StringEncoding::HEX)
+        KETO_LOG_INFO << "[BlockChain::writeBlock] parent hash is [" << parentHash.getHash(keto::common::StringEncoding::HEX)
                        << "] Add a new block chain tangle : " << blockHash.getHash(keto::common::StringEncoding::HEX);
         blockChainTangleMetaPtr = this->blockChainMetaPtr->addTangle(blockHash);
         this->tangleManagerInterfacePtr->addTangle(blockChainTangleMetaPtr->getHash());
@@ -487,9 +487,9 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
         transactionMeta.set_transaction_hash(transactionHash);
         transactionMeta.set_block_hash(blockHash);
         transactionMeta.set_block_chain_hash(this->blockChainMetaPtr->getHashId());
-        std::string value;
-        transactionMeta.SerializeToString(&value);
-        keto::rocks_db::SliceHelper transactionMetaHelper(value);
+        std::string transactionValue;
+        transactionMeta.SerializeToString(&transactionValue);
+        keto::rocks_db::SliceHelper transactionMetaHelper(transactionValue);
 
         transactionTransaction->Put(keto::rocks_db::SliceHelper(
                 (const std::vector<uint8_t>)transactionHash),transactionMetaHelper);
@@ -507,7 +507,10 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
         accountMeta.set_block_tangle_hash_id(blockChainTangleMetaPtr->getHash());
         accountMeta.set_block_chain_hash(this->blockChainMetaPtr->getHashId());
         std::string accountValue;
-        accountMeta.SerializeToString(&value);
+        accountMeta.SerializeToString(&accountValue);
+        KETO_LOG_INFO << "[BlockChain::writeBlock] for account [" << transactionWrapperHelper.getCurrentAccount().getHash(keto::common::StringEncoding::HEX)
+                      << "] set the hash id to [" << blockChainTangleMetaPtr->getHash().getHash(keto::common::StringEncoding::HEX) << "] data size [" <<
+                      accountValue.size() << "]";
         keto::rocks_db::SliceHelper accountMetaHelper(accountValue);
 
         accountTransaction->Put(keto::rocks_db::SliceHelper(
@@ -740,16 +743,23 @@ keto::proto::AccountChainTangle BlockChain::getAccountBlockTangle(const keto::pr
     rocksdb::Transaction* accountTransaction =  resource->getTransaction(Constants::ACCOUNTS_INDEX);
 
     rocksdb::ReadOptions readOptions;
-    keto::rocks_db::SliceHelper keyHelper(accountChainTangle.account_id());
+    keto::asn1::HashHelper accountHash(accountChainTangle.account_id());
+    keto::rocks_db::SliceHelper keyHelper((std::vector<uint8_t>)accountHash);
     std::string value;
     auto status = accountTransaction->Get(readOptions,keyHelper,&value);
-    if (rocksdb::Status::OK() == status && rocksdb::Status::NotFound() != status) {
+    if (rocksdb::Status::OK() != status && rocksdb::Status::NotFound() == status) {
+        KETO_LOG_INFO << "[BlockChain::getAccountBlockTangle] Could not find the account [" << accountHash.getHash(keto::common::StringEncoding::HEX)
+            << "][" << status.ToString() << "][" << accountTransaction->GetNumKeys() << "]";
         result.set_found(false);
     } else {
         keto::proto::AccountMeta accountMeta;
         accountMeta.ParseFromString(value);
         result.set_found(true);
         result.set_chain_tangle_id(accountMeta.block_tangle_hash_id());
+        keto::asn1::HashHelper tangleHashHelper(accountMeta.block_tangle_hash_id());
+        KETO_LOG_INFO << "[BlockChain::getAccountBlockTangle] Find the account [" << accountHash.getHash(keto::common::StringEncoding::HEX)
+                      << "][" << status.ToString() << "][" << tangleHashHelper.getHash(keto::common::StringEncoding::HEX) << "]";
+
     }
 
     return result;
@@ -764,7 +774,7 @@ bool BlockChain::getAccountTangle(const keto::asn1::HashHelper& accountHash, ket
     keto::rocks_db::SliceHelper keyHelper((std::vector<uint8_t>)accountHash);
     std::string value;
     auto status = accountTransaction->Get(readOptions,keyHelper,&value);
-    if (rocksdb::Status::OK() == status && rocksdb::Status::NotFound() != status) {
+    if (rocksdb::Status::OK() != status && rocksdb::Status::NotFound() == status) {
         return false;
     } else {
         keto::proto::AccountMeta accountMeta;
@@ -895,7 +905,7 @@ bool BlockChain::accountExists(const keto::asn1::HashHelper& accountHash) {
     keto::rocks_db::SliceHelper keyHelper((std::vector<uint8_t>)accountHash);
     std::string value;
     auto status = accountTransaction->Get(readOptions,keyHelper,&value);
-    if (rocksdb::Status::OK() == status && rocksdb::Status::NotFound() != status) {
+    if (rocksdb::Status::OK() != status && rocksdb::Status::NotFound() == status) {
         return false;
     }
     return true;

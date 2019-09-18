@@ -35,9 +35,7 @@ HashHelper::HashHelper() {
 }
 
 HashHelper::HashHelper(const std::string& hash) {
-    for (const char entry: hash) {
-        this->hash.push_back(entry);
-    }
+    this->hash = keto::crypto::SecureVector(hash.begin(), hash.end());
 }
 
 
@@ -71,9 +69,7 @@ HashHelper::~HashHelper() {
 }
 
 HashHelper& HashHelper::operator=(const std::string& hash) {
-    for (const char entry: hash) {
-        this->hash.push_back(entry);
-    }
+    this->hash = keto::crypto::SecureVector(hash.begin(), hash.end());
     return (*this);
 }
 

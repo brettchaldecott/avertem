@@ -15,7 +15,10 @@
 #include <condition_variable>
 
 #include "keto/rpc_server/RpcServerSession.hpp"
+
 #include "keto/environment/LogManager.hpp"
+
+#include "keto/rpc_server/Constants.hpp"
 
 namespace keto {
 namespace rpc_server {
@@ -44,21 +47,25 @@ void RpcServerSession::fin() {
 void RpcServerSession::addPeer(const std::vector<uint8_t>& account,
         const std::string& host) {
     std::lock_guard<std::mutex> guard(classMutex);
+    if (!this->accountPeerCache.count(account)) {
+        if (this->accountPeerList.size() >= Constants::MAX_PEERS) {
+            this->accountPeerList.erase(this->accountPeerList.begin());
+        }
+        this->accountPeerList.push_back(host);
+    }
     this->accountPeerCache[account] = host;
 }
 
 std::vector<std::string> RpcServerSession::getPeers(
         const std::vector<uint8_t> account) {
     std::lock_guard<std::mutex> guard(classMutex);
-    std::vector<std::string> result;
-    for (auto const &entry : this->accountPeerCache) {
-        KETO_LOG_DEBUG << "The entry [" << entry.second << "]";
-        if (entry.first != account) {
-            KETO_LOG_DEBUG << "The entry [" << entry.second << "] is getting added";
-            result.push_back(entry.second);
+    std::set<std::string> result(this->accountPeerList.begin(),this->accountPeerList.end());
+    if (this->accountPeerCache.count(account)) {
+        if (result.count(this->accountPeerCache[account])) {
+            result.erase(this->accountPeerCache[account]);
         }
     }
-    return result;
+    return std::vector<std::string>(result.begin(),result.end());
 }
 
 std::vector<std::string> RpcServerSession::getPeers(

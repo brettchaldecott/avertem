@@ -15,7 +15,7 @@ std::string ElectionPublishTangleAccountProtoHelper::getSourceVersion() {
 
 ElectionPublishTangleAccountProtoHelper::ElectionPublishTangleAccountProtoHelper() {
     this->electionPublishTangleAccount.set_version(keto::common::MetaInfo::PROTOCOL_VERSION);
-    setGrowing(true);
+    setGrowing(false);
 }
 
 ElectionPublishTangleAccountProtoHelper::ElectionPublishTangleAccountProtoHelper(const keto::proto::ElectionPublishTangleAccount& electionPublishTangleAccount) :

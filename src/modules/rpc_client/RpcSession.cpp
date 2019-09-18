@@ -139,8 +139,10 @@ void RpcSession::ReadQueue::deactivate() {
         this->active = false;
         stateCondition.notify_all();
     }
-    queueThreadPtr->join();
-    queueThreadPtr.reset();
+    if (queueThreadPtr) {
+        queueThreadPtr->join();
+        queueThreadPtr.reset();
+    }
 }
 
 void RpcSession::ReadQueue::pushEntry(const std::string& command, const keto::server_common::StringVector& stringVector) {
@@ -162,7 +164,7 @@ RpcSession::ReadQueueEntryPtr RpcSession::ReadQueue::popEntry() {
 }
 
 void RpcSession::ReadQueue::run() {
-    while(this->isActive()) {
+    while(this->isActive() && !this->session->isClosed()) {
         RpcSession::ReadQueueEntryPtr entry = popEntry();
         if (entry) {
             this->session->processQueueEntry(entry);
@@ -229,8 +231,10 @@ RpcSession::RpcSession(
 }
 
 RpcSession::~RpcSession() {
-    this->readQueuePtr->deactivate();
-    this->readQueuePtr.reset();
+    if (this->readQueuePtr) {
+        this->readQueuePtr->deactivate();
+        this->readQueuePtr.reset();
+    }
 }
 
 // Start the asynchronous operation
@@ -500,10 +504,7 @@ void RpcSession::processQueueEntry(const ReadQueueEntryPtr& readQueueEntryPtr) {
         message = handleRetryResponse(command);
     }
 
-    if (this->isClosed()) {
-        KETO_LOG_INFO << this->sessionNumber << " Closing the session";
-        do_close();
-    } else if (!message.empty()) {
+    if (!message.empty() && !this->isClosed()) {
         send(message);
     }
 
@@ -572,7 +573,7 @@ std::string RpcSession::buildMessage(const std::string& command, const std::stri
 
 std::string RpcSession::buildMessage(const std::string& command, const std::vector<uint8_t>& message) {
     std::stringstream ss;
-    ss << command << " " << Botan::hex_encode(message);
+    ss << command << " " << Botan::hex_encode(message,true);
     return ss.str();
 }
 
@@ -601,7 +602,7 @@ std::string RpcSession::consensusResponse(const std::string& command, const std:
 }
 
 std::string RpcSession::serverRequest(const std::string& command, const std::vector<uint8_t>& message) {
-    return serverRequest(command, Botan::hex_encode(message));
+    return serverRequest(command, Botan::hex_encode(message,true));
 }
 
 std::string RpcSession::serverRequest(const std::string& command, const std::string& message) {
@@ -990,12 +991,10 @@ void RpcSession::requestBlockSync(const keto::proto::SignedBlockBatchRequest& si
 
 void RpcSession::pushBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage) {
     KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::pushBlock]: push the block";
-    std::string messageWrapperStr = signedBlockWrapperMessage.SerializeAsString();
-    std::vector<uint8_t> messageBytes =  keto::server_common::VectorUtils().copyStringToVector(
-            messageWrapperStr);
-
+    std::string messageWrapperStr;
+    signedBlockWrapperMessage.SerializeToString(&messageWrapperStr);
     send(serverRequest(keto::server_common::Constants::RPC_COMMANDS::BLOCK,
-                  messageBytes));
+                  Botan::hex_encode((uint8_t*)messageWrapperStr.data(),messageWrapperStr.size(),true)));
     KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::pushBlock]: ";
 }
 

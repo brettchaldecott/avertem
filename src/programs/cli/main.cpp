@@ -73,6 +73,7 @@ boost::program_options::options_description generateOptionDescriptions() {
             ("mnemonic_phrase,M", po::value<std::string>(),"The mnemonic phrase.")
             ("mnemonic_pass_phrase,P", po::value<std::string>(),"The mnemonic pass phrase.")
             ("target,t",po::value<std::string>(), "Target Account Hash.")
+            ("source,s",po::value<std::string>(), "Source Account Hash.")
             ("mnemonic_language,L", po::value<std::string>(),"language [en...].")
             ("value,V", po::value<long>(), "Value of the transaction.");
 

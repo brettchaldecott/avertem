@@ -29,6 +29,7 @@ KETO_DECLARE_DERIVED_EXCEPTION (RouterModuleException, NoServicesRegisteredExcep
 KETO_DECLARE_DERIVED_EXCEPTION (RouterModuleException, NoAccountsForServiceException , "No accounts for the service.");
 KETO_DECLARE_DERIVED_EXCEPTION (RouterModuleException, NoPeersRegistered , "No Registered Peers.");
 KETO_DECLARE_DERIVED_EXCEPTION (RouterModuleException, NoGrowingTangle , "No growing tangle.");
+KETO_DECLARE_DERIVED_EXCEPTION (RouterModuleException, NoMatchingTangleFound , "No matching tangle found.");
 
 }
 }

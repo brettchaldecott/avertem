@@ -28,9 +28,7 @@ SliceHelper::SliceHelper() {
 }
 
 SliceHelper::SliceHelper(const std::string& sliceBytes) {
-    for(const char entry : sliceBytes) {
-        this->sliceBytes.push_back((uint8_t)entry);
-    }
+    this->sliceBytes = std::vector<uint8_t>(sliceBytes.begin(),sliceBytes.end());
 }
 
 
@@ -52,9 +50,7 @@ SliceHelper::~SliceHelper() {
 }
 
 SliceHelper& SliceHelper::operator = (const std::string& sliceBytes) {
-    for(const char entry : sliceBytes) {
-        this->sliceBytes.push_back((uint8_t)entry);
-    }
+    this->sliceBytes = std::vector<uint8_t>(sliceBytes.begin(),sliceBytes.end());
     return (*this);
 }
     
@@ -84,9 +80,8 @@ SliceHelper::operator std::vector<uint8_t> () {
 
 SliceHelper::operator std::string () {
     std::stringstream ss;
-    for (uint8_t entry : this->sliceBytes) {
-        ss << (char)entry;
-    }
+    std::copy(this->sliceBytes.begin(), this->sliceBytes.end(),
+              std::ostream_iterator<uint8_t>(ss));
     return ss.str();
 }
     

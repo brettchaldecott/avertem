@@ -899,23 +899,21 @@ public:
         this->rpcServer->setExternalIp(this->socket_.local_endpoint().address());
         std::vector<std::string> urls;
         keto::rpc_protocol::PeerResponseHelper peerResponseHelper;
-        if (payload == keto::server_common::Constants::RPC_COMMANDS::PEERS) {
-            std::stringstream str;
-            str << this->socket_.remote_endpoint().address().to_string() << ":" << Constants::DEFAULT_PORT_NUMBER;
-            RpcServerSession::getInstance()->addPeer(
-                this->serverHelloProtoHelperPtr->getAccountHash(),str.str());
-            std::vector<std::string> peers = RpcServerSession::getInstance()->getPeers(this->serverHelloProtoHelperPtr->getAccountHash());
-            if (peers.size() < Constants::MIN_PEERS) {
-                peers.push_back(this->rpcServer->getExternalPeerInfo());
-            }
-            peerResponseHelper.addPeers(peers);
-            
-        } else {
-            
-            // deserialize the object
-            KETO_LOG_DEBUG << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " no peers were provided request a retry.";
-            return handleRetryResponse(command);
+
+        // get the list of peers but ignore the current account
+        std::vector<std::string> peers = RpcServerSession::getInstance()->getPeers(this->serverHelloProtoHelperPtr->getAccountHash());
+        if (peers.size() < Constants::MIN_PEERS) {
+            peers.push_back(this->rpcServer->getExternalPeerInfo());
         }
+        peerResponseHelper.addPeers(peers);
+
+        // this peer to the list of peers
+        std::stringstream str;
+        str << this->socket_.remote_endpoint().address().to_string() << ":" << Constants::DEFAULT_PORT_NUMBER;
+        RpcServerSession::getInstance()->addPeer(
+                this->serverHelloProtoHelperPtr->getAccountHash(),str.str());
+
+        // return the list of peers
         std::string result;
         peerResponseHelper.operator keto::proto::PeerResponse().SerializePartialToString(&result);
         std::stringstream ss;
@@ -1117,9 +1115,8 @@ public:
     void handleBlockPush(const std::string& command, const std::string& payload) {
         KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleBlockPush] handle block push";
         keto::proto::SignedBlockWrapperMessage signedBlockWrapperMessage;
-        std::string rpcVector = keto::server_common::VectorUtils().copyVectorToString(
-                Botan::hex_decode(payload));
-        signedBlockWrapperMessage.ParseFromString(rpcVector);
+        signedBlockWrapperMessage.ParseFromString(keto::server_common::VectorUtils().copyVectorToString(
+                Botan::hex_decode(payload)));
 
         keto::proto::MessageWrapperResponse messageWrapperResponse =
                 keto::server_common::fromEvent<keto::proto::MessageWrapperResponse>(

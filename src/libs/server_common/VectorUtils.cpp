@@ -31,11 +31,8 @@ VectorUtils::~VectorUtils() {
 }
 
 std::vector<uint8_t> VectorUtils::copyStringToVector(const std::string& str) {
-    std::vector<uint8_t> result;
-    for (int index = 0; index < str.size(); index++) {
-        result.push_back(str[index]);
-    }
-    return result;
+    std::vector<uint8_t> vec(str.begin(), str.end());
+    return vec;
 }
 
 std::string VectorUtils::copyVectorToString(const std::vector<uint8_t>& vec) {
