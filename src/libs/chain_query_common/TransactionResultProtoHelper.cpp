@@ -111,7 +111,7 @@ TransactionResultProtoHelper& TransactionResultProtoHelper::addChangesetHash(con
 
 std::vector<keto::asn1::HashHelper> TransactionResultProtoHelper::getTransactionTraceHashes() {
     std::vector<keto::asn1::HashHelper> transactionTraceHashes;
-    for (int index = 0; index < this->transactionResult.transaction_trace_hashes(); index++){
+    for (int index = 0; index < this->transactionResult.transaction_trace_hashes_size(); index++){
         transactionTraceHashes.push_back(keto::asn1::HashHelper(this->transactionResult.transaction_trace_hashes(index)));
     }
     return transactionTraceHashes;

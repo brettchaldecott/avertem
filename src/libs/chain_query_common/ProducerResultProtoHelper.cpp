@@ -34,20 +34,20 @@ ProducerResultProtoHelper::~ProducerResultProtoHelper() {
 
 std::vector<ProducerInfoResultProtoHelperPtr> ProducerResultProtoHelper::getProducers() {
     std::vector<ProducerInfoResultProtoHelperPtr> result;
-    for (int index = 0; index < this->producerResult.tangles_size(); index++) {
+    for (int index = 0; index < this->producerResult.producers_size(); index++) {
         result.push_back(ProducerInfoResultProtoHelperPtr(
-                new ProducerInfoResultProtoHelper(this->producerResult.tangles(index))));
+                new ProducerInfoResultProtoHelper(this->producerResult.producers(index))));
     }
     return result;
 }
 
 ProducerResultProtoHelper& ProducerResultProtoHelper::addProducer(const ProducerInfoResultProtoHelper& producer) {
-    *this->producerResult.add_tangles() = producer;
+    *this->producerResult.add_producers() = producer;
     return *this;
 }
 
 ProducerResultProtoHelper& ProducerResultProtoHelper::addProducer(const ProducerInfoResultProtoHelperPtr& producer) {
-    *this->producerResult.add_tangles() = *producer;
+    *this->producerResult.add_producers() = *producer;
     return *this;
 }
 

@@ -130,8 +130,8 @@ keto::event::Event EventRegistry::electRpcProcessConfirmation(const keto::event:
 }
 
 keto::event::Event EventRegistry::getProducers(const keto::event::Event& event) {
-    TangleServiceCache::getInstance()->confirmation(electionConfirmationHelper);
-    return event;
+    return keto::server_common::toEvent<keto::proto::ProducerResult>(
+            TangleServiceCache::getInstance()->getProducers());
 }
 
 
