@@ -212,6 +212,14 @@ const char* Events::ROUTER_QUERY::PUSH_RPC_PEER                         = "ROUTE
 const char* Events::ROUTER_QUERY::PROCESS_PUSH_RPC_PEER                 = "ROUTER_QUERY::PROCESS_PUSH_RPC_PEER";
 
 
+const char* Events::BLOCK_QUERY::GET_BLOCKS                             = "BLOCK_QUERY::GET_BLOCKS";
+const char* Events::BLOCK_QUERY::GET_BLOCK                              = "BLOCK_QUERY::GET_BLOCK";
+const char* Events::BLOCK_QUERY::GET_BLOCK_TRANSACTIONS                 = "BLOCK_QUERY::GET_BLOCK_TRANSACTIONS";
+const char* Events::BLOCK_QUERY::GET_TRANSACTION                        = "BLOCK_QUERY::GET_TRANSACTION";
+const char* Events::BLOCK_QUERY::GET_ACCOUNT_TRANSACTIONS               = "BLOCK_QUERY::GET_ACCOUNT_TRANSACTIONS";
+
+const char* Events::PRODUCER_QUERY::GET_PRODUCER                        = "PRODUCER_QUERY::GET_PRODUCER";
+
 const char* Events::GET_SOFTWARE_CONSENSUS_MESSAGE
                                             = "GET_SOFTWARE_CONSENSUS_MESSAGE";
 const char* Events::VALIDATE_SOFTWARE_CONSENSUS_MESSAGE

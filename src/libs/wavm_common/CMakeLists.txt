@@ -57,6 +57,7 @@ target_include_directories( keto_wavm_common
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../event_service_api/include/"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../module_manager/include/"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../account_query/include/"
+                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../chain_query_common/include/"
                             PUBLIC "${PROTO_HDRS}"
                             ${Boost_INCLUDE_DIRS}
                             ${BOTAN_INCLUDE_DIR}

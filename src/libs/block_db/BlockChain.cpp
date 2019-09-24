@@ -5,6 +5,7 @@
 #include <Block.h>
 #include <keto/server_common/StringUtils.hpp>
 #include <keto/server_common/Events.hpp>
+#include <SignedBlock.h>
 #include "BlockChain.pb.h"
 
 #include "keto/block_db/BlockChain.hpp"
@@ -525,6 +526,7 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
     blockMeta.set_block_hash((const std::string&)blockHash);
     blockMeta.set_block_parent_hash((const std::string&)parentHash);
     blockMeta.set_chain_id((const std::string&)this->blockChainMetaPtr->getHashId());
+    blockMeta.set_tangle_id(blockChainTangleMetaPtr->getHash());
     blockMeta.set_encrypted(this->blockChainMetaPtr->isEncrypted());
 
     if (this->blockChainMetaPtr->isEncrypted()) {
@@ -737,6 +739,64 @@ keto::proto::SignedBlockWrapper BlockChain::getBlock(keto::asn1::HashHelper hash
 }
 
 
+keto::proto::SignedBlockWrapper BlockChain::getBlock(keto::asn1::HashHelper hash, BlockResourcePtr resource,
+        keto::proto::BlockWrapper& blockWrapper) {
+
+    KETO_LOG_DEBUG << "[BlockChain::getBlock]" << " Get the block : " << hash.getHash(keto::common::StringEncoding::HEX);
+    rocksdb::Transaction* blockTransaction = resource->getTransaction(Constants::BLOCKS_INDEX);
+    rocksdb::Transaction* nestedTransaction = resource->getTransaction(Constants::NESTED_INDEX);
+
+    rocksdb::ReadOptions readOptions;
+    keto::rocks_db::SliceHelper keyHelper((std::vector<uint8_t>)hash);
+    std::string value;
+
+    auto status = blockTransaction->Get(readOptions,keyHelper,&value);
+    if (rocksdb::Status::OK() != status && rocksdb::Status::NotFound() == status) {
+        // not found
+        std::stringstream ss;
+        ss << "The last hash was not found in the store [" << hash.getHash(keto::common::StringEncoding::HEX) << "][" << status.ToString()
+           << "] : " << status.code();
+        BOOST_THROW_EXCEPTION(keto::block_db::InvalidLastBlockHashException(ss.str()));
+    }
+
+    //keto::proto::BlockWrapper blockWrapper;
+    blockWrapper.ParseFromString(value);
+
+    // decrypt the block
+    if (this->blockChainMetaPtr->isEncrypted()) {
+        KETO_LOG_DEBUG << "[BlockChain::getBlock]" << " The block is encrypted and needs to be decrypted : " <<
+                       hash.getHash(keto::common::StringEncoding::HEX);
+        keto::key_store_utils::EncryptionRequestProtoHelper encryptionRequestProtoHelper;
+        encryptionRequestProtoHelper = keto::server_common::VectorUtils().copyStringToVector(
+                blockWrapper.asn1_block());
+        keto::key_store_utils::EncryptionResponseProtoHelper encryptionResponseProtoHelper(
+                keto::server_common::fromEvent<keto::proto::EncryptResponse>(
+                        keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::EncryptRequest>(
+                                keto::server_common::Events::ENCRYPT_ASN1::DECRYPT,encryptionRequestProtoHelper))));
+        blockWrapper.set_asn1_block(encryptionResponseProtoHelper);
+        KETO_LOG_DEBUG << "[BlockChain::getBlock]" << " Decrypted the buffer";
+    }
+
+    keto::block_db::SignedBlockWrapperProtoHelper signedBlockWrapperProtoHelper(blockWrapper);
+    signedBlockWrapperProtoHelper.loadSignedBlock();
+
+    std::string nestedBlockStr;
+    status = nestedTransaction->Get(readOptions,keyHelper,&nestedBlockStr);
+    if (rocksdb::Status::OK() == status && rocksdb::Status::NotFound() != status) {
+        keto::proto::NestedBlockMeta nestedBlockMeta;
+        nestedBlockMeta.ParseFromString(nestedBlockStr);
+        KETO_LOG_DEBUG << "[BlockChain::getBlock]" << " The nexted hash blocks : " << nestedBlockMeta.nested_hashs_size();
+        for (int index = 0; index < nestedBlockMeta.nested_hashs_size(); index++) {
+            signedBlockWrapperProtoHelper.addNestedBlocks(
+                    getBlock(
+                            nestedBlockMeta.nested_hashs(index),resource));
+        }
+    }
+    KETO_LOG_DEBUG << "[BlockChain::getBlock]" << " Return the signed block wrappers : " << hash.getHash(keto::common::StringEncoding::HEX);
+    return signedBlockWrapperProtoHelper;
+}
+
+
 keto::proto::AccountChainTangle BlockChain::getAccountBlockTangle(const keto::proto::AccountChainTangle& accountChainTangle) {
     keto::proto::AccountChainTangle result = accountChainTangle;
     BlockResourcePtr resource = blockResourceManagerPtr->getResource();
@@ -807,6 +867,85 @@ void BlockChain::setActiveTangles(const std::vector<keto::asn1::HashHelper>& tan
 void BlockChain::setCurrentTangle(const keto::asn1::HashHelper& tangle) {
     this->tangleManagerInterfacePtr->setCurrentTangle(tangle);
 }
+
+
+keto::chain_query_common::BlockResultSetProtoHelperPtr BlockChain::performBlockQuery(
+        const keto::chain_query_common::BlockQueryProtoHelper& blockQueryProtoHelper) {
+    BlockResourcePtr resource = blockResourceManagerPtr->getResource();
+
+    keto::chain_query_common::BlockResultSetProtoHelperPtr blockResultSetProtoHelperPtr(
+            new keto::chain_query_common::BlockResultSetProtoHelper());
+    std::vector<keto::asn1::HashHelper> startingPoints;
+    if (blockQueryProtoHelper.getBlockHashId().empty()) {
+        for (BlockChainTangleMetaPtr blockChainTangleMetaPtr : this->blockChainMetaPtr->getTangles()) {
+            startingPoints.push_back(blockChainTangleMetaPtr->getLastBlockHash());
+        }
+    } else {
+        startingPoints.push_back(blockQueryProtoHelper.getBlockHashId());
+    }
+
+    for (keto::asn1::HashHelper startHash: startingPoints) {
+        keto::asn1::HashHelper currentHash = startHash;
+        for (int count = 0; count < blockQueryProtoHelper.getNumberOfBlocks(); count++) {
+            keto::chain_query_common::BlockResultProtoHelper blockResultProtoHelper;
+            keto::proto::BlockWrapper blockWrapper;
+            SignedBlockWrapperProtoHelper signedBlockWrapperProtoHelper(getBlock(currentHash,resource,blockWrapper));
+
+            SignedBlock& signedBlock = signedBlockWrapperProtoHelper;
+
+            keto::asn1::HashHelper parentHash = signedBlockWrapperProtoHelper.getParentHash();
+            blockResultProtoHelper.setTangleHashId(blockWrapper.block_meta().tangle_id());
+            blockResultProtoHelper.setBlockHashId(signedBlockWrapperProtoHelper.getHash());
+            blockResultProtoHelper.setCreated(keto::asn1::TimeHelper(signedBlock.date));
+            blockResultProtoHelper.setParentBlockHashId(parentHash);
+            blockResultProtoHelper.setAcceptedHash(signedBlock.block.acceptedCheck.merkelRoot);
+            blockResultProtoHelper.setValidationHash(signedBlock.block.validateCheck.merkelRoot);
+            blockResultProtoHelper.setMerkelRoot(signedBlock.block.merkelRoot);
+            blockResultProtoHelper.setSignature(keto::asn1::SignatureHelper(*signedBlock.signatures.list.array[0]));
+            blockResultProtoHelper.setBlockHeight(signedBlockWrapperProtoHelper.getHeight());
+
+            for (int index = 0; index < signedBlock.block.transactions.list.count; index++) {
+                TransactionWrapper_t *transactionWrapper = signedBlock.block.transactions.list.array[index];
+                keto::transaction_common::TransactionWrapperHelper transactionWrapperHelper(transactionWrapper, false);
+                keto::chain_query_common::TransactionResultProtoHelper transactionResultProtoHelper;
+                keto::transaction_common::SignedTransactionHelperPtr signedTransactionHelperPtr = transactionWrapperHelper.getSignedTransaction();
+                keto::transaction_common::TransactionHelperPtr transactionHelperPtr = signedTransactionHelperPtr->getTransaction();
+                transactionResultProtoHelper.setTransactionHashId(transactionWrapperHelper.getHash());
+                transactionResultProtoHelper.setCreated(transactionHelperPtr->getDate());
+                transactionResultProtoHelper.setParentTransactionHashId(transactionWrapperHelper.getParentHash());
+                transactionResultProtoHelper.setSourceAccountHashId(transactionWrapperHelper.getSourceAccount());
+                transactionResultProtoHelper.setTargetAccountHashId(transactionWrapperHelper.getTargetAccount());
+                transactionResultProtoHelper.setValue(transactionHelperPtr->getValue());
+                transactionResultProtoHelper.setSignature(signedTransactionHelperPtr->getSignature());
+                transactionResultProtoHelper.setStatus(transactionWrapperHelper.getStatus());
+                for (keto::transaction_common::TransactionTraceHelperPtr transactionTraceHelperPtr :
+                    transactionWrapperHelper.getTransactionTrace()) {
+                    transactionResultProtoHelper.addTransactionTraceHash(transactionTraceHelperPtr->getSignatureHash());
+                }
+                for (keto::transaction_common::SignedChangeSetHelperPtr signedChangeSetHelperPtr :
+                        transactionWrapperHelper.getChangeSets()) {
+                    transactionResultProtoHelper.addChangesetHash(signedChangeSetHelperPtr->getHash());
+                }
+
+                blockResultProtoHelper.addTransaction(transactionResultProtoHelper);
+            }
+
+            blockResultSetProtoHelperPtr->addBlockResult(blockResultProtoHelper);
+        }
+    }
+    return blockResultSetProtoHelperPtr;
+}
+
+keto::chain_query_common::TransactionResultSetProtoHelperPtr BlockChain::performTransactionQuery(
+        const keto::chain_query_common::TransactionQueryProtoHelper& transactionQueryProtoHelper) {
+    // at present all transaction queries can be performed on the accounting store
+    // as the accounting store has data level security
+    // TODO: investigate implementing this functionality when the security constraints become clearer
+    keto::chain_query_common::TransactionResultSetProtoHelperPtr transactionResultSetProtoHelperPtr(
+            new keto::chain_query_common::TransactionResultSetProtoHelper());
+    return transactionResultSetProtoHelperPtr;
+}
+
 
 void BlockChain::load(const std::vector<uint8_t>& id) {
 
@@ -913,5 +1052,5 @@ bool BlockChain::accountExists(const keto::asn1::HashHelper& accountHash) {
 
 
 
-    }
+}
 }

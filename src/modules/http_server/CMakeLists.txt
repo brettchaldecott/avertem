@@ -26,7 +26,7 @@ add_library( 0050_keto_httpd_module
 add_dependencies(0050_keto_httpd_module keto_tools)
 
 KetoModuleDepencencies( 0050_keto_httpd_module 
-                            PRIVATE keto_http_server_session
+                            PRIVATE keto_http_server_session keto_chain_query_common
                             PRIVATE keto_software_consensus key_store_utils keto_account_query
                             PRIVATE keto_transaction_common keto_server_common
                             PRIVATE keto_key_tools keto_proto_environment ${PROTOBUF_LIBRARIES}

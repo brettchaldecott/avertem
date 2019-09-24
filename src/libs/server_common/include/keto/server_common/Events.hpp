@@ -259,6 +259,19 @@ public:
         static const char* PROCESS_PUSH_RPC_PEER;
     };
 
+    class BLOCK_QUERY {
+    public:
+        static const char* GET_BLOCKS;
+        static const char* GET_BLOCK;
+        static const char* GET_BLOCK_TRANSACTIONS;
+        static const char* GET_TRANSACTION;
+        static const char* GET_ACCOUNT_TRANSACTIONS;
+    };
+
+    class PRODUCER_QUERY {
+    public:
+        static const char* GET_PRODUCER;
+    };
 
 
     static const char* GET_SOFTWARE_CONSENSUS_MESSAGE;

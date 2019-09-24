@@ -20,6 +20,7 @@ add_library( keto_transaction_common
             SignedChangeSetHelper.cpp
             FeeInfoMsgProtoHelper.cpp
             include/keto/transaction_common/Constants.hpp
+            TransactionTraceHelper.cpp
 
              ${HEADERS}
            )

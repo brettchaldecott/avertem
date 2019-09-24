@@ -30,6 +30,8 @@ KETO_DECLARE_DERIVED_EXCEPTION (RouterModuleException, NoAccountsForServiceExcep
 KETO_DECLARE_DERIVED_EXCEPTION (RouterModuleException, NoPeersRegistered , "No Registered Peers.");
 KETO_DECLARE_DERIVED_EXCEPTION (RouterModuleException, NoGrowingTangle , "No growing tangle.");
 KETO_DECLARE_DERIVED_EXCEPTION (RouterModuleException, NoMatchingTangleFound , "No matching tangle found.");
+KETO_DECLARE_DERIVED_EXCEPTION (RouterModuleException, PrivateKeyNotConfiguredException , "The private key has not been found.");
+KETO_DECLARE_DERIVED_EXCEPTION (RouterModuleException, PublicKeyNotConfiguredException , "The public key has not been found.");
 
 }
 }

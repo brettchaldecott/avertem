@@ -11,10 +11,12 @@ add_library( keto_http_server_session
             HttpSession.cpp
             HttpTransactionManager.cpp
             HttpSparqlManager.cpp
+            HttpBlockchainExplorerManager.cpp
             URISparqlParser.cpp
             HttpContractManager.cpp
             URIContractParser.cpp
             URIAuthenticationParser.cpp
+            URIBlockchainExplorerParser.cpp
             Constants.cpp
 
              ${HEADERS}
@@ -33,11 +35,13 @@ target_include_directories( keto_http_server_session
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../transaction_common/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../asn1/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../account_query/include/"
+                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../chain_query_common/include/"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/proto/"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/asn1/"
                             PUBLIC "${PROTO_HDRS}"
                             ${Boost_INCLUDE_DIRS}
                             ${BOTAN_INCLUDE_DIR}
+                            ${JSON_INCLUDE_DIR}
                             )
 
 #if(MSVC)

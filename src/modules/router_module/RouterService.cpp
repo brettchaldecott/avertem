@@ -22,6 +22,9 @@
 #include "Account.pb.h"
 #include "Route.pb.h"
 
+#include "keto/environment/EnvironmentManager.hpp"
+#include "keto/environment/Config.hpp"
+
 #include "keto/common/Log.hpp"
 #include "keto/router/RouterService.hpp"
 #include "keto/server_common/Events.hpp"
@@ -37,13 +40,16 @@
 #include "keto/transaction_common/MessageWrapperProtoHelper.hpp"
 #include "keto/transaction_common/TransactionProtoHelper.hpp"
 #include "keto/transaction_common/TransactionMessageHelper.hpp"
+#include "keto/transaction_common/TransactionTraceBuilder.hpp"
 
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
 #include "keto/server_common/ServerInfo.hpp"
 #include "keto/router_utils/AccountRoutingStoreHelper.hpp"
-#include "keto/router/PeerCache.hpp"
 
+#include "keto/router/PeerCache.hpp"
+#include "keto/router/Constants.hpp"
+#include "keto/router/Exception.hpp"
 
 namespace keto {
 namespace router {
@@ -55,6 +61,23 @@ std::string RouterService::getSourceVersion() {
 }
 
 RouterService::RouterService() {
+
+    std::shared_ptr<keto::environment::Config> config =
+            keto::environment::EnvironmentManager::getInstance()->getConfig();
+    if (!config->getVariablesMap().count(Constants::PRIVATE_KEY)) {
+        BOOST_THROW_EXCEPTION(keto::router::PrivateKeyNotConfiguredException());
+    }
+
+    std::string privateKeyPath =
+            config->getVariablesMap()[Constants::PRIVATE_KEY].as<std::string>();
+    if (!config->getVariablesMap().count(Constants::PUBLIC_KEY)) {
+        BOOST_THROW_EXCEPTION(keto::router::PublicKeyNotConfiguredException());
+    }
+    std::string publicKeyPath =
+            config->getVariablesMap()[Constants::PUBLIC_KEY].as<std::string>();
+    keyLoaderPtr = std::make_shared<keto::crypto::KeyLoader>(privateKeyPath,
+                                                             publicKeyPath);
+
 }
 
 RouterService::~RouterService() {
@@ -80,7 +103,20 @@ keto::event::Event RouterService::routeMessage(const keto::event::Event& event) 
     keto::transaction_common::MessageWrapperProtoHelper  messageWrapperProtoHelper =
             keto::server_common::fromEvent<keto::proto::MessageWrapper>(event);
 
+    // add to the transaction trace
+    keto::asn1::HashHelper currentAccountHash = messageWrapperProtoHelper.getAccountHash();
+    keto::transaction_common::TransactionProtoHelperPtr transactionProtoHelperPtr = messageWrapperProtoHelper.getTransaction();
+    keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr = transactionProtoHelperPtr->getTransactionMessageHelper();
+    transactionMessageHelperPtr->getTransactionWrapper()->addTransactionTrace(
+            *keto::transaction_common::TransactionTraceBuilder::createTransactionTrace(
+                    keto::server_common::ServerInfo::getInstance()->getAccountHash(),
+                    this->keyLoaderPtr));
+    transactionProtoHelperPtr->setTransaction(transactionMessageHelperPtr);
+    messageWrapperProtoHelper.setTransaction(
+            transactionProtoHelperPtr);
+    messageWrapperProtoHelper.setAccountHash(currentAccountHash);
 
+    // update the rooting
     if (!TangleServiceCache::getInstance()->containsAccount(messageWrapperProtoHelper.getAccountHash())) {
         keto::proto::AccountChainTangle requestAccountChainTangle;
         requestAccountChainTangle.set_account_id(messageWrapperProtoHelper.getSourceAccountHash());

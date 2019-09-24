@@ -14,6 +14,7 @@
 #include "keto/transaction_common/TransactionTraceBuilder.hpp"
 
 #include "keto/crypto/SignatureGenerator.hpp"
+#include "keto/crypto/HashGenerator.hpp"
 #include "keto/asn1/SignatureHelper.hpp"
 
 
@@ -31,7 +32,9 @@ TransactionTraceBuilder::TransactionTraceBuilder(
     keto::crypto::SignatureGenerator generator(keyloader);
     keto::asn1::SignatureHelper signatureHelper(generator.sign(accountHash));
     this->transactionTrace->signature = signatureHelper;
-    
+    keto::crypto::HashGenerator hashGenerator;
+    this->transactionTrace->signature = keto::asn1::HashHelper(hashGenerator.generateHash(
+            (std::vector<uint8_t>)signatureHelper));
 }
 
 

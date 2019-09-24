@@ -54,9 +54,12 @@ public:
 
     operator std::string() const;
 
+
+
     SignedBlockWrapperProtoHelper& operator = (const std::string& asn1Block);
 
     void loadSignedBlock();
+    int getHeight();
 private:
     keto::proto::SignedBlockWrapper signedBlockWrapper;
     SignedBlock_t* signedBlock;

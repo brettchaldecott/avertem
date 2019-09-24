@@ -6,7 +6,10 @@
 #include <iostream>
 
 #include "keto/common/HttpEndPoints.hpp"
+
 #include "keto/server_session/URIContractParser.hpp"
+
+#include "keto/server_common/StringUtils.hpp"
 
 
 namespace keto {
@@ -18,7 +21,8 @@ std::string URIContractParser::getSourceVersion() {
 }
 
 URIContractParser::URIContractParser(const std::string &uri) : cors(false) {
-    std::string subUri = uri.substr(strlen(keto::common::HttpEndPoints::CONTRACT));
+    std::string subUri = keto::server_common::StringUtils(uri).replaceAll("//","/")
+            .substr(strlen(keto::common::HttpEndPoints::CONTRACT));
     int nextSlash = subUri.find("/");
 
     // check if this is a cors query

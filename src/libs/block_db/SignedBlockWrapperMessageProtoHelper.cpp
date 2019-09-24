@@ -42,9 +42,7 @@ SignedBlockWrapperMessageProtoHelper::~SignedBlockWrapperMessageProtoHelper() {
 
 
 SignedBlockWrapperMessageProtoHelper::operator std::string() {
-    std::string result;
-    this->signedBlockWrapperMessage.SerializePartialToString(&result);
-    return result;
+    return this->signedBlockWrapperMessage.SerializeAsString();
 }
 
 SignedBlockWrapperMessageProtoHelper::operator keto::proto::SignedBlockWrapperMessage() {

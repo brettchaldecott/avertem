@@ -14,8 +14,11 @@
 #include <iostream>
 
 #include "keto/server_session/URISparqlParser.hpp"
-#include "keto/server_common/URLUtils.hpp"
 #include "keto/server_session/Exception.hpp"
+
+#include "keto/server_common/URLUtils.hpp"
+#include "keto/server_common/StringUtils.hpp"
+
 #include "keto/common/HttpEndPoints.hpp"
 
 namespace keto {
@@ -27,7 +30,7 @@ std::string URISparqlParser::getSourceVersion() {
 
 URISparqlParser::URISparqlParser(const std::string& uri,const std::string& body) {
     // remove data segment from path
-    std::string subUri = uri.substr(strlen(keto::common::HttpEndPoints::DATA_QUERY));
+    std::string subUri = keto::server_common::StringUtils(uri).replaceAll("//","/").substr(strlen(keto::common::HttpEndPoints::DATA_QUERY));
     int nextSlash = subUri.find("/");
     this->accountHash = subUri.substr(0,nextSlash);
     subUri = subUri.substr(nextSlash+1);

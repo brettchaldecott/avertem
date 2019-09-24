@@ -44,6 +44,11 @@
 
 #include "keto/server_common/StatePersistanceManager.hpp"
 
+#include "keto/chain_query_common/BlockQueryProtoHelper.hpp"
+#include "keto/chain_query_common/BlockResultSetProtoHelper.hpp"
+#include "keto/chain_query_common/TransactionQueryProtoHelper.hpp"
+#include "keto/chain_query_common/TransactionResultSetProtoHelper.hpp"
+
 namespace keto {
 namespace block {
 
@@ -214,6 +219,43 @@ keto::event::Event BlockService::getAccountBlockTangle(const keto::event::Event&
     return keto::server_common::toEvent<keto::proto::AccountChainTangle>(
             keto::block_db::BlockChainStore::getInstance()->getAccountBlockTangle(
                     keto::server_common::fromEvent<keto::proto::AccountChainTangle>(event)));
+}
+
+keto::event::Event BlockService::getBlocks(const keto::event::Event& event) {
+    keto::chain_query_common::BlockQueryProtoHelper blockQueryProtoHelper(
+            keto::server_common::fromEvent<keto::proto::BlockQuery>(event));
+
+    return keto::server_common::toEvent<keto::proto::BlockResultSet>(
+            *keto::block_db::BlockChainStore::getInstance()->performBlockQuery(
+                    blockQueryProtoHelper));
+
+}
+
+keto::event::Event BlockService::getBlockTransactions(const keto::event::Event& event) {
+    keto::chain_query_common::TransactionQueryProtoHelper transactionQueryProtoHelper(
+            keto::server_common::fromEvent<keto::proto::TransactionQuery>(event));
+
+    return keto::server_common::toEvent<keto::proto::TransactionResultSet>(
+            *keto::block_db::BlockChainStore::getInstance()->performTransactionQuery(
+                    transactionQueryProtoHelper));
+}
+
+keto::event::Event BlockService::getTransaction(const keto::event::Event& event) {
+    keto::chain_query_common::TransactionQueryProtoHelper transactionQueryProtoHelper(
+            keto::server_common::fromEvent<keto::proto::TransactionQuery>(event));
+
+    return keto::server_common::toEvent<keto::proto::TransactionResultSet>(
+            *keto::block_db::BlockChainStore::getInstance()->performTransactionQuery(
+                    transactionQueryProtoHelper));
+}
+
+keto::event::Event BlockService::getAccountTransactions(const keto::event::Event& event) {
+    keto::chain_query_common::TransactionQueryProtoHelper transactionQueryProtoHelper(
+            keto::server_common::fromEvent<keto::proto::TransactionQuery>(event));
+
+    return keto::server_common::toEvent<keto::proto::TransactionResultSet>(
+            *keto::block_db::BlockChainStore::getInstance()->performTransactionQuery(
+                    transactionQueryProtoHelper));
 }
 
 std::mutex& BlockService::getAccountLock(const AccountHashVector& accountHash) {

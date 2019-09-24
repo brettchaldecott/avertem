@@ -202,5 +202,21 @@ void BlockChainStore::setCurrentTangle(const keto::asn1::HashHelper& tangle) {
     this->masterChain->setCurrentTangle(tangle);
 }
 
+keto::chain_query_common::BlockResultSetProtoHelperPtr BlockChainStore::performBlockQuery(
+        const keto::chain_query_common::BlockQueryProtoHelper& blockQueryProtoHelper) {
+    if (!masterChain) {
+        BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
+    }
+    return this->masterChain->performBlockQuery(blockQueryProtoHelper);
+}
+
+keto::chain_query_common::TransactionResultSetProtoHelperPtr BlockChainStore::performTransactionQuery(
+        const keto::chain_query_common::TransactionQueryProtoHelper& transactionQueryProtoHelper) {
+    if (!masterChain) {
+        BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
+    }
+    return this->masterChain->performTransactionQuery(transactionQueryProtoHelper);
+}
+
 }
 }

@@ -59,6 +59,11 @@ public:
     static keto::event::Event electRpcProcessPublish(const keto::event::Event& event);
     static keto::event::Event electRpcProcessConfirmation(const keto::event::Event& event);
 
+    static keto::event::Event getBlocks(const keto::event::Event& event);
+    static keto::event::Event getBlockTransactions(const keto::event::Event& event);
+    static keto::event::Event getTransaction(const keto::event::Event& event);
+    static keto::event::Event getAccountTransactions(const keto::event::Event& event);
+
 private:
     EventRegistry();
     

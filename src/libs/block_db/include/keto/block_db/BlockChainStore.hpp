@@ -30,6 +30,11 @@
 
 #include "keto/obfuscate/MetaString.hpp"
 
+#include "keto/chain_query_common/BlockQueryProtoHelper.hpp"
+#include "keto/chain_query_common/BlockResultSetProtoHelper.hpp"
+#include "keto/chain_query_common/TransactionQueryProtoHelper.hpp"
+#include "keto/chain_query_common/TransactionResultSetProtoHelper.hpp"
+
 
 namespace keto {
 namespace block_db {
@@ -72,6 +77,9 @@ public:
     keto::asn1::HashHelper getGrowTangle();
     void setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles);
     void setCurrentTangle(const keto::asn1::HashHelper& tangle);
+
+    keto::chain_query_common::BlockResultSetProtoHelperPtr performBlockQuery(const keto::chain_query_common::BlockQueryProtoHelper& blockQueryProtoHelper);
+    keto::chain_query_common::TransactionResultSetProtoHelperPtr performTransactionQuery(const keto::chain_query_common::TransactionQueryProtoHelper& transactionQueryProtoHelper);
 
 private:
     std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr;

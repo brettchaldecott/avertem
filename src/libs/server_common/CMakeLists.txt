@@ -18,6 +18,7 @@ add_library( keto_server_common
 				RDFUtils.cpp
 				ModuleSessionManager.cpp
 				StatePersistanceManager.cpp
+				DateUtils.cpp
 
              ${HEADERS}
            )

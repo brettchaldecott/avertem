@@ -99,9 +99,33 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_PROCESS_CONFIRMATION,
             &keto::block::EventRegistry::electRpcProcessConfirmation);
+
+    // the blockchain query methods
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::BLOCK_QUERY::GET_BLOCKS,
+            &keto::block::EventRegistry::getBlocks);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::BLOCK_QUERY::GET_BLOCK_TRANSACTIONS,
+            &keto::block::EventRegistry::getBlockTransactions);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::BLOCK_QUERY::GET_TRANSACTION,
+            &keto::block::EventRegistry::getTransaction);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::BLOCK_QUERY::GET_ACCOUNT_TRANSACTIONS,
+            &keto::block::EventRegistry::getAccountTransactions);
 }
 
 void EventRegistry::deregisterEventHandlers() {
+
+    // the blockchain query methods
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::BLOCK_QUERY::GET_BLOCKS);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::BLOCK_QUERY::GET_BLOCK_TRANSACTIONS);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::BLOCK_QUERY::GET_TRANSACTION);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::BLOCK_QUERY::GET_ACCOUNT_TRANSACTIONS);
 
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::GET_ACCOUNT_TANGLE);
@@ -224,6 +248,22 @@ keto::event::Event EventRegistry::electRpcProcessPublish(const keto::event::Even
 
 keto::event::Event EventRegistry::electRpcProcessConfirmation(const keto::event::Event& event) {
     return ElectionManager::getInstance()->electRpcProcessConfirmation(event);
+}
+
+keto::event::Event EventRegistry::getBlocks(const keto::event::Event& event) {
+    return BlockService::getInstance()->getBlocks(event);
+}
+
+keto::event::Event EventRegistry::getBlockTransactions(const keto::event::Event& event) {
+    return BlockService::getInstance()->getBlockTransactions(event);
+}
+
+keto::event::Event EventRegistry::getTransaction(const keto::event::Event& event) {
+    return BlockService::getInstance()->getTransaction(event);
+}
+
+keto::event::Event EventRegistry::getAccountTransactions(const keto::event::Event& event) {
+    return BlockService::getInstance()->getAccountTransactions(event);
 }
 
 }

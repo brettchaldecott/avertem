@@ -4,6 +4,7 @@ ACTION=$1
 if [ -z "$ACTION" ] ;
 then
     echo "Must select and ACTION"    
+    echo "   image - build the required image"
     echo "   dev - build the source code using a docker container"
     echo "   clean - clean up the docker containers"
     echo "   native - build the source code directly no container"
@@ -79,6 +80,14 @@ then
         [ "$var" != 'cluster' ] && ARGS+=("$var")
     done
     ./docker/scripts/dev_cluster.sh "${ARGS[@]}"
+elif [ "${ACTION}" == "image" ] ;
+then
+    ARGS=()
+    for var in "$@"; do
+        # Ignore known bad arguments
+        [ "$var" != 'image' ] && ARGS+=("$var")
+    done
+    ./docker/scripts/dev_image.sh "${ARGS[@]}"
 fi
 
 

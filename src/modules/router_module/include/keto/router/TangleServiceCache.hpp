@@ -23,6 +23,8 @@
 #include "keto/election_common/ElectionPublishTangleAccountProtoHelper.hpp"
 #include "keto/election_common/ElectionConfirmationHelper.hpp"
 
+#include "keto/chain_query_common/ProducerResultProtoHelper.hpp"
+
 
 namespace keto {
 namespace router {
@@ -62,6 +64,7 @@ public:
         keto::asn1::HashHelper getAccountHash();
         bool containsTangle(const keto::asn1::HashHelper& tangle);
         TanglePtr getTangle(const keto::asn1::HashHelper& tangle);
+        std::vector<keto::asn1::HashHelper> getTangles();
         bool isGrowing();
 
     private:
@@ -89,6 +92,8 @@ public:
 
     void publish(const keto::election_common::ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper);
     void confirmation(const keto::election_common::ElectionConfirmationHelper& electionPublishTangleAccountProtoHelper);
+
+    keto::chain_query_common::ProducerResultProtoHelper getProducers();
 
 private:
     std::mutex classMutex;

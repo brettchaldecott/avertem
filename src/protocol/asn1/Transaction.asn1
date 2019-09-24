@@ -28,7 +28,8 @@ SignedTransaction ::= SEQUENCE {
 
 TransactionTrace ::= SEQUENCE {
     traceHash       Hash,
-    signature       Signature
+    signature       Signature,
+    signatureHash   Hash
 }
 
 TransactionWrapper ::= SEQUENCE {

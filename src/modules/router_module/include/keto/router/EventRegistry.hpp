@@ -50,6 +50,8 @@ public:
     static keto::event::Event electRpcProcessPublish(const keto::event::Event& event);
     static keto::event::Event electRpcProcessConfirmation(const keto::event::Event& event);
 
+    static keto::event::Event getProducers(const keto::event::Event& event);
+
     static void registerEventHandlers();
     static void deregisterEventHandlers();
 private:

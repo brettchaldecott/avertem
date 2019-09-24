@@ -52,6 +52,12 @@ public:
     keto::event::Event processRequestBlockSyncRetry(const keto::event::Event& event);
 
     keto::event::Event getAccountBlockTangle(const keto::event::Event& event);
+
+    // query methods
+    keto::event::Event getBlocks(const keto::event::Event& event);
+    keto::event::Event getBlockTransactions(const keto::event::Event& event);
+    keto::event::Event getTransaction(const keto::event::Event& event);
+    keto::event::Event getAccountTransactions(const keto::event::Event& event);
 private:
     std::mutex classMutex;
     std::map<AccountHashVector,std::mutex> accountLocks;

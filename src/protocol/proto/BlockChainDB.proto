@@ -51,7 +51,8 @@ message BlockMeta {
     bytes block_hash = 1;
     bytes block_parent_hash = 2;
     bytes chain_id = 3;
-    bool encrypted = 4;
+    bytes tangle_id = 4;
+    bool encrypted = 5;
 }
 
 message AccountMeta {

@@ -23,6 +23,10 @@
 #include "keto/block_db/BlockBuilder.hpp"
 #include "keto/block_db/BlockChainStore.hpp"
 #include "keto/asn1/CloneHelper.hpp"
+#include "keto/asn1/SignatureHelper.hpp"
+
+#include "keto/crypto/HashGenerator.hpp"
+
 
 
 namespace keto {
@@ -133,6 +137,11 @@ std::vector<keto::asn1::HashHelper> BlockBuilder::getCurrentHashs() {
         hashs.push_back(keto::asn1::HashHelper(transactionWrapper->transactionHash));
         for (int changeIndex = 0; changeIndex < transactionWrapper->changeSet.list.count; changeIndex++) {
             hashs.push_back(keto::asn1::HashHelper(transactionWrapper->changeSet.list.array[changeIndex]->changeSetHash));
+        }
+        // add the hashes for the trace
+        for (int traceIndex = 0; traceIndex < transactionWrapper->transactionTrace.list.count; traceIndex++) {
+            hashs.push_back(keto::asn1::HashHelper(
+                      transactionWrapper->transactionTrace.list.array[traceIndex]->signatureHash));
         }
     }
 

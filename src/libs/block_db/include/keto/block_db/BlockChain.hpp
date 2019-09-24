@@ -23,6 +23,12 @@
 
 #include "keto/obfuscate/MetaString.hpp"
 
+#include "keto/chain_query_common/BlockQueryProtoHelper.hpp"
+#include "keto/chain_query_common/BlockResultSetProtoHelper.hpp"
+#include "keto/chain_query_common/TransactionQueryProtoHelper.hpp"
+#include "keto/chain_query_common/TransactionResultSetProtoHelper.hpp"
+
+
 namespace keto {
 namespace block_db {
 
@@ -154,6 +160,11 @@ public:
     void setCurrentTangle(const keto::asn1::HashHelper& tangle);
 
 
+    keto::chain_query_common::BlockResultSetProtoHelperPtr performBlockQuery(
+            const keto::chain_query_common::BlockQueryProtoHelper& blockQueryProtoHelper);
+    keto::chain_query_common::TransactionResultSetProtoHelperPtr performTransactionQuery(
+            const keto::chain_query_common::TransactionQueryProtoHelper& transactionQueryProtoHelper);
+
 private:
     std::recursive_mutex classMutex;
     bool inited;
@@ -189,6 +200,8 @@ private:
 
     keto::proto::SignedBlockBatch getBlockBatch(keto::asn1::HashHelper hash, BlockResourcePtr resource);
     keto::proto::SignedBlockWrapper getBlock(keto::asn1::HashHelper hash, BlockResourcePtr resource);
+    keto::proto::SignedBlockWrapper getBlock(keto::asn1::HashHelper hash, BlockResourcePtr resource,
+                                                         keto::proto::BlockWrapper& blockWrapper);
 
     bool accountExists(const keto::asn1::HashHelper& accountHash);
 };

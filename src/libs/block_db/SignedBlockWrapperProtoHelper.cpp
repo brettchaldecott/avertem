@@ -128,5 +128,9 @@ void SignedBlockWrapperProtoHelper::loadSignedBlock() {
     }
 }
 
+int SignedBlockWrapperProtoHelper::getHeight() {
+    return this->signedBlockWrapper.asn1_block_message().size();
+}
+
 }
 }

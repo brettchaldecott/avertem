@@ -35,6 +35,7 @@ public:
 
     SignatureHelper();
     SignatureHelper(const std::vector<uint8_t>& signature);
+    SignatureHelper(const std::string& signature);
     SignatureHelper(const Signature_t& signature);
     SignatureHelper(const std::string& signature,keto::common::StringEncoding stringEncoding);
     
@@ -48,6 +49,7 @@ public:
     
     SignatureHelper& operator =(const std::vector<uint8_t>& signature);
     operator std::vector<uint8_t>() const;
+    operator std::string() const;
 
     SignatureHelper& setSignature(const std::string& signature,keto::common::StringEncoding stringEncoding);
     std::string getSignature(keto::common::StringEncoding stringEncoding);

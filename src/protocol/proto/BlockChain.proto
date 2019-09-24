@@ -83,3 +83,91 @@ message AccountChainTangle {
     bytes chain_tangle_id = 3;
     bool found = 4;
 }
+
+message KeyValue {
+    uint32 version = 1;
+    string key = 2;
+    string value = 3;
+}
+
+/**
+ * The block query objects focus on the basics. This prevents systems and users from getting access to the
+ * data they don't have the right to view.
+ */
+message BlockQuery {
+    uint32 version = 1;
+    bytes block_hash_id = 2;
+    int64 number_of_blocks = 3;
+}
+
+message TransactionResult {
+    uint32 version = 1;
+    bytes transaction_hash_id = 2;
+    google.protobuf.Timestamp created = 3;
+    bytes parent_transaction_hash_id = 4;
+    bytes source_account_hash_id = 5;
+    bytes target_account_hash_id = 6;
+    int64 value = 7;
+    bytes signature = 9;
+    repeated bytes changeset_hashes = 10;
+    repeated bytes transaction_trace_hashes = 11;
+    uint32 status = 12;
+}
+
+message BlockResult {
+    uint32 version = 1;
+    bytes tangle_hash_id = 2;
+    bytes block_hash_id = 3;
+    google.protobuf.Timestamp created = 4;
+    bytes parent_block_hash_id = 5;
+    repeated TransactionResult transactions = 6;
+    bytes accepted_hash = 7;
+    bytes validation_hash = 8;
+    bytes merkel_root = 9;
+    bytes signature = 10;
+    uint32 block_height = 11;
+}
+
+message BlockResultSet {
+    uint32 version = 1;
+    bytes start_block_hash_id = 2;
+    bytes end_block_hash_id = 3;
+    repeated BlockResult block_results = 5;
+}
+
+/**
+ * The transaction query objects focus on the basics. This prevents systems and users from getting access to the data
+ * they don't have the right to view.
+ */
+message TransactionQuery {
+    uint32 version = 1;
+    bytes block_hash_id = 2;
+    bytes transaction_hash_id = 3;
+    bytes account_hash_id = 4;
+    int64 number_of_transactions = 5;
+}
+
+
+message TransactionResultSet {
+    uint32 version = 1;
+    repeated TransactionResult transactions = 2;
+    int64 number_of_transactions = 3;
+}
+
+/**
+ * The producer query objects
+ */
+message ProducerQuery {
+    uint32 version = 1;
+}
+
+message ProducerInfoResult {
+    uint32 version = 1;
+    bytes account_hash_id = 2;
+    repeated bytes tangles = 3;
+}
+
+message ProducerResult {
+    uint32 version = 1;
+    repeated ProducerInfoResult producers = 2;
+}

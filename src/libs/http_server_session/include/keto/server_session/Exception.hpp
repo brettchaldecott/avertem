@@ -28,7 +28,10 @@ KETO_DECLARE_DERIVED_EXCEPTION (HttpServerSessionException, MessageSerialization
 KETO_DECLARE_DERIVED_EXCEPTION (HttpServerSessionException, MessageDeserializationException , "The server message failed deserialize.");
 KETO_DECLARE_DERIVED_EXCEPTION (HttpServerSessionException, InvalidSessionException , "Invalid client session.");
 KETO_DECLARE_DERIVED_EXCEPTION (HttpServerSessionException, InvalidSparqlRequestException , "Invalid SPARQL format exception.");
+KETO_DECLARE_DERIVED_EXCEPTION (HttpServerSessionException, InvalidBlockQueryException , "Invalid Block Query format exception.")
+KETO_DECLARE_DERIVED_EXCEPTION (HttpServerSessionException, InvalidBlockQueryByTransctionException , "Invalid Block Query by Transaction format exception.");
 KETO_DECLARE_DERIVED_EXCEPTION (HttpServerSessionException, InvalidAuthenticationURL , "Invalid Authentication URL.");
+KETO_DECLARE_DERIVED_EXCEPTION (HttpServerSessionException, InvalidBlockchainExplorerRequest , "Invalid request on the blockchain explorer.");
     
 }
 }

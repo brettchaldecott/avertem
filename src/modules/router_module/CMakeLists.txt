@@ -22,6 +22,7 @@ add_library( 0015_keto_router_module
             RouterRegistry.cpp
             PeerCache.cpp
             TangleServiceCache.cpp
+            Constants.cpp
 
              ${HEADERS}
            )
@@ -29,7 +30,7 @@ add_library( 0015_keto_router_module
 add_dependencies(0015_keto_router_module keto_tools)
 
 KetoModuleDepencencies( 0015_keto_router_module 
-                            PRIVATE keto_election_common keto_software_consensus
+                            PRIVATE keto_election_common keto_chain_query_common  keto_software_consensus
                             PRIVATE keto_router_db keto_rocks_db
                             PRIVATE keto_server_common keto_transaction_common keto_router_utils keto_router_utils
                             PRIVATE keto_key_tools keto_proto_environment ${PROTOBUF_LIBRARIES}
@@ -41,7 +42,7 @@ KetoModuleDepencencies( 0015_keto_router_module
 KetoModuleConsensus( 0015_keto_router_module ${NUMBER_OF_KEYS} router )
 
 KetoModuleConsensusScriptsCalls( 0015_keto_router_module ${NUMBER_OF_KEYS} "4"
-        PRIVATE keto_software_consensus
+        PRIVATE keto_election_common keto_chain_query_common keto_software_consensus
         PRIVATE keto_router_db keto_rocks_db
         PRIVATE keto_server_common keto_transaction_common keto_router_utils keto_router_utils
         PRIVATE keto_key_tools keto_proto_environment ${PROTOBUF_LIBRARIES}

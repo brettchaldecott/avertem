@@ -33,6 +33,10 @@ SignatureHelper::SignatureHelper(const std::vector<uint8_t>& signature) {
     this->signature = signature;
 }
 
+SignatureHelper::SignatureHelper(const std::string& signature) {
+    this->signature = std::vector<uint8_t>(signature.begin(),signature.end());
+}
+
 SignatureHelper::SignatureHelper(const Signature_t& signature) {
     copyHashToVector(signature,this->signature);
 }
@@ -86,6 +90,10 @@ SignatureHelper& SignatureHelper::operator =(const std::vector<uint8_t>& signatu
 
 SignatureHelper::operator std::vector<uint8_t>() const {
     return this->signature;
+}
+
+SignatureHelper::operator std::string() const {
+    return std::string(this->signature.begin(),this->signature.end());
 }
 
 

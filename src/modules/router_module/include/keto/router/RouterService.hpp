@@ -19,8 +19,11 @@
 
 #include "Protocol.pb.h"
 
-#include "keto/event/Event.hpp"
 #include "keto/common/MetaInfo.hpp"
+
+#include "keto/event/Event.hpp"
+
+#include "keto/crypto/KeyLoader.hpp"
 
 #include "keto/router_utils/RpcPeerHelper.hpp"
 
@@ -58,6 +61,8 @@ public:
     
     
 private:
+    std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr;
+
     RouterService();
     
     /**

@@ -37,8 +37,11 @@ HttpRequestManager::HttpRequestManager() {
             httpSessionManagerPtr);
     this->httpSparqlManagerPtr = std::make_shared<HttpSparqlManager>(
             httpSessionManagerPtr);
+    this->httpBlockchainExplorerManagerPtr = std::make_shared<HttpBlockchainExplorerManager>(
+            httpSessionManagerPtr);
     this->httpContractManagerPtr = std::make_shared<HttpContractManager>(
             httpSessionManagerPtr);
+
 }
 
 HttpRequestManager::~HttpRequestManager() {
@@ -61,6 +64,9 @@ HttpRequestManager::checkRequest(boost::beast::http::request<boost::beast::http:
         return true;
     } else if (strlen(keto::common::HttpEndPoints::DATA_QUERY) <= target.size() &&
         0 == target.compare(0,strlen(keto::common::HttpEndPoints::DATA_QUERY),keto::common::HttpEndPoints::DATA_QUERY)) {
+        return true;
+    } else if (strlen(keto::common::HttpEndPoints::BLOCK_EXPLORER_QUERY) <= target.size() &&
+               0 == target.compare(0,strlen(keto::common::HttpEndPoints::BLOCK_EXPLORER_QUERY),keto::common::HttpEndPoints::BLOCK_EXPLORER_QUERY)) {
         return true;
     } else if (strlen(keto::common::HttpEndPoints::CONTRACT) <= target.size() &&
         0 == target.compare(0,strlen(keto::common::HttpEndPoints::CONTRACT),keto::common::HttpEndPoints::CONTRACT)) {
@@ -94,6 +100,19 @@ HttpRequestManager::handle_request(
         boost::beast::http::response<boost::beast::http::string_body> response;
         response.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
         response.set(boost::beast::http::field::content_type, Constants::CONTENT_TYPE::SPARQL);
+        response.keep_alive(false);
+        response.chunked(false);
+        response.body() = result;
+        response.content_length(result.size());
+        return response;
+    } else if (strlen(keto::common::HttpEndPoints::BLOCK_EXPLORER_QUERY) <= target.size() &&
+               0 == target.compare(0,strlen(keto::common::HttpEndPoints::BLOCK_EXPLORER_QUERY),keto::common::HttpEndPoints::BLOCK_EXPLORER_QUERY)) {
+        result = this->httpBlockchainExplorerManagerPtr->processQuery(req,req.body());
+        // for the sparql queries we force the connect to close otherwise
+        // the body gets appended to rather than freshly executed.
+        boost::beast::http::response<boost::beast::http::string_body> response;
+        response.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
+        response.set(boost::beast::http::field::content_type, Constants::CONTENT_TYPE::JSON);
         response.keep_alive(false);
         response.chunked(false);
         response.body() = result;

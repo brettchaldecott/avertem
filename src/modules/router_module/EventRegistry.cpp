@@ -29,6 +29,7 @@
 #include "keto/election_common/ElectionPublishTangleAccountProtoHelper.hpp"
 #include "keto/election_common/ElectionConfirmationHelper.hpp"
 
+#include "keto/chain_query_common/ProducerResultProtoHelper.hpp"
 
 namespace keto {
 namespace router {
@@ -128,6 +129,11 @@ keto::event::Event EventRegistry::electRpcProcessConfirmation(const keto::event:
     return event;
 }
 
+keto::event::Event EventRegistry::getProducers(const keto::event::Event& event) {
+    TangleServiceCache::getInstance()->confirmation(electionConfirmationHelper);
+    return event;
+}
+
 
 void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
@@ -179,9 +185,16 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::ROUTER_QUERY::ELECT_RPC_PROCESS_CONFIRMATION,
             &keto::router::EventRegistry::electRpcProcessConfirmation);
+
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::PRODUCER_QUERY::GET_PRODUCER,
+            &keto::router::EventRegistry::getProducers);
 }
 
 void EventRegistry::deregisterEventHandlers() {
+
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::PRODUCER_QUERY::GET_PRODUCER);
 
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::ROUTER_QUERY::ELECT_RPC_PROCESS_PUBLISH);

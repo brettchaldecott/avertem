@@ -61,6 +61,14 @@ TangleServiceCache::TanglePtr TangleServiceCache::AccountTangle::getTangle(const
     return this->tangleMap[tangle];
 }
 
+std::vector<keto::asn1::HashHelper> TangleServiceCache::AccountTangle::getTangles() {
+    std::vector<keto::asn1::HashHelper> tangles;
+    for (TanglePtr tanglePtr: this->tangleList) {
+        tangles.push_back(tanglePtr->getTangle());
+    }
+    return tangles;
+}
+
 bool TangleServiceCache::AccountTangle::isGrowing() {
     return this->growing;
 }
@@ -151,6 +159,19 @@ void TangleServiceCache::confirmation(const keto::election_common::ElectionConfi
     this->nextSessionAccounts.erase(electionConfirmationHelper.getAccount());
     KETO_LOG_INFO << "[TangleServiceCache::confirmation] Added the account [" << electionConfirmationHelper.getAccount().getHash(keto::common::StringEncoding::HEX)
         << "] to the tangle cache list";
+}
+
+keto::chain_query_common::ProducerResultProtoHelper TangleServiceCache::getProducers() {
+    std::lock_guard<std::mutex> guard(classMutex);
+    keto::chain_query_common::ProducerResultProtoHelper result;
+    for (std::map<std::string,AccountTanglePtr>::iterator iter = sessionAccounts.begin();
+            iter != sessionAccounts.end(); iter++) {
+        keto::chain_query_common::ProducerInfoResultProtoHelper producerInfoResultProtoHelper;
+        producerInfoResultProtoHelper.setAccountHashId(iter->second->getAccountHash());
+        producerInfoResultProtoHelper.setTangles(iter->second->getTangles());
+        result.addProducer(producerInfoResultProtoHelper);
+    }
+    return result;
 }
 
 }

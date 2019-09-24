@@ -151,6 +151,15 @@ TransactionWrapperHelper& TransactionWrapperHelper::addTransactionTrace(
     return (*this);
 }
 
+std::vector<TransactionTraceHelperPtr> TransactionWrapperHelper::getTransactionTrace() {
+    std::vector<TransactionTraceHelperPtr> result;
+    for (int index = 0; index < this->transactionWrapper->transactionTrace.list.count; index++) {
+        result.push_back(TransactionTraceHelperPtr(
+                new TransactionTraceHelper(this->transactionWrapper->transactionTrace.list.array[index])));
+    }
+    return result;
+}
+
 TransactionWrapperHelper& TransactionWrapperHelper::addChangeSet(
     SignedChangeSet_t* signedChangeSet) {
     

@@ -26,7 +26,7 @@ add_dependencies(0020_keto_sandbox_module keto_tools)
 
 KetoModuleDepencencies( 0020_keto_sandbox_module 
                             PRIVATE keto_software_consensus
-                            PRIVATE keto_wavm_common keto_account_query keto_server_common keto_transaction_common
+                            PRIVATE keto_wavm_common keto_chain_query_common keto_account_query keto_server_common keto_transaction_common
                             PRIVATE keto_key_tools keto_proto_environment ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_asn1_common keto_asn1_protocol
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 

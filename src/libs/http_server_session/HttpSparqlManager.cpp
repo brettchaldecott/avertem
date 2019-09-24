@@ -31,7 +31,6 @@
 #include "keto/server_session/Exception.hpp"
 #include "keto/server_session/HttpSparqlManager.hpp"
 #include "keto/server_session/URISparqlParser.hpp"
-#include "include/keto/server_session/URISparqlParser.hpp"
 
 namespace keto{
 namespace server_session {

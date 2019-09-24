@@ -104,6 +104,10 @@ BlockChainTangleMetaPtr BlockChainMeta::addTangle(const keto::asn1::HashHelper& 
     return blockChainTangleMetaPtr;
 }
 
+std::vector<BlockChainTangleMetaPtr> BlockChainMeta::getTangles() {
+    return this->tangles;
+}
+
 BlockChainMeta::BlockChainMeta(
         const std::vector<uint8_t>& id) {
     this->hashId = keto::asn1::HashHelper(id);
