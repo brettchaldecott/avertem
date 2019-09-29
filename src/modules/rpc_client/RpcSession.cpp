@@ -205,6 +205,7 @@ RpcSession::RpcSession(
         reading(false),
         closed(false),
         active(false),
+        registered(false),
         resolver(*ioc),
         ws_(*ioc, *ctx),
         strand_(ws_.get_executor()),
@@ -420,13 +421,15 @@ void RpcSession::processQueueEntry(const ReadQueueEntryPtr& readQueueEntryPtr) {
             if (!this->rpcPeer.getPeered()) {
                 message = serverRequest(keto::server_common::Constants::RPC_COMMANDS::PEERS,
                                         keto::server_common::Constants::RPC_COMMANDS::PEERS);
+            } else if (this->isRegistered()) {
+                message = handleRequestNetworkSessionKeys(command, stringVector[1]);
             } else {
                 message = handleRegisterRequest(command, stringVector[1]);
             }
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PEERS) == 0) {
-            peerResponse(command, stringVector[1]);
+            handlePeerResponse(command, stringVector[1]);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REGISTER) == 0) {
-            message = registerResponse(command, stringVector[1]);
+            message = handleRegisterResponse(command, stringVector[1]);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ACTIVATE) == 0) {
             KETO_LOG_DEBUG << "[RpcSession] handle the activate";
             handleActivatePeer(command, stringVector[1]);
@@ -449,14 +452,14 @@ void RpcSession::processQueueEntry(const ReadQueueEntryPtr& readQueueEntryPtr) {
             message = consensusResponse(command, stringVector[1]);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_SESSION_KEYS) ==
                    0) {
-            message = requestNetworkSessionKeysResponse(command, stringVector[1]);
+            message = handleRequestNetworkSessionKeysResponse(command, stringVector[1]);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_MASTER_NETWORK_KEYS) ==
                    0) {
-            message = requestNetworkMasterKeyResponse(command, stringVector[1]);
+            message = handleRequestNetworkMasterKeyResponse(command, stringVector[1]);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_KEYS) == 0) {
-            message = requestNetworkKeysResponse(command, stringVector[1]);
+            message = handleRequestNetworkKeysResponse(command, stringVector[1]);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_FEES) == 0) {
-            message = requestNetworkFeesResponse(command, stringVector[1]);
+            message = handleRequestNetworkFeesResponse(command, stringVector[1]);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLOSE) == 0) {
             closeResponse(command, stringVector[1]);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_RETRY) == 0) {
@@ -614,7 +617,7 @@ std::string RpcSession::serverRequest(const std::string& command, const std::str
     return ss.str();
 }
 
-void RpcSession::peerResponse(const std::string& command, const std::string& message) {
+void RpcSession::handlePeerResponse(const std::string& command, const std::string& message) {
     std::string response = keto::server_common::VectorUtils().copyVectorToString(
         Botan::hex_decode(message,true));
     keto::rpc_protocol::PeerResponseHelper peerResponseHelper(response);
@@ -802,7 +805,7 @@ void RpcSession::handleElectionConfirmation(const std::string& command, const st
 }
 
 
-std::string RpcSession::registerResponse(const std::string& command, const std::string& message) {
+std::string RpcSession::handleRegisterResponse(const std::string& command, const std::string& message) {
     KETO_LOG_DEBUG << "[RpcSession::registerResponse] handle the registration response";
     keto::router_utils::RpcPeerHelper rpcPeerHelper(keto::server_common::VectorUtils().copyVectorToString(
             Botan::hex_decode(message)));
@@ -817,34 +820,43 @@ std::string RpcSession::registerResponse(const std::string& command, const std::
                 keto::server_common::toEvent<keto::proto::RpcPeer>(
                 keto::server_common::Events::REGISTER_RPC_PEER_SERVER,rpcPeerHelper));
 
+    // set the registered flag
+    this->registered = true;
+
     KETO_LOG_DEBUG << "[RpcSession::registerResponse] return the next command";
     return serverRequest(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS,
                   keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS);
 }
 
-std::string RpcSession::requestNetworkSessionKeysResponse(const std::string& command, const std::string& message) {
+std::string RpcSession::handleRequestNetworkSessionKeys(const std::string& command, const std::string& message) {
+    KETO_LOG_DEBUG << "[RpcSession::handleRequestNeworkKeys] return the next command";
+    return serverRequest(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS,
+                         keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS);
+}
+
+std::string RpcSession::handleRequestNetworkSessionKeysResponse(const std::string& command, const std::string& message) {
     // notify the accepted inorder to set the network keys
     keto::software_consensus::ConsensusSessionManager::getInstance()->notifyAccepted();
 
-    KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::requestNetworkSessionKeysResponse]: Process the hex message";
+    KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::handleRequestNetworkSessionKeysResponse]: Process the hex message";
     keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(
             Botan::hex_decode(message));
 
-    KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::requestNetworkSessionKeysResponse]: Set the network session keys";
+    KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::handleRequestNetworkSessionKeysResponse]: Set the network session keys";
     keto::proto::NetworkKeysWrapper networkKeysWrapper = networkKeysWrapperHelper;
     networkKeysWrapper = keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(
             keto::server_common::processEvent(
                     keto::server_common::toEvent<keto::proto::NetworkKeysWrapper>(
                             keto::server_common::Events::SET_NETWORK_SESSION_KEYS,networkKeysWrapper)));
 
-    KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::requestNetworkSessionKeysResponse]: Set request the master network keys";
+    KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::handleRequestNetworkSessionKeysResponse]: Set request the master network keys";
     return serverRequest(keto::server_common::Constants::RPC_COMMANDS::REQUEST_MASTER_NETWORK_KEYS,
                   keto::server_common::Constants::RPC_COMMANDS::REQUEST_MASTER_NETWORK_KEYS);
 }
 
 
-std::string RpcSession::requestNetworkMasterKeyResponse(const std::string& command, const std::string& message) {
-    KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::requestNetworkMasterKeyResponse]: Process the master network key";
+std::string RpcSession::handleRequestNetworkMasterKeyResponse(const std::string& command, const std::string& message) {
+    KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::handleRequestNetworkMasterKeyResponse]: Process the master network key";
     keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(
             Botan::hex_decode(message));
 
@@ -854,12 +866,12 @@ std::string RpcSession::requestNetworkMasterKeyResponse(const std::string& comma
                     keto::server_common::toEvent<keto::proto::NetworkKeysWrapper>(
                             keto::server_common::Events::SET_MASTER_NETWORK_KEYS,networkKeysWrapper)));
 
-    KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::requestNetworkMasterKeyResponse]: Request the network keys";
+    KETO_LOG_DEBUG << this->sessionNumber << "[RpcSession::handleRequestNetworkMasterKeyResponse]: Request the network keys";
     return serverRequest(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS,
                   keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS);
 }
 
-std::string RpcSession::requestNetworkKeysResponse(const std::string& command, const std::string& message) {
+std::string RpcSession::handleRequestNetworkKeysResponse(const std::string& command, const std::string& message) {
     keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(
             Botan::hex_decode(message));
 
@@ -873,7 +885,7 @@ std::string RpcSession::requestNetworkKeysResponse(const std::string& command, c
                   keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES);
 }
 
-std::string RpcSession::requestNetworkFeesResponse(const std::string& command, const std::string& message) {
+std::string RpcSession::handleRequestNetworkFeesResponse(const std::string& command, const std::string& message) {
     keto::transaction_common::FeeInfoMsgProtoHelper feeInfoMsgProtoHelper(
             Botan::hex_decode(message));
 
@@ -883,9 +895,9 @@ std::string RpcSession::requestNetworkFeesResponse(const std::string& command, c
                     keto::server_common::toEvent<keto::proto::FeeInfoMsg>(
                             keto::server_common::Events::NETWORK_FEE_INFO::SET_NETWORK_FEE,feeInfoMsg)));
 
-    KETO_LOG_INFO << "[RpcSession::requestNetworkFeesResponse][" << this->getPeer().getHost() << "][" << this->sessionNumber << "] #######################################################";
-    KETO_LOG_INFO << "[RpcSession::requestNetworkFeesResponse][" << this->getPeer().getHost() << "][" << this->sessionNumber << "] ######## Network intialization is now complete ########";
-    KETO_LOG_INFO << "[RpcSession::requestNetworkFeesResponse][" << this->getPeer().getHost() << "][" << this->sessionNumber << "] #######################################################";
+    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkFeesResponse][" << this->getPeer().getHost() << "][" << this->sessionNumber << "] #######################################################";
+    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkFeesResponse][" << this->getPeer().getHost() << "][" << this->sessionNumber << "] ######## Network intialization is now complete ########";
+    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkFeesResponse][" << this->getPeer().getHost() << "][" << this->sessionNumber << "] #######################################################";
 
 
     return serverRequest(keto::server_common::Constants::RPC_COMMANDS::CLIENT_NETWORK_COMPLETE,
@@ -1069,6 +1081,10 @@ bool RpcSession::isClosed() {
 
 bool RpcSession::isActive() {
     return this->active;
+}
+
+bool RpcSession::isRegistered() {
+    return this->registered;
 }
 
 void

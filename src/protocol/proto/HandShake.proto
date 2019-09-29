@@ -16,7 +16,6 @@ enum HelloResponse {
 message EncryptedConfirmation {
     bytes private_key = 1;
 }
-
 /**
  * The client messages used by the command line client.
  */

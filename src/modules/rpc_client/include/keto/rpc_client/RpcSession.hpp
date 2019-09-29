@@ -212,11 +212,13 @@ public:
     RpcPeer getPeer();
     bool isClosed();
     bool isActive();
+    bool isRegistered();
     
 private:
     bool reading;
     bool closed;
     bool active;
+    bool registered;
     std::recursive_mutex classMutex;
     tcp::resolver resolver;
     websocket::stream<boostSsl::stream<tcp::socket>> ws_;
@@ -247,7 +249,7 @@ private:
     std::string consensusResponse(const std::string& command, const std::string& message);
     std::string serverRequest(const std::string& command, const std::vector<uint8_t>& message);
     std::string serverRequest(const std::string& command, const std::string& message);
-    void peerResponse(const std::string& command, const std::string& message);
+    void handlePeerResponse(const std::string& command, const std::string& message);
 
     // protocol methods
     std::string handleProtocolCheckRequest(const std::string& command, const std::string& message);
@@ -260,11 +262,12 @@ private:
     void handleElectionPublish(const std::string& command, const std::string& message);
     void handleElectionConfirmation(const std::string& command, const std::string& message);
 
-    std::string registerResponse(const std::string& command, const std::string& message);
-    std::string requestNetworkSessionKeysResponse(const std::string& command, const std::string& message);
-    std::string requestNetworkMasterKeyResponse(const std::string& command, const std::string& message);
-    std::string requestNetworkKeysResponse(const std::string& command, const std::string& message);
-    std::string requestNetworkFeesResponse(const std::string& command, const std::string& message);
+    std::string handleRegisterResponse(const std::string& command, const std::string& message);
+    std::string handleRequestNetworkSessionKeys(const std::string& command, const std::string& message);
+    std::string handleRequestNetworkSessionKeysResponse(const std::string& command, const std::string& message);
+    std::string handleRequestNetworkMasterKeyResponse(const std::string& command, const std::string& message);
+    std::string handleRequestNetworkKeysResponse(const std::string& command, const std::string& message);
+    std::string handleRequestNetworkFeesResponse(const std::string& command, const std::string& message);
     std::string handleRetryResponse(const std::string& command);
     std::string handleRegisterRequest(const std::string& command, const std::string& message);
     std::string handleTransaction(const std::string& command, const std::string& message);

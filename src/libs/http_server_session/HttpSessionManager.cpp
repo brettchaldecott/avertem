@@ -61,11 +61,11 @@ HttpSessionManager::HttpSessionManager() {
     // retrieve the configuration
     std::shared_ptr<keto::environment::Config> config = keto::environment::EnvironmentManager::getInstance()->getConfig();
 
-    if (config->getVariablesMap().count(Constants::HTTP_SESSION_ACCOUNT)) {
-        sessionAccount = Botan::hex_decode(config->getVariablesMap()[Constants::HTTP_SESSION_ACCOUNT].as<std::string>(),true);
-    } else {
+    //if (config->getVariablesMap().count(Constants::HTTP_SESSION_ACCOUNT)) {
+    //    sessionAccount = Botan::hex_decode(config->getVariablesMap()[Constants::HTTP_SESSION_ACCOUNT].as<std::string>(),true);
+    //} else {
         sessionAccount = keto::server_common::ServerInfo::getInstance()->getAccountHash();
-    }
+    //}
 
 }
 

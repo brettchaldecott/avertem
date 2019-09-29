@@ -260,6 +260,9 @@ public:
     }
     
     ~ChaiScriptSessionScope() {
+        // check out the chai script ptr
+        this->chaiScriptPtr->set_state(chaiscript::ChaiScript::State());
+        this->chaiScriptPtr.reset();
         finChaiScript();
     }
     

@@ -68,7 +68,7 @@ void NetworkSessionKeyManager::fin() {
 }
 
 void NetworkSessionKeyManager::clearSession() {
-    sessionKeys.clear();
+    this->sessionKeys.clear();
     this->hashIndex.clear();
     this->networkSessionConfigured = false;
 }

@@ -295,11 +295,12 @@ MasterKeyManager::SlaveSession::~SlaveSession() {
 }
 
 void MasterKeyManager::SlaveSession::initSession() {
-
+    Session::initSession();
 }
 
 void MasterKeyManager::SlaveSession::clearSession() {
     std::lock_guard<std::mutex> uniqueLock(this->classMutex);
+    Session::clearSession();
     this->slaveMaster = false;
     this->slaveMasterKeys.Clear();
     this->slaveWrapper = false;
