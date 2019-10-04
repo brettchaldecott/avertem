@@ -738,6 +738,19 @@ keto::proto::SignedBlockWrapper BlockChain::getBlock(keto::asn1::HashHelper hash
     return signedBlockWrapperProtoHelper;
 }
 
+bool BlockChain::containsBlock(keto::asn1::HashHelper hash, BlockResourcePtr resource) {
+    rocksdb::Transaction* blockTransaction = resource->getTransaction(Constants::BLOCKS_INDEX);
+
+    rocksdb::ReadOptions readOptions;
+    keto::rocks_db::SliceHelper keyHelper((std::vector<uint8_t>)hash);
+    std::string value;
+
+    auto status = blockTransaction->Get(readOptions,keyHelper,&value);
+    if (rocksdb::Status::OK() != status && rocksdb::Status::NotFound() == status) {
+        return false;
+    }
+    return true;
+}
 
 keto::proto::SignedBlockWrapper BlockChain::getBlock(keto::asn1::HashHelper hash, BlockResourcePtr resource,
         keto::proto::BlockWrapper& blockWrapper) {
@@ -887,6 +900,13 @@ keto::chain_query_common::BlockResultSetProtoHelperPtr BlockChain::performBlockQ
     for (keto::asn1::HashHelper startHash: startingPoints) {
         keto::asn1::HashHelper currentHash = startHash;
         for (int count = 0; count < blockQueryProtoHelper.getNumberOfBlocks(); count++) {
+
+            // break out of the loop if the current block is not found
+            if (!containsBlock(currentHash, resource)) {
+                break;
+            }
+
+            // retrieve the block and add it to the list
             keto::chain_query_common::BlockResultProtoHelper blockResultProtoHelper;
             keto::proto::BlockWrapper blockWrapper;
             SignedBlockWrapperProtoHelper signedBlockWrapperProtoHelper(getBlock(currentHash,resource,blockWrapper));
@@ -931,6 +951,7 @@ keto::chain_query_common::BlockResultSetProtoHelperPtr BlockChain::performBlockQ
             }
 
             blockResultSetProtoHelperPtr->addBlockResult(blockResultProtoHelper);
+            currentHash = parentHash;
         }
     }
     return blockResultSetProtoHelperPtr;

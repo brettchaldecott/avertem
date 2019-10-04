@@ -14,6 +14,7 @@ const char* Constants::CONTENT_TYPE::HTML   = "text/html";
 const char* Constants::CONTENT_TYPE::TEXT   = "text/plain";
 const char* Constants::CONTENT_TYPE::JSON   = "application/json";
 const char* Constants::CONTENT_TYPE::SPARQL = "application/sparql-results+json";
+const char* Constants::CONTENT_TYPE::PROTOBUF = "application/protobuf";
 
 }
 }

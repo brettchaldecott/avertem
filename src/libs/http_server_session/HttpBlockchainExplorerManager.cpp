@@ -146,7 +146,7 @@ std::string HttpBlockchainExplorerManager::processBlockQuery(const URIBlockchain
         });
     }
 
-    json.push_back(jsonBlocks);
+    json.push_back({"blocks",jsonBlocks});
 
     return json.dump();
 }
@@ -180,7 +180,7 @@ std::string HttpBlockchainExplorerManager::processTransactionQuery(const URIBloc
     };
 
 
-    json.push_back(generateTransactionBlock(transactionResultSetProtoHelper.getTransactions()));
+    json.push_back({"transactions",generateTransactionBlock(transactionResultSetProtoHelper.getTransactions())});
 
     return json.dump();
 

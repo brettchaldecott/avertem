@@ -73,6 +73,11 @@ std::string HttpSession::getPort() {
     return this->port;
 }
 
+std::string HttpSession::getClientHash() {
+    keto::crypto::SecureVector publicKeyHashVector = keto::crypto::HashGenerator().generateHash(
+            Botan::X509::BER_encode(*this->keyLoader->getPublicKey()));
+    return Botan::hex_encode(publicKeyHashVector);
+}
 
 HttpSession& HttpSession::handShake() {
     

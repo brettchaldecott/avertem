@@ -73,6 +73,12 @@ HashHelper& HashHelper::operator=(const std::string& hash) {
     return (*this);
 }
 
+HashHelper& HashHelper::operator=(const HashHelper& orig) {
+    this->hash = orig.hash;
+    return (*this);
+}
+
+
 HashHelper& HashHelper::operator=(const Hash_t* hash) {
     this->hash.clear();
     copyHashToVector(*hash,this->hash);

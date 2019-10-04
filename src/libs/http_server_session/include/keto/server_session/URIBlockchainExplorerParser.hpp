@@ -47,7 +47,6 @@ public:
     std::string getUri() const;
 
     bool isCors() const;
-    keto::asn1::HashHelper getSessionHash() const;
     bool isBlockQuery() const;
     bool isTransactionQuery() const;
     bool isProducerQuery() const;
@@ -63,7 +62,6 @@ public:
 private:
     std::string uri;
     bool cors;
-    keto::asn1::HashHelper sessionHash;
     bool blockQuery;
     bool transactionQuery;
     bool producerQuery;

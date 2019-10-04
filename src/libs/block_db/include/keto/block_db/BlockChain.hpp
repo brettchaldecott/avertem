@@ -202,6 +202,7 @@ private:
     keto::proto::SignedBlockWrapper getBlock(keto::asn1::HashHelper hash, BlockResourcePtr resource);
     keto::proto::SignedBlockWrapper getBlock(keto::asn1::HashHelper hash, BlockResourcePtr resource,
                                                          keto::proto::BlockWrapper& blockWrapper);
+    bool containsBlock(keto::asn1::HashHelper hash, BlockResourcePtr resource);
 
     bool accountExists(const keto::asn1::HashHelper& accountHash);
 };

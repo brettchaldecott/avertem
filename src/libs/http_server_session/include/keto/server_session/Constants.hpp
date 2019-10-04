@@ -19,6 +19,7 @@ public:
         static const char* TEXT;
         static const char* JSON;
         static const char* SPARQL;
+        static const char* PROTOBUF;
     };
 };
 

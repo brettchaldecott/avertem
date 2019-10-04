@@ -28,9 +28,7 @@ URIBlockchainExplorerParser::URIBlockchainExplorerParser(const std::string& uri)
         subUri = subUri.substr(strlen(keto::common::HttpEndPoints::CORS_ENABLED));
     }
 
-    int end = subUri.find(URL_SEP);
-    this->sessionHash = keto::asn1::HashHelper(subUri.substr(0,end),keto::common::StringEncoding::HEX);
-    subUri = subUri.substr(end);
+    int end = 0;
 
     if (subUri.find(BLOCK_QUERY) == 0) {
         this->blockQuery = true;
@@ -90,10 +88,6 @@ std::string URIBlockchainExplorerParser::getUri() const {
 
 bool URIBlockchainExplorerParser::isCors() const {
     return this->cors;
-}
-
-keto::asn1::HashHelper URIBlockchainExplorerParser::getSessionHash() const {
-    return this->sessionHash;
 }
 
 bool URIBlockchainExplorerParser::isBlockQuery() const {

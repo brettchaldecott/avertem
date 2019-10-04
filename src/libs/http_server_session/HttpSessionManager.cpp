@@ -88,7 +88,7 @@ boost::beast::http::response<boost::beast::http::string_body> HttpSessionManager
         response.set_response(keto::proto::HelloResponse::GO_AWAY);
         response.SerializeToString(&result);
 
-        return buildResponse(result,403);
+        return buildResponse(result,403,Constants::CONTENT_TYPE::PROTOBUF);
     }
     keto::server_common::VectorUtils vectorUtils;
     std::vector<uint8_t> clientHash = vectorUtils.copyStringToVector(
@@ -112,7 +112,7 @@ boost::beast::http::response<boost::beast::http::string_body> HttpSessionManager
             keto::crypto::SecureVectorUtils().copyFromSecure(
             ptr->getSessionKey())));
     response.SerializeToString(&result);
-    return buildResponse(result);
+    return buildResponse(result,200,Constants::CONTENT_TYPE::PROTOBUF);
 }
 
 
@@ -217,6 +217,8 @@ std::shared_ptr<Botan::Public_Key> HttpSessionManager::validateRemoteHash(
             Botan::X509::BER_encode(*publicKey)));
 
         if (publicKeyHashVector == clientHash) {
+            KETO_LOG_DEBUG << "[HttpSessionManager::validateRemoteHash] Check the signature [" <<
+                           Botan::hex_encode(publicKeyHashVector,true) << "][" << Botan::hex_encode(clientHash,true) << "]";
             if (keto::crypto::SignatureVerification(publicKey,publicKeyHashVector).check(signature)) {
                 return publicKey;
             } else {
@@ -224,6 +226,8 @@ std::shared_ptr<Botan::Public_Key> HttpSessionManager::validateRemoteHash(
             }
         }
     }
+    KETO_LOG_ERROR << "[HttpSessionManager::validateRemoteHash] Failed to vaidate the hash for [" << Botan::hex_encode(clientHash,true)
+        << "][" << Botan::hex_encode(signature,true) << "]";
     return std::shared_ptr<Botan::Public_Key>();
 }
 

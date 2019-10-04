@@ -46,6 +46,7 @@ public:
     virtual ~HashHelper();
     
     HashHelper& operator=(const std::string& hash);
+    HashHelper& operator=(const HashHelper& orig);
     
     HashHelper& operator=(const Hash_t* hash);
     HashHelper& operator=(const Hash_t& hash);

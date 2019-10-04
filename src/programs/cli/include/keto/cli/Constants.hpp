@@ -33,6 +33,7 @@ public:
     static constexpr const char* VALUE = "value";
     
     // commands
+    static constexpr const char* KETO_CLIENT_HASH_ID = "client_hash_id";
     static constexpr const char* KETO_TRANSACTION_GEN = "transgen";
     static constexpr const char* KETO_ACCOUNT_GEN = "accgen";
     static constexpr const char* KETO_SESSION_GEN = "sessiongen";

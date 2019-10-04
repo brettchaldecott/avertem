@@ -67,11 +67,32 @@ bool SignatureVerification::check(const std::vector<uint8_t>& signature) {
         this->publicKey = keto::crypto::BlockchainPublicKeyLoader(this->key).getPublicKey();
     }
     std::vector<SignatureVerification::SignatureVerificationType> signatureTypes({
-        SignatureVerification::SignatureVerificationType(Constants::SIGNATURE_TYPE,Botan::IEEE_1363),
         SignatureVerification::SignatureVerificationType(Constants::SIGNATURE_TYPE,Botan::DER_SEQUENCE),
+        SignatureVerification::SignatureVerificationType(Constants::SIGNATURE_TYPE,Botan::IEEE_1363),
+        SignatureVerification::SignatureVerificationType(Constants::SECP256K_SIGNATURE_TYPE,Botan::IEEE_1363),
         SignatureVerification::SignatureVerificationType(Constants::EMSA1_SIGNATURE_TYPE,Botan::DER_SEQUENCE),
         SignatureVerification::SignatureVerificationType(Constants::EMSA1_SIGNATURE_TYPE,Botan::IEEE_1363),
-        SignatureVerification::SignatureVerificationType(Constants::SECP256K_SIGNATURE_TYPE,Botan::IEEE_1363)});
+
+        SignatureVerification::SignatureVerificationType(Constants::EMSA3_RAW_SIGNATURE_TYPE,Botan::DER_SEQUENCE),
+        SignatureVerification::SignatureVerificationType(Constants::EMSA3_RAW_SIGNATURE_TYPE,Botan::IEEE_1363),
+        SignatureVerification::SignatureVerificationType(Constants::EMSA3_SHA1_SIGNATURE_TYPE,Botan::DER_SEQUENCE),
+        SignatureVerification::SignatureVerificationType(Constants::EMSA3_SHA1_SIGNATURE_TYPE,Botan::IEEE_1363),
+        SignatureVerification::SignatureVerificationType(Constants::EMSA3_PKCS1_SIGNATURE_TYPE,Botan::DER_SEQUENCE),
+        SignatureVerification::SignatureVerificationType(Constants::EMSA3_PKCS1_SIGNATURE_TYPE,Botan::IEEE_1363),
+
+        //SignatureVerification::SignatureVerificationType(Constants::EMSA4_RAW_SIGNATURE_TYPE,Botan::DER_SEQUENCE),
+        //SignatureVerification::SignatureVerificationType(Constants::EMSA4_RAW_SIGNATURE_TYPE,Botan::IEEE_1363),
+        SignatureVerification::SignatureVerificationType(Constants::EMSA4_SHA1_SIGNATURE_TYPE,Botan::DER_SEQUENCE),
+        SignatureVerification::SignatureVerificationType(Constants::EMSA4_SHA1_SIGNATURE_TYPE,Botan::IEEE_1363),
+        SignatureVerification::SignatureVerificationType(Constants::EMSA4_SHA256_SIGNATURE_TYPE,Botan::DER_SEQUENCE),
+        SignatureVerification::SignatureVerificationType(Constants::EMSA4_SHA256_SIGNATURE_TYPE,Botan::IEEE_1363),
+        SignatureVerification::SignatureVerificationType(Constants::EMSA4_SHA256_MGF1_SIGNATURE_TYPE,Botan::DER_SEQUENCE),
+        SignatureVerification::SignatureVerificationType(Constants::EMSA4_SHA256_MGF1_SIGNATURE_TYPE,Botan::IEEE_1363),
+
+        SignatureVerification::SignatureVerificationType(Constants::PSSR_SHA256_MGF1_SIGNATURE_TYPE,Botan::DER_SEQUENCE),
+        SignatureVerification::SignatureVerificationType(Constants::PSSR_SHA256_MGF1_SIGNATURE_TYPE,Botan::IEEE_1363)
+
+    });
 
     for (SignatureVerification::SignatureVerificationType signatureType: signatureTypes) {
         KETO_LOG_DEBUG << "verify the signature using type [" << signatureType.getType() << "]["
@@ -84,7 +105,8 @@ bool SignatureVerification::check(const std::vector<uint8_t>& signature) {
         } else {
             Botan::PK_Verifier verify(*this->publicKey, signatureType.getType(), signatureType.getFormat());
             KETO_LOG_DEBUG << "Verify the message.";
-            if (verify.verify_message(this->source, signature)) {
+            verify.update(this->source);
+            if (verify.check_signature(signature)) {
                 KETO_LOG_DEBUG << "The signature is valid";
                 return true;
             }

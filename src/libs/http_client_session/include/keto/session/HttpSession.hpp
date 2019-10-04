@@ -72,7 +72,9 @@ public:
     HttpSession& setPort(const std::string& port);
     std::string getPort();
     
-    
+
+    std::string getClientHash();
+
     HttpSession& handShake();
     
     std::string makeRequest(keto::transaction_common::TransactionMessageHelperPtr& request);
