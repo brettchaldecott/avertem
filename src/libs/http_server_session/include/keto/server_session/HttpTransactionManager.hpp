@@ -26,6 +26,9 @@
 
 #include "keto/obfuscate/MetaString.hpp"
 
+#include "keto/asn1/HashHelper.hpp"
+#include "keto/asn1/SignatureHelper.hpp"
+
 
 namespace keto {
 namespace server_session {
@@ -47,6 +50,11 @@ public:
     
 private:
     std::shared_ptr<HttpSessionManager> httpSessionManagerPtr;
+
+    bool validateSignature(
+            const keto::asn1::HashHelper& transactionHash,
+            const keto::asn1::SignatureHelper&  transactionSignature,
+            const keto::asn1::HashHelper& accountHash);
 };
 
 

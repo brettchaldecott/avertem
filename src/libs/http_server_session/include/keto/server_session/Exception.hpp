@@ -32,6 +32,7 @@ KETO_DECLARE_DERIVED_EXCEPTION (HttpServerSessionException, InvalidBlockQueryExc
 KETO_DECLARE_DERIVED_EXCEPTION (HttpServerSessionException, InvalidBlockQueryByTransctionException , "Invalid Block Query by Transaction format exception.");
 KETO_DECLARE_DERIVED_EXCEPTION (HttpServerSessionException, InvalidAuthenticationURL , "Invalid Authentication URL.");
 KETO_DECLARE_DERIVED_EXCEPTION (HttpServerSessionException, InvalidBlockchainExplorerRequest , "Invalid request on the blockchain explorer.");
+KETO_DECLARE_DERIVED_EXCEPTION (HttpServerSessionException, InvalidAccountSigner , "The signer on the transaction does not have control over it.");
     
 }
 }

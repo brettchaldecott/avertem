@@ -11,10 +11,16 @@
  * Created on March 2, 2018, 7:11 AM
  */
 
+#include <sstream>
+
 #include <boost/beast/http/message.hpp>
+
+#include <botan/hex.h>
 
 #include "BlockChain.pb.h"
 #include "Protocol.pb.h"
+#include "Sparql.pb.h"
+
 #include "google/protobuf/any.h"
 
 #include "keto/common/HttpEndPoints.hpp"
@@ -31,9 +37,12 @@
 #include "keto/server_session/HttpSessionManager.hpp"
 #include "keto/server_session/HttpSession.hpp"
 #include "keto/server_session/Exception.hpp"
+
 #include "keto/crypto/SecureVectorUtils.hpp"
+#include "keto/crypto/SignatureVerification.hpp"
 
 #include "keto/transaction_common/MessageWrapperProtoHelper.hpp"
+#include "keto/account_query/AccountSparqlQueryHelper.hpp"
 
 namespace keto {
 namespace server_session {
@@ -73,6 +82,14 @@ std::string HttpTransactionManager::processTransaction(
     
     keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper;
     messageWrapperProtoHelper.setSessionHash(hashHelper).setTransaction(transaction);
+
+    // validate the signature
+    if (!validateSignature(
+            messageWrapperProtoHelper.getTransaction()->getTransactionMessageHelper()->getTransactionWrapper()->getHash(),
+            messageWrapperProtoHelper.getTransaction()->getTransactionMessageHelper()->getTransactionWrapper()->getSignature(),
+            messageWrapperProtoHelper.getTransaction()->getTransactionMessageHelper()->getTransactionWrapper()->getCurrentAccount())) {
+        BOOST_THROW_EXCEPTION(keto::server_session::InvalidAccountSigner());
+    }
     
     //KETO_LOG_DEBUG << "Before re-encrypting the transaction";
     keto::proto::MessageWrapper messageWrapper = messageWrapperProtoHelper;
@@ -87,6 +104,39 @@ std::string HttpTransactionManager::processTransaction(
             keto::server_common::Events::ROUTE_MESSAGE,messageWrapper)));
     
     return messageWrapperResponse.result();
+}
+
+
+bool HttpTransactionManager::validateSignature(
+        const keto::asn1::HashHelper& transactionHash,
+        const keto::asn1::SignatureHelper&  transactionSignature,
+        const keto::asn1::HashHelper& accountHash) {
+
+    keto::proto::SparqlResultSetQuery sparqlResultSetQuery;
+    sparqlResultSetQuery.set_account_hash(accountHash);
+    std::stringstream ss;
+    ss << "SELECT ?publicKey WHERE { " <<
+       "?account <http://keto-coin.io/schema/rdf/1.0/keto/Account#hash> '"
+       << accountHash.getHash(keto::common::StringEncoding::HEX)
+       << "'^^<http://www.w3.org/2001/XMLSchema#string> . " <<
+       "?account <http://keto-coin.io/schema/rdf/1.0/keto/Account#public_key> ?publicKey . } LIMIT 1";
+
+    keto::account_query::ResultVectorMap resultVectorMap =
+            keto::account_query::AccountSparqlQueryHelper(keto::server_common::Events::SPARQL_QUERY_WITH_RESULTSET_MESSAGE,
+                                                          accountHash,ss.str()).execute();
+    if (resultVectorMap.size() != 1) {
+        KETO_LOG_INFO << "Cannot find the account";
+        return false;
+    }
+
+    KETO_LOG_ERROR << "Load the public key : " << resultVectorMap[0]["publicKey"];
+    if (!keto::crypto::SignatureVerification(Botan::hex_decode(resultVectorMap[0]["publicKey"]),
+                                             (std::vector<uint8_t>)transactionHash).check(transactionSignature)) {
+        KETO_LOG_ERROR << "The signature is invalid [" << transactionHash.getHash(keto::common::HEX) << "][" <<
+                      Botan::hex_encode((std::vector<uint8_t>)transactionSignature,true) << "]";
+        return false;
+    }
+    return true;
 }
     
 }

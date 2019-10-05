@@ -16,6 +16,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <nlohmann/json.hpp>
 #include <botan/hex.h>
+#include <botan/x509_key.h>
 
 #include "keto/account_utils/AccountGenerator.hpp"
 #include "keto/account_utils/Exceptions.hpp"
@@ -66,7 +67,7 @@ keto::crypto::SecureVector AccountGenerator::getPrivateKey() {
 }
 
 std::vector<uint8_t> AccountGenerator::getPublicKey() {
-    return this->publicKey->public_key_bits();
+    return Botan::X509::BER_encode(*this->publicKey);
 }
 
 AccountGenerator::operator std::string() {
