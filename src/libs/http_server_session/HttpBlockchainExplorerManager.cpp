@@ -191,18 +191,22 @@ std::string HttpBlockchainExplorerManager::processProducerQuery(const URIBlockch
             keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::ProducerQuery>(
                     keto::server_common::Events::PRODUCER_QUERY::GET_PRODUCER,keto::proto::ProducerQuery()))));
 
-    nlohmann::json json = {};
+    nlohmann::json json = {
+            {"number_of_producers",producerResultProtoHelper.getProducers().size()}
+    };
+    nlohmann::json jsonProducers = {};
     for (keto::chain_query_common::ProducerInfoResultProtoHelperPtr producerInfoResultProtoHelperPtr : producerResultProtoHelper.getProducers()) {
         nlohmann::json jsonTangles = {};
         for (keto::asn1::HashHelper tangle : producerInfoResultProtoHelperPtr->getTangles()) {
-            jsonTangles.push_back({tangle});
+            jsonTangles.push_back({tangle.getHash(keto::common::StringEncoding::HEX)});
         }
-        json.push_back({
+        jsonProducers.push_back({
                                      {"account_hash",producerInfoResultProtoHelperPtr->getAccountHashId().getHash(keto::common::StringEncoding::HEX)},
                                      {"tangles",jsonTangles}
                              });
     }
 
+    json.push_back({"producers",jsonProducers});
     return json.dump();
 }
 
