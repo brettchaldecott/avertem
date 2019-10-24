@@ -364,9 +364,6 @@ public:
         , registered(false)
         , active(false)
     {
-        this->localAddress = socket.local_endpoint().address();
-        this->remoteAddress = socket.remote_endpoint().address().to_string();
-
         //ws_.auto_fragment(false);
         this->generatorPtr = std::shared_ptr<Botan::AutoSeeded_RNG>(new Botan::AutoSeeded_RNG());
         // setup the read queue
@@ -442,6 +439,20 @@ public:
         std::lock_guard<std::recursive_mutex> guard(classMutex);
         if(ec)
             return fail(ec, "accept");
+
+        try {
+            this->localAddress = beast::get_lowest_layer(ws_).socket().local_endpoint().address();
+            this->remoteAddress = beast::get_lowest_layer(ws_).socket().remote_endpoint().address().to_string();
+        } catch (keto::common::Exception& ex) {
+            KETO_LOG_ERROR << "[RpcServer][on_accept] Failed to handle the request [keto::common::Exception]: " << boost::diagnostic_information(ex,true);
+        } catch (boost::exception& ex) {
+            KETO_LOG_ERROR << "[RpcServer][on_accept] Failed to handle the request [boost::exception]: " << boost::diagnostic_information(ex,true);
+        } catch (std::exception& ex) {
+            KETO_LOG_ERROR << "[RpcServer][on_accept] Failed to handle the request [std::exception]: " << ex.what();
+        } catch (...) {
+            KETO_LOG_ERROR << "[RpcServer][on_accept] Failed to handle the request on the server [...]: unknown";
+        }
+
 
         // Read a message
         do_read();
