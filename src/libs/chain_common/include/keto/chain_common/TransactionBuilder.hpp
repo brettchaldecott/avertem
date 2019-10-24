@@ -34,6 +34,8 @@
 namespace keto {
 namespace chain_common {
 
+class TransactionBuilder;
+typedef std::shared_ptr<TransactionBuilder> TransactionBuilderPtr;
 
 class TransactionBuilder : virtual public keto::asn1::AnyInterface {
 public:
@@ -66,11 +68,17 @@ public:
     TransactionBuilder& setTargetAccount(const keto::asn1::HashHelper& hashHelper);
     keto::asn1::HashHelper getTargetAccount();
     
-    TransactionBuilder& addAction(const std::shared_ptr<ActionBuilder> action);
+    TransactionBuilder& addAction(const ActionBuilderPtr action);
 
     TransactionBuilder& setEncrypted(bool encrypted);
     bool getEncrypted();
-    
+
+    TransactionBuilder& setTransactionSignator(const keto::asn1::HashHelper& hashHelper);
+    keto::asn1::HashHelper getTransactionSignator();
+
+    TransactionBuilder& setCreatorId(const keto::asn1::HashHelper& hashHelper);
+    keto::asn1::HashHelper getCreatorId();
+
     operator std::vector<uint8_t>&();
     
     operator uint8_t*();

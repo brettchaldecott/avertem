@@ -13,43 +13,62 @@
 
 #include <condition_variable>
 
-#include "Platform/Platform.h"
-#include "Inline/BasicTypes.h"
-#include "Inline/Floats.h"
-#include "Inline/Timing.h"
 #include "keto/wavm_common/Emscripten.hpp"
-#include "Inline/BasicTypes.h"
-#include "Inline/Timing.h"
-#include "IR/Module.h"
-#include "IR/Operators.h"
-#include "IR/Validate.h"
-#include "Runtime/Linker.h"
-#include "Runtime/Intrinsics.h"
-#include "Runtime/Runtime.h"
-#include "ThreadTest/ThreadTest.h"
-#include "WAST/WAST.h"
-#include "WASM/WASM.h"
+
+#include "WAVM/Inline/BasicTypes.h"
+#include "WAVM/Inline/Timing.h"
+#include "WAVM/Inline/BasicTypes.h"
+#include "WAVM/Inline/Timing.h"
+#include "WAVM/IR/Module.h"
+#include "WAVM/IR/Operators.h"
+#include "WAVM/IR/Validate.h"
+#include "WAVM/Runtime/Linker.h"
+#include "WAVM/Runtime/Intrinsics.h"
+#include "WAVM/Runtime/Runtime.h"
+#include "WAVM/ThreadTest/ThreadTest.h"
 
 #include "keto/wavm_common/WavmEngineManager.hpp"
 #include "keto/wavm_common/WavmEngineWrapper.hpp"
 #include "keto/wavm_common/WavmSessionManager.hpp"
-#include "include/keto/wavm_common/WavmSessionManager.hpp"
 
 
-using namespace IR;
-using namespace Runtime;
+using namespace WAVM::IR;
+using namespace WAVM::Runtime;
 
 namespace keto {
 namespace wavm_common {
 
-    struct RootResolver : Resolver
+    /*struct RootResolver : WAVM::Runtime::Resolver
     {
+        RootResolver(WAVM::Runtime::Resolver& inInnerResolver, WAVM::Runtime::Compartment* inCompartment)
+        : innerResolver(inInnerResolver), compartment(inCompartment)
+        {
+        }
+
+        virtual bool resolve(const std::string& moduleName,
+                             const std::string& exportName,
+                             WAVM::IR::ExternType type,
+                             WAVM::Runtime::Object*& outObject) override
+        {
+            if(innerResolver.resolve(moduleName, exportName, type, outObject)) { return true; }
+            else
+            {
+                return generateStub(
+                        moduleName, exportName, type, outObject, compartment, StubFunctionBehavior::trap);
+            }
+        }
+
+    private:
+        WAVM::Runtime::Resolver& innerResolver;
+        GCPointer<WAVM::Runtime::Compartment> compartment;
+
+
         Compartment* compartment;
-        std::map<std::string,ModuleInstance*> moduleNameToInstanceMap;
+        std::map<std::string,Instance*> moduleNameToInstanceMap;
 
         RootResolver(Compartment* inCompartment): compartment(inCompartment) {}
 
-        bool resolve(const std::string& moduleName,const std::string& exportName,ObjectType type,Object*& outObject) override
+        bool resolve(const std::string& moduleName,const std::string& exportName,WAVM::IR::ExternType type,Object*& outObject) override
         {
             auto namedInstanceIt = moduleNameToInstanceMap.find(moduleName);
             if(namedInstanceIt != moduleNameToInstanceMap.end())
@@ -96,8 +115,8 @@ namespace wavm_common {
                     IR::validateDefinitions(stubModule);
 
                     // Instantiate the module and return the stub function instance.
-                    auto stubModuleInstance = instantiateModule(compartment,stubModule,{});
-                    return getInstanceExport(stubModuleInstance,"importStub");
+                    auto stubInstance = instantiateModule(compartment,stubModule,{});
+                    return getInstanceExport(stubInstance,"importStub");
                 }
                 case IR::ObjectKind::memory:
                 {
@@ -125,37 +144,37 @@ namespace wavm_common {
                 }
             };
         }
-    };
+    };*/
 
 
 static WavmEngineManagerPtr singleton;
 
-Runtime::GCPointer<Runtime::Compartment>* compartment;
+//WAVM::Runtime::GCPointer<WAVM::Runtime::Compartment>* compartment;
 
 std::string WavmEngineManager::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
 WavmEngineManager::WavmEngineManager() {
-    compartment = new Runtime::GCPointer<Runtime::Compartment>();
-    *compartment = Runtime::createCompartment();
-    this->emscriptenInstance = keto::Emscripten::instantiate(*compartment);
+    //compartment = new Runtime::GCPointer<Runtime::Compartment>();
+    //*compartment = Runtime::createCompartment();
+    //this->emscriptenInstance = keto::Emscripten::instantiate(*compartment);
 
-    RootResolver* rootResolver = new RootResolver(*compartment);
+    //RootResolver* rootResolver = new RootResolver(*compartment);
 
     KETO_LOG_DEBUG << "After getting the instance.";
-    rootResolver->moduleNameToInstanceMap["env"] = emscriptenInstance->env;
-    rootResolver->moduleNameToInstanceMap["asm2wasm"] = emscriptenInstance->asm2wasm;
-    rootResolver->moduleNameToInstanceMap["global"] = emscriptenInstance->global;
-    rootResolver->moduleNameToInstanceMap["Keto"] = emscriptenInstance->keto;
-    rootResolver->moduleNameToInstanceMap["keto"] = emscriptenInstance->keto;
+    //rootResolver->moduleNameToInstanceMap["env"] = emscriptenInstance->env;
+    //rootResolver->moduleNameToInstanceMap["asm2wasm"] = emscriptenInstance->asm2wasm;
+    //rootResolver->moduleNameToInstanceMap["global"] = emscriptenInstance->global;
+    //rootResolver->moduleNameToInstanceMap["Keto"] = emscriptenInstance->keto;
+    //rootResolver->moduleNameToInstanceMap["keto"] = emscriptenInstance->keto;
 
-    this->resolver = rootResolver;
+    //this->resolver = rootResolver;
 
 }
 
 WavmEngineManager::~WavmEngineManager() {
-    delete compartment;
+    //delete compartment;
 }
 
 WavmEngineManagerPtr WavmEngineManager::init() {
@@ -175,22 +194,22 @@ WavmEngineManagerPtr WavmEngineManager::getInstance() {
 }
 
 
-WavmEngineWrapperPtr WavmEngineManager::getEngine(const std::string& wast) {
-    return WavmEngineWrapperPtr(new WavmEngineWrapper(*this,wast));
+WavmEngineWrapperPtr WavmEngineManager::getEngine(const std::string& wast, const std::string& contract) {
+    return WavmEngineWrapperPtr(new WavmEngineWrapper(wast, contract));
 }
 
 
-Runtime::Compartment* WavmEngineManager::getCompartment() {
-    return *compartment;
-}
+//Runtime::Compartment* WavmEngineManager::getCompartment() {
+//    return *compartment;
+//}
 
-keto::Emscripten::Instance* WavmEngineManager::getEmscriptenInstance() {
-    return this->emscriptenInstance;
-}
+//keto::Emscripten::Instance* WavmEngineManager::getEmscriptenInstance() {
+//    return this->emscriptenInstance;
+//}
 
-Runtime::Resolver* WavmEngineManager::getResolver() {
-    return this->resolver;
-}
+//Runtime::Resolver* WavmEngineManager::getResolver() {
+//    return this->resolver;
+//}
 
 }
 }

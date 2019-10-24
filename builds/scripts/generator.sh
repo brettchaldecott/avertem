@@ -25,7 +25,7 @@ copyDependencies() {
     copyDependency "/opt/asn1c"
     copyDependency "/opt/beast"
     copyDependency "/opt/binaryen"
-    copyDependency "/opt/boost_1_66_0"
+    copyDependency "/opt/boost_1_71_0"
     copyDependency "/opt/botan"
     copyDependency "/opt/librdf"
     copyDependency "/opt/libwally-core"
@@ -64,7 +64,7 @@ BASE_HOME=${WORK_DIR}/dependencies/
 echo ""
 echo ">>> ARCHITECTURE \"$ARCH\""
 
-BOOST_ROOT=${BASE_HOME}/opt/boost_1_66_0
+BOOST_ROOT=${BASE_HOME}/opt/boost_1_71_0
 BINARYEN_BIN=${BASE_HOME}/opt/binaryen/bin
 OPENSSL_ROOT_DIR=/usr/local/opt/openssl
 OPENSSL_LIBRARIES=/usr/local/opt/openssl/lib
@@ -111,8 +111,8 @@ COMPILE_CONTRACTS=1
 # Define default arguments.
 CMAKE_BUILD_TYPE=RelWithDebugInfo
 
-CXX_COMPILER=clang++-4.0
-C_COMPILER=clang-4.0
+CXX_COMPILER=clang++-6.0
+C_COMPILER=clang-6.0
 
 if [ $ARCH == "darwin" ]; then
   CXX_COMPILER=clang++

@@ -21,13 +21,13 @@
 namespace keto {
 namespace wavm_common {
 
-std::string WavmUtils::readCString(Runtime::MemoryInstance* memory,I32 stringAddress) {
+std::string WavmUtils::readCString(WAVM::Runtime::Memory* memory,I32 stringAddress) {
     // Validate the path name and make a local copy of it.
     std::string returnString;
     int index = 0;
     while(true)
     {
-        int c = Runtime::memoryRef<char>(memory,stringAddress + index);
+        int c = WAVM::Runtime::memoryRef<char>(memory,stringAddress + index);
         if(c == 0) { 
             break; 
         } else {

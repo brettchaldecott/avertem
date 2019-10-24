@@ -34,7 +34,7 @@ public:
     friend class NetworkSessionKeyManager;
 
     NetworkSessionKeyDecryptor(const NetworkSessionKeyDecryptor& orig) = delete;
-    ~NetworkSessionKeyDecryptor();
+    virtual ~NetworkSessionKeyDecryptor();
 
     keto::crypto::SecureVector decrypt(const std::vector<uint8_t>& value) const;
 

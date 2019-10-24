@@ -5,6 +5,10 @@
 #ifndef KETO_CONFIGURABLE_SHA256_HPP
 #define KETO_CONFIGURABLE_SHA256_HPP
 
+#ifndef BOTAN_NO_DEPRECATED_WARNINGS
+#define BOTAN_NO_DEPRECATED_WARNINGS
+#endif
+
 #include <string>
 #include <memory>
 

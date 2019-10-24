@@ -4,6 +4,7 @@
 
 #ifndef KETO_PASSWORDPIPELINE_HPP
 #define KETO_PASSWORDPIPELINE_HPP
+#define BOTAN_NO_DEPRECATED_WARNINGS
 
 #include <string>
 #include <memory>

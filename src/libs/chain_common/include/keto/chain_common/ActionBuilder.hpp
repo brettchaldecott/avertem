@@ -33,6 +33,8 @@
 namespace keto {
 namespace chain_common {
 
+class ActionBuilder;
+typedef std::shared_ptr<ActionBuilder> ActionBuilderPtr;
 
 class ActionBuilder : virtual public keto::asn1::AnyInterface {
 public:
@@ -47,7 +49,7 @@ public:
     ActionBuilder(const ActionBuilder& orig) = delete;
     virtual ~ActionBuilder();
     
-    static std::shared_ptr<ActionBuilder> createAction();
+    static ActionBuilderPtr createAction();
     
     long getVersion();
     

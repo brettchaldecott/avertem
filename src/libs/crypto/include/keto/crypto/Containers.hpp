@@ -14,6 +14,10 @@
 #ifndef KETO_CRYPTO_CONTAINERS_HPP
 #define KETO_CRYPTO_CONTAINERS_HPP
 
+#ifndef BOTAN_NO_DEPRECATED_WARNINGS
+#define BOTAN_NO_DEPRECATED_WARNINGS
+#endif
+
 #include <botan/secmem.h>
 
 #include "keto/obfuscate/MetaString.hpp"

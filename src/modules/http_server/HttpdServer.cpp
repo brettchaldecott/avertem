@@ -16,8 +16,8 @@
 #include <sstream>
 
 #include <boost/exception/exception.hpp>
-#include <boost/exception/diagnostic_information.hpp>
-#include <boost/exception_ptr.hpp> 
+//#include <boost/exception/diagnostic_information.hpp>
+#include <boost/exception_ptr.hpp>
 
 #include "keto/http/HttpdServer.hpp"
 #include "keto/http/Constants.hpp"
@@ -127,7 +127,7 @@ template<
 void
 handle_request(
     boost::beast::string_view doc_root,
-    boost::beast::http::request<Body, boost::beast::http::basic_fields<Allocator>>&& req,
+    httpBeast::request<Body, httpBeast::basic_fields<Allocator>>&& req,
     Send&& send)
 {
     // Returns a bad request response
@@ -196,15 +196,15 @@ handle_request(
             return;
         } catch (keto::common::Exception& ex) {
             KETO_LOG_ERROR << "Failed to process the request : " << req;
-            KETO_LOG_ERROR << "Cause: " << boost::diagnostic_information(ex,true);
+            //KETO_LOG_ERROR << "Cause: " << boost::diagnostic_information_what(ex,true);
             std::stringstream ss;
             ss << "Process the request : " << req << std::endl;
-            ss << "Cause : " << boost::diagnostic_information(ex,true);
+            //ss << "Cause : " << boost::diagnostic_information_what(ex,true);
             return send(server_error(ss.str()));
         } catch (boost::exception& ex) {
-            KETO_LOG_ERROR << "Failed to process because : " << boost::diagnostic_information(ex,true);
+            //KETO_LOG_ERROR << "Failed to process because : " << boost::diagnostic_information_what(ex,true);
             std::stringstream ss;
-            ss << "Failed process the request : " << boost::diagnostic_information(ex,true);
+            //ss << "Failed process the request : " << boost::diagnostic_information_what(ex,true);
             return send(server_error(ss.str()));
         } catch (std::exception& ex) {
             KETO_LOG_ERROR << "Failed process the request : " << ex.what();
@@ -258,7 +258,7 @@ handle_request(
             res.keep_alive(req.keep_alive());
             return send(std::move(res));
         }
-        
+
         // Respond to GET request
         httpBeast::response<httpBeast::file_body> res{
             std::piecewise_construct,
@@ -271,7 +271,7 @@ handle_request(
         return send(std::move(res));
     }
 
-    
+
 }
 
 //------------------------------------------------------------------------------
@@ -314,25 +314,19 @@ class session : public std::enable_shared_from_this<session>
 
             // Write the response
             httpBeast::async_write(
-                self_.stream_,
-                *sp,
-                boost::asio::bind_executor(
-                    self_.strand_,
-                    std::bind(
-                        &session::on_write,
-                        self_.shared_from_this(),
-                        std::placeholders::_1,
-                        std::placeholders::_2,
-                        sp->need_eof())));
+                    self_.stream_,
+                    *sp,
+                    beast::bind_front_handler(
+                            &session::on_write,
+                            self_.shared_from_this(),
+                            sp->need_eof()));
+
         }
     };
 
-    tcp::socket socket_;
-    ssl::stream<tcp::socket&> stream_;
-    boost::asio::strand<
-        boost::asio::io_context::executor_type> strand_;
+    beast::ssl_stream<beast::tcp_stream> stream_;
     boost::beast::flat_buffer buffer_;
-    std::string const& doc_root_;
+    std::shared_ptr<std::string const> doc_root_;
     httpBeast::request<httpBeast::string_body> req_;
     std::shared_ptr<void> res_;
     send_lambda lambda_;
@@ -341,12 +335,10 @@ public:
     // Take ownership of the socket
     explicit
     session(
-        tcp::socket socket,
-        ssl::context& ctx,
-        std::string const& doc_root)
-        : socket_(std::move(socket))
-        , stream_(socket_, ctx)
-        , strand_(socket_.get_executor())
+        tcp::socket&& socket,
+        sslBeast::context& ctx,
+        std::shared_ptr<std::string const> const& doc_root)
+        : stream_(std::move(socket), ctx)
         , doc_root_(doc_root)
         , lambda_(*this)
     {
@@ -356,15 +348,15 @@ public:
     void
     run()
     {
+        // Set the timeout.
+        beast::get_lowest_layer(stream_).expires_after(std::chrono::seconds(30));
+
         // Perform the SSL handshake
         stream_.async_handshake(
-            ssl::stream_base::server,
-            boost::asio::bind_executor(
-                strand_,
-                std::bind(
-                    &session::on_handshake,
-                    shared_from_this(),
-                    std::placeholders::_1)));
+                sslBeast::stream_base::server,
+                beast::bind_front_handler(
+                        &session::on_handshake,
+                        shared_from_this()));
     }
 
     void
@@ -379,15 +371,18 @@ public:
     void
     do_read()
     {
+        // Make the request empty before reading,
+        // otherwise the operation behavior is undefined.
+        req_ = {};
+
+        // Set the timeout.
+        beast::get_lowest_layer(stream_).expires_after(std::chrono::seconds(30));
+
         // Read a request
         httpBeast::async_read(stream_, buffer_, req_,
-            boost::asio::bind_executor(
-                strand_,
-                std::bind(
-                    &session::on_read,
-                    shared_from_this(),
-                    std::placeholders::_1,
-                    std::placeholders::_2)));
+                         beast::bind_front_handler(
+                                 &session::on_read,
+                                 shared_from_this()));
     }
 
     void
@@ -406,14 +401,14 @@ public:
             return fail(ec, "read");
         }
         // Send the response
-        handle_request(doc_root_, std::move(req_), lambda_);
+        handle_request(*doc_root_, std::move(req_), lambda_);
     }
 
     void
     on_write(
+        bool close,
         boost::system::error_code ec,
-        std::size_t bytes_transferred,
-        bool close)
+        std::size_t bytes_transferred)
     {
         boost::ignore_unused(bytes_transferred);
 
@@ -438,14 +433,15 @@ public:
     void
     do_close()
     {
+
+        // Set the timeout.
+        beast::get_lowest_layer(stream_).expires_after(std::chrono::seconds(30));
+
         // Perform the SSL shutdown
         stream_.async_shutdown(
-            boost::asio::bind_executor(
-                strand_,
-                std::bind(
-                    &session::on_shutdown,
-                    shared_from_this(),
-                    std::placeholders::_1)));
+                beast::bind_front_handler(
+                        &session::on_shutdown,
+                        shared_from_this()));
     }
 
     void
@@ -464,20 +460,20 @@ public:
 // Accepts incoming connections and launches the sessions
 class listener : public std::enable_shared_from_this<listener>
 {
-    std::shared_ptr<ssl::context> ctx_;
+    std::shared_ptr<boost::asio::io_context> ioc_;
+    std::shared_ptr<sslBeast::context> ctx_;
     tcp::acceptor acceptor_;
-    tcp::socket socket_;
-    std::string const& doc_root_;
+    std::shared_ptr<std::string const> doc_root_;
 
 public:
     listener(
         std::shared_ptr<boost::asio::io_context> ioc,
-        std::shared_ptr<ssl::context> ctx,
+        std::shared_ptr<sslBeast::context> ctx,
         tcp::endpoint endpoint,
-         const std::string& doc_root)
-        : ctx_(ctx)
+        std::shared_ptr<std::string const> const& doc_root)
+        : ioc_(ioc)
+        , ctx_(ctx)
         , acceptor_(*ioc)
-        , socket_(*ioc)
         , doc_root_(doc_root)
     {
         boost::system::error_code ec;
@@ -490,8 +486,13 @@ public:
             return;
         }
         
-        // this solves the shut down problem
-        acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
+        // Allow address reuse
+        acceptor_.set_option(net::socket_base::reuse_address(true), ec);
+        if(ec)
+        {
+            fail(ec, "set_option");
+            return;
+        }
 
         // Bind to the server address
         acceptor_.bind(endpoint, ec);
@@ -515,24 +516,24 @@ public:
     void
     run()
     {
-        if(! acceptor_.is_open())
-            return;
+        //if(! acceptor_.is_open())
+        //    return;
         do_accept();
     }
         
     void
     do_accept()
     {
+        // The new connection gets its own strand
         acceptor_.async_accept(
-            socket_,
-            std::bind(
-                &listener::on_accept,
-                shared_from_this(),
-                std::placeholders::_1));
+                net::make_strand(*ioc_),
+                beast::bind_front_handler(
+                        &listener::on_accept,
+                        shared_from_this()));
     }
 
     void
-    on_accept(boost::system::error_code ec)
+    on_accept(boost::system::error_code ec, tcp::socket socket)
     {
         if(ec)
         {
@@ -542,12 +543,10 @@ public:
         }
         else
         {
-            // Create the session and run it
-            std::shared_ptr<session> sessionPtr = std::make_shared<session>(
-                std::move(socket_),
-                *ctx_,
-                doc_root_);
-            sessionPtr->run();
+            std::make_shared<session>(
+                    std::move(socket),
+                    *ctx_,
+                    doc_root_)->run();
         }
 
         // Accept another connection
@@ -613,10 +612,10 @@ HttpdServer::~HttpdServer() {
 
 void HttpdServer::start() {
     // The io_context is required for all I/O
-    this->ioc = std::make_shared<boost::asio::io_context>(this->threads);
+    this->ioc = std::make_shared<net::io_context>(this->threads);
 
     // The SSL context is required, and holds certificates
-    this->contextPtr = std::make_shared<ssl::context>(ssl::context::sslv23);
+    this->contextPtr = std::make_shared<sslBeast::context>(sslBeast::context::sslv23);
 
     // This holds the self-signed certificate used by the server
     load_server_certificate(*(this->contextPtr),certPath,keyPath);
@@ -626,7 +625,7 @@ void HttpdServer::start() {
         ioc,
         contextPtr,
         tcp::endpoint{this->serverIp, this->serverPort},
-        documentRoot.string());
+        std::make_shared<std::string>(documentRoot.string()));
     listenerPtr->run();
 
     // Run the I/O service on the requested number of threads

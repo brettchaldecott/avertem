@@ -22,6 +22,7 @@ add_library( keto_wavm_common
             RDFMemorySession.cpp
             WavmSession.cpp
             WavmSessionTransaction.cpp
+            WavmSessionTransactionBuilder.cpp
             WavmSessionHttp.cpp
             WavmSessionManager.cpp
             WavmSessionScope.cpp
@@ -58,6 +59,7 @@ target_include_directories( keto_wavm_common
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../module_manager/include/"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../account_query/include/"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../chain_query_common/include/"
+                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../chain_common/include/"
                             PUBLIC "${PROTO_HDRS}"
                             ${Boost_INCLUDE_DIRS}
                             ${BOTAN_INCLUDE_DIR}
@@ -67,6 +69,8 @@ target_include_directories( keto_wavm_common
                             ${LIBRDF_RAPTOR_INCLUDE_DIR}
                             ${LIBRDF_RASQAL_INCLUDE_DIR}
                             )
+
+target_compile_definitions(keto_wavm_common PUBLIC "WAVM_API=")
 
 #if(MSVC)
 #  set_source_files_properties( db_init.cpp db_block.cpp database.cpp block_log.cpp PROPERTIES COMPILE_FLAGS "/bigobj" )

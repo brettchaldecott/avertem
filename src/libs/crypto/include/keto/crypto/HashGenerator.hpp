@@ -14,6 +14,10 @@
 #ifndef HASHGENERATOR_HPP
 #define HASHGENERATOR_HPP
 
+#ifndef BOTAN_NO_DEPRECATED_WARNINGS
+#define BOTAN_NO_DEPRECATED_WARNINGS
+#endif
+
 #include <botan/hash.h>
 
 #include "keto/crypto/Containers.hpp"

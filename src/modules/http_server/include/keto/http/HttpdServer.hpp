@@ -22,6 +22,11 @@
 #include <boost/asio/ssl/stream.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/config.hpp>
+#include <boost/beast/ssl.hpp>
+#include <boost/beast/version.hpp>
+#include <boost/asio/strand.hpp>
+#include <boost/config.hpp>
+
 #include <algorithm>
 #include <cstdlib>
 #include <functional>
@@ -35,10 +40,11 @@
 #include "keto/common/MetaInfo.hpp"
 
 
+namespace beast = boost::beast;         // from <boost/beast.hpp>
+namespace httpBeast = beast::http;           // from <boost/beast/http.hpp>
+namespace net = boost::asio;            // from <boost/asio.hpp>
+namespace sslBeast = boost::asio::ssl;       // from <boost/asio/ssl.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
-namespace ssl = boost::asio::ssl;       // from <boost/asio/ssl.hpp>
-namespace httpBeast = boost::beast::http;    // from <boost/beast/http.hpp>
-
 
 namespace keto {
 namespace http {
@@ -67,8 +73,8 @@ private:
     int threads;
     std::string certPath;
     std::string keyPath;
-    std::shared_ptr<ssl::context> contextPtr;
-    std::shared_ptr<boost::asio::io_context> ioc;
+    std::shared_ptr<sslBeast::context> contextPtr;
+    std::shared_ptr<net::io_context> ioc;
     std::vector<std::thread> threadsVector;
 };
 

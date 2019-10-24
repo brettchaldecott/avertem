@@ -25,6 +25,10 @@
 #include "KeyStore.pb.h"
 
 #include <boost/beast/core.hpp>
+#include <boost/beast/ssl.hpp>
+#include <boost/beast/websocket.hpp>
+#include <boost/beast/websocket/ssl.hpp>
+#include <boost/asio/strand.hpp>
 
 #include <botan/hex.h>
 #include <botan/base64.h>
@@ -69,9 +73,12 @@
 #include "keto/election_common/Constants.hpp"
 
 
-using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
-namespace beastSsl = boost::asio::ssl;               // from <boost/asio/ssl.hpp>
-namespace websocket = boost::beast::websocket;  // from <boost/beast/websocket.hpp>
+namespace beast = boost::beast;         // from <boost/beast.hpp>
+namespace http = beast::http;           // from <boost/beast/http.hpp>
+namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
+namespace net = boost::asio;            // from <boost/asio.hpp>
+namespace sslBeast = boost::asio::ssl;       // from <boost/asio/ssl.hpp>
+using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
 namespace keto {
 namespace rpc_server {
@@ -149,7 +156,7 @@ typedef std::shared_ptr<ReadQueueEntry> ReadQueueEntryPtr;
 
 
 
-    class SessionBase {
+class SessionBase {
 public:
     virtual bool isActive() = 0;
     virtual void routeTransaction(keto::proto::MessageWrapper&  messageWrapper) = 0;
@@ -330,10 +337,12 @@ class session : public SessionBase, public std::enable_shared_from_this<session>
 {
 private:
     std::recursive_mutex classMutex;
-    tcp::socket socket_;
-    websocket::stream<beastSsl::stream<tcp::socket&>> ws_;
-    boost::asio::strand<
-        boost::asio::io_context::executor_type> strand_;
+    websocket::stream<
+            beast::ssl_stream<beast::tcp_stream>> ws_;
+
+    boost::asio::ip::address localAddress;
+    std::string remoteAddress;
+
     //boost::beast::multi_buffer buffer_;
     boost::beast::multi_buffer sessionBuffer;
     RpcServer* rpcServer;
@@ -348,14 +357,16 @@ private:
 
 public:
     // Take ownership of the socket
-    session(tcp::socket socket, beastSsl::context& ctx, RpcServer* rpcServer)
-        : socket_(std::move(socket))
-        , ws_(socket_, ctx)
-        , strand_(ws_.get_executor())
+    session(tcp::socket&& socket, sslBeast::context& ctx, RpcServer* rpcServer)
+        :
+            ws_(std::move(socket), ctx)
         , rpcServer(rpcServer)
         , registered(false)
         , active(false)
     {
+        this->localAddress = socket.local_endpoint().address();
+        this->remoteAddress = socket.remote_endpoint().address().to_string();
+
         //ws_.auto_fragment(false);
         this->generatorPtr = std::shared_ptr<Botan::AutoSeeded_RNG>(new Botan::AutoSeeded_RNG());
         // setup the read queue
@@ -381,15 +392,16 @@ public:
     run()
     {
         this->readQueuePtr->activate();
+
+        // Set the timeout.
+        beast::get_lowest_layer(ws_).expires_after(std::chrono::seconds(30));
+
         // Perform the SSL handshake
         ws_.next_layer().async_handshake(
-            beastSsl::stream_base::server,
-            boost::asio::bind_executor(
-                strand_,
-                std::bind(
-                    &session::on_handshake,
-                    shared_from_this(),
-                    std::placeholders::_1)));
+                sslBeast::stream_base::server,
+                beast::bind_front_handler(
+                        &session::on_handshake,
+                        shared_from_this()));
     }
 
     void
@@ -398,14 +410,30 @@ public:
         if(ec)
             return fail(ec, "handshake");
 
+        // Turn off the timeout on the tcp_stream, because
+        // the websocket stream has its own timeout system.
+        beast::get_lowest_layer(ws_).expires_never();
+
+        // Set suggested timeout settings for the websocket
+        ws_.set_option(
+                websocket::stream_base::timeout::suggested(
+                        beast::role_type::server));
+
+        // Set a decorator to change the Server of the handshake
+        ws_.set_option(websocket::stream_base::decorator(
+                [](websocket::response_type& res)
+                {
+                    res.set(http::field::server,
+                            std::string(BOOST_BEAST_VERSION_STRING) +
+                            " websocket-server-async-ssl");
+                }));
+
         // Accept the websocket handshake
         ws_.async_accept(
-            boost::asio::bind_executor(
-                strand_,
-                std::bind(
-                    &session::on_accept,
-                    shared_from_this(),
-                    std::placeholders::_1)));
+                beast::bind_front_handler(
+                        &session::on_accept,
+                        shared_from_this()));
+
     }
 
     void
@@ -425,13 +453,9 @@ public:
         // Read a message into our buffer
         ws_.async_read(
                 sessionBuffer,
-            boost::asio::bind_executor(
-                strand_,
-                std::bind(
-                    &session::on_read,
-                    shared_from_this(),
-                    std::placeholders::_1,
-                    std::placeholders::_2)));
+                beast::bind_front_handler(
+                        &session::on_read,
+                        shared_from_this()));
     }
 
     void
@@ -482,7 +506,7 @@ public:
 
 
         std::stringstream ss;
-        ss << boost::beast::buffers(sessionBuffer.data());
+        ss << boost::beast::make_printable(sessionBuffer.data());
         std::string data = ss.str();
         stringVector = keto::server_common::StringUtils(data).tokenize(" ");
 
@@ -896,13 +920,13 @@ public:
     std::string handlePeer(const std::string& command, const std::string& payload) {
         // first check if the external ip address has been added
         KETO_LOG_DEBUG << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " get the peers for a client";
-        this->rpcServer->setExternalIp(this->socket_.local_endpoint().address());
+        this->rpcServer->setExternalIp(this->localAddress);
         std::vector<std::string> urls;
         keto::rpc_protocol::PeerResponseHelper peerResponseHelper;
 
         // get the list of peers but ignore the current account
         std::stringstream str;
-        str << this->socket_.remote_endpoint().address().to_string() << ":" << Constants::DEFAULT_PORT_NUMBER;
+        str << this->remoteAddress << ":" << Constants::DEFAULT_PORT_NUMBER;
         std::vector<std::string> peers = RpcServerSession::getInstance()->handlePeers(this->serverHelloProtoHelperPtr->getAccountHash(),str.str());
         if (peers.size() < Constants::MIN_PEERS) {
             peers.push_back(this->rpcServer->getExternalPeerInfo());
@@ -1206,15 +1230,14 @@ public:
         KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][sendFirstQueueMessage] send the message from the message buffer : " <<
             keto::server_common::StringUtils(*queue_.front()).tokenize(" ")[0];
         // We are not currently writing, so send this immediately
+
+        // Echo the message
+        ws_.text(ws_.got_text());
         ws_.async_write(
                 boost::asio::buffer(*queue_.front()),
-                boost::asio::bind_executor(
-                strand_,
-                std::bind(
+                beast::bind_front_handler(
                         &session::on_write,
-                        shared_from_this(),
-                        std::placeholders::_1,
-                        std::placeholders::_2)));
+                        shared_from_this()));
 
         KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][sendFirstQueueMessage] after sending the message";
     }
@@ -1226,20 +1249,20 @@ public:
 // Accepts incoming connections and launches the sessions
 class listener : public std::enable_shared_from_this<listener>
 {
-    std::shared_ptr<beastSsl::context> ctx_;
+    std::shared_ptr<boost::asio::io_context> ioc_;
+    std::shared_ptr<sslBeast::context> ctx_;
     tcp::acceptor acceptor_;
-    tcp::socket socket_;
     RpcServer* rpcServer;
 
 public:
     listener(
         std::shared_ptr<boost::asio::io_context> ioc,
-        std::shared_ptr<beastSsl::context> ctx,
+        std::shared_ptr<sslBeast::context> ctx,
         tcp::endpoint endpoint,
         RpcServer* rpcServer)
-        : ctx_(ctx)
-        , acceptor_(*ioc)
-        , socket_(*ioc)
+        : ioc_(ioc)
+        , ctx_(ctx)
+        , acceptor_(net::make_strand(*ioc))
         , rpcServer(rpcServer)
     {
         boost::system::error_code ec;
@@ -1253,7 +1276,12 @@ public:
         }
         
         // this solves the shut down problem
-        acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
+        acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true),ec);
+        if(ec)
+        {
+            fail(ec, "set_option");
+            return;
+        }
         
         // Bind to the server address
         acceptor_.bind(endpoint, ec);
@@ -1285,16 +1313,16 @@ public:
     void
     do_accept()
     {
+        // The new connection gets its own strand
         acceptor_.async_accept(
-            socket_,
-            std::bind(
-                &listener::on_accept,
-                shared_from_this(),
-                std::placeholders::_1));
+                net::make_strand(*ioc_),
+                beast::bind_front_handler(
+                        &listener::on_accept,
+                        shared_from_this()));
     }
 
     void
-    on_accept(boost::system::error_code ec)
+    on_accept(boost::system::error_code ec, tcp::socket socket)
     {
         if(ec)
         {
@@ -1303,7 +1331,7 @@ public:
         else
         {
             // Create the session and run it
-            std::make_shared<session>(std::move(socket_), *ctx_, rpcServer)->run();
+            std::make_shared<session>(std::move(socket), *ctx_, rpcServer)->run();
         }
 
         // Accept another connection
@@ -1372,10 +1400,10 @@ void RpcServer::start() {
     }
     
     // The io_context is required for all I/O
-    this->ioc = std::make_shared<boost::asio::io_context>(this->threads);
+    this->ioc = std::make_shared<net::io_context>(this->threads);
 
     // The SSL context is required, and holds certificates
-    this->contextPtr = std::make_shared<beastSsl::context>(beastSsl::context::sslv23);
+    this->contextPtr = std::make_shared<sslBeast::context>(sslBeast::context::tlsv12);
     
     // This holds the self-signed certificate used by the server
     load_server_certificate(*(this->contextPtr));

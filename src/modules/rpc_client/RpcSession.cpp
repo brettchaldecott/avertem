@@ -73,6 +73,13 @@
 #include "keto/election_common/ElectionUtils.hpp"
 #include "keto/election_common/Constants.hpp"
 
+namespace beast = boost::beast;         // from <boost/beast.hpp>
+namespace http = beast::http;           // from <boost/beast/http.hpp>
+namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
+namespace net = boost::asio;            // from <boost/asio.hpp>
+namespace sslBeast = boost::asio::ssl;       // from <boost/asio/ssl.hpp>
+using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
+
 namespace keto {
 namespace rpc_client {
 
@@ -182,15 +189,11 @@ RpcSession::fail(boost::system::error_code ec, const std::string& what)
         KETO_LOG_DEBUG << this->sessionNumber << ":Attempt to reconnect";
         RpcSessionManager::getInstance()->reconnect(rpcPeer);
 
-        // force the close to be handled on this connection
-        ws_.async_close(
-                websocket::close_code::normal,
-                boost::asio::bind_executor(
-                        strand_,
-                        std::bind(
+        // Close the WebSocket connection
+        ws_.async_close(websocket::close_code::normal,
+                        beast::bind_front_handler(
                                 &RpcSession::on_close,
-                                shared_from_this(),
-                                std::placeholders::_1)));
+                                shared_from_this()));
     }
 }
 
@@ -199,16 +202,15 @@ std::string RpcSession::getSourceVersion() {
 }
 
 RpcSession::RpcSession(
-        std::shared_ptr<boost::asio::io_context> ioc, 
-        std::shared_ptr<boostSsl::context> ctx, 
+        std::shared_ptr<net::io_context> ioc,
+        std::shared_ptr<sslBeast::context> ctx,
         const RpcPeer& rpcPeer) :
         reading(false),
         closed(false),
         active(false),
         registered(false),
-        resolver(*ioc),
-        ws_(*ioc, *ctx),
-        strand_(ws_.get_executor()),
+        resolver(net::make_strand(*ioc)),
+        ws_(net::make_strand(*ioc), *ctx),
         rpcPeer(rpcPeer) {
     this->sessionNumber = sessionIndex++;
     ws_.auto_fragment(false);
@@ -246,13 +248,11 @@ RpcSession::run()
 
     // Look up the domain name
     this->resolver.async_resolve(
-        this->rpcPeer.getHost().c_str(),
-        this->rpcPeer.getPort().c_str(),
-        std::bind(
-            &RpcSession::on_resolve,
-            shared_from_this(),
-            std::placeholders::_1,
-            std::placeholders::_2));
+            this->rpcPeer.getHost().c_str(),
+            this->rpcPeer.getPort().c_str(),
+            beast::bind_front_handler(
+                    &RpcSession::on_resolve,
+                    shared_from_this()));
 }
 
 void
@@ -263,32 +263,34 @@ RpcSession::on_resolve(
     if(ec)
         return fail(ec, Constants::SESSION::RESOLVE);
 
+    // Set a timeout on the operation
+    beast::get_lowest_layer(ws_).expires_after(std::chrono::seconds(30));
+
     // Make the connection on the IP address we get from a lookup
-    boost::asio::async_connect(
-        ws_.next_layer().next_layer(),
-        results.begin(),
-        results.end(),
-        std::bind(
-            &RpcSession::on_connect,
-            shared_from_this(),
-            std::placeholders::_1));
+    beast::get_lowest_layer(ws_).async_connect(
+            results,
+            beast::bind_front_handler(
+                    &RpcSession::on_connect,
+                    shared_from_this()));
 }
 
 void
-RpcSession::on_connect(boost::system::error_code ec)
+RpcSession::on_connect(boost::system::error_code ec,tcp::resolver::results_type::endpoint_type)
 {
     if(ec) {
 
         return fail(ec, Constants::SESSION::CONNECT);
     }
 
+    // Set a timeout on the operation
+    beast::get_lowest_layer(ws_).expires_after(std::chrono::seconds(30));
+
     // Perform the SSL handshake
     ws_.next_layer().async_handshake(
-        boostSsl::stream_base::client,
-        std::bind(
-            &RpcSession::on_ssl_handshake,
-            shared_from_this(),
-            std::placeholders::_1));
+            sslBeast::stream_base::client,
+            beast::bind_front_handler(
+                    &RpcSession::on_ssl_handshake,
+                    shared_from_this()));
 }
 
 void
@@ -297,14 +299,29 @@ RpcSession::on_ssl_handshake(boost::system::error_code ec)
     if(ec)
         return fail(ec, Constants::SESSION::SSL_HANDSHAKE);
 
+    // Turn off the timeout on the tcp_stream, because
+    // the websocket stream has its own timeout system.
+    beast::get_lowest_layer(ws_).expires_never();
+
+    // Set suggested timeout settings for the websocket
+    ws_.set_option(
+            websocket::stream_base::timeout::suggested(
+                    beast::role_type::client));
+
+    // Set a decorator to change the User-Agent of the handshake
+    ws_.set_option(websocket::stream_base::decorator(
+            [](websocket::request_type& req)
+            {
+                req.set(http::field::user_agent,
+                        std::string(BOOST_BEAST_VERSION_STRING) +
+                        " websocket-client-async-ssl");
+            }));
+
     // Perform the websocket handshake
-    ws_.async_handshake(
-        rpcPeer.getHost(),
-        "/",
-        std::bind(
-            &RpcSession::on_handshake,
-            shared_from_this(),
-            std::placeholders::_1));
+    ws_.async_handshake(rpcPeer.getHost(), "/",
+                        beast::bind_front_handler(
+                                &RpcSession::on_handshake,
+                                shared_from_this()));
 }
 
 void
@@ -350,13 +367,10 @@ RpcSession::do_read() {
     // Read a message into our buffer
     ws_.async_read(
             buffer_,
-            boost::asio::bind_executor(
-                    strand_,
-                    std::bind(
-                            &RpcSession::on_read,
-                            shared_from_this(),
-                            std::placeholders::_1,
-                            std::placeholders::_2)));
+            beast::bind_front_handler(
+                    &RpcSession::on_read,
+                    shared_from_this()));
+
 }
 
 void
@@ -376,7 +390,7 @@ RpcSession::on_read(
     // parse the input
     KETO_LOG_DEBUG << this->sessionNumber << ": [RpcSession][on_read] process the buffer";
     std::stringstream ss;
-    ss << boost::beast::buffers(buffer_.data());
+    ss << boost::beast::make_printable(buffer_.data());
     std::string data = ss.str();
     KETO_LOG_DEBUG << this->sessionNumber << ": [RpcSession][on_read] data : " << data;
     stringVector = keto::server_common::StringUtils(data).tokenize(" ");
@@ -518,14 +532,11 @@ void RpcSession::processQueueEntry(const ReadQueueEntryPtr& readQueueEntryPtr) {
 
 void
 RpcSession::do_close() {
-    ws_.async_close(
-            websocket::close_code::normal,
-            boost::asio::bind_executor(
-                    strand_,
-                    std::bind(
+    // Close the WebSocket connection
+    ws_.async_close(websocket::close_code::normal,
+                    beast::bind_front_handler(
                             &RpcSession::on_close,
-                            shared_from_this(),
-                            std::placeholders::_1)));
+                            shared_from_this()));
 }
 
 void
@@ -1113,16 +1124,13 @@ void
 RpcSession::sendFirstQueueMessage() {
     KETO_LOG_DEBUG << "[RpcSession::sendMessage][" << this->sessionNumber << "][sendFirstQueueMessage] send the message from the message buffer :" <<
         keto::server_common::StringUtils(*queue_.front()).tokenize(" ")[0];
-    // We are not currently writing, so send this immediately
+
+    // Send the message
     ws_.async_write(
             boost::asio::buffer(*queue_.front()),
-            boost::asio::bind_executor(
-                    strand_,
-                    std::bind(
-                            &RpcSession::on_write,
-                            shared_from_this(),
-                            std::placeholders::_1,
-                            std::placeholders::_2)));
+            beast::bind_front_handler(
+                    &RpcSession::on_write,
+                    shared_from_this()));
 
     KETO_LOG_DEBUG << "[RpcServer][" << this->sessionNumber << "][sendFirstQueueMessage] after sending the message";
 }

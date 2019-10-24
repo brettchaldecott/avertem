@@ -71,7 +71,7 @@ then
 
 elif [ "${ACTION}" == "genesis" ] ;
 then
-    ./builds/scripts/update_genisis.sh
+    ./builds/scripts/docker_build.sh ${ACTION}
 elif [ "${ACTION}" == "cluster" ] ;
 then
     ARGS=()

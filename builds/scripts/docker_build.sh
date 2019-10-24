@@ -7,6 +7,7 @@ if [ -z "${COMMAND}" ] ;
 then
     echo "docker_build: must provide a command"
     echo "  build - build using docker"
+    echo "  genesis - contract genesis"
     echo "  stop - stop the docker environment"
     echo "  clean - stop the docker environment"
     exit 1
@@ -24,6 +25,13 @@ then
 
     echo "Build Keto"
     docker_execute_command "/opt/keto/build.sh ubuntu build"
+
+elif [ "$COMMAND" == "genesis" ]
+then
+    docker_start_build_container
+
+    echo "Build Genesis"
+    docker_execute_command "/opt/keto/builds/scripts/update_genisis.sh"
 
 elif [ "$COMMAND" == "start" ]
 then 

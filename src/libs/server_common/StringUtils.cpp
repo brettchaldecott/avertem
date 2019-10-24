@@ -67,5 +67,12 @@ std::string StringUtils::replaceAll(const std::string& oldVal, const std::string
     return result;
 }
 
+bool StringUtils::isIEqual(const std::string& val) {
+    std::string value = val;
+    return ((this->value.size() == value.size()) && std::equal(this->value.begin(), this->value.end(), value.begin(), [](char & c1, char & c2){
+        return (c1 == c2 || std::toupper(c1) == std::toupper(c2));
+    }));
+}
+
 }
 }

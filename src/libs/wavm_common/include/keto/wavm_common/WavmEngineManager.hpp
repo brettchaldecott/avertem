@@ -55,14 +55,14 @@ public:
     static void fin();
     static WavmEngineManagerPtr getInstance();
     
-    WavmEngineWrapperPtr getEngine(const std::string& wast);
+    WavmEngineWrapperPtr getEngine(const std::string& wast, const std::string& contract);
 
-    Runtime::Compartment* getCompartment();
-    keto::Emscripten::Instance* getEmscriptenInstance();
-    Runtime::Resolver* getResolver();
+    //Runtime::Compartment* getCompartment();
+    //keto::Emscripten::Instance* getEmscriptenInstance();
+    //Runtime::Resolver* getResolver();
 private:
-    keto::Emscripten::Instance *emscriptenInstance;
-    Runtime::Resolver* resolver;
+    //keto::Emscripten::Instance *emscriptenInstance;
+    //Runtime::Resolver* resolver;
 };
 
 

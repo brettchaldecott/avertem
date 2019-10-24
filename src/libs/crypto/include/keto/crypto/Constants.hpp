@@ -14,6 +14,10 @@
 #ifndef CRYPTO_CONSTANTS_HPP
 #define CRYPTO_CONSTANTS_HPP
 
+#ifndef BOTAN_NO_DEPRECATED_WARNINGS
+#define BOTAN_NO_DEPRECATED_WARNINGS
+#endif
+
 #include "keto/obfuscate/MetaString.hpp"
 
 

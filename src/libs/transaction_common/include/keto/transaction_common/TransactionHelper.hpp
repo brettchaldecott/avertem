@@ -52,6 +52,8 @@ public:
     keto::asn1::TimeHelper getDate();
     keto::asn1::HashHelper getSourceAccount();
     keto::asn1::HashHelper getTargetAccount();
+    keto::asn1::HashHelper getTransactionSignator();
+    keto::asn1::HashHelper getCreatorId();
     bool isEncrypted();
     void setEncrypted(bool encrypted);
     

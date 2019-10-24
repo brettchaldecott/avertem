@@ -5,7 +5,7 @@ if [ $ARCH == "ubuntu" ]; then
     # install dev toolkit
     sudo apt-get update
     wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
-    sudo apt-get -y install clang-4.0 lldb-4.0 libclang-4.0-dev cmake make \
+    sudo apt-get -y install clang-6.0 lldb-4.0 libclang-6.0-dev cmake make \
                          libbz2-dev libssl-dev libgmp3-dev \
                          autotools-dev build-essential \
                          libbz2-dev libicu-dev python-dev \
@@ -19,14 +19,15 @@ if [ $ARCH == "ubuntu" ]; then
     OPENSSL_LIBRARIES=/usr/local/opt/openssl/lib
 
     # install boost
+    echo "Build boost"
     cd ${TEMP_DIR}
-    export BOOST_ROOT=${HOME}/opt/boost_1_66_0
-    curl -L https://dl.bintray.com/boostorg/release/1.66.0/source/boost_1_66_0.tar.bz2 > boost_1.66.0.tar.bz2
-    tar xvf boost_1.66.0.tar.bz2
-    cd boost_1_66_0/
-    ./bootstrap.sh "--prefix=$BOOST_ROOT"
-    ./b2 install
-    rm -rf ${TEMP_DIR}/boost_1_66_0/
+    export BOOST_ROOT=${HOME}/opt/boost_1_69_0
+    curl -L https://dl.bintray.com/boostorg/release/1.69.0/source/boost_1_69_0.tar.bz2 > boost_1.69.0.tar.bz2
+    tar xvf boost_1.69.0.tar.bz2
+    cd boost_1_69_0/
+    ./bootstrap.sh "--prefix=$BOOST_ROOT" "CFLAGS=-fPIC" "CXXFLAGS=-fPIC"
+    ./b2 threading=multi link=static install
+    rm -rf ${TEMP_DIR}/boost_1_69_0/
 
     # install secp256k1-zkp (Cryptonomex branch)
     #cd ${TEMP_DIR}
@@ -162,17 +163,20 @@ if [ $ARCH == "ubuntu" ]; then
     
     # build wavm
     cd ${TEMP_DIR}
-    git clone https://github.com/burntjam/WAVM.git
+    git clone https://github.com/WAVM/WAVM.git
+    cd WAVM && find ./ -name "CMakeLists.txt" | xargs sed -i.old "s/find_package(LLVM REQUIRED CONFIG)/find_package(LLVM 6.0 REQUIRED CONFIG PATHS \${LLVM_DIR})/g" && cd -
     mkdir -p ${TEMP_DIR}/WAVM/cmake
     cd ${TEMP_DIR}/WAVM/cmake
-    cmake .. -DCMAKE_BUILD_TYPE=RELEASE -DLLVM_DIR=${WASM_LLVM}
+    cmake .. -DCMAKE_BUILD_TYPE=RELEASE -DLLVM_DIR=${WASM_LLVM} -DWAVM_ENABLE_STATIC_LINKING=ON
     make
     mkdir -p ${HOME}/opt/wavm/lib
     mkdir -p ${HOME}/opt/wavm/include
-    cp ${TEMP_DIR}/WAVM/cmake/lib/* ${HOME}/opt/wavm/lib/.
-    cp -rf ${TEMP_DIR}/WAVM/Include/* ${HOME}/opt/wavm/include/.
+    find ${TEMP_DIR}/WAVM/cmake  -name "*.a*" -exec cp {} ${HOME}/opt/wavm/lib/. \;
+    cp -rvf ${TEMP_DIR}/WAVM/cmake/lib/* ${HOME}/opt/wavm/lib/.
+    cp -rvf ${TEMP_DIR}/WAVM/Include/* ${HOME}/opt/wavm/include/.
+    cp -rvf ${TEMP_DIR}/WAVM/cmake/Include/* ${HOME}/opt/wavm/include/.
     cd ${HOME}
-    rm -rf ${TEMP_DIR}/WAVM
+    #rm -rf ${TEMP_DIR}/WAVM
 
     # temp directory
     cd ${TEMP_DIR}

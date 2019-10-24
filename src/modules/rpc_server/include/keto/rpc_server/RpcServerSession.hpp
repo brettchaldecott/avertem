@@ -17,6 +17,7 @@
 #include <memory>
 #include <map>
 #include <vector>
+#include <mutex>
 
 namespace keto {
 namespace rpc_server {

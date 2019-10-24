@@ -25,9 +25,14 @@
 #include "keto/asn1/RDFModelHelper.hpp"
 #include "keto/asn1/RDFObjectHelper.hpp"
 #include "keto/asn1/NumberHelper.hpp"
+
 #include "keto/wavm_common/RDFMemorySession.hpp"
 #include "keto/wavm_common/WavmSession.hpp"
+
 #include "keto/transaction_common/TransactionProtoHelper.hpp"
+
+#include "keto/wavm_common/WavmSessionTransactionBuilder.hpp"
+
 #include "keto/crypto/KeyLoader.hpp"
 
 #include "keto/obfuscate/MetaString.hpp"
@@ -93,7 +98,10 @@ public:
     // the methods used at the end of call to get the change set and sandbox
     keto::proto::SandboxCommandMessage getSandboxCommandMessage();
 
-    
+    // create a transaction
+    WavmSessionTransactionBuilderPtr createChildTransaction();
+    WavmSessionTransactionBuilderPtr getChildTransaction(int id);
+
 private:
     keto::transaction_common::TransactionProtoHelper transactionProtoHelper;
     keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr; 
@@ -102,6 +110,7 @@ private:
     keto::crypto::KeyLoaderPtr keyLoaderPtr;
     RDFMemorySessionPtr rdfSessionPtr;
     keto::asn1::HashHelper contractHash;
+    std::vector<WavmSessionTransactionBuilderPtr> childrenTransactions;
 
 
     keto::asn1::RDFSubjectHelperPtr getSubject(const std::string& subjectUrl);

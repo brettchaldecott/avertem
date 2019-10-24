@@ -15,6 +15,10 @@
 #ifndef SECUREVECTORUITLS_HPP
 #define SECUREVECTORUITLS_HPP
 
+#ifndef BOTAN_NO_DEPRECATED_WARNINGS
+#define BOTAN_NO_DEPRECATED_WARNINGS
+#endif
+
 #include <vector>
 #include "keto/crypto/Containers.hpp"
 

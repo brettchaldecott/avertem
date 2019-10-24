@@ -36,7 +36,7 @@ public:
     friend class NetworkSessionKeyManager;
 
     NetworkSessionKeyEncryptor(const NetworkSessionKeyEncryptor& orig) = delete;
-    ~NetworkSessionKeyEncryptor();
+    virtual ~NetworkSessionKeyEncryptor();
 
     std::vector<uint8_t> encrypt(const keto::crypto::SecureVector& value) const;
 

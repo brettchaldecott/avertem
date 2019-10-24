@@ -16,6 +16,10 @@ Transaction ::= SEQUENCE {
     sourceAccount   Hash,
     -- the target account for the transaction
     targetAccount   Hash,
+    -- the transaction signator and creator id are there
+    -- to track internal transactions for security and validation purposes
+    transactionSignator Hash,
+    creatorId       Hash,
     actions         SEQUENCE OF Action
 }
 

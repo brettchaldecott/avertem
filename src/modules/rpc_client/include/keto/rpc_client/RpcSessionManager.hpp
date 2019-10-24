@@ -16,6 +16,12 @@
 
 #include "keto/rpc_client/RpcSession.hpp"
 
+#include <boost/beast/core.hpp>
+#include <boost/beast/ssl.hpp>
+#include <boost/beast/websocket.hpp>
+#include <boost/beast/websocket/ssl.hpp>
+#include <boost/asio/strand.hpp>
+
 #include <thread>
 #include <vector>
 
@@ -25,6 +31,13 @@
 
 #include "keto/rpc_client/RpcPeer.hpp"
 #include "keto/rocks_db/DBManager.hpp"
+
+namespace beast = boost::beast;         // from <boost/beast.hpp>
+namespace http = beast::http;           // from <boost/beast/http.hpp>
+namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
+namespace net = boost::asio;            // from <boost/asio.hpp>
+namespace sslBeast = boost::asio::ssl;       // from <boost/asio/ssl.hpp>
+using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
 
 namespace keto {
@@ -85,9 +98,9 @@ private:
     std::map<std::string,RpcSessionPtr> sessionMap;
     std::map<std::string,RpcSessionPtr> accountSessionMap;
     // The io_context is required for all I/O
-    std::shared_ptr<boost::asio::io_context> ioc;
+    std::shared_ptr<net::io_context> ioc;
     // The SSL context is required, and holds certificates
-    std::shared_ptr<boostSsl::context> ctx;
+    std::shared_ptr<sslBeast::context> ctx;
     // the thread information
     std::string configuredPeersString;
     int threads;

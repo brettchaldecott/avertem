@@ -60,7 +60,7 @@ echo ""
 echo ">>> ARCHITECTURE \"$ARCH\""
 
 if [ $ARCH == "ubuntu" ]; then
-    BOOST_ROOT=${HOME}/opt/boost_1_66_0
+    BOOST_ROOT=${HOME}/opt/boost_1_71_0
     BINARYEN_BIN=${HOME}/opt/binaryen/bin
     OPENSSL_ROOT_DIR=/usr/local/opt/openssl
     OPENSSL_LIBRARIES=/usr/local/opt/openssl/lib
@@ -124,8 +124,8 @@ if [ ${INSTALL_DEPS} == "1" ]; then
 fi
 
 
-CXX_COMPILER=clang++-4.0
-C_COMPILER=clang-4.0
+CXX_COMPILER=clang++-6.0
+C_COMPILER=clang-6.0
 
 if [ $ARCH == "darwin" ]; then
   CXX_COMPILER=clang++

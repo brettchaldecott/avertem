@@ -37,8 +37,8 @@ ActionBuilder::~ActionBuilder() {
     }
 }
 
-std::shared_ptr<ActionBuilder> ActionBuilder::createAction() {
-    return std::shared_ptr<ActionBuilder>(new ActionBuilder());
+ActionBuilderPtr ActionBuilder::createAction() {
+    return ActionBuilderPtr(new ActionBuilder());
 }
 
 long ActionBuilder::getVersion() {

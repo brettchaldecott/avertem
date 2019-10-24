@@ -3,6 +3,7 @@
 //
 
 #include <botan/sha2_32.h>
+#include <botan/loadstor.h>
 
 #include "keto/crypto/ConfigurableSha256.hpp"
 
@@ -34,7 +35,7 @@ void ConfigurableSha256::compress_n(const uint8_t input[], size_t blocks) {
 }
 
 void ConfigurableSha256::copy_out(uint8_t output[]) {
-    copy_out_vec_be(output, output_length(), m_digest);
+    Botan::copy_out_vec_be(output, output_length(), m_digest);
 }
 
 }

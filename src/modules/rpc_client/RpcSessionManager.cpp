@@ -41,6 +41,13 @@
 
 #include "keto/router_utils/RpcPeerHelper.hpp"
 
+namespace beast = boost::beast;         // from <boost/beast.hpp>
+namespace http = beast::http;           // from <boost/beast/http.hpp>
+namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
+namespace net = boost::asio;            // from <boost/asio.hpp>
+namespace sslBeast = boost::asio::ssl;       // from <boost/asio/ssl.hpp>
+using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
+
 namespace keto {
 namespace rpc_client {
 
@@ -54,9 +61,9 @@ std::string RpcSessionManager::getSourceVersion() {
 
 RpcSessionManager::RpcSessionManager() : peered(true) {
     
-    this->ioc = std::make_shared<boost::asio::io_context>();
+    this->ioc = std::make_shared<net::io_context>();
     
-    this->ctx = std::make_shared<boostSsl::context>(boostSsl::context::sslv23_client);
+    this->ctx = std::make_shared<sslBeast::context>(sslBeast::context::tlsv12_client);
 
     // This holds the root certificate used for verification
     keto::ssl::load_root_certificates(*ctx);

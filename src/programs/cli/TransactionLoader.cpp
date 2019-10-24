@@ -95,7 +95,7 @@ keto::transaction_common::TransactionMessageHelperPtr TransactionLoader::load(nl
                 modelHelper.addSubject(subjectHelper);
             }
         }
-        keto::asn1::AnyHelper anyModel(modelHelper);
+        keto::asn1::AnyHelper anyModel = modelHelper;
         std::shared_ptr<keto::chain_common::ActionBuilder> actionBuilderPtr =
                 keto::chain_common::ActionBuilder::createAction();
         actionBuilderPtr->setModel(anyModel);

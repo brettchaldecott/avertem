@@ -17,6 +17,9 @@
 #include <string>
 #include <memory>
 
+#include "WAVM/Runtime/Runtime.h"
+
+#include "keto/wavm_common/Emscripten.hpp"
 #include "keto/obfuscate/MetaString.hpp"
 
 namespace Runtime {
@@ -39,7 +42,7 @@ public:
     
     static std::string getSourceVersion();
 
-    WavmEngineWrapper(WavmEngineManager& wavmEngineManager, const std::string& wast);
+    WavmEngineWrapper(const std::string& wast, const std::string& contract);
     WavmEngineWrapper(const WavmEngineWrapper& orig) = delete;
     virtual ~WavmEngineWrapper();
     
@@ -47,8 +50,11 @@ public:
     void executeHttp();
     
 private:
-    WavmEngineManager& wavmEngineManager;
+    //WavmEngineManager& wavmEngineManager;
+    WAVM::Runtime::GCPointer<WAVM::Runtime::Compartment> compartment;
+    std::shared_ptr<keto::Emscripten::Instance> emscriptenInstance;
     std::string wast;
+    std::string contract;
 
 };
 

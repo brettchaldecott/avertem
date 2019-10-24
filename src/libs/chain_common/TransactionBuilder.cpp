@@ -75,6 +75,8 @@ keto::asn1::HashHelper TransactionBuilder::getParent() {
 
 TransactionBuilder& TransactionBuilder::setSourceAccount(const keto::asn1::HashHelper& hashHelper) {
     this->transaction->sourceAccount = (Hash_t)hashHelper;
+    this->transaction->transactionSignator = hashHelper;
+    this->transaction->creatorId = hashHelper;
     return (*this);
 }
 
@@ -93,7 +95,7 @@ keto::asn1::HashHelper TransactionBuilder::getTargetAccount() {
     return this->transaction->targetAccount;
 }
 
-TransactionBuilder& TransactionBuilder::addAction(const std::shared_ptr<ActionBuilder> action) {
+TransactionBuilder& TransactionBuilder::addAction(const ActionBuilderPtr action) {
     if (0!= ASN_SEQUENCE_ADD(&this->transaction->actions,action->takePtr())) {
         BOOST_THROW_EXCEPTION(keto::chain_common::ActionSequenceAddFailedException());
     }
@@ -108,6 +110,23 @@ TransactionBuilder& TransactionBuilder::setEncrypted(bool encrypted) {
 
 bool TransactionBuilder::getEncrypted() {
     return this->transaction->encrypted;
+}
+
+TransactionBuilder& TransactionBuilder::setTransactionSignator(const keto::asn1::HashHelper& hashHelper) {
+    this->transaction->transactionSignator = hashHelper;
+    return *this;
+}
+keto::asn1::HashHelper TransactionBuilder::getTransactionSignator() {
+    return this->transaction->transactionSignator;
+}
+
+TransactionBuilder& TransactionBuilder::setCreatorId(const keto::asn1::HashHelper& hashHelper) {
+    this->transaction->creatorId = hashHelper;
+    return *this;
+}
+
+keto::asn1::HashHelper TransactionBuilder::getCreatorId() {
+    return this->transaction->creatorId;
 }
 
 TransactionBuilder::operator std::vector<uint8_t>&() {

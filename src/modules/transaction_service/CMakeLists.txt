@@ -31,7 +31,7 @@ KetoModuleDepencencies( 0003_keto_transaction_module
                             PRIVATE keto_transaction_common keto_server_common keto_rpc_protocol
                             PRIVATE keto_key_tools keto_proto_environment ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_asn1_common keto_asn1_protocol
-                            PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
+                            PRIVATE keto_crypto ${BOTAN_LIBRARIES}
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
 KetoModuleConsensus( 0003_keto_transaction_module ${NUMBER_OF_KEYS} "transaction" )

@@ -34,6 +34,14 @@ public:
         static const char* NESTED_TRANSACTION;
     };
     static const std::vector<const char*> SYSTEM_CONTRACTS;
+
+    class TRANSACTION_BUILDER {
+    public:
+        class MODEL {
+        public:
+            static const char* RDF;
+        };
+    };
 };
 
 

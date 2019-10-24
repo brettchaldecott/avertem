@@ -24,6 +24,8 @@
 #include <boost/asio/strand.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ssl/stream.hpp>
+#include <boost/beast/ssl.hpp>
+
 #include <cstdlib>
 #include <functional>
 #include <iostream>
@@ -56,9 +58,13 @@
 
 #include "keto/common/MetaInfo.hpp"
 
-using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
-namespace boostSsl = boost::asio::ssl;               // from <boost/asio/ssl.hpp>
-namespace websocket = boost::beast::websocket;  // from <boost/beast/websocket.hpp>
+namespace beast = boost::beast;         // from <boost/beast.hpp>
+namespace http = beast::http;           // from <boost/beast/http.hpp>
+namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
+namespace net = boost::asio;            // from <boost/asio.hpp>
+namespace sslBeast = boost::asio::ssl;       // from <boost/asio/ssl.hpp>
+using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
+
 
 namespace keto {
 namespace rpc_client {
@@ -144,8 +150,8 @@ public:
     static std::string getSourceVersion();
 
     RpcSession(
-            std::shared_ptr<boost::asio::io_context> ioc, 
-            std::shared_ptr<boostSsl::context> ctx,
+            std::shared_ptr<net::io_context> ioc,
+            std::shared_ptr<sslBeast::context> ctx,
             const RpcPeer& rpcPeer);
     RpcSession(const RpcSession& orig) = delete;
     virtual ~RpcSession();
@@ -155,7 +161,7 @@ public:
         boost::system::error_code ec,
         tcp::resolver::results_type results);
     void
-    on_connect(boost::system::error_code ec);
+    on_connect(boost::system::error_code ec,tcp::resolver::results_type::endpoint_type);
     
     void
     on_ssl_handshake(boost::system::error_code ec);
@@ -221,9 +227,7 @@ private:
     bool registered;
     std::recursive_mutex classMutex;
     tcp::resolver resolver;
-    websocket::stream<boostSsl::stream<tcp::socket>> ws_;
-    boost::asio::strand<
-        boost::asio::io_context::executor_type> strand_;
+    websocket::stream<beast::ssl_stream<beast::tcp_stream>> ws_;
     boost::beast::multi_buffer buffer_;
     ReadQueuePtr readQueuePtr;
     std::queue<std::shared_ptr<std::string>> queue_;

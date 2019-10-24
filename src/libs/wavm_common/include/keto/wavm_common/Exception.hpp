@@ -44,6 +44,11 @@ KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, InvalidWavmSessionTypeExcep
 KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, RoleIndexOutOfBoundsException , "The role index is out of bounds.");
 KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, ParameterIndexOutOfBoundsException , "The parameter index is out of bounds.");
 KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, InvalidSubjectForContract , "The subject being modified does not match the contract.");
+KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, UnsupportedModelType , "The model type is not supported.");
+KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, InvalidActionIdForThisSession , "Invalid action id.");
+KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, InvalidTransactionIdForThisSession , "Invalid action id.");
+KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, EmscriptInstanciateFailed , "Emscript instanciate failed.");
+KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, FailedToInstanciateModule , "Failed to instanciate the module.");
 
 
 }

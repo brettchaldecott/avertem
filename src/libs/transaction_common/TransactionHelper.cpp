@@ -51,6 +51,14 @@ keto::asn1::HashHelper TransactionHelper::getTargetAccount() {
     return transaction->targetAccount;
 }
 
+keto::asn1::HashHelper TransactionHelper::getTransactionSignator() {
+    return transaction->transactionSignator;
+}
+
+keto::asn1::HashHelper TransactionHelper::getCreatorId() {
+    return transaction->creatorId;
+}
+
 bool TransactionHelper::isEncrypted() {
     return transaction->encrypted;
 }

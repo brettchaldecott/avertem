@@ -14,6 +14,10 @@
 #ifndef SIGNATURE_GENERATOR_HPP
 #define SIGNATURE_GENERATOR_HPP
 
+#ifndef BOTAN_NO_DEPRECATED_WARNINGS
+#define BOTAN_NO_DEPRECATED_WARNINGS
+#endif
+
 #include "keto/crypto/Constants.hpp"
 #include "keto/crypto/Containers.hpp"
 #include "keto/crypto/KeyLoader.hpp"

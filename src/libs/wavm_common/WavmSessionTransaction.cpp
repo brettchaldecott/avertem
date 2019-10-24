@@ -264,7 +264,7 @@ long WavmSessionTransaction::executeQuery(const std::string& type, const std::st
 
 keto::proto::SandboxCommandMessage WavmSessionTransaction::getSandboxCommandMessage() {
     // create a change and add it to the transaction
-    keto::asn1::AnyHelper anyModel(this->modelHelper);
+    keto::asn1::AnyHelper anyModel = this->modelHelper;
     keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelperPtr =
             transactionMessageHelperPtr->getTransactionWrapper();
     keto::transaction_common::ChangeSetBuilderPtr changeSetBuilder(
@@ -288,6 +288,22 @@ keto::proto::SandboxCommandMessage WavmSessionTransaction::getSandboxCommandMess
     sandboxCommandMessage.set_elapsed_time(sandboxCommandMessage.elapsed_time() + (elapsedTime.count()));
     
     return this->sandboxCommandMessage;
+}
+
+// create a transaction
+WavmSessionTransactionBuilderPtr WavmSessionTransaction::createChildTransaction() {
+    int id = this->childrenTransactions.size();
+    WavmSessionTransactionBuilderPtr wavmSessionTransactionBuilderPtr(new WavmSessionTransactionBuilder(id,
+            transactionMessageHelperPtr->getTransactionWrapper()->getSignedTransaction()->getHash(),this->keyLoaderPtr));
+    this->childrenTransactions.push_back(wavmSessionTransactionBuilderPtr);
+    return wavmSessionTransactionBuilderPtr;
+}
+
+WavmSessionTransactionBuilderPtr WavmSessionTransaction::getChildTransaction(int id) {
+    if (id >= this->childrenTransactions.size()) {
+        BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidTransactionIdForThisSession());
+    }
+    return this->childrenTransactions[id];
 }
 
 
@@ -321,7 +337,7 @@ keto::asn1::RDFPredicateHelperPtr WavmSessionTransaction::getPredicate(
         keto::asn1::RDFPredicateHelper predicate(predicateUrl);
         subject->addPredicate(predicate);
     }
-    return subject->operator [](predicateUrl);
+    return (*subject)[predicateUrl];
 }
 
 void WavmSessionTransaction::addModelEntry(const std::string& subjectUrl, const std::string predicateUrl,
@@ -335,11 +351,11 @@ void WavmSessionTransaction::addModelEntry(const std::string& subjectUrl, const 
         setValue(value);
     
     predicate->addObject(objectHelper);
-    
+
     rdfSessionPtr->setStringValue(
         subjectUrl,predicateUrl,value);
-    
-    
+
+
 }
 
 void WavmSessionTransaction::addModelEntry(const std::string& subjectUrl, const std::string predicateUrl,

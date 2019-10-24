@@ -153,6 +153,13 @@ RDFModelHelper::operator ANY_t*() {
     return anyPtr;
 }
 
+RDFModelHelper::operator keto::asn1::AnyHelper() {
+    ANY_t* anyPtr = ANY_new_fromType(&asn_DEF_RDFModel, this->rdfModel);
+    if (!anyPtr) {
+        BOOST_THROW_EXCEPTION(keto::asn1::TypeToAnyConversionFailedException());
+    }
+    return anyPtr;
+}
 
 }
 }

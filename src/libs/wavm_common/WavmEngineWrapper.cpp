@@ -17,24 +17,25 @@
 #include <vector>
 #include <sstream>
 
-//#include "Programs/CLI.h"
-#include "Platform/Platform.h"
-#include "Inline/BasicTypes.h"
-#include "Inline/Floats.h"
-#include "Inline/Timing.h"
+#include "WAVM/Inline/BasicTypes.h"
+#include "WAVM/Inline/Timing.h"
+#include "WAVM/Inline/BasicTypes.h"
+#include "WAVM/Inline/Timing.h"
+#include "WAVM/IR/Module.h"
+#include "WAVM/IR/Operators.h"
+#include "WAVM/IR/Validate.h"
+#include "WAVM/Runtime/Linker.h"
+#include "WAVM/Runtime/Intrinsics.h"
+#include "WAVM/Runtime/Runtime.h"
+#include "WAVM/Platform/File.h"
+#include "WAVM/ThreadTest/ThreadTest.h"
+#include "WAVM/WASM/WASM.h"
+#include "WAVM/WASI/WASI.h"
+#include "WAVM/IR/Types.h"
+#include "WAVM/WASTParse/WASTParse.h"
+
 #include "keto/wavm_common/Emscripten.hpp"
-#include "Inline/BasicTypes.h"
-#include "Inline/Timing.h"
-#include "IR/Module.h"
-#include "IR/Operators.h"
-#include "IR/Validate.h"
-#include "Runtime/Linker.h"
-#include "Runtime/Intrinsics.h"
-#include "Runtime/Runtime.h"
-#include "ThreadTest/ThreadTest.h"
-#include "WAST/WAST.h"
-#include "WASM/WASM.h"
-#include "IR/Types.h"
+
 
 #include "keto/wavm_common/WavmEngineWrapper.hpp"
 #include "keto/wavm_common/Exception.hpp"
@@ -45,30 +46,52 @@
 
 
 
-using namespace IR;
-using namespace Runtime;
-
-
-
 namespace keto {
 namespace wavm_common {
 
 
-bool loadBinaryModule(const std::string& wasmBytes,IR::Module& outModule)
+struct RootResolver : WAVM::Runtime::Resolver {
+    RootResolver(WAVM::Runtime::Resolver &inInnerResolver, WAVM::Runtime::Compartment *inCompartment)
+            : innerResolver(inInnerResolver), compartment(inCompartment) {
+    }
+
+    virtual bool resolve(const std::string &moduleName,
+                         const std::string &exportName,
+                         WAVM::IR::ExternType type,
+                         WAVM::Runtime::Object *&outObject) override {
+        if (innerResolver.resolve(moduleName, exportName, type, outObject)) { return true; }
+        else {
+            KETO_LOG_ERROR << "Resolved import " << moduleName << "." << exportName << " was expecting " << asString(type);
+            return generateStub(
+                    moduleName, exportName, type, outObject, compartment, WAVM::Runtime::StubFunctionBehavior::trap);
+        }
+    }
+
+private:
+    WAVM::Runtime::Resolver &innerResolver;
+    WAVM::Runtime::GCPointer <WAVM::Runtime::Compartment> compartment;
+
+};
+
+bool loadBinaryModule(const std::string& wasmBytes, const WAVM::IR::FeatureSpec& featureSpec, WAVM::Runtime::ModuleRef& outModule)
 {
     // Load the module from a binary WebAssembly file.
     try
     {
-        Serialization::MemoryInputStream stream((const U8*)wasmBytes.data(),wasmBytes.size());
-        WASM::serialize(stream,outModule);
+        WAVM::WASM::LoadError loadError;
+        if (!WAVM::Runtime::loadBinaryModule((const U8*)wasmBytes.data(),wasmBytes.size(),outModule,featureSpec,&loadError)) {
+            KETO_LOG_ERROR <<  "[WavmEngineWrapper][loadBinaryModule]Error deserializing WebAssembly binary file:";
+            KETO_LOG_ERROR <<  loadError.message;
+            return false;
+        }
     }
-    catch(Serialization::FatalSerializationException exception)
+    catch(WAVM::Serialization::FatalSerializationException exception)
     {
         KETO_LOG_ERROR <<  "[WavmEngineWrapper][loadBinaryModule]Error deserializing WebAssembly binary file:";
         KETO_LOG_ERROR <<  exception.message;
         return false;
     }
-    catch(IR::ValidationException exception)
+    catch(WAVM::IR::ValidationException exception)
     {
         KETO_LOG_ERROR <<  "[WavmEngineWrapper][loadBinaryModule]Error validating WebAssembly binary file:";
         KETO_LOG_ERROR <<  exception.message;
@@ -83,14 +106,19 @@ bool loadBinaryModule(const std::string& wasmBytes,IR::Module& outModule)
     return true;
 }
     
-bool loadTextModule(const std::string& wastString,IR::Module& outModule)
+bool loadTextModule(const std::string& wastString, const WAVM::IR::FeatureSpec& featureSpec, WAVM::Runtime::ModuleRef& outModule)
 {
-    std::vector<WAST::Error> parseErrors;
-    WAST::parseModule(wastString.c_str(),wastString.size(),outModule,parseErrors);
-    if(!parseErrors.size()) {
-        return true; 
+    WAVM::IR::Module irModule(featureSpec);
+    std::vector<WAVM::WAST::Error> parseErrors;
+    if (!WAVM::WAST::parseModule(wastString.c_str(),wastString.size(),irModule,parseErrors)) {
+        KETO_LOG_ERROR <<  "[WavmEngineWrapper][loadBinaryModule]Error deserializing WebAssembly binary file:";
+        for (WAVM::WAST::Error error : parseErrors) {
+            KETO_LOG_ERROR << error.message;
+        }
+        return false;
     }
-    return false;
+    outModule = WAVM::Runtime::compileModule(irModule);
+    return true;
 }
 
 
@@ -98,13 +126,17 @@ std::string WavmEngineWrapper::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
-WavmEngineWrapper::WavmEngineWrapper(WavmEngineManager& wavmEngineManager, const std::string& wast)
-    : wavmEngineManager(wavmEngineManager), wast(wast) {
+WavmEngineWrapper::WavmEngineWrapper(const std::string& wast, const std::string& contract)
+    : wast(wast), contract(contract) {
+    this->compartment = WAVM::Runtime::createCompartment();
 }
 
 
 WavmEngineWrapper::~WavmEngineWrapper() {
-
+    emscriptenInstance.reset();
+    if (WAVM::Runtime::tryCollectCompartment(std::move(compartment))) {
+        KETO_LOG_ERROR << "Failed to clean out the compartment";
+    }
 }
 
 
@@ -112,30 +144,31 @@ WavmEngineWrapper::~WavmEngineWrapper() {
 void WavmEngineWrapper::execute() {
     // place object in a scope
     try {
-        Module module;
+        WAVM::IR::FeatureSpec featureSpec{false};
+        WAVM::Runtime::ModuleRef moduleRef;
 
-        // Enable some additional "features" in WAVM that are disabled by default.
-        module.featureSpec.importExportMutableGlobals = true;
-        module.featureSpec.sharedTables = true;
-        // Allow atomics on unshared memories to accomodate atomics on the Emscripten memory.
-        module.featureSpec.requireSharedFlagForAtomicOperators = false;
-
-        // check if we are dealing with a binary contract or not
-        if(*(U32*)wast.data() == 0x6d736100) {
-            if (!loadBinaryModule(wast,module)) {
+        if (!loadBinaryModule(wast,featureSpec,moduleRef)) {
+            KETO_LOG_ERROR << "Failed to load the wast as a binary mondule falling back to text";
+            if(!loadTextModule(wast,featureSpec,moduleRef)) {
                 BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidContractException());
             }
-        } else if(!loadTextModule(wast,module)) {
-            BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidContractException());
         }
 
-        // Link the module with the intrinsic modules.
-        Runtime::GCPointer<Compartment> compartment = Runtime::cloneCompartment(
-                this->wavmEngineManager.getCompartment());
-        Runtime::GCPointer<Context> context = Runtime::createContext(compartment);
+        const WAVM::IR::Module& irModule = WAVM::Runtime::getModuleIR(moduleRef);
+        emscriptenInstance
+                = keto::Emscripten::instantiate(compartment,
+                                          irModule,
+                                          WAVM::Platform::getStdFD(WAVM::Platform::StdDevice::in),
+                                          WAVM::Platform::getStdFD(WAVM::Platform::StdDevice::out),
+                                          WAVM::Platform::getStdFD(WAVM::Platform::StdDevice::err));
+        if(!emscriptenInstance) {
+            BOOST_THROW_EXCEPTION(keto::wavm_common::EmscriptInstanciateFailed());
+        }
 
+        RootResolver rootResolver(
+                keto::Emscripten::getInstanceResolver(emscriptenInstance), compartment);
+        WAVM::Runtime::LinkResult linkResult = WAVM::Runtime::linkModule(irModule, rootResolver);
 
-        LinkResult linkResult = linkModule(module, *this->wavmEngineManager.getResolver());
         if (!linkResult.success) {
             std::stringstream ss;
             ss << "Failed to link module:";
@@ -147,20 +180,25 @@ void WavmEngineWrapper::execute() {
             BOOST_THROW_EXCEPTION(keto::wavm_common::LinkingFailedException(ss.str()));
         }
 
-        Runtime::GCPointer<ModuleInstance> moduleInstance =
-                instantiateModule(compartment, module, std::move(linkResult.resolvedImports));
-        if (!moduleInstance) { BOOST_THROW_EXCEPTION(keto::wavm_common::LinkingFailedException()); }
-
-        // Call the module start function, if it has one.
-        Runtime::GCPointer<FunctionInstance> startFunction = getStartFunction(moduleInstance);
-        if (startFunction) {
-            invokeFunctionChecked(context, startFunction, {});
+        WAVM::Runtime::Instance* moduleInstance = WAVM::Runtime::instantiateModule(
+                compartment, moduleRef, std::move(linkResult.resolvedImports),contract.c_str());
+        if(!moduleInstance) {
+            std::stringstream ss;
+            ss << "Failed to link module: " << contract;
+            BOOST_THROW_EXCEPTION(keto::wavm_common::FailedToInstanciateModule(ss.str()));
         }
 
-        keto::Emscripten::initializeGlobals(context, module, moduleInstance);
+        // Call the module start function, if it has one.
+        WAVM::Runtime::Function* startFunction = WAVM::Runtime::getStartFunction(moduleInstance);
+        WAVM::Runtime::Context* context = WAVM::Runtime::createContext(compartment);
+        if (startFunction) {
+            WAVM::Runtime::invokeFunction(context, startFunction);
+        }
+
+        keto::Emscripten::initializeGlobals(this->emscriptenInstance,context, irModule, moduleInstance);
 
         // Look up the function export to call.
-        Runtime::GCPointer<FunctionInstance> functionInstance;
+        WAVM::Runtime::Function* functionInstance;
         Status currentStatus = std::dynamic_pointer_cast<WavmSessionTransaction>(WavmSessionManager::getInstance()->getWavmSession())->getStatus();
         if ((currentStatus == Status_init) ||
             (currentStatus == Status_debit)) {
@@ -179,160 +217,162 @@ void WavmEngineWrapper::execute() {
         if (!functionInstance) {
             BOOST_THROW_EXCEPTION(keto::wavm_common::MissingEntryPointException());
         }
-        //const FunctionType *functionType = getFunctionType(functionInstance);
+        WAVM::IR::FunctionType invokeSig(WAVM::Runtime::getFunctionType(functionInstance));
 
-        // Set up the arguments for the invoke.
-        std::vector<Value> invokeArgs;
-        Result functionResult;
-        //Timing::Timer executionTimer;
-        Runtime::catchRuntimeExceptions(
-                [&] {
-                    // invoke the function
-                    functionResult = invokeFunctionChecked(context, functionInstance, invokeArgs);
-                },
-                [&](Runtime::Exception &&exception) {
-                    std::stringstream ss;
-                    ss << "Failed to handle the exception : " << describeException(exception).c_str();
+        std::vector<WAVM::IR::UntaggedValue> untaggedInvokeArgs;
+        std::vector<WAVM::IR::UntaggedValue> untaggedInvokeResults;
+        // Invoke the function.
+        WAVM::Timing::Timer executionTimer;
+        WAVM::Runtime::invokeFunction(
+                context, functionInstance, invokeSig,untaggedInvokeArgs.data(),untaggedInvokeResults.data());
+        WAVM::Timing::logTimer("Invoked function", executionTimer);
 
-                    KETO_LOG_DEBUG << ss.str();
-                    BOOST_THROW_EXCEPTION(keto::wavm_common::ContactExecutionFailedException(ss.str()));
-                });
-
-        // validate the result
-        if ((currentStatus == Status_init) ||
-            (currentStatus == Status_debit)) {
+        if (untaggedInvokeResults.size() != 1) {
+            BOOST_THROW_EXCEPTION(
+                    keto::wavm_common::ContractUnsupportedResultException("Unsupported contract result format."));
+        } else if (untaggedInvokeResults.size() == 1) {
             bool result = false;
-            switch (functionResult.type) {
-                case IR::ResultType::i32:
-                    result = (functionResult.i32);
+            switch (invokeSig.results()[0]) {
+                case WAVM::IR::ValueType::i32:
+                    result = untaggedInvokeResults[0].i32;
                     break;
-                case IR::ResultType::i64:
-                    result = (functionResult.i64);
+                case WAVM::IR::ValueType::i64:
+                    result = (untaggedInvokeResults[0].i64);
                     break;
-                case IR::ResultType::f32:
-                    result = (functionResult.f32);
+                case WAVM::IR::ValueType::f32:
+                    result = (untaggedInvokeResults[0].f32);
                     break;
-                case IR::ResultType::f64:
-                    result = (functionResult.f64);
+                case WAVM::IR::ValueType::f64:
+                    result = (untaggedInvokeResults[0].f64);
                     break;
                 default:
                     BOOST_THROW_EXCEPTION(keto::wavm_common::ContractUnsupportedResultException(
-                            "Contract returned an unsupported result."));
+                                                  "Contract returned an unsupported result."));
             }
             if (!result) {
                 BOOST_THROW_EXCEPTION(
                         keto::wavm_common::ContractExecutionFailedException("Contract execution failed."));
             }
+        } else {
+            BOOST_THROW_EXCEPTION(
+                    keto::wavm_common::ContractExecutionFailedException("Contract execution failed."));
         }
+
+
     } catch (...) {
-        Runtime::collectGarbage();
         throw;
     }
-    Runtime::collectGarbage();
 }
 
 
 void WavmEngineWrapper::executeHttp() {
     // place object in a scope
     try {
-        Module module;
+        WAVM::IR::FeatureSpec featureSpec{false};
+        WAVM::Runtime::ModuleRef moduleRef;
 
-        // Enable some additional "features" in WAVM that are disabled by default.
-        module.featureSpec.importExportMutableGlobals = true;
-        module.featureSpec.sharedTables = true;
-        // Allow atomics on unshared memories to accomodate atomics on the Emscripten memory.
-        module.featureSpec.requireSharedFlagForAtomicOperators = false;
-
-        // check if we are dealing with a binary contract or not
-        if(*(U32*)wast.data() == 0x6d736100) {
-            if (!loadBinaryModule(wast,module)) {
+        if (!loadBinaryModule(wast,featureSpec,moduleRef)) {
+            KETO_LOG_ERROR << "Failed to load the wast as a binary mondule falling back to text";
+            if(!loadTextModule(wast,featureSpec,moduleRef)) {
                 BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidContractException());
             }
-        } else if(!loadTextModule(wast,module)) {
-            BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidContractException());
         }
 
-        // Link the module with the intrinsic modules.
-        Runtime::GCPointer<Compartment> compartment = Runtime::cloneCompartment(
-                this->wavmEngineManager.getCompartment());
-        Runtime::GCPointer<Context> context = Runtime::createContext(compartment);
+        const WAVM::IR::Module& irModule = WAVM::Runtime::getModuleIR(moduleRef);
+        emscriptenInstance
+                = keto::Emscripten::instantiate(compartment,
+                                                irModule,
+                                                WAVM::Platform::getStdFD(WAVM::Platform::StdDevice::in),
+                                                WAVM::Platform::getStdFD(WAVM::Platform::StdDevice::out),
+                                                WAVM::Platform::getStdFD(WAVM::Platform::StdDevice::err));
+        if(!emscriptenInstance) {
+            BOOST_THROW_EXCEPTION(keto::wavm_common::EmscriptInstanciateFailed());
+        }
 
+        RootResolver rootResolver(
+                keto::Emscripten::getInstanceResolver(emscriptenInstance), compartment);
+        WAVM::Runtime::LinkResult linkResult = WAVM::Runtime::linkModule(irModule, rootResolver);
 
-        LinkResult linkResult = linkModule(module, *this->wavmEngineManager.getResolver());
         if (!linkResult.success) {
             std::stringstream ss;
             ss << "Failed to link module:";
             for (auto &missingImport : linkResult.missingImports) {
                 ss << "Missing import: module=\"" << missingImport.moduleName
                    << "\" export=\"" << missingImport.exportName
-                   << "\" type=\"" << asString(missingImport.type) << "\"" << std::endl;
+                   << "\" type=\"" << asString(missingImport.type) << "\"";
             }
             BOOST_THROW_EXCEPTION(keto::wavm_common::LinkingFailedException(ss.str()));
         }
 
-        Runtime::GCPointer<ModuleInstance> moduleInstance =
-                instantiateModule(compartment, module, std::move(linkResult.resolvedImports));
-        if (!moduleInstance) { BOOST_THROW_EXCEPTION(keto::wavm_common::LinkingFailedException()); }
-
-        // Call the module start function, if it has one.
-        Runtime::GCPointer<FunctionInstance> startFunction = getStartFunction(moduleInstance);
-        if (startFunction) {
-            invokeFunctionChecked(context, startFunction, {});
+        WAVM::Runtime::Instance* moduleInstance = WAVM::Runtime::instantiateModule(
+                compartment, moduleRef, std::move(linkResult.resolvedImports),contract.c_str());
+        if(!moduleInstance) {
+            std::stringstream ss;
+            ss << "Failed to link module: " << contract;
+            BOOST_THROW_EXCEPTION(keto::wavm_common::FailedToInstanciateModule(ss.str()));
         }
 
-        keto::Emscripten::initializeGlobals(context, module, moduleInstance);
+        // Call the module start function, if it has one.
+        WAVM::Runtime::Function* startFunction = WAVM::Runtime::getStartFunction(moduleInstance);
+        WAVM::Runtime::Context* context = WAVM::Runtime::createContext(compartment);
+        if (startFunction) {
+            WAVM::Runtime::invokeFunction(context, startFunction);
+        }
+
+        keto::Emscripten::initializeGlobals(this->emscriptenInstance,context, irModule, moduleInstance);
 
         // Look up the function export to call.
-        Runtime::GCPointer<FunctionInstance> functionInstance;
+        WAVM::Runtime::Function* functionInstance;
         functionInstance = asFunctionNullable(getInstanceExport(moduleInstance, "request"));
 
         if (!functionInstance) {
             BOOST_THROW_EXCEPTION(keto::wavm_common::MissingEntryPointException());
         }
-        //const FunctionType *functionType = getFunctionType(functionInstance);
 
-        // Set up the arguments for the invoke.
-        std::vector<Value> invokeArgs;
-        Result functionResult;
-        //Timing::Timer executionTimer;
-        Runtime::catchRuntimeExceptions(
-                [&] {
-                    // invoke the function
-                    functionResult = invokeFunctionChecked(context, functionInstance, invokeArgs);
-                },
-                [&](Runtime::Exception &&exception) {
-                    std::stringstream ss;
-                    ss << "Failed to handle the exception : " << describeException(exception).c_str();
+        // setup the invoke sig
+        WAVM::IR::FunctionType invokeSig(WAVM::Runtime::getFunctionType(functionInstance));
 
-                    KETO_LOG_DEBUG << ss.str();
-                    BOOST_THROW_EXCEPTION(keto::wavm_common::ContactExecutionFailedException(ss.str()));
-                });
+        std::vector<WAVM::IR::UntaggedValue> untaggedInvokeArgs;
+        std::vector<WAVM::IR::UntaggedValue> untaggedInvokeResults;
+        // Invoke the function.
+        WAVM::Timing::Timer executionTimer;
+        WAVM::Runtime::invokeFunction(
+                context, functionInstance, invokeSig,untaggedInvokeArgs.data(),untaggedInvokeResults.data());
+        WAVM::Timing::logTimer("Invoked function", executionTimer);
 
-        // validate the result
-        bool result = false;
-        switch (functionResult.type) {
-            case IR::ResultType::i32:
-                result = (functionResult.i32);
-                break;
-            case IR::ResultType::i64:
-                result = (functionResult.i64);
-                break;
-            case IR::ResultType::f32:
-                result = (functionResult.f32);
-                break;
-            case IR::ResultType::f64:
-                result = (functionResult.f64);
-                break;
-            default:
-                BOOST_THROW_EXCEPTION(keto::wavm_common::ContractUnsupportedResultException(
-                                              "Contract returned an unsupported result."));
+        if (untaggedInvokeResults.size() != 1) {
+            BOOST_THROW_EXCEPTION(
+                    keto::wavm_common::ContractUnsupportedResultException("Unsupported contract result format."));
+        } else if (untaggedInvokeResults.size() == 1) {
+            bool result = false;
+            switch (invokeSig.results()[0]) {
+                case WAVM::IR::ValueType::i32:
+                    result = untaggedInvokeResults[0].i32;
+                    break;
+                case WAVM::IR::ValueType::i64:
+                    result = (untaggedInvokeResults[0].i64);
+                    break;
+                case WAVM::IR::ValueType::f32:
+                    result = (untaggedInvokeResults[0].f32);
+                    break;
+                case WAVM::IR::ValueType::f64:
+                    result = (untaggedInvokeResults[0].f64);
+                    break;
+                default:
+                    BOOST_THROW_EXCEPTION(keto::wavm_common::ContractUnsupportedResultException(
+                                                  "Contract returned an unsupported result."));
+            }
+            if (!result) {
+                BOOST_THROW_EXCEPTION(
+                        keto::wavm_common::ContractExecutionFailedException("Contract execution failed."));
+            }
+        } else {
+            BOOST_THROW_EXCEPTION(
+                    keto::wavm_common::ContractExecutionFailedException("Contract execution failed."));
         }
-
     } catch (...) {
-        Runtime::collectGarbage();
         throw;
     }
-    Runtime::collectGarbage();
 }
 }
 }

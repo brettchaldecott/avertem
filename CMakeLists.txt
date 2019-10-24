@@ -47,7 +47,10 @@ if (USE_PCH)
   include (cotire)
 endif(USE_PCH)
 
+SET(BOTAN_NO_DEPRECATED_WARNINGS)
 SET(BOOST_COMPONENTS)
+#set( CMAKE_VERBOSE_MAKEFILE on )
+
 LIST(APPEND BOOST_COMPONENTS 
                             log_setup
                             log
@@ -55,12 +58,10 @@ LIST(APPEND BOOST_COMPONENTS
                              system
                              filesystem
                              program_options
-                             signals
                              serialization
                              chrono
                              coroutine
                              unit_test_framework
-                             context
                              locale
                              regex
                             thread
@@ -74,14 +75,17 @@ IF( WIN32 )
   set(BOOST_ALL_DYN_LINK OFF) # force dynamic linking for all libraries
 ENDIF(WIN32)
 
-FIND_PACKAGE(Boost 1.66 REQUIRED COMPONENTS ${BOOST_COMPONENTS})
+FIND_PACKAGE(Boost 1.71.0 REQUIRED COMPONENTS ${BOOST_COMPONENTS})
 # For Boost 1.53 on windows, coroutine was not in BOOST_LIBRARYDIR and do not need it to build,  but if boost versin >= 1.54, find coroutine otherwise will cause link errors
-IF(NOT "${Boost_VERSION}" MATCHES "1.53(.*)")
-    SET(BOOST_LIBRARIES_TEMP ${Boost_LIBRARIES})
-    FIND_PACKAGE(Boost 1.54 REQUIRED COMPONENTS coroutine)
-    LIST(APPEND BOOST_COMPONENTS coroutine)
-    SET(Boost_LIBRARIES ${BOOST_LIBRARIES_TEMP} ${Boost_LIBRARIES})
-ENDIF()
+#IF(NOT "${Boost_VERSION}" MATCHES "1.53(.*)")
+
+# setup the static libraries
+#SET(BOOST_LIBRARIES_TEMP ${Boost_LIBRARIES})
+#FIND_PACKAGE(Boost 1.69 REQUIRED COMPONENTS system filesystem log log_setup program_options)
+#SET(Boost_STATIC_LIBRARIES ${Boost_LIBRARIES})
+#LIST(APPEND BOOST_COMPONENTS coroutine)
+#SET(Boost_LIBRARIES ${BOOST_LIBRARIES_TEMP})
+#ENDIF()
 
 find_package(OpenSSL REQUIRED)
 find_package(Protobuf REQUIRED)
@@ -156,7 +160,7 @@ else( WIN32 ) # Apple AND Linux
         endif ( FULL_STATIC_BUILD )
 
         if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
-            if( CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 4.0.0 OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 4.0.0 )
+            if( CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 6.0.0 OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.0.0 )
                 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-invalid-partial-specialization" )
             endif()
         endif()

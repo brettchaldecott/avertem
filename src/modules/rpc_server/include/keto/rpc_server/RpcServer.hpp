@@ -21,6 +21,11 @@
 #include <boost/asio/strand.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ssl/stream.hpp>
+#include <boost/beast/ssl.hpp>
+#include <boost/beast/websocket.hpp>
+#include <boost/beast/websocket/ssl.hpp>
+#include <boost/asio/strand.hpp>
+
 #include <algorithm>
 #include <cstdlib>
 #include <functional>
@@ -37,9 +42,12 @@
 #include "keto/event/Event.hpp"
 
 
-using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
-namespace beastSsl = boost::asio::ssl;               // from <boost/asio/ssl.hpp>
-namespace websocket = boost::beast::websocket;  // from <boost/beast/websocket.hpp>
+namespace beast = boost::beast;         // from <boost/beast.hpp>
+namespace http = beast::http;           // from <boost/beast/http.hpp>
+namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
+namespace net = boost::asio;            // from <boost/asio.hpp>
+namespace sslBeast = boost::asio::ssl;       // from <boost/asio/ssl.hpp>
+using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
 
 namespace keto {
@@ -102,8 +110,8 @@ private:
     boost::asio::ip::address externalIp;
     unsigned short serverPort;
     int threads;
-    std::shared_ptr<beastSsl::context> contextPtr;
-    std::shared_ptr<boost::asio::io_context> ioc;
+    std::shared_ptr<sslBeast::context> contextPtr;
+    std::shared_ptr<net::io_context> ioc;
     std::vector<std::thread> threadsVector;
     keto::crypto::SecureVector secret;
     bool serverActive;

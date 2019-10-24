@@ -28,6 +28,8 @@ const std::vector<const char*> Constants::SYSTEM_CONTRACTS{
         Constants::SYSTEM_CONTRACT::NESTED_TRANSACTION
 };
 
+const char* Constants::TRANSACTION_BUILDER::MODEL::RDF = "RDF";
+
 }
 }
 

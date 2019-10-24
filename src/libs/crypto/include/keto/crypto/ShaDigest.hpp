@@ -5,6 +5,10 @@
 #ifndef KETO_SHADIGEST_HPP
 #define KETO_SHADIGEST_HPP
 
+#ifndef BOTAN_NO_DEPRECATED_WARNINGS
+#define BOTAN_NO_DEPRECATED_WARNINGS
+#endif
+
 #include <string>
 #include <memory>
 
@@ -16,7 +20,7 @@
 #include <botan/rng.h>
 #include <botan/auto_rng.h>
 #include <botan/bigint.h>
-#include <botan/mdx_hash.h>
+//#include <botan/mdx_hash.h>
 
 #include "keto/obfuscate/MetaString.hpp"
 
