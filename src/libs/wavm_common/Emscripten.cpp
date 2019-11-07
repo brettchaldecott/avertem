@@ -9,6 +9,9 @@
 #include "WAVM/VFS/VFS.h"
 #include "WAVM/Logging/Logging.h"
 #include "WAVM/Platform/Thread.h"
+#include "WAVM/Inline/Serialization.h"
+#include "WAVM/IR/Module.h"
+#include "WAVM/Inline/LEB128.h"
 
 #include <time.h>
 #include <stdio.h>
@@ -34,24 +37,97 @@
 
 #endif
 
+using namespace WAVM;
 using namespace WAVM::IR;
 using namespace WAVM::Runtime;
 
-WAVM::Intrinsics::Module* getIntrinsicModule_env();
-WAVM::Intrinsics::Module* getIntrinsicModule_envThreads();
-WAVM::Intrinsics::Module* getIntrinsicModule_asm2wasm();
 WAVM::Intrinsics::Module* getIntrinsicModule_global();
-struct MutableGlobals;
+WAVM::Intrinsics::Module* getIntrinsicModule_env();
+WAVM::Intrinsics::Module* getIntrinsicModule_asm2wasm();
+WAVM::Intrinsics::Module* getIntrinsicModule_emscripten_wasi_unstable();
 
 namespace WAVM {
     namespace Emscripten {
+        struct EmscriptenModuleMetadata
+        {
+            U32 metadataVersionMajor;
+            U32 metadataVersionMinor;
+
+            U32 abiVersionMajor;
+            U32 abiVersionMinor;
+
+            U32 backendID;
+            U32 numMemoryPages;
+            U32 numTableElems;
+            U32 globalBaseAddress;
+            U32 dynamicBaseAddress;
+            U32 dynamicTopAddressAddress;
+            U32 tempDoubleAddress;
+            U32 standaloneWASM;
+        };
     }
 }
 
+static bool loadEmscriptenMetadata(const WAVM::IR::Module& module, WAVM::Emscripten::EmscriptenModuleMetadata& outMetadata)
+{
+    for(const CustomSection& customSection : module.customSections)
+    {
+        if(customSection.name == "emscripten_metadata")
+        {
+            try
+            {
+                WAVM::Serialization::MemoryInputStream sectionStream(customSection.data.data(),
+                                                               customSection.data.size());
+
+                serializeVarUInt32(sectionStream, outMetadata.metadataVersionMajor);
+                serializeVarUInt32(sectionStream, outMetadata.metadataVersionMinor);
+
+                if(outMetadata.metadataVersionMajor != 0 || outMetadata.metadataVersionMinor < 2)
+                {
+                    WAVM::Log::printf(WAVM::Log::error,
+                                "Unsupported Emscripten module metadata version: %u\n",
+                                outMetadata.metadataVersionMajor);
+                    return false;
+                }
+
+                serializeVarUInt32(sectionStream, outMetadata.abiVersionMajor);
+                serializeVarUInt32(sectionStream, outMetadata.abiVersionMinor);
+
+                serializeVarUInt32(sectionStream, outMetadata.backendID);
+                serializeVarUInt32(sectionStream, outMetadata.numMemoryPages);
+                serializeVarUInt32(sectionStream, outMetadata.numTableElems);
+                serializeVarUInt32(sectionStream, outMetadata.globalBaseAddress);
+                serializeVarUInt32(sectionStream, outMetadata.dynamicBaseAddress);
+                serializeVarUInt32(sectionStream, outMetadata.dynamicTopAddressAddress);
+                serializeVarUInt32(sectionStream, outMetadata.tempDoubleAddress);
+
+                if(outMetadata.metadataVersionMinor >= 3)
+                { serializeVarUInt32(sectionStream, outMetadata.standaloneWASM); }
+                else
+                {
+                    outMetadata.standaloneWASM = 0;
+                }
+
+                return true;
+            }
+            catch(WAVM::Serialization::FatalSerializationException const& exception)
+            {
+                WAVM::Log::printf(WAVM::Log::error,
+                            "Error while deserializing Emscripten metadata section: %s\n",
+                            exception.message.c_str());
+                return false;
+            }
+        }
+    }
+
+    WAVM::Log::printf(WAVM::Log::error,
+                "Module did not contain Emscripten module metadata section: WAVM only supports"
+                " Emscripten modules compiled with '-S EMIT_EMSCRIPTEN_METADATA=1'.\n");
+    return false;
+}
 
 namespace keto {
-    namespace Emscripten
-    {
+    namespace Emscripten {
 
         //--------------------------------------------------------------------------------------------------------------
         //--------------------------------------------------------------------------------------------------------------
@@ -65,20 +141,30 @@ namespace keto {
         static constexpr WAVM::Emscripten::emabi::Address mainThreadStackAddress = 64 * WAVM::IR::numBytesPerPage;
         static constexpr WAVM::Emscripten::emabi::Address mainThreadNumStackBytes = 32 * WAVM::IR::numBytesPerPage;
 
-        struct Instance : WAVM::Runtime::Resolver
+        struct Process : WAVM::Runtime::Resolver
         {
             WAVM::Runtime::GCPointer<WAVM::Runtime::Compartment> compartment;
-            WAVM::Runtime::GCPointer<WAVM::Runtime::Instance> moduleInstance;
 
+            WAVM::Runtime::GCPointer<WAVM::Runtime::Instance> wasi_unstable;
             WAVM::Runtime::GCPointer<WAVM::Runtime::Instance> env;
             WAVM::Runtime::GCPointer<WAVM::Runtime::Instance> keto;
             WAVM::Runtime::GCPointer<WAVM::Runtime::Instance> asm2wasm;
             WAVM::Runtime::GCPointer<WAVM::Runtime::Instance> global;
 
+            WAVM::IntrusiveSharedPtr<Thread> mainThread;
+
+            WAVM::Emscripten::EmscriptenModuleMetadata metadata;
+
+            WAVM::Runtime::GCPointer<WAVM::Runtime::Instance> instance;
             WAVM::Runtime::GCPointer<WAVM::Runtime::Memory> memory;
             WAVM::Runtime::GCPointer<WAVM::Runtime::Table> table;
 
-            WAVM::IntrusiveSharedPtr<Thread> mainThread;
+            WAVM::Runtime::GCPointer<WAVM::Runtime::Function> malloc;
+            WAVM::Runtime::GCPointer<WAVM::Runtime::Function> free;
+            WAVM::Runtime::GCPointer<WAVM::Runtime::Function> stackAlloc;
+            WAVM::Runtime::GCPointer<WAVM::Runtime::Function> stackSave;
+            WAVM::Runtime::GCPointer<WAVM::Runtime::Function> stackRestore;
+            WAVM::Runtime::GCPointer<WAVM::Runtime::Function> errnoLocation;
 
             // A global list of running threads created by WebAssembly code.
             WAVM::Platform::Mutex threadsMutex;
@@ -86,15 +172,16 @@ namespace keto {
 
             std::atomic<WAVM::Emscripten::emabi::pthread_key_t> pthreadSpecificNextKey{0};
 
-            WAVM::Emscripten::emabi::Address errnoAddress{0};
-
             std::atomic<WAVM::Emscripten::emabi::Address> currentLocale;
+
+            std::vector<std::string> args;
+            std::vector<std::string> envs;
 
             WAVM::VFS::VFD* stdIn{nullptr};
             WAVM::VFS::VFD* stdOut{nullptr};
             WAVM::VFS::VFD* stdErr{nullptr};
 
-            ~Instance();
+            ~Process();
 
             bool resolve(const std::string& moduleName,
                          const std::string& exportName,
@@ -103,28 +190,14 @@ namespace keto {
         };
 
 
-        struct MutableGlobals
-        {
-            enum
-            {
-                address = 63 * WAVM::IR::numBytesPerPage
-            };
-
-            WAVM::Emscripten::emabi::Address DYNAMICTOP_PTR;
-            F64 tempDoublePtr;
-            WAVM::Emscripten::emabi::FD _stderr;
-            WAVM::Emscripten::emabi::FD _stdin;
-            WAVM::Emscripten::emabi::FD _stdout;
-        };
-
-        bool resizeHeap(Instance* instance, U32 desiredNumBytes)
+        bool resizeHeap(Process* process, U32 desiredNumBytes)
         {
             const Uptr desiredNumPages
                     = (Uptr(desiredNumBytes) + WAVM::IR::numBytesPerPage - 1) / WAVM::IR::numBytesPerPage;
-            const Uptr currentNumPages = WAVM::Runtime::getMemoryNumPages(instance->memory);
+            const Uptr currentNumPages = WAVM::Runtime::getMemoryNumPages(process->memory);
             if(desiredNumPages > currentNumPages)
             {
-                if(!WAVM::Runtime::growMemory(instance->memory, desiredNumPages - currentNumPages))
+                if(!WAVM::Runtime::growMemory(process->memory, desiredNumPages - currentNumPages))
                 { return false; }
 
                 return true;
@@ -139,36 +212,72 @@ namespace keto {
             }
         }
 
-        WAVM::Emscripten::emabi::Address dynamicAlloc(Instance* instance, WAVM::Emscripten::emabi::Size numBytes)
+
+        inline Emscripten::Process* getEmscriptenInstance(
+                WAVM::Runtime::ContextRuntimeData* contextRuntimeData);
+
+        enum class ioStreamVMHandle
         {
-            MutableGlobals& mutableGlobals
-                    = memoryRef<MutableGlobals>(instance->memory, MutableGlobals::address);
+            StdIn = 0,
+            StdOut = 1,
+            StdErr = 2,
+        };
+    }
+}
 
-            const WAVM::Emscripten::emabi::Address allocationAddress = mutableGlobals.DYNAMICTOP_PTR;
-            const WAVM::Emscripten::emabi::Address endAddress = (allocationAddress + numBytes + 15) & -16;
+namespace WAVM {
+    namespace Emscripten {
+        // Metadata from the emscripten_metadata user section of a module emitted by Emscripten.
 
-            mutableGlobals.DYNAMICTOP_PTR = endAddress;
+        WAVM::Intrinsics::Module* getIntrinsicModule_envThreads();
 
-            if(endAddress > getMemoryNumPages(instance->memory) * WAVM::IR::numBytesPerPage)
-            {
-                Uptr memoryMaxPages = getMemoryType(instance->memory).size.max;
-                if(memoryMaxPages == UINT64_MAX) { memoryMaxPages = WAVM::IR::maxMemoryPages; }
-
-                if(endAddress > memoryMaxPages * WAVM::IR::numBytesPerPage || !resizeHeap(instance, endAddress))
-                { throwException(ExceptionTypes::outOfMemory); }
-            }
-
-            return allocationAddress;
+        // C/CPP method mappings
+        WAVM_DEFINE_INTRINSIC_FUNCTION(env,"console",void,c_console,WAVM::Emscripten::emabi::Address msg)
+        {
+            keto::Emscripten::Process* instance = keto::Emscripten::getEmscriptenInstance(contextRuntimeData);
+            std::string msgString = keto::wavm_common::WavmUtils::readCString(instance->memory,msg);
+            return;
         }
 
-        inline Emscripten::Instance* getEmscriptenInstance(
+        WAVM_DEFINE_INTRINSIC_FUNCTION(env,"log",void,c_log,I64 level,WAVM::Emscripten::emabi::Address msg)
+        {
+            keto::Emscripten::Process* instance = keto::Emscripten::getEmscriptenInstance(contextRuntimeData);
+            std::string msgString = keto::wavm_common::WavmUtils::readCString(instance->memory,msg);
+            keto::wavm_common::WavmUtils::log(U32(level),msgString);
+            return;
+        }
+
+    }
+}
+
+
+namespace keto {
+    namespace Emscripten
+    {
+
+
+        WAVM::Emscripten::emabi::Address dynamicAlloc(Emscripten::Process* process,
+                                                Context* context,
+                                                WAVM::Emscripten::emabi::Size numBytes)
+        {
+            static FunctionType mallocSignature({ValueType::i32}, {ValueType::i32});
+
+            UntaggedValue args[1] = {numBytes};
+            UntaggedValue results[1];
+            invokeFunction(context, process->malloc, mallocSignature, args, results);
+
+            return results[0].u32;
+        }
+
+
+        inline Emscripten::Process* getEmscriptenInstance(
                 WAVM::Runtime::ContextRuntimeData* contextRuntimeData)
         {
-            auto instance = (Emscripten::Instance*)getUserData(
+            auto process = (Emscripten::Process*)getUserData(
                     getCompartmentFromContextRuntimeData(contextRuntimeData));
-            WAVM_ASSERT(instance);
-            WAVM_ASSERT(instance->memory);
-            return instance;
+            WAVM_ASSERT(process);
+            WAVM_ASSERT(process->memory);
+            return process;
         }
 
         //--------------------------------------------------------------------------------------------------------------
@@ -180,7 +289,7 @@ namespace keto {
         //--------------------------------------------------------------------------------------------------------------
         struct Thread
         {
-            Emscripten::Instance* instance;
+            Emscripten::Process* process;
             WAVM::Emscripten::emabi::pthread_t id = 0;
             std::atomic<Uptr> numRefs{0};
 
@@ -197,11 +306,11 @@ namespace keto {
 
             WAVM::HashMap<WAVM::Emscripten::emabi::pthread_key_t, WAVM::Emscripten::emabi::Address> pthreadSpecific;
 
-            Thread(Emscripten::Instance* inInstance,
+            Thread(Emscripten::Process* process,
                    WAVM::Runtime::Context* inContext,
                    WAVM::Runtime::Function* inEntryFunction,
                    I32 inArgument)
-                    : instance(inInstance)
+                    : process(process)
                     , context(inContext)
                     , threadFunc(inEntryFunction)
                     , argument(inArgument)
@@ -220,7 +329,7 @@ namespace keto {
             // Call the establishStackSpace function exported by the module to set the thread's stack
             // address and size.
             Function* establishStackSpace = asFunctionNullable(
-                    getInstanceExport(thread->instance->moduleInstance, "establishStackSpace"));
+                    getInstanceExport(thread->process->instance, "establishStackSpace"));
             if(establishStackSpace
                && getFunctionType(establishStackSpace)
                   == FunctionType(TypeTuple{}, TypeTuple{ValueType::i32, ValueType::i32}))
@@ -233,19 +342,19 @@ namespace keto {
             }
         }
 
-        void joinAllThreads(Instance* instance)
+        void joinAllThreads(Process& process)
         {
             while(true)
             {
-                WAVM::Platform::Mutex::Lock threadsLock(instance->threadsMutex);
+                WAVM::Platform::Mutex::Lock threadsLock(process.threadsMutex);
 
-                if(!instance->threads.size()) { break; }
-                auto it = instance->threads.begin();
-                WAVM_ASSERT(it != instance->threads.end());
+                if(!process.threads.size()) { break; }
+                auto it = process.threads.begin();
+                WAVM_ASSERT(it != process.threads.end());
 
                 WAVM::Emscripten::emabi::pthread_t threadId = it.getIndex();
                 WAVM::IntrusiveSharedPtr<Thread> thread = std::move(*it);
-                instance->threads.removeOrFail(threadId);
+                process.threads.removeOrFail(threadId);
 
                 threadsLock.unlock();
 
@@ -254,7 +363,6 @@ namespace keto {
             };
         }
 
-
         //--------------------------------------------------------------------------------------------------------------
         //--------------------------------------------------------------------------------------------------------------
         //
@@ -262,36 +370,57 @@ namespace keto {
         //
         //--------------------------------------------------------------------------------------------------------------
         //--------------------------------------------------------------------------------------------------------------
-        Instance::~Instance()
+        Process::~Process()
         {
             // Instead of allowing an Instance to live on until all its threads exit, wait for all threads
             // to exit before destroying the Instance.
-            joinAllThreads(this);
+            joinAllThreads(*this);
         }
 
-        bool Instance::resolve(const std::string& moduleName,
+        bool Process::resolve(const std::string& moduleName,
                                            const std::string& exportName,
                                            WAVM::IR::ExternType type,
                                            WAVM::Runtime::Object*& outObject)
         {
-            WAVM::Runtime::Instance* intrinsicInstance
-                    = moduleName == "env"
-                      ? env
-                      : moduleName == "asm2wasm" ? asm2wasm : moduleName == "global" ? global : nullptr;
+            WAVM::Runtime::Instance* intrinsicInstance = nullptr;
+            if(moduleName == "env")
+            {
+                intrinsicInstance = env;
+            }
+            else if(moduleName == "asm2wasm")
+            {
+                intrinsicInstance = asm2wasm;
+            }
+            else if(moduleName == "global")
+            {
+                intrinsicInstance = global;
+            }
+            else if(moduleName == "wasi_unstable")
+            {
+                intrinsicInstance = wasi_unstable;
+            }
+            else if(moduleName == "keto")
+            {
+                intrinsicInstance = keto;
+            }
+
             if(intrinsicInstance)
             {
                 outObject = getInstanceExport(intrinsicInstance, exportName);
                 if(outObject)
                 {
-                    if(isA(outObject, type)) { return true; }
+                    if(isA(outObject, type)) {
+                        return true;
+                    }
                     else
                     {
-                        WAVM::Log::printf(WAVM::Log::debug,
-                                          "Resolved import %s.%s to a %s, but was expecting %s\n",
-                                          moduleName.c_str(),
-                                          exportName.c_str(),
-                                          asString(getExternType(outObject)).c_str(),
-                                          asString(type).c_str());
+                        //KETO_LOG_ERROR << "The object was not found";
+                        WAVM::Log::printf(WAVM::Log::error,
+                                    "Resolved import %s.%s to a %s, but was expecting %s\n",
+                                    moduleName.c_str(),
+                                    exportName.c_str(),
+                                    asString(getExternType(outObject)).c_str(),
+                                    asString(type).c_str());
                     }
                 }
             }
@@ -323,59 +452,59 @@ namespace keto {
             BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidWavmSessionTypeException());
         }
 
-        I32 createCstringBuf(Instance* instance, const std::string& returnString ) {
+        WAVM::Emscripten::emabi::Address createCstringBuf(Process* process, Context* context, const std::string& returnString ) {
             int length = returnString.size() + 1;
 
-            I32 base = dynamicAlloc(instance,length);
-            memset(WAVM::Runtime::memoryArrayPtr<U8>(instance->memory,base,length),0,length);
-            memcpy(WAVM::Runtime::memoryArrayPtr<U8>(instance->memory,base,length),returnString.data(),
+            WAVM::Emscripten::emabi::Address base = dynamicAlloc(process, context,length);
+            memset(WAVM::Runtime::memoryArrayPtr<U8>(process->memory,base,length),0,length);
+            memcpy(WAVM::Runtime::memoryArrayPtr<U8>(process->memory,base,length),returnString.data(),
                    returnString.size());
             return base;
         }
 
         // type script method mappings
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__console",void,keto_console,I32 msg)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__console",void,keto_console,WAVM::Emscripten::emabi::Address msg)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string msgString = keto::wavm_common::WavmUtils::readCString(instance->memory,msg);
             return;
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__log",void,keto_log,I32 level,I32 msg)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__log",void,keto_log,I32 level,WAVM::Emscripten::emabi::Address msg)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string msgString = keto::wavm_common::WavmUtils::readCString(instance->memory,msg);
             keto::wavm_common::WavmUtils::log(U32(level),msgString);
             return;
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__getFeeAccount",I32,keto_getFeeAccount)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__getFeeAccount",WAVM::Emscripten::emabi::Address,keto_getFeeAccount)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string accountHash = castToTransactionSession(
                     keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getFeeAccount();
-            return createCstringBuf(instance,accountHash);
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),accountHash);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__getAccount",I32,keto_getAccount)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__getAccount",WAVM::Emscripten::emabi::Address,keto_getAccount)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string account = keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getAccount();
-            return createCstringBuf(instance,account);
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),account);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__getTransaction",I32,keto_getTransaction)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__getTransaction",WAVM::Emscripten::emabi::Address,keto_getTransaction)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string transaction = castToTransactionSession(
                     keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getTransaction();
-            return createCstringBuf(instance,transaction);
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),transaction);
         }
 
         // rdf methods
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__rdf_executeQuery",I64,keto_rdf_executeQuery,I32 type, I32 query)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__rdf_executeQuery",I64,keto_rdf_executeQuery,WAVM::Emscripten::emabi::Address type, WAVM::Emscripten::emabi::Address query)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string queryStr = keto::wavm_common::WavmUtils::readCString(instance->memory,query);
             std::string typeStr = keto::wavm_common::WavmUtils::readCString(instance->memory,type);
 
@@ -387,26 +516,26 @@ namespace keto {
             return (I64)(long)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getQueryHeaderCount(id);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__rdf_getQueryHeader",I32,keto_rdf_getQueryHeader,I64 id, I64 index)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__rdf_getQueryHeader",WAVM::Emscripten::emabi::Address,keto_rdf_getQueryHeader,I64 id, I64 index)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string header = keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getQueryHeader(id,index);
-            return createCstringBuf(instance,header);
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),header);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__rdf_getQueryString",I32,keto_rdf_getQueryStringValue,I64 id, I64 index, I64 headerNumber)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__rdf_getQueryString",WAVM::Emscripten::emabi::Address,keto_rdf_getQueryStringValue,I64 id, I64 index, I64 headerNumber)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string value = keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getQueryStringValue(id,index,headerNumber);
-            return createCstringBuf(instance,value);
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),value);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__rdf_getQueryStringByKey",I32,keto_rdf_getQueryStringByKey,I64 id, I64 index, I32 name)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__rdf_getQueryStringByKey",WAVM::Emscripten::emabi::Address,keto_rdf_getQueryStringByKey,I64 id, I64 index, WAVM::Emscripten::emabi::Address name)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string nameString = keto::wavm_common::WavmUtils::readCString(instance->memory,name);
             std::string value = keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getQueryStringValue(id,index,nameString);
-            return createCstringBuf(instance,value);
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),value);
         }
 
         WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__rdf_getQueryLong",I64,keto_rdf_getQueryLong,I64 id, I64 index, I64 headerNumber)
@@ -414,9 +543,9 @@ namespace keto {
             return (I64)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getQueryLongValue(id,index,headerNumber);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__rdf_getQueryLongByKey",I64,keto_rdf_getQueryLongByKey,I64 id, I64 index, I32 name)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__rdf_getQueryLongByKey",I64,keto_rdf_getQueryLongByKey,I64 id, I64 index, WAVM::Emscripten::emabi::Address name)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string nameString = keto::wavm_common::WavmUtils::readCString(instance->memory,name);
             return (I64)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getQueryLongValue(id,index,nameString);
         }
@@ -426,9 +555,9 @@ namespace keto {
             return (I32)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getQueryFloatValue(id,index,headerNumber);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__rdf_getQueryFloatByKey",I32,keto_rdf_getQueryFloatByKey,I64 id, I64 index, I32 name)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__rdf_getQueryFloatByKey",I32,keto_rdf_getQueryFloatByKey,I64 id, I64 index, WAVM::Emscripten::emabi::Address name)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string nameString = keto::wavm_common::WavmUtils::readCString(instance->memory,name);
             return (I32)keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getQueryFloatValue(id,index,nameString);
         }
@@ -458,9 +587,9 @@ namespace keto {
         keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getTransactionFee(minimum);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__getRequestModelTransactionValue",I64,keto_getRequestModelTransactionValue,I32 accountModel,I32 transactionValueModel)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__getRequestModelTransactionValue",I64,keto_getRequestModelTransactionValue,WAVM::Emscripten::emabi::Address accountModel,WAVM::Emscripten::emabi::Address transactionValueModel)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string accountModelString = keto::wavm_common::WavmUtils::readCString(instance->memory,accountModel);
             std::string transactionValueModelString = keto::wavm_common::WavmUtils::readCString(instance->memory,transactionValueModel);
 
@@ -469,9 +598,9 @@ namespace keto {
             getRequestModelTransactionValue(accountModelString,transactionValueModelString);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__createDebitEntry",void,keto_createDebitEntry,I32 accountId, I32 name, I32 description, I32 accountModel,I32 transactionValueModel,I64 value)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__createDebitEntry",void,keto_createDebitEntry,WAVM::Emscripten::emabi::Address accountId, WAVM::Emscripten::emabi::Address name, WAVM::Emscripten::emabi::Address description, WAVM::Emscripten::emabi::Address accountModel,WAVM::Emscripten::emabi::Address transactionValueModel,I64 value)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string accountIdString = keto::wavm_common::WavmUtils::readCString(instance->memory,accountId);
             std::string nameString = keto::wavm_common::WavmUtils::readCString(instance->memory,name);
             std::string descriptionString = keto::wavm_common::WavmUtils::readCString(instance->memory,description);
@@ -482,9 +611,9 @@ namespace keto {
                     accountIdString, nameString, descriptionString, accountModelString,transactionValueModelString,(U64)value);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__createCreditEntry",void,keto_createCreditEntry, I32 accountId, I32 name, I32 description, I32 accountModel,I32 transactionValueModel,I64 value)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__createCreditEntry",void,keto_createCreditEntry, WAVM::Emscripten::emabi::Address accountId, WAVM::Emscripten::emabi::Address name, WAVM::Emscripten::emabi::Address description, WAVM::Emscripten::emabi::Address accountModel,WAVM::Emscripten::emabi::Address transactionValueModel,I64 value)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string accountIdString = keto::wavm_common::WavmUtils::readCString(instance->memory,accountId);
             std::string nameString = keto::wavm_common::WavmUtils::readCString(instance->memory,name);
             std::string descriptionString = keto::wavm_common::WavmUtils::readCString(instance->memory,description);
@@ -495,20 +624,20 @@ namespace keto {
                     accountIdString, nameString, descriptionString, accountModelString,transactionValueModelString,(U64)value);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__getRequestStringValue",I32,keto_getRequestStringValue,I32 subject,I32 predicate)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__getRequestStringValue",WAVM::Emscripten::emabi::Address,keto_getRequestStringValue,WAVM::Emscripten::emabi::Address subject,WAVM::Emscripten::emabi::Address predicate)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string subjectString = keto::wavm_common::WavmUtils::readCString(instance->memory,subject);
             std::string predicateString = keto::wavm_common::WavmUtils::readCString(instance->memory,predicate);
 
             std::string requestString = castToTransactionSession(
                 keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getRequestStringValue(subjectString,predicateString);
-            return createCstringBuf(instance,requestString);
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),requestString);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__setResponseStringValue",void,keto_setResponseStringValue,I32 subject,I32 predicate,I32 value)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__setResponseStringValue",void,keto_setResponseStringValue,WAVM::Emscripten::emabi::Address subject,WAVM::Emscripten::emabi::Address predicate,WAVM::Emscripten::emabi::Address value)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string subjectString = keto::wavm_common::WavmUtils::readCString(instance->memory,subject);
             std::string predicateString = keto::wavm_common::WavmUtils::readCString(instance->memory,predicate);
             std::string valueString = keto::wavm_common::WavmUtils::readCString(instance->memory,value);
@@ -518,9 +647,9 @@ namespace keto {
         }
 
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__getRequestLongValue",I64,keto_getRequestLongValue,I32 subject,I32 predicate)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__getRequestLongValue",I64,keto_getRequestLongValue,WAVM::Emscripten::emabi::Address subject,WAVM::Emscripten::emabi::Address predicate)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string subjectString = keto::wavm_common::WavmUtils::readCString(instance->memory,subject);
             std::string predicateString = keto::wavm_common::WavmUtils::readCString(instance->memory,predicate);
 
@@ -529,9 +658,9 @@ namespace keto {
                             subjectString,predicateString);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__setResponseLongValue",void,keto_setResponseLongValue,I32 subject,I32 predicate, I64 value)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__setResponseLongValue",void,keto_setResponseLongValue,WAVM::Emscripten::emabi::Address subject,WAVM::Emscripten::emabi::Address predicate, I64 value)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string subjectString = keto::wavm_common::WavmUtils::readCString(instance->memory,subject);
             std::string predicateString = keto::wavm_common::WavmUtils::readCString(instance->memory,predicate);
 
@@ -540,9 +669,9 @@ namespace keto {
                             subjectString,predicateString,(U64)value);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__getResponseFloatValue",I32,keto_getRequestFloatValue,I32 subject,I32 predicate)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__getResponseFloatValue",I32,keto_getRequestFloatValue,WAVM::Emscripten::emabi::Address subject,WAVM::Emscripten::emabi::Address predicate)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string subjectString = keto::wavm_common::WavmUtils::readCString(instance->memory,subject);
             std::string predicateString = keto::wavm_common::WavmUtils::readCString(instance->memory,predicate);
 
@@ -551,9 +680,9 @@ namespace keto {
             getRequestFloatValue(subjectString,predicateString);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__setResponseFloatValue",void,keto_setResponseFloatValue,I32 subject,I32 predicate,I32 value)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__setResponseFloatValue",void,keto_setResponseFloatValue,WAVM::Emscripten::emabi::Address subject,WAVM::Emscripten::emabi::Address predicate,WAVM::Emscripten::emabi::Address value)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string subjectString = keto::wavm_common::WavmUtils::readCString(instance->memory,subject);
             std::string predicateString = keto::wavm_common::WavmUtils::readCString(instance->memory,predicate);
 
@@ -561,9 +690,9 @@ namespace keto {
             getWavmSession())->setResponseFloatValue(subjectString,predicateString,(U32)value);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__getRequestBooleanValue",I32,keto_getRequestBooleanValue,I32 subject,I32 predicate)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__getRequestBooleanValue",I32,keto_getRequestBooleanValue,WAVM::Emscripten::emabi::Address subject,WAVM::Emscripten::emabi::Address predicate)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string subjectString = keto::wavm_common::WavmUtils::readCString(instance->memory,subject);
             std::string predicateString = keto::wavm_common::WavmUtils::readCString(instance->memory,predicate);
 
@@ -571,9 +700,9 @@ namespace keto {
             getWavmSession())->getRequestBooleanValue(subjectString,predicateString);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__setResponseBooleanValue",void,keto_setResponseBooleanValue,I32 subject,I32 predicate,I32 value)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__setResponseBooleanValue",void,keto_setResponseBooleanValue,WAVM::Emscripten::emabi::Address subject,WAVM::Emscripten::emabi::Address predicate,WAVM::Emscripten::emabi::Address value)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string subjectString = keto::wavm_common::WavmUtils::readCString(instance->memory,subject);
             std::string predicateString = keto::wavm_common::WavmUtils::readCString(instance->memory,predicate);
 
@@ -589,44 +718,44 @@ namespace keto {
             return (I64)(long)castToTHttpSession(keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getNumberOfRoles();
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__http_getRole",I32,keto_http_getRole,I64 index)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__http_getRole",WAVM::Emscripten::emabi::Address,keto_http_getRole,I64 index)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string requestString = castToTHttpSession(
                 keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getRole(index);
-            return createCstringBuf(instance,requestString);
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),requestString);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__http_getTargetUri",I32,keto_http_getTargetUri)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__http_getTargetUri",WAVM::Emscripten::emabi::Address,keto_http_getTargetUri)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string requestString = castToTHttpSession(
                 keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getTargetUri();
-            return createCstringBuf(instance,requestString);
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),requestString);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__http_getQuery",I32,keto_http_getQuery)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__http_getQuery",WAVM::Emscripten::emabi::Address,keto_http_getQuery)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string requestString = castToTHttpSession(
                 keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getQuery();
-            return createCstringBuf(instance,requestString);
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),requestString);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__http_getMethod",I32,keto_http_getMethod)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__http_getMethod",WAVM::Emscripten::emabi::Address,keto_http_getMethod)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string requestString = castToTHttpSession(
                 keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getMethod();
-            return createCstringBuf(instance,requestString);
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),requestString);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__http_getBody",I32,keto_http_getBody)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__http_getBody",WAVM::Emscripten::emabi::Address,keto_http_getBody)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string requestString = castToTHttpSession(
                 keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getBody();
-            return createCstringBuf(instance,requestString);
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),requestString);
         }
 
         WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__http_getNumberOfParameters",I64,keto_http_getNumberOfParameters)
@@ -634,21 +763,21 @@ namespace keto {
             return (I64)(long)castToTHttpSession(keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getNumberOfParameters();
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__http_getParameterKey",I32,keto_http_getParameterKey,I64 index)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__http_getParameterKey",WAVM::Emscripten::emabi::Address,keto_http_getParameterKey,I64 index)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string requestString = castToTHttpSession(
                 keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getParameterKey(index);
-            return createCstringBuf(instance,requestString);
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),requestString);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__http_getParameter",I32,keto_http_getParameter,I32 key)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__http_getParameter",WAVM::Emscripten::emabi::Address,keto_http_getParameter,WAVM::Emscripten::emabi::Address key)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string keyString = keto::wavm_common::WavmUtils::readCString(instance->memory,key);
             std::string requestString = castToTHttpSession(
                 keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->getParameter(keyString);
-            return createCstringBuf(instance,requestString);
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),requestString);
         }
 
         // response methods
@@ -658,34 +787,18 @@ namespace keto {
         }
 
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__http_setContentType",void,keto_http_setContentType,I32 contentType)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__http_setContentType",void,keto_http_setContentType,WAVM::Emscripten::emabi::Address contentType)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string contentTypeString = keto::wavm_common::WavmUtils::readCString(instance->memory,contentType);
             castToTHttpSession(keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->setContentType(contentTypeString);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__http_setBody",void,keto_http_setBody,I32 body)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__http_setBody",void,keto_http_setBody,WAVM::Emscripten::emabi::Address body)
         {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string bodyString = keto::wavm_common::WavmUtils::readCString(instance->memory,body);
             castToTHttpSession(keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->setBody(bodyString);
-        }
-
-        // C/CPP method mappings
-        WAVM_DEFINE_INTRINSIC_FUNCTION(env,"console",void,c_console,I32 msg)
-        {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
-            std::string msgString = keto::wavm_common::WavmUtils::readCString(instance->memory,msg);
-            return;
-        }
-
-        WAVM_DEFINE_INTRINSIC_FUNCTION(env,"log",void,c_log,I64 level,I32 msg)
-        {
-            Emscripten::Instance* instance = getEmscriptenInstance(contextRuntimeData);
-            std::string msgString = keto::wavm_common::WavmUtils::readCString(instance->memory,msg);
-            keto::wavm_common::WavmUtils::log(U32(level),msgString);
-            return;
         }
 
         // transaction builder api
@@ -697,158 +810,165 @@ namespace keto {
         //
         //--------------------------------------------------------------------------------------------------------------
         //--------------------------------------------------------------------------------------------------------------
-        std::shared_ptr<Emscripten::Instance> instantiate(Compartment* compartment,
-                                                                      const WAVM::IR::Module& module,
-                                                                      WAVM::VFS::VFD* stdIn,
-                                                                      WAVM::VFS::VFD* stdOut,
-                                                                      WAVM::VFS::VFD* stdErr)
+        bool isEmscriptenModule(const WAVM::IR::Module& irModule) {
+            for(const WAVM::IR::CustomSection& customSection : irModule.customSections)
+            {
+                if(customSection.name == "emscripten_metadata") { return true; }
+            }
+
+            return false;
+        }
+
+
+        std::shared_ptr<Emscripten::Process> createProcess(Compartment* compartment,
+                                                                       std::vector<std::string>&& inArgs,
+                                                                       std::vector<std::string>&& inEnvs,
+                                                                       WAVM::VFS::VFD* stdIn,
+                                                                       WAVM::VFS::VFD* stdOut,
+                                                                       WAVM::VFS::VFD* stdErr)
         {
-            MemoryType memoryType(false, SizeConstraints{0, 0});
-            if(module.memories.imports.size() && module.memories.imports[0].moduleName == "env"
-               && module.memories.imports[0].exportName == "memory")
-            {
-                memoryType = module.memories.imports[0].type;
-                if(memoryType.size.max >= minStaticMemoryPages)
-                {
-                    if(memoryType.size.min <= minStaticMemoryPages)
-                    {
-                        // Enlarge the initial memory to make space for the stack and mutable globals.
-                        memoryType.size.min = minStaticMemoryPages;
-                    }
-                }
-                else
-                {
-                    WAVM::Log::printf(WAVM::Log::error, "module's memory is too small for Emscripten emulation\n");
-                    return nullptr;
-                }
-            }
-            else
-            {
-                WAVM::Log::printf(WAVM::Log::error, "module does not import Emscripten's env.memory\n");
-                return nullptr;
-            }
+            std::shared_ptr<Process> process = std::make_shared<Process>();
 
-            TableType tableType(ReferenceType::funcref, false, SizeConstraints{0, 0});
-            if(module.tables.imports.size() && module.tables.imports[0].moduleName == "env"
-               && module.tables.imports[0].exportName == "table")
-            { tableType = module.tables.imports[0].type; }
+            process->args = std::move(inArgs);
+            process->envs = std::move(inEnvs);
+            process->stdIn = stdIn;
+            process->stdOut = stdOut;
+            process->stdErr = stdErr;
 
-            Memory* memory = WAVM::Runtime::createMemory(compartment, memoryType, "env.memory");
-            Table* table = WAVM::Runtime::createTable(compartment, tableType, nullptr, "env.table");
-
-            WAVM::HashMap<std::string, WAVM::Runtime::Object*> extraEnvExports = {
-                    {"memory", WAVM::Runtime::asObject(memory)},
-                    {"table", WAVM::Runtime::asObject(table)},
-            };
-
-            std::shared_ptr<Instance> instance = std::make_shared<Instance>();
-            instance->env = WAVM::Intrinsics::instantiateModule(
+            process->env = WAVM::Intrinsics::instantiateModule(
                     compartment,
-                    {WAVM_INTRINSIC_MODULE_REF(env), WAVM_INTRINSIC_MODULE_REF(envThreads)},
-                    "env",
-                    extraEnvExports);
-            instance->keto = WAVM::Intrinsics::instantiateModule(
+                    {WAVM_INTRINSIC_MODULE_REF(env), WAVM::Emscripten::getIntrinsicModule_envThreads()},
+                    "env");
+            process->keto = WAVM::Intrinsics::instantiateModule(
                     compartment,
                     {WAVM_INTRINSIC_MODULE_REF(keto)},
-                    "keto",
-                    extraEnvExports);
-            instance->asm2wasm = WAVM::Intrinsics::instantiateModule(
+                    "keto");
+            process->asm2wasm = WAVM::Intrinsics::instantiateModule(
                     compartment, {WAVM_INTRINSIC_MODULE_REF(asm2wasm)}, "asm2wasm");
-            instance->global
+            process->global
                     = WAVM::Intrinsics::instantiateModule(compartment, {WAVM_INTRINSIC_MODULE_REF(global)}, "global");
+            process->wasi_unstable = WAVM::Intrinsics::instantiateModule(
+                    compartment, {WAVM_INTRINSIC_MODULE_REF(emscripten_wasi_unstable)}, "wasi_unstable");
 
-            unwindSignalsAsExceptions([=] {
-                MutableGlobals& mutableGlobals = memoryRef<MutableGlobals>(memory, MutableGlobals::address);
+            process->compartment = compartment;
 
-                mutableGlobals.DYNAMICTOP_PTR = minStaticMemoryPages * WAVM::IR::numBytesPerPage;
-                mutableGlobals._stderr = (U32)WAVM::Emscripten::ioStreamVMHandle::StdErr;
-                mutableGlobals._stdin = (U32)WAVM::Emscripten::ioStreamVMHandle::StdIn;
-                mutableGlobals._stdout = (U32)WAVM::Emscripten::ioStreamVMHandle::StdOut;
-            });
+            setUserData(compartment, process.get());
 
-            instance->compartment = compartment;
-            instance->memory = memory;
-            instance->table = table;
-
-            instance->stdIn = stdIn;
-            instance->stdOut = stdOut;
-            instance->stdErr = stdErr;
-
-            setUserData(compartment, instance.get());
-
-            return instance;
+            return process;
         }
 
-        void initializeGlobals(const std::shared_ptr<Instance>& instance,
-                                           Context* context,
-                                           const WAVM::IR::Module& module,
-                                            WAVM::Runtime::Instance* moduleInstance)
-        {
-            instance->moduleInstance = moduleInstance;
+        bool initializeProcess(Process& process,
+                               WAVM::Runtime::Context* context,
+                               const WAVM::IR::Module& module,
+                               WAVM::Runtime::Instance* instance) {
+
+            process.instance = instance;
+
+            if (keto::Emscripten::isEmscriptenModule(module)) {
+                // Read the module metadata.
+                if (!loadEmscriptenMetadata(module, process.metadata)) {
+                    WAVM::Log::printf(WAVM::Log::output,
+                                      "The em script meta data was found and could be loaded");
+                    return false;
+                }
+
+                // Check the ABI version used by the module.
+                if (process.metadata.abiVersionMajor != 0) {
+                    WAVM::Log::printf(WAVM::Log::error,
+                                      "Unsupported Emscripten ABI major version (%u)\n",
+                                      process.metadata.abiVersionMajor);
+                    return false;
+                }
+
+                // Check whether the module was compiled as "standalone".
+                if (!process.metadata.standaloneWASM) {
+                    WAVM::Log::printf(WAVM::Log::error,
+                                      "WAVM only supports Emscripten modules compiled with '-s STANDALONE_WASM=1'.");
+                    return false;
+                }
+
+                // Find the various Emscripten ABI objects exported by the module.
+                process.memory = asMemoryNullable(getInstanceExport(instance, "memory"));
+                if (!process.memory) {
+                    WAVM::Log::printf(WAVM::Log::error, "Emscripten module does not export memory.\n");
+                    return false;
+                }
+
+                process.table = asTableNullable(getInstanceExport(instance, "table"));
+
+                process.malloc = getTypedInstanceExport(
+                        instance, "malloc", FunctionType({ValueType::i32}, {ValueType::i32}));
+                if (!process.malloc) {
+                    process.malloc = getTypedInstanceExport(
+                            instance, "_malloc", FunctionType({ValueType::i32}, {ValueType::i32}));
+                    if (!process.malloc) {
+                        WAVM::Log::printf(WAVM::Log::error, "Emscripten module does not export malloc.\n");
+                        return false;
+                    }
+                }
+                process.free = getTypedInstanceExport(
+                        instance, "free", FunctionType({ValueType::i32}, {ValueType::i32}));
+
+                process.stackAlloc = getTypedInstanceExport(
+                        instance, "stackAlloc", FunctionType({ValueType::i32}, {ValueType::i32}));
+                process.stackSave
+                        = getTypedInstanceExport(instance, "stackSave", FunctionType({ValueType::i32}, {}));
+                process.stackRestore
+                        = getTypedInstanceExport(instance, "stackRestore", FunctionType({}, {ValueType::i32}));
+                process.errnoLocation
+                        = getTypedInstanceExport(instance, "__errno_location", FunctionType({ValueType::i32}, {}));
+            } else {
+                // Find the various Emscripten ABI objects exported by the module.
+                process.memory = asMemoryNullable(getInstanceExport(instance, "memory"));
+                if (!process.memory) {
+                    WAVM::Log::printf(WAVM::Log::error, "Emscripten module does not export memory.\n");
+                    return false;
+                }
+
+                process.table = asTableNullable(getInstanceExport(instance, "table"));
+                process.malloc = getTypedInstanceExport(
+                        instance, "malloc", FunctionType({ValueType::i32}, {ValueType::i32}));
+                if (!process.malloc) {
+                    process.malloc = getTypedInstanceExport(
+                            instance, "_malloc", FunctionType({ValueType::i32}, {ValueType::i32}));
+                    if (!process.malloc) {
+                        WAVM::Log::printf(WAVM::Log::error, "Failed to find the malloc function.\n");
+                    }
+                }
+                process.free = getTypedInstanceExport(
+                        instance, "free", FunctionType({ValueType::i32}, {ValueType::i32}));
+                if (!process.free) {
+                    process.free = getTypedInstanceExport(
+                            instance, "_free", FunctionType({}, {ValueType::i32}));
+                    if (!process.free) {
+                        WAVM::Log::printf(WAVM::Log::error, "Failed to find the free function.\n");
+                    }
+                }
+                process.stackAlloc = getTypedInstanceExport(
+                        instance, "stackAlloc", FunctionType({ValueType::i32}, {ValueType::i32}));
+                process.stackSave
+                        = getTypedInstanceExport(instance, "stackSave", FunctionType({ValueType::i32}, {}));
+                process.stackRestore
+                        = getTypedInstanceExport(instance, "stackRestore", FunctionType({}, {ValueType::i32}));
+                process.errnoLocation
+                        = getTypedInstanceExport(instance, "__errno_location", FunctionType({ValueType::i32}, {}));
+            }
 
             // Create an Emscripten "main thread" and associate it with this context.
-            instance->mainThread = new Emscripten::Thread(instance.get(), context, nullptr, 0);
-            setUserData(context, instance->mainThread);
+            process.mainThread = new Emscripten::Thread(&process, context, nullptr, 0);
+            setUserData(context, process.mainThread);
 
-            instance->mainThread->stackAddress = mainThreadStackAddress;
-            instance->mainThread->numStackBytes = mainThreadNumStackBytes;
+            // TODO
+            process.mainThread->stackAddress = 0;
+            process.mainThread->numStackBytes = 0;
 
             // Initialize the Emscripten "thread local" state.
-            initThreadLocals(instance->mainThread);
+            initThreadLocals(process.mainThread);
 
-            // Call the global initializer functions: newer Emscripten uses a single globalCtors function,
-            // and older Emscripten uses a __GLOBAL__* function for each translation unit.
-            if(Function* globalCtors = asFunctionNullable(getInstanceExport(moduleInstance, "globalCtors")))
-            { invokeFunction(context, globalCtors); }
-
-            for(Uptr exportIndex = 0; exportIndex < module.exports.size(); ++exportIndex)
-            {
-                const Export& functionExport = module.exports[exportIndex];
-                if(functionExport.kind == WAVM::IR::ExternKind::function
-                   && !strncmp(functionExport.name.c_str(), "__GLOBAL__", 10))
-                {
-                    Function* function
-                            = asFunctionNullable(getInstanceExport(moduleInstance, functionExport.name));
-                    if(function) { invokeFunction(context, function); }
-                }
-            }
-
-            // Store ___errno_location.
-            Function* errNoLocation
-                    = asFunctionNullable(getInstanceExport(moduleInstance, "___errno_location"));
-            if(errNoLocation && getFunctionType(errNoLocation) == FunctionType({ValueType::i32}, {}))
-            {
-                WAVM::IR::UntaggedValue errNoResult;
-                invokeFunction(
-                        context, errNoLocation, FunctionType({ValueType::i32}, {}), nullptr, &errNoResult);
-                instance->errnoAddress = errNoResult.i32;
-            }
+            return true;
         }
 
-        std::vector<WAVM::IR::Value> injectCommandArgs(const std::shared_ptr<Instance>& instance,
-                                                             const std::vector<std::string>& argStrings)
-        {
-            U8* memoryBase = getMemoryBaseAddress(instance->memory);
-
-            U32* argvOffsets
-                    = (U32*)(memoryBase
-                             + dynamicAlloc(instance.get(), (U32)(sizeof(U32) * (argStrings.size() + 1))));
-            for(Uptr argIndex = 0; argIndex < argStrings.size(); ++argIndex)
-            {
-                auto stringSize = argStrings[argIndex].size() + 1;
-                auto stringMemory = memoryBase + dynamicAlloc(instance.get(), (U32)stringSize);
-                memcpy(stringMemory, argStrings[argIndex].c_str(), stringSize);
-                argvOffsets[argIndex] = (U32)(stringMemory - memoryBase);
-            }
-            argvOffsets[argStrings.size()] = 0;
-            return {(U32)argStrings.size(), (U32)((U8*)argvOffsets - memoryBase)};
-        }
-
-        WAVM::Runtime::Resolver& getInstanceResolver(const std::shared_ptr<Instance>& instance)
-        {
-            return *instance.get();
-        }
-
+        WAVM::Runtime::Resolver& getInstanceResolver(Process& process) { return process; }
 
         I32 catchExit(std::function<I32()>&& thunk)
         {
@@ -1678,9 +1798,9 @@ namespace keto {
         // End of Keto method definitions
         //-------------------------------------------------------------------------------
 
-        EMSCRIPTEN_API keto::Emscripten::Instance* instantiate(Runtime::Compartment* compartment)
+        EMSCRIPTEN_API keto::Emscripten::Process* instantiate(Runtime::Compartment* compartment)
         {
-            keto::Emscripten::Instance* instance = new keto::Emscripten::Instance;
+            keto::Emscripten::Process* instance = new keto::Emscripten::Process;
             instance->env = Intrinsics::instantiateModule(compartment,INTRINSIC_MODULE_REF(env));
             instance->asm2wasm = Intrinsics::instantiateModule(compartment,INTRINSIC_MODULE_REF(asm2wasm));
             instance->global = Intrinsics::instantiateModule(compartment,INTRINSIC_MODULE_REF(global));
@@ -1728,7 +1848,7 @@ namespace keto {
             }
         }
 
-        EMSCRIPTEN_API void injectCommandArgs(keto::Emscripten::Instance* instance,const std::vector<const char*>& argStrings,std::vector<Runtime::Value>& outInvokeArgs)
+        EMSCRIPTEN_API void injectCommandArgs(keto::Emscripten::Process* instance,const std::vector<const char*>& argStrings,std::vector<Runtime::Value>& outInvokeArgs)
         {
             U8* emscriptenMemoryBaseAdress = getMemoryBaseAddress(emscriptenMemoryInstance);
 

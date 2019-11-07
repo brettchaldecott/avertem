@@ -15,10 +15,12 @@
 #include "WAVM/Inline/IntrusiveSharedPtr.h"
 #include "WAVM/Platform/Mutex.h"
 #include "WAVM/Inline/IndexMap.h"
+#include "WAVM/Inline/BasicTypes.h"
 
 #include "keto/obfuscate/MetaString.hpp"
 
 
+using namespace WAVM;
 //namespace IR { struct Module; }
 //namespace Runtime { struct Instance; struct Context; struct Compartment; }
 
@@ -44,23 +46,29 @@ namespace keto {
         EMSCRIPTEN_API void injectCommandArgs(Emscripten::Instance* instance,const std::vector<const char*>& argStrings,std::vector<Runtime::Value>& outInvokeArgs);*/
 
         struct Thread;
-        struct Instance;
+        struct Process;
 
-        std::shared_ptr<Instance> instantiate(WAVM::Runtime::Compartment* compartment,
-        const WAVM::IR::Module& module,
-                WAVM::VFS::VFD* stdIn = nullptr,
-                WAVM::VFS::VFD* stdOut = nullptr,
-                WAVM::VFS::VFD* stdErr = nullptr);
-        void initializeGlobals(const std::shared_ptr<Instance>& instance,
+        bool isEmscriptenModule(const WAVM::IR::Module& irModule);
+
+
+        std::shared_ptr<Process> createProcess(
+                    WAVM::Runtime::Compartment* compartment,
+                    std::vector<std::string>&& inArgs,
+                    std::vector<std::string>&& inEnvs,
+                    WAVM::VFS::VFD* stdIn = nullptr,
+                    WAVM::VFS::VFD* stdOut = nullptr,
+                    WAVM::VFS::VFD* stdErr = nullptr);
+
+        bool initializeProcess(Process& process,
                                WAVM::Runtime::Context* context,
-                                        const WAVM::IR::Module& module,
-                               WAVM::Runtime::Instance* moduleInstance);
-        std::vector<WAVM::IR::Value> injectCommandArgs(const std::shared_ptr<Instance>& instance,
-                                                          const std::vector<std::string>& argStrings);
+                               const WAVM::IR::Module& module,
+                               WAVM::Runtime::Instance* instance);
 
-        WAVM::Runtime::Resolver& getInstanceResolver(const std::shared_ptr<Instance>& instance);
 
-        void joinAllThreads(Instance* instance);
+
+        WAVM::Runtime::Resolver& getInstanceResolver(Process& instance);
+
+        void joinAllThreads(Process& instance);
 
         I32 catchExit(std::function<I32()>&& thunk);
 

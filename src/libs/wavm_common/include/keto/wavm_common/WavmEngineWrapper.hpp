@@ -52,9 +52,13 @@ public:
 private:
     //WavmEngineManager& wavmEngineManager;
     WAVM::Runtime::GCPointer<WAVM::Runtime::Compartment> compartment;
-    std::shared_ptr<keto::Emscripten::Instance> emscriptenInstance;
+    std::shared_ptr<keto::Emscripten::Process> emscriptenProcess;
     std::string wast;
     std::string contract;
+
+
+    void internalExecute();
+    void internalExecuteHttp();
 
 };
 

@@ -4,6 +4,7 @@ include_directories(${PROTOBUF_INCLUDE_DIR})
 
 ## SORT .cpp by most likely to change / break compile
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set( CMAKE_VERBOSE_MAKEFILE on )
 
 if(MSVC)
     add_definitions("-DDLL_EXPORT=__declspec(dllexport)")
@@ -33,16 +34,13 @@ add_library( keto_wavm_common
              ${HEADERS}
            )
 
-target_link_libraries( keto_wavm_common 
-                    ${LIBWAVM_RUNTIME_LIBRARY}
+target_link_libraries( keto_wavm_common
                     ${LIBWAVM_LIBRARY}
-                    ${LIBWAVM_WAST_LIBRARY}
-                    ${LIBWAVM_LOGGING_LIBRARY}
-                    ${LIBWAVM_EMSCRIPTEN_LIBRARY}
-                    ${LIBWAVM_IR_LIBRARY}
-                    ${LIBWAVM_EXTRA_LIBRARY}
+                    ${LIBWAVM_WAVMUnwind_LIBRARY}
+                    ${LIBWAVM_WAVMlmdb_LIBRARY}
                     ${LIBWAVM_PLATFORM_LIBRARY}
-                    ${LIBWAVM_LLVM_LIBS})
+                    ${LIBWAVM_LLVM_LIBS}
+        )
 target_include_directories( keto_wavm_common
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../common/include"

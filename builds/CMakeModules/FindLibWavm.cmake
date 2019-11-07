@@ -44,13 +44,32 @@ find_library(LIBWAVM_PLATFORM_LIBRARY
     NAMES WAVM
     PATHS ${LIBWAVM_ROOT_FOLDER}/lib)
 
-# find_library(LIBWAVM_RUNTIME_LIBRARY
-#     NAMES Runtime
-#     PATHS ${LIBWAVM_ROOT_FOLDER}/lib)
+find_library(LIBWAVM_WAVMUnwind_LIBRARY
+     NAMES WAVMUnwind
+     PATHS ${LIBWAVM_ROOT_FOLDER}/lib)
 
-# find_library(LIBWAVM_LIBRARY
-#     NAMES WASM
-#     PATHS ${LIBWAVM_ROOT_FOLDER}/lib)
+find_library(LIBWAVM_WAVMlmdb_LIBRARY
+     NAMES WAVMlmdb
+     PATHS ${LIBWAVM_ROOT_FOLDER}/lib)
+
+find_library(LIBWAVM_LLVMAArch64Info_LIBRARY
+        NAMES LLVMAArch64Info
+        PATHS ${WASM_LLVM}/lib)
+
+find_library(LIBWAVM_LLVMAArch64AsmParser_LIBRARY
+        NAMES LLVMAArch64AsmParser
+        PATHS ${WASM_LLVM}/lib)
+
+find_library(LIBWAVM_LLVMAArch64Desc_LIBRARY
+        NAMES LLVMAArch64Desc
+        PATHS ${WASM_LLVM}/lib)
+
+find_library(LIBWAVM_LLVMAArch64Utils_LIBRARY
+        NAMES LLVMAArch64Utils
+        PATHS ${WASM_LLVM}/lib)
+
+
+
 
 # find_library(LIBWAVM_WAST_LIBRARY
 #    NAMES WAST
@@ -72,13 +91,24 @@ find_library(LIBWAVM_PLATFORM_LIBRARY
 IF ( NOT IDE_FLAG )
     find_package(LLVM 6.0 REQUIRED CONFIG PATHS ${WASM_LLVM})
     # Include the LLVM headers
-    llvm_map_components_to_libnames(LIBWAVM_LLVM_LIBS support core passes mcjit native DebugInfoDWARF)
+    llvm_map_components_to_libnames(LIBWAVM_LLVM_LIBS support core passes mcjit native DebugInfoDWARF AArch64Info
+            AMDGPUInfo ARMInfo DebugInfoCodeView DebugInfoMSF HexagonInfo MSP430Info NVPTXInfo SparcInfo XCoreInfo
+            BPFInfo DebugInfoPDB LanaiInfo MipsInfo PowerPCInfo SystemZInfo X86Info AArch64CodeGen ARMCodeGen CodeGen
+            LanaiCodeGen MipsCodeGen PowerPCCodeGen SystemZCodeGen X86CodeGen AMDGPUCodeGen BPFCodeGen
+            HexagonCodeGen MSP430CodeGen NVPTXCodeGen SparcCodeGen  XCoreCodeGen AArch64Disassembler ARMDisassembler
+            HexagonDisassembler MCDisassembler PowerPCDisassembler SystemZDisassembler X86Disassembler
+            AMDGPUDisassembler BPFDisassembler LanaiDisassembler MipsDisassembler SparcDisassembler XCoreDisassembler
+            AArch64AsmParser ARMAsmParser BPFAsmParser LanaiAsmParser MIRParser PowerPCAsmParser SystemZAsmParser
+            AMDGPUAsmParser AsmParser HexagonAsmParser MCParser MipsAsmParser SparcAsmParser X86AsmParser)
 ELSE ( NOT IDE_FLAG )
     find_package(LLVM 6.0 CONFIG PATHS ${WASM_LLVM})
 ENDIF ( NOT IDE_FLAG )
 
 message(STATUS "LIBWAVM_INCLUDE_DIR " ${LIBWAVM_INCLUDE_DIR})
 message(STATUS "LIBWAVM_PLATFORM_LIBRARY " ${LIBWAVM_PLATFORM_LIBRARY})
+message(STATUS "LIBWAVM_WAVMUnwind_LIBRARY " ${LIBWAVM_WAVMUnwind_LIBRARY})
+message(STATUS "LIBWAVM_WAVMlmdb_LIBRARY " ${LIBWAVM_WAVMlmdb_LIBRARY})
+
 #message(STATUS "LIBWAVM_RUNTIME_LIBRARY " ${LIBWAVM_RUNTIME_LIBRARY})
 #message(STATUS "LIBWAVM_LIBRARY " ${LIBWAVM_LIBRARY})
 #message(STATUS "LIBWAVM_WAST_LIBRARY " ${LIBWAVM_WAST_LIBRARY})
@@ -99,6 +129,9 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(Libwavm DEFAULT_MSG LIBWAVM_PLATFORM_LIBRARY)
 IF(LIBWAVM_FOUND)
     SET(LIBWAVM_INCLUDE_DIR    ${LIBWAVM_INCLUDE_DIR})
     SET(LIBWAVM_PLATFORM_LIBRARY    ${LIBWAVM_PLATFORM_LIBRARY})
+    SET(LIBWAVM_WAVMUnwind_LIBRARY    ${LIBWAVM_WAVMUnwind_LIBRARY})
+    SET(LIBWAVM_WAVMlmdb_LIBRARY    ${LIBWAVM_WAVMlmdb_LIBRARY})
+
     #    SET(LIBWAVM_RUNTIME_LIBRARY    ${LIBWAVM_RUNTIME_LIBRARY})
     #SET(LIBWAVM_LIBRARY ${LIBWAVM_LIBRARY})
     #SET(LIBWAVM_WAST_LIBRARY ${LIBWAVM_WAST_LIBRARY})

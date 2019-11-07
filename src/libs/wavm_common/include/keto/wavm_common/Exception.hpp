@@ -49,6 +49,7 @@ KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, InvalidActionIdForThisSessi
 KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, InvalidTransactionIdForThisSession , "Invalid action id.");
 KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, EmscriptInstanciateFailed , "Emscript instanciate failed.");
 KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, FailedToInstanciateModule , "Failed to instanciate the module.");
+KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, ModuleMemoryInvalid , "Module memory is invalid.");
 
 
 }
