@@ -35,6 +35,8 @@ const char* Constants::BLOCK_PRODUCER_SAFE_MODE
                                         = "block_producer_safe_mode";
 const char* Constants::BLOCK_PRODUCER_SAFE_MODE_ENABLED_TRUE
                                         = "true";
+
+const char* Constants::FAUCET_ACCOUNT   = "faucet_account";
 const long Constants::BLOCK_PRODUCER_SAFE_MODE_DELAY
                                         = 10;
 
@@ -57,6 +59,28 @@ const int Constants::ACTIVATE_PRODUCER_DELAY    = 40;
 const int Constants::BLOCK_TIME                 = 15;
 const int Constants::BLOCK_PRDUCER_DEACTIVATE_CHECK_DELAY    = 10;
 const int Constants::BLOCK_PRODUCER_RETRY_MAX   = 4;
+
+const char* Constants::FaucetRequest::SUBJECT   = "http://keto-coin.io/schema/rdf/1.0/keto/Faucet#Faucet";
+const char* Constants::FaucetRequest::ID        = "http://keto-coin.io/schema/rdf/1.0/keto/Faucet#id";
+const char* Constants::FaucetRequest::ACCOUNT   = "http://keto-coin.io/schema/rdf/1.0/keto/Faucet#account";
+const char* Constants::FaucetRequest::DATE_TIME = "http://keto-coin.io/schema/rdf/1.0/keto/Faucet#dateTime";
+const char* Constants::FaucetRequest::TANGLES   = "http://keto-coin.io/schema/rdf/1.0/keto/Faucet#tangles";
+const char* Constants::FaucetRequest::PROOF     = "http://keto-coin.io/schema/rdf/1.0/keto/Faucet#proof";
+
+
+const char* Constants::SYSTEM_CONTRACT::BASE_ACCOUNT_TRANSACTION = "base_account_transaction";
+const char* Constants::SYSTEM_CONTRACT::FEE_PAYMENT = "fee_payment";
+const char* Constants::SYSTEM_CONTRACT::NESTED_TRANSACTION = "nested_transaction";
+const char* Constants::SYSTEM_CONTRACT::FAUCET_TRANSACTION = "faucet_transaction";
+
+
+const std::vector<const char*> Constants::SYSTEM_CONTRACTS{
+        Constants::SYSTEM_CONTRACT::BASE_ACCOUNT_TRANSACTION,
+        Constants::SYSTEM_CONTRACT::FEE_PAYMENT,
+        Constants::SYSTEM_CONTRACT::NESTED_TRANSACTION,
+        Constants::SYSTEM_CONTRACT::FAUCET_TRANSACTION
+};
+
 
 }
 }

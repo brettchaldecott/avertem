@@ -36,6 +36,7 @@ target_include_directories( keto_transaction_common
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../asn1/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../crypto/include/"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../server_common/include/"
+                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../chain_common/include/"
                             PUBLIC "${PROTO_HDRS}"
                             ${Boost_INCLUDE_DIRS}
                             ${BOTAN_INCLUDE_DIR}

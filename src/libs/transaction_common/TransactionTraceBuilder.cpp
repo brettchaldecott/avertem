@@ -26,7 +26,7 @@ std::string TransactionTraceBuilder::getSourceVersion() {
 }
 
 TransactionTraceBuilder::TransactionTraceBuilder(
-    const keto::asn1::HashHelper& accountHash, keto::crypto::KeyLoaderPtr& keyloader) {
+    const keto::asn1::HashHelper& accountHash, const keto::crypto::KeyLoaderPtr& keyloader) {
     this->transactionTrace = (TransactionTrace_t*)calloc(1, sizeof *transactionTrace);
     this->transactionTrace->traceHash = accountHash;
     keto::crypto::SignatureGenerator generator(keyloader);
@@ -46,7 +46,7 @@ TransactionTraceBuilder::~TransactionTraceBuilder() {
 }
 
 TransactionTraceBuilderPtr TransactionTraceBuilder::createTransactionTrace(
-    const keto::asn1::HashHelper& accountHash, keto::crypto::KeyLoaderPtr& keyloader) {
+    const keto::asn1::HashHelper& accountHash, const keto::crypto::KeyLoaderPtr& keyloader) {
     return TransactionTraceBuilderPtr(
             new TransactionTraceBuilder(accountHash,keyloader));
 }

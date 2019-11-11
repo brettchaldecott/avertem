@@ -11,8 +11,8 @@
  * Created on January 31, 2018, 7:24 AM
  */
 
-#ifndef SIGNEDTRANSACTIONBUILDER_HPP
-#define SIGNEDTRANSACTIONBUILDER_HPP
+#ifndef KETO_SIGNEDTRANSACTIONBUILDER_HPP
+#define KETO_SIGNEDTRANSACTIONBUILDER_HPP
 
 #include <memory>
 #include <vector>
@@ -23,6 +23,7 @@
 #include "Transaction.h"
 #include "SignedTransaction.h"
 #include "keto/crypto/Containers.hpp"
+#include "keto/crypto/KeyLoader.hpp"
 #include "keto/asn1/PrivateKeyHelper.hpp"
 #include "keto/asn1/SerializationHelper.hpp"
 #include "keto/asn1/HashHelper.hpp"
@@ -37,6 +38,9 @@
 namespace keto {
 namespace chain_common {
 
+class SignedTransactionBuilder;
+typedef std::shared_ptr<SignedTransactionBuilder> SignedTransactionBuilderPtr;
+
 class SignedTransactionBuilder {
 public:
     
@@ -50,8 +54,9 @@ public:
     virtual ~SignedTransactionBuilder();
     
     static std::shared_ptr<SignedTransactionBuilder> createTransaction(
-        const keto::asn1::PrivateKeyHelper& privateKeyHelper);
-    
+            const keto::asn1::PrivateKeyHelper& privateKeyHelper);
+    static std::shared_ptr<SignedTransactionBuilder> createTransaction(
+            const keto::crypto::KeyLoaderPtr& keyLoaderPtr);
     
     SignedTransactionBuilder& setTransaction(
         const std::shared_ptr<keto::chain_common::TransactionBuilder>& transactionBuilder);
@@ -73,9 +78,11 @@ public:
 private:
     SignedTransaction* signedTransaction;
     keto::asn1::PrivateKeyHelper privateKeyHelper;
+    keto::crypto::KeyLoaderPtr keyLoaderPtr;
     std::shared_ptr<keto::asn1::SerializationHelper<SignedTransaction>> serializationHelperPtr;
     
     SignedTransactionBuilder(const keto::asn1::PrivateKeyHelper& privateKeyHelper);
+    SignedTransactionBuilder(const keto::crypto::KeyLoaderPtr& keyLoaderPtr);
     
     void serializeTransaction();
 };

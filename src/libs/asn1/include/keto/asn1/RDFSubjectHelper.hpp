@@ -53,7 +53,7 @@ public:
     bool containsPredicate(const std::string& predicate);
     
     RDFSubjectHelper& setSubject(const std::string& subject);
-    RDFSubjectHelper& addPredicate(RDFPredicateHelper& predicate);
+    RDFSubjectHelper& addPredicate(const RDFPredicateHelper& predicate);
     
     std::string getOntologyClass();
     std::string getSubject();

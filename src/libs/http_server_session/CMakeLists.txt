@@ -36,6 +36,7 @@ target_include_directories( keto_http_server_session
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../asn1/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../account_query/include/"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../chain_query_common/include/"
+                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../chain_common/include"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/proto/"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/asn1/"
                             PUBLIC "${PROTO_HDRS}"

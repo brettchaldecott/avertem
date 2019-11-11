@@ -40,6 +40,7 @@ public:
     static const char* BLOCK_PRODUCER_ENABLED_TRUE;
     static const char* BLOCK_PRODUCER_SAFE_MODE;
     static const char* BLOCK_PRODUCER_SAFE_MODE_ENABLED_TRUE;
+    static const char* FAUCET_ACCOUNT;
     static const long BLOCK_PRODUCER_SAFE_MODE_DELAY;
 
     // network fee manager
@@ -66,6 +67,30 @@ public:
     static const int BLOCK_TIME;
     static const int BLOCK_PRDUCER_DEACTIVATE_CHECK_DELAY;
     static const int BLOCK_PRODUCER_RETRY_MAX;
+
+
+    class FaucetRequest {
+    public:
+        static const char* SUBJECT;
+        static const char* ID;
+        static const char* ACCOUNT;
+        static const char* DATE_TIME;
+        static const char* TANGLES;
+        static const char* PROOF;
+
+
+    };
+
+
+    class SYSTEM_CONTRACT {
+    public:
+        static const char* BASE_ACCOUNT_TRANSACTION;
+        static const char* FEE_PAYMENT;
+        static const char* NESTED_TRANSACTION;
+        static const char* FAUCET_TRANSACTION;
+    };
+    static const std::vector<const char*> SYSTEM_CONTRACTS;
+
 };
 
 

@@ -104,7 +104,7 @@ RDFSubjectHelper& RDFSubjectHelper::setSubject(const std::string& subject) {
     return (*this);
 }
 
-RDFSubjectHelper& RDFSubjectHelper::addPredicate(RDFPredicateHelper& predicate) {
+RDFSubjectHelper& RDFSubjectHelper::addPredicate(const RDFPredicateHelper& predicate) {
     if (0!= ASN_SEQUENCE_ADD(&rdfSubject->rdfPredicates,predicate.operator RDFPredicate_t*())) {
         BOOST_THROW_EXCEPTION(keto::asn1::FailedToAddPredicateToSubjectException());
     }

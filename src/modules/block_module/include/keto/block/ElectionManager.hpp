@@ -16,6 +16,11 @@
 #include "keto/common/MetaInfo.hpp"
 #include "keto/event/Event.hpp"
 
+#include "keto/asn1/RDFObjectHelper.hpp"
+#include "keto/asn1/RDFPredicateHelper.hpp"
+#include "keto/asn1/RDFSubjectHelper.hpp"
+#include "keto/asn1/RDFModelHelper.hpp"
+
 #include "keto/election_common/ElectionResultMessageProtoHelper.hpp"
 #include "keto/software_consensus/ProtocolHeartbeatMessageHelper.hpp"
 #include "keto/election_common/SignedElectNodeHelper.hpp"
@@ -80,6 +85,7 @@ public:
 private:
     std::recursive_mutex classMutex;
     ElectionManager::State state;
+    keto::asn1::HashHelper faucetAccount;
     std::map<std::vector<uint8_t>,ElectorPtr> accountElectionResult;
     int responseCount;
     std::vector<keto::asn1::HashHelper> nextWindow;
@@ -91,6 +97,10 @@ private:
     std::vector<std::vector<uint8_t>> listAccounts();
 
     keto::election_common::SignedElectNodeHelperPtr generateSignedElectedNode(std::vector<std::vector<uint8_t>>& accounts);
+    void generateTransaction(const keto::election_common::SignedElectNodeHelperPtr& signedElectNodeHelperPtr,
+            const std::vector<keto::asn1::HashHelper>& tangles);
+    keto::asn1::RDFPredicateHelper buildPredicate(const std::string& predicate, const std::string& datatype,
+                                                                   const std::string& type, const std::string& value);
 
 };
 

@@ -26,6 +26,7 @@ KETO_DECLARE_EXCEPTION( BlockException, "Block exception." );
 
 // the 
 KETO_DECLARE_DERIVED_EXCEPTION (BlockException, PrivateKeyNotConfiguredException , "The server private key configured was not found.");
+KETO_DECLARE_DERIVED_EXCEPTION (BlockException, FaucetNotConfiguredException , "The faucet account has not been configured.");
 KETO_DECLARE_DERIVED_EXCEPTION (BlockException, PublicKeyNotConfiguredException , "The server public key configured was not found.");
 KETO_DECLARE_DERIVED_EXCEPTION (BlockException, BlockProducerTerminatedException , "The block producer has been terminated.");
 KETO_DECLARE_DERIVED_EXCEPTION (BlockException, NotBlockProducerException , "Not enabled as a block producer.");

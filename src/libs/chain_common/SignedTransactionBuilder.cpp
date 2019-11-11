@@ -46,6 +46,13 @@ std::shared_ptr<SignedTransactionBuilder>
             new SignedTransactionBuilder(privateKeyHelper));
 }
 
+std::shared_ptr<SignedTransactionBuilder>
+SignedTransactionBuilder::createTransaction(
+        const keto::crypto::KeyLoaderPtr& keyLoaderPtr) {
+    return std::shared_ptr<SignedTransactionBuilder>(
+            new SignedTransactionBuilder(keyLoaderPtr));
+}
+
 SignedTransactionBuilder& SignedTransactionBuilder::setTransaction(
     const std::shared_ptr<TransactionBuilder>& transactionBuilder) {
     keto::asn1::HashHelper hashHelper(
@@ -75,12 +82,19 @@ keto::asn1::SignatureHelper SignedTransactionBuilder::getSignature() {
 }
 
 void SignedTransactionBuilder::sign() {
-    
-    keto::asn1::BerEncodingHelper key = this->privateKeyHelper.getKey();
-    keto::crypto::SignatureGenerator generator((keto::crypto::SecureVector)key);
-    keto::asn1::HashHelper hashHelper(this->signedTransaction->transactionHash);
-    keto::asn1::SignatureHelper signatureHelper(generator.sign(hashHelper));
-    this->signedTransaction->signature = signatureHelper;
+
+    if (this->keyLoaderPtr) {
+        keto::crypto::SignatureGenerator generator(this->keyLoaderPtr);
+        keto::asn1::HashHelper hashHelper(this->signedTransaction->transactionHash);
+        keto::asn1::SignatureHelper signatureHelper(generator.sign(hashHelper));
+        this->signedTransaction->signature = signatureHelper;
+    } else {
+        keto::asn1::BerEncodingHelper key = this->privateKeyHelper.getKey();
+        keto::crypto::SignatureGenerator generator((keto::crypto::SecureVector) key);
+        keto::asn1::HashHelper hashHelper(this->signedTransaction->transactionHash);
+        keto::asn1::SignatureHelper signatureHelper(generator.sign(hashHelper));
+        this->signedTransaction->signature = signatureHelper;
+    }
 }
 
 
@@ -115,6 +129,15 @@ SignedTransactionBuilder::SignedTransactionBuilder(
     this->signedTransaction->version = keto::common::MetaInfo::PROTOCOL_VERSION;
     
     
+}
+
+SignedTransactionBuilder::SignedTransactionBuilder(
+        const keto::crypto::KeyLoaderPtr& keyLoaderPtr) :
+        keyLoaderPtr(keyLoaderPtr) {
+
+    this->signedTransaction = (SignedTransaction*)calloc(1, sizeof *signedTransaction);
+    this->signedTransaction->version = keto::common::MetaInfo::PROTOCOL_VERSION;
+
 }
 
 

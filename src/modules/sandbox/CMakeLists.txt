@@ -29,7 +29,7 @@ KetoModuleDepencencies( 0020_keto_sandbox_module
                             PRIVATE keto_wavm_common keto_chain_query_common keto_account_query keto_server_common keto_transaction_common
                             PRIVATE keto_key_tools keto_proto_environment ${PROTOBUF_LIBRARIES}
                             PRIVATE keto_asn1_common keto_asn1_protocol
-                            PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
+                            PRIVATE keto_crypto key_store_utils ${BOTAN_LIBRARIES}
                             PRIVATE ${LIBRDF_LIBRARY} ${LIBRDF_RAPTOR_LIBRARY} 
                             PRIVATE ${LIBRDF_RASQAL_LIBRARY} 
                             PRIVATE ${LIBRDF_EXTRA_LIBRARY} ${LIBRDF_XML_EXTRA_LIBRARY} 
@@ -44,7 +44,7 @@ KetoModuleConsensusScriptsCalls( 0020_keto_sandbox_module ${NUMBER_OF_KEYS} "4"
         PRIVATE keto_wavm_common keto_account_query keto_server_common keto_transaction_common
         PRIVATE keto_key_tools keto_proto_environment ${PROTOBUF_LIBRARIES}
         PRIVATE keto_asn1_common keto_asn1_protocol
-        PRIVATE keto_crypto ${BOTAN_LIBRARIES}
+        PRIVATE keto_crypto  key_store_utils ${BOTAN_LIBRARIES}
         PRIVATE ${LIBRDF_LIBRARY} ${LIBRDF_RAPTOR_LIBRARY}
         PRIVATE ${LIBRDF_RASQAL_LIBRARY}
         PRIVATE ${LIBRDF_EXTRA_LIBRARY} ${LIBRDF_XML_EXTRA_LIBRARY}

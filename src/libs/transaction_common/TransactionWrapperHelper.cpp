@@ -12,7 +12,12 @@
  */
 
 #include <TransactionWrapper.h>
+
+
 #include "keto/transaction_common/TransactionWrapperHelper.hpp"
+
+#include "keto/chain_common/SignedTransactionBuilder.hpp"
+
 #include "keto/common/MetaInfo.hpp"
 #include "keto/server_common/VectorUtils.hpp"
 #include "keto/asn1/HashHelper.hpp"
@@ -35,6 +40,24 @@ TransactionWrapperHelper::TransactionWrapperHelper() {
     this->transactionWrapper->version = keto::common::MetaInfo::PROTOCOL_VERSION;
 }
 
+TransactionWrapperHelper::TransactionWrapperHelper(
+            const keto::chain_common::SignedTransactionBuilderPtr& signedTransactionBuilderPtr) {
+    SignedTransaction_t* signedTransaction = *signedTransactionBuilderPtr;
+    this->own = true;
+    this->transactionWrapper = (TransactionWrapper_t*)calloc(1, sizeof *transactionWrapper);
+    this->transactionWrapper->version = keto::common::MetaInfo::PROTOCOL_VERSION;
+    this->transactionWrapper->signedTransaction = *signedTransaction;
+    this->transactionWrapper->transactionHash = keto::asn1::HashHelper(
+            signedTransaction->transactionHash);
+    this->transactionWrapper->signature = keto::asn1::SignatureHelper(
+            signedTransaction->signature);
+    this->transactionWrapper->parent = keto::asn1::HashHelper(
+            signedTransaction->transaction.parent);
+    this->transactionWrapper->sourceAccount = keto::asn1::HashHelper(
+            signedTransaction->transaction.sourceAccount);
+    this->transactionWrapper->targetAccount = keto::asn1::HashHelper(
+            signedTransaction->transaction.targetAccount);
+}
 
 TransactionWrapperHelper::TransactionWrapperHelper(SignedTransaction_t* signedTransaction) {
     this->own = true;

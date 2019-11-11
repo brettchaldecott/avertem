@@ -22,7 +22,9 @@ ${WORK_DIR}/build/install/bin/keto_contract_tools.sh -e -s ${WORK_DIR}/src/contr
 FEE_HEX_ID=$(cat ${WORK_DIR}/src/contracts/keto_standard_typscript_contracts/build/fee_untouched.hex)
 ${WORK_DIR}/build/install/bin/keto_contract_tools.sh -e -s ${WORK_DIR}/src/contracts/keto_standard_typscript_contracts/build/nested_untouched.wasm -t ${WORK_DIR}/src/contracts/keto_standard_typscript_contracts/build/nested_untouched.hex
 NESTED_HEX_ID=$(cat ${WORK_DIR}/src/contracts/keto_standard_typscript_contracts/build/nested_untouched.hex)
-cat ${WORK_DIR}/resources/config/genesis.json.in | sed "s/BASE_CONTRACT/${BASE_HEX_ID}/" | sed "s/FEE_CONTRACT/${FEE_HEX_ID}/" | sed "s/NESTED_CONTRACT/${NESTED_HEX_ID}/" > ${WORK_DIR}/resources/config/genesis.json
+${WORK_DIR}/build/install/bin/keto_contract_tools.sh -e -s ${WORK_DIR}/src/contracts/keto_standard_typscript_contracts/build/faucet_untouched.wasm -t ${WORK_DIR}/src/contracts/keto_standard_typscript_contracts/build/faucet_untouched.hex
+FAUCET_HEX_ID=$(cat ${WORK_DIR}/src/contracts/keto_standard_typscript_contracts/build/faucet_untouched.hex)
+cat ${WORK_DIR}/resources/config/genesis.json.in | sed "s/BASE_CONTRACT/${BASE_HEX_ID}/" | sed "s/FEE_CONTRACT/${FEE_HEX_ID}/" | sed "s/NESTED_CONTRACT/${NESTED_HEX_ID}/" | sed "s/FAUCET_CONTRACT/${FAUCET_HEX_ID}/" > ${WORK_DIR}/resources/config/genesis.json
 
 rm -rf ../../build/install/data/*
 rm -rf ../../build/install/tmp/*

@@ -93,6 +93,8 @@ public:
                                    const time_t value);
 
     };
+    typedef std::shared_ptr<WavmSessionRDFModelBuilder> WavmSessionRDFModelBuilderPtr;
+
 
     class WavmSessionActionBuilder {
     public:
@@ -149,11 +151,14 @@ public:
     WavmSessionActionBuilderPtr createAction(const std::string& modelType);
     WavmSessionActionBuilderPtr getAction(const int& id);
 
+    void submit();
+
 private:
     int id;
     keto::chain_common::TransactionBuilderPtr transactionBuilderPtr;
     keto::crypto::KeyLoaderPtr keyLoaderPtr;
     std::vector<WavmSessionActionBuilderPtr> actions;
+    bool submitted;
 
 };
 

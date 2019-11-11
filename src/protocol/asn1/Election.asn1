@@ -23,6 +23,7 @@ SignedElection ::= SEQUENCE {
 ElectNode ::= SEQUENCE {
     version             Version,
     date                UTCTime,
+    accountHash         Hash,
     electedNode         SignedElection,
     alternatives        SEQUENCE OF SignedElection,
     acceptedCheck       SoftwareConsensus,

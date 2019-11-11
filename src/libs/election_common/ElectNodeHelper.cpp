@@ -50,6 +50,15 @@ ElectNodeHelper& ElectNodeHelper::setDate(const keto::asn1::TimeHelper& timeHelp
     return *this;
 }
 
+keto::asn1::HashHelper ElectNodeHelper::getAccountHash() {
+    return this->electNode->accountHash;
+}
+
+ElectNodeHelper& ElectNodeHelper::setAccountHash(const keto::asn1::HashHelper& hashHelper) {
+    this->electNode->accountHash = hashHelper;
+    return *this;
+}
+
 SignedElectionHelperPtr ElectNodeHelper::getElectedNode() {
     return SignedElectionHelperPtr(new SignedElectionHelper(this->electNode->electedNode));
 }

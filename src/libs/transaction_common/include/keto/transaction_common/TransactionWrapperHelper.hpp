@@ -27,6 +27,8 @@
 #include "keto/asn1/HashHelper.hpp"
 #include "keto/asn1/SignatureHelper.hpp"
 
+#include "keto/chain_common/SignedTransactionBuilder.hpp"
+
 #include "keto/transaction_common/SignedTransactionHelper.hpp"
 #include "keto/transaction_common/SignedChangeSetHelper.hpp"
 #include "keto/transaction_common/TransactionTraceHelper.hpp"
@@ -48,6 +50,7 @@ public:
     static std::string getSourceVersion();
     
     TransactionWrapperHelper();
+    TransactionWrapperHelper(const keto::chain_common::SignedTransactionBuilderPtr& signedTransactionBuilderPtr);
     TransactionWrapperHelper(SignedTransaction_t* signedTransaction);
     TransactionWrapperHelper(SignedTransaction_t* signedTransaction,
             const keto::asn1::HashHelper& sourceAccount, 

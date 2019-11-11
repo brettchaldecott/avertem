@@ -48,8 +48,8 @@ public:
     RDFPredicateHelper(const RDFPredicateHelper& orig);
     virtual ~RDFPredicateHelper();
     
-    operator RDFPredicate_t*();
-    operator ANY_t*();
+    operator RDFPredicate_t*() const;
+    operator ANY_t*() const;
     
     RDFPredicateHelper& addObject(RDFObjectHelper& rdfObject);
     RDFPredicateHelper& setPredicate(const std::string& predicate);

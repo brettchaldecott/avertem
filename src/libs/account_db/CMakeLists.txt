@@ -41,6 +41,7 @@ target_include_directories( keto_account_db
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../rocks_db/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../obfuscate/include"
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../rdf_utils/include"
+                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../chain_common/include"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/proto/"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/protocol/asn1/"
                             PUBLIC "${CMAKE_BINARY_DIR}/src/libs/common/include/" 

@@ -46,6 +46,9 @@ public:
     keto::asn1::TimeHelper getDate();
     ElectNodeHelper& setDate(const keto::asn1::TimeHelper& timeHelper);
 
+    keto::asn1::HashHelper getAccountHash();
+    ElectNodeHelper& setAccountHash(const keto::asn1::HashHelper& hashHelper);
+
     SignedElectionHelperPtr getElectedNode();
     ElectNodeHelper& setElectedNode(const SignedElectionHelper& signedElectionHelper);
 

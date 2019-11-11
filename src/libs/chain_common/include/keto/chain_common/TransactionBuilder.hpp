@@ -89,6 +89,8 @@ public:
     virtual void* getPtr();
     virtual struct asn_TYPE_descriptor_s* getType();
 
+
+
 protected:
     Transaction* takePtr();
     

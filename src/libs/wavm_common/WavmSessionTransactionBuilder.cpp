@@ -9,11 +9,21 @@
 #include "keto/wavm_common/RDFConstants.hpp"
 #include "keto/wavm_common/Exception.hpp"
 
+#include "keto/chain_common/SignedTransactionBuilder.hpp"
+
+#include "keto/transaction_common/TransactionTraceBuilder.hpp"
 
 #include "keto/server_common/RDFUtils.hpp"
 #include "keto/server_common/StringUtils.hpp"
 #include "keto/server_common/ServerInfo.hpp"
 
+#include "keto/server_common/EventUtils.hpp"
+#include "keto/server_common/Events.hpp"
+#include "keto/server_common/EventServiceHelpers.hpp"
+
+#include "keto/key_store_utils/Events.hpp"
+
+#include "keto/transaction_common/MessageWrapperProtoHelper.hpp"
 
 namespace keto {
 namespace wavm_common {
@@ -222,13 +232,13 @@ WavmSessionTransactionBuilder::WavmSessionActionBuilder::operator keto::chain_co
 }
 
 WavmSessionTransactionBuilder::WavmSessionTransactionBuilder(int id, const keto::crypto::KeyLoaderPtr& keyLoaderPtr)
-    : id(id), keyLoaderPtr(keyLoaderPtr){
+    : id(id), keyLoaderPtr(keyLoaderPtr), submitted(false) {
     this->transactionBuilderPtr = keto::chain_common::TransactionBuilder::createTransaction();
 }
 
 WavmSessionTransactionBuilder::WavmSessionTransactionBuilder(int id, const keto::asn1::HashHelper& hashHelper,
         const keto::crypto::KeyLoaderPtr& keyLoaderPtr)
-        : id(id), keyLoaderPtr(keyLoaderPtr){
+        : id(id), keyLoaderPtr(keyLoaderPtr), submitted(false) {
     this->transactionBuilderPtr = keto::chain_common::TransactionBuilder::createTransaction();
     this->transactionBuilderPtr->setParent(hashHelper);
 }
@@ -274,6 +284,24 @@ keto::asn1::HashHelper WavmSessionTransactionBuilder::getTargetAccount() {
     return this->transactionBuilderPtr->getTargetAccount();
 }
 
+
+void WavmSessionTransactionBuilder::setTransactionSignator(const keto::asn1::HashHelper& hashHelper) {
+    this->transactionBuilderPtr->setTransactionSignator(hashHelper);
+}
+
+keto::asn1::HashHelper WavmSessionTransactionBuilder::getTransactionSignator() {
+    return this->transactionBuilderPtr->getTransactionSignator();
+}
+
+void WavmSessionTransactionBuilder::setCreatorId(const keto::asn1::HashHelper& hashHelper) {
+    this->transactionBuilderPtr->setCreatorId(hashHelper);
+}
+
+keto::asn1::HashHelper WavmSessionTransactionBuilder::getCreatorId() {
+    return this->transactionBuilderPtr->getCreatorId();
+}
+
+
 WavmSessionTransactionBuilder::WavmSessionActionBuilderPtr WavmSessionTransactionBuilder::createAction(const std::string& modelType) {
     int id = this->actions.size();
     WavmSessionTransactionBuilder::WavmSessionActionBuilderPtr
@@ -289,6 +317,50 @@ WavmSessionTransactionBuilder::WavmSessionActionBuilderPtr WavmSessionTransactio
     return this->actions[id];
 }
 
+
+void WavmSessionTransactionBuilder::submit() {
+
+    if (this->submitted) {
+        BOOST_THROW_EXCEPTION(keto::wavm_common::TransactionAlreadySubmitted());
+    }
+    std::shared_ptr<keto::chain_common::SignedTransactionBuilder> signedTransBuild =
+            keto::chain_common::SignedTransactionBuilder::createTransaction(
+                    this->keyLoaderPtr);
+
+
+    signedTransBuild->setTransaction(this->transactionBuilderPtr);
+    signedTransBuild->sign();
+
+    keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelperPtr(
+            new keto::transaction_common::TransactionWrapperHelper(signedTransBuild));
+
+    transactionWrapperHelperPtr->addTransactionTrace(
+            *keto::transaction_common::TransactionTraceBuilder::createTransactionTrace(
+                    keto::server_common::ServerInfo::getInstance()->getAccountHash(), this->keyLoaderPtr));
+
+    keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr =
+            keto::transaction_common::TransactionMessageHelperPtr(
+            new keto::transaction_common::TransactionMessageHelper(
+                    transactionWrapperHelperPtr));
+
+    keto::transaction_common::TransactionProtoHelper
+            transactionProtoHelper(transactionMessageHelperPtr);
+
+
+    keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper;
+    messageWrapperProtoHelper.setTransaction(transactionProtoHelper);
+
+    keto::proto::MessageWrapper messageWrapper = messageWrapperProtoHelper;
+    messageWrapper = keto::server_common::fromEvent<keto::proto::MessageWrapper>(
+            keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
+                    keto::key_store_utils::Events::TRANSACTION::REENCRYPT_TRANSACTION,messageWrapper)));
+
+    keto::proto::MessageWrapperResponse  messageWrapperResponse =
+            keto::server_common::fromEvent<keto::proto::MessageWrapperResponse>(
+                    keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
+                            keto::server_common::Events::ROUTE_MESSAGE,messageWrapper)));
+
+}
 
 }
 }

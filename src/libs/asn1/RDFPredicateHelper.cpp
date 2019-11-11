@@ -16,6 +16,7 @@
 #include "keto/asn1/RDFObjectHelper.hpp"
 #include "keto/asn1/CloneHelper.hpp"
 #include "keto/asn1/StringUtils.hpp"
+#include "keto/asn1/CloneHelper.hpp"
 
 namespace keto {
 namespace asn1 {
@@ -59,14 +60,12 @@ RDFPredicateHelper::~RDFPredicateHelper() {
     }
 }
 
-RDFPredicateHelper::operator RDFPredicate_t*() {
-    RDFPredicate_t* result = this->rdfPredicate;
-    this->rdfPredicate = 0;
-    return result;
+RDFPredicateHelper::operator RDFPredicate_t*() const {
+    return keto::asn1::clone<RDFPredicate_t>(this->rdfPredicate,&asn_DEF_RDFPredicate);
 }
 
 
-RDFPredicateHelper::operator ANY_t*() {
+RDFPredicateHelper::operator ANY_t*() const {
     ANY_t* anyPtr = ANY_new_fromType(&asn_DEF_RDFPredicate, this->rdfPredicate);
     if (!anyPtr) {
         BOOST_THROW_EXCEPTION(keto::asn1::TypeToAnyConversionFailedException());
