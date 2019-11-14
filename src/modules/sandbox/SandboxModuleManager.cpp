@@ -58,9 +58,9 @@ const std::string SandboxModuleManager::getVersion() const {
 // lifecycle methods
 void SandboxModuleManager::start() {
     modules["SandboxModule"] = std::make_shared<SandboxModule>();
+    ConsensusService::init(getConsensusHash());
     keto::wavm_common::WavmEngineManager::init();
     SandboxService::init();
-    ConsensusService::init(getConsensusHash());
     EventRegistry::registerEventHandlers();
     KETO_LOG_INFO << "[SandboxModuleManager] Started the SandboxModuleManager";
 }

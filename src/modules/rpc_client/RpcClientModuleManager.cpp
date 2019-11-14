@@ -61,9 +61,9 @@ const std::string RpcClientModuleManager::getVersion() const {
 void RpcClientModuleManager::start() {
     modules["RpcClientModule"] = std::make_shared<RpcClientModule>();
     keto::software_consensus::ConsensusSessionManager::init();
-    ConsensusService::init(getConsensusHash());
     EventRegistry::registerEventHandlers();
     RpcSessionManager::init();
+    ConsensusService::init(getConsensusHash());
     RpcSessionManager::getInstance()->start();
     KETO_LOG_INFO << "[RpcClientModuleManager] Started the RpcClientModuleManager";
 }
@@ -78,12 +78,12 @@ void RpcClientModuleManager::postStart() {
 
 void RpcClientModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
-    ConsensusService::fin();
     if (RpcSessionManager::getInstance()) {
         RpcSessionManager::getInstance()->stop();
     }
     RpcSessionManager::fin();
     keto::software_consensus::ConsensusSessionManager::fin();
+    ConsensusService::fin();
     modules.clear();
     KETO_LOG_INFO << "[RpcClientModuleManager] The RpcClientModuleManager is being stopped";
 }

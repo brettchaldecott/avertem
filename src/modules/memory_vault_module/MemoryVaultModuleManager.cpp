@@ -52,17 +52,17 @@ const std::string MemoryVaultModuleManager::getVersion() const {
 // lifecycle methods
 void MemoryVaultModuleManager::start() {
     KETO_LOG_INFO << "Start has been called on the memory vault module manager";
-    keto::memory_vault::MemoryVaultManager::init();
     ConsensusService::init(getConsensusHash());
+    keto::memory_vault::MemoryVaultManager::init();
     modules["memory_vault_module"] = std::make_shared<MemoryVaultModule>();
     EventRegistry::registerEventHandlers();
 }
 
 void MemoryVaultModuleManager::stop() {
     KETO_LOG_INFO << "Stop has been called on the memory vault module manager";
-    EventRegistry::deregisterEventHandlers();
     ConsensusService::fin();
     keto::memory_vault::MemoryVaultManager::fin();
+    EventRegistry::deregisterEventHandlers();
     modules.clear();
     KETO_LOG_INFO << "The memory vault module has been stopped";
 

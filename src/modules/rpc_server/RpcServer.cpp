@@ -129,12 +129,6 @@ private:
 
     static RpcServerPtr singleton;
 
-// Report a failure
-void
-fail(boost::system::error_code ec, char const* what)
-{
-    KETO_LOG_ERROR << "Failed to process because : " << what << ": " << ec.message();
-}
 
 class ReadQueueEntry {
 public:
@@ -259,7 +253,7 @@ public:
 
 class ReadQueue {
 public:
-    ReadQueue(SessionBase* session) : session(session) {}
+    ReadQueue(const SessionBasePtr& session) : session(session) {}
     ReadQueue(const ReadQueue& orig) = delete;
     virtual ~ReadQueue() {
         deactivate();
@@ -284,6 +278,9 @@ public:
         {
             std::unique_lock<std::mutex> guard(classMutex);
             if (!this->active) {
+                if (this->session) {
+                    this->session.reset();
+                }
                 return;
             }
             this->active = false;
@@ -291,6 +288,7 @@ public:
         }
         queueThreadPtr->join();
         queueThreadPtr.reset();
+        this->session.reset();
     }
 
     void pushEntry(const std::string& command, const std::string& payload) {
@@ -300,7 +298,7 @@ public:
     }
 
 private:
-    SessionBase* session;
+    SessionBasePtr session;
     bool active;
     std::mutex classMutex;
     std::condition_variable stateCondition;
@@ -366,14 +364,13 @@ public:
     {
         //ws_.auto_fragment(false);
         this->generatorPtr = std::shared_ptr<Botan::AutoSeeded_RNG>(new Botan::AutoSeeded_RNG());
-        // setup the read queue
-        readQueuePtr = ReadQueuePtr(new ReadQueue(this));
     }
         
     virtual ~session() {
         removeFromCache();
-        this->readQueuePtr->deactivate();
-        this->readQueuePtr.reset();
+        if (this->readQueuePtr) {
+            this->readQueuePtr.reset();
+        }
     }
 
     keto::crypto::SecureVector getSessionId() {
@@ -388,8 +385,6 @@ public:
     void
     run()
     {
-        this->readQueuePtr->activate();
-
         // Set the timeout.
         beast::get_lowest_layer(ws_).expires_after(std::chrono::seconds(30));
 
@@ -439,6 +434,10 @@ public:
         std::lock_guard<std::recursive_mutex> guard(classMutex);
         if(ec)
             return fail(ec, "accept");
+
+        // setup the read queue
+        this->readQueuePtr = ReadQueuePtr(new ReadQueue(shared_from_this()));
+        this->readQueuePtr->activate();
 
         try {
             this->localAddress = beast::get_lowest_layer(ws_).socket().local_endpoint().address();
@@ -512,7 +511,7 @@ public:
             return;
         }
         if (ec) {
-            fail(ec, "read");
+            return fail(ec, "read");
         }
 
 
@@ -574,9 +573,7 @@ public:
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLOSE) == 0) {
                 // implement
                 KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] close the session";
-                AccountSessionCache::getInstance()->removeAccount(
-                    keto::server_common::VectorUtils().copyVectorToString(    
-                        serverHelloProtoHelperPtr->getAccountHash()),this);
+                removeFromCache();
                 return;
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS) == 0) {
                 message = handleRequestNetworkSessionKeys(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS, payload);
@@ -1253,6 +1250,21 @@ public:
         KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][sendFirstQueueMessage] after sending the message";
     }
 
+
+private:
+    // Report a failure
+    void
+    fail(boost::system::error_code ec, char const* what)
+    {
+        KETO_LOG_ERROR << "Failed to process because : " << what << ": " << ec.message();
+        if (this->readQueuePtr) {
+            this->readQueuePtr->deactivate();
+            this->readQueuePtr.reset();
+        }
+
+    }
+
+
 };
 
 //------------------------------------------------------------------------------
@@ -1347,6 +1359,13 @@ public:
 
         // Accept another connection
         do_accept();
+    }
+
+    // Report a failure
+    void
+    fail(boost::system::error_code ec, char const* what)
+    {
+        KETO_LOG_ERROR << "Failed to process because : " << what << ": " << ec.message();
     }
 };
 

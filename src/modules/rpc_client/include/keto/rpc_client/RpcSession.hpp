@@ -120,7 +120,7 @@ public:
 
     class ReadQueue {
     public:
-        ReadQueue(RpcSession* session);
+        ReadQueue(const RpcSessionPtr& session);
         ReadQueue(const ReadQueue& orig) = delete;
         virtual ~ReadQueue();
 
@@ -130,7 +130,7 @@ public:
         void pushEntry(const std::string& command, const keto::server_common::StringVector& stringVector);
 
     private:
-        RpcSession* session;
+        RpcSessionPtr session;
         bool active;
         std::mutex classMutex;
         std::condition_variable stateCondition;

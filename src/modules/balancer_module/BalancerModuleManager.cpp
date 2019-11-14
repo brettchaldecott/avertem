@@ -60,20 +60,20 @@ const std::string BalancerModuleManager::getVersion() const {
 void BalancerModuleManager::start() {
     KETO_LOG_INFO << "[BalancerModuleManager] Starting the BalancerModuleManager";
     modules["balancerModule"] = std::make_shared<BalancerModule>();
+    ConsensusService::init(getConsensusHash());
     BalancerService::init();
     BlockRouting::init();
     TransactionCache::init();
-    ConsensusService::init(getConsensusHash());
     EventRegistry::registerEventHandlers();
     KETO_LOG_INFO << "[BalancerModuleManager] Started the BalancerModuleManager";
 }
 
 void BalancerModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
-    ConsensusService::fin();
     TransactionCache::fin();
     BlockRouting::fin();
     BalancerService::fin();
+    ConsensusService::fin();
     modules.clear();
     KETO_LOG_INFO << "[BalancerModuleManager] The BalancerModuleManager is being stopped";
 }

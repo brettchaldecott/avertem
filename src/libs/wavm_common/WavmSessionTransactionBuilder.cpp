@@ -353,7 +353,7 @@ void WavmSessionTransactionBuilder::submit() {
     keto::proto::MessageWrapper messageWrapper = messageWrapperProtoHelper;
     messageWrapper = keto::server_common::fromEvent<keto::proto::MessageWrapper>(
             keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
-                    keto::key_store_utils::Events::TRANSACTION::REENCRYPT_TRANSACTION,messageWrapper)));
+                    keto::key_store_utils::Events::TRANSACTION::ENCRYPT_TRANSACTION,messageWrapper)));
 
     keto::proto::MessageWrapperResponse  messageWrapperResponse =
             keto::server_common::fromEvent<keto::proto::MessageWrapperResponse>(

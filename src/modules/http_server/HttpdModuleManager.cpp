@@ -67,10 +67,10 @@ void HttpdModuleManager::start() {
 void HttpdModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
     keto::server_common::ModuleSessionManager::fin();
-    ConsensusService::fin();
     this->httpServer->stop();
     modules.clear();
     keto::server_session::HttpRequestManager::fin();
+    ConsensusService::fin();
     KETO_LOG_INFO << "[HttpdModuleManager] The HttpdModuleManager is being stopped";
 }
     

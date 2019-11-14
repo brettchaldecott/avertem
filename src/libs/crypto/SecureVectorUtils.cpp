@@ -35,34 +35,21 @@ std::vector<uint8_t> SecureVectorUtils::copyFromSecure(const SecureVector& secur
 }
 
 std::vector<uint8_t> SecureVectorUtils::copyFromSecure(SecureVector& secureVector) {
-    std::vector<uint8_t> result;
-    for (SecureVector::iterator iter = secureVector.begin();
-            iter != secureVector.end(); iter++) {
-        result.push_back(*iter);
-    }
+    std::vector<uint8_t> result(secureVector.begin(),secureVector.end());
     return result;
 }
 
 SecureVector SecureVectorUtils::copyToSecure(const std::vector<uint8_t>& vector) {
-    std::vector<uint8_t> vectorCopy = vector;
-    return copyToSecure(vectorCopy);
+    return SecureVector(vector.begin(),vector.end());
 }
 
 SecureVector SecureVectorUtils::copyToSecure(std::vector<uint8_t>& vector) {
-    SecureVector result;
-    for (std::vector<uint8_t>::iterator iter = vector.begin();
-            iter != vector.end(); iter++) {
-        result.push_back(*iter);
-    }
-    return result;
+    return SecureVector(vector.begin(),vector.end());
 }
 
 
 SecureVector SecureVectorUtils::copyStringToSecure(const std::string& str) {
-    SecureVector result;
-    for (int index = 0; index < str.size(); index++) {
-        result.push_back(str[index]);
-    }
+    SecureVector result(str.begin(),str.end());
     return result;
 }
 

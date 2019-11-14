@@ -424,82 +424,107 @@ keto::election_common::SignedElectNodeHelperPtr ElectionManager::generateSignedE
 
 void ElectionManager::generateTransaction(const keto::election_common::SignedElectNodeHelperPtr& signedElectNodeHelperPtr,
                                           const std::vector<keto::asn1::HashHelper>& tangles) {
-    std::shared_ptr<keto::chain_common::TransactionBuilder> transactionPtr =
-            keto::chain_common::TransactionBuilder::createTransaction();
+    try {
+        std::shared_ptr<keto::chain_common::TransactionBuilder> transactionPtr =
+                keto::chain_common::TransactionBuilder::createTransaction();
 
-    transactionPtr->setSourceAccount(keto::server_common::ServerInfo::getInstance()->getAccountHash());
-    transactionPtr->setTargetAccount(faucetAccount);
-    transactionPtr->setValue(keto::asn1::NumberHelper());
+        transactionPtr->setSourceAccount(faucetAccount);
+        transactionPtr->setTargetAccount(keto::server_common::ServerInfo::getInstance()->getAccountHash());
+        transactionPtr->setValue(keto::asn1::NumberHelper());
 
-    // use the facet account as the parent transaction
-    transactionPtr->setParent(faucetAccount);
+        // use the facet account as the parent transaction
+        transactionPtr->setParent(faucetAccount);
 
-    keto::asn1::RDFModelHelper modelHelper;
-    std::string id = signedElectNodeHelperPtr->getElectedHash().getHash(keto::common::StringEncoding::HEX);
-    std::string account = Botan::hex_encode(
-            keto::server_common::ServerInfo::getInstance()->getAccountHash(),true);
-    std::stringstream subject;
-    subject << Constants::FaucetRequest::SUBJECT << "/" << id;
-    keto::asn1::RDFSubjectHelper subjectHelper(subject.str());
-    subjectHelper.addPredicate(buildPredicate(Constants::FaucetRequest::ID, keto::asn1::Constants::RDF_NODE::LITERAL,
-                                              keto::asn1::Constants::RDF_TYPES::STRING,id));
-    subjectHelper.addPredicate(buildPredicate(Constants::FaucetRequest::ACCOUNT, keto::asn1::Constants::RDF_NODE::LITERAL,
-                                              keto::asn1::Constants::RDF_TYPES::STRING,account));
-    subjectHelper.addPredicate(buildPredicate(Constants::FaucetRequest::DATE_TIME, keto::asn1::Constants::RDF_NODE::LITERAL,
-                                              keto::asn1::Constants::RDF_TYPES::DATE_TIME,
-                                              keto::server_common::RDFUtils::convertTimeToRDFDateTime(std::time(0))));
-    std::stringstream tangleStream;
-    for (keto::asn1::HashHelper tangle : tangles) {
-        tangleStream << tangle.getHash(keto::common::StringEncoding::HEX) << ",";
+        keto::asn1::RDFModelHelper modelHelper;
+        std::string id = signedElectNodeHelperPtr->getElectedHash().getHash(keto::common::StringEncoding::HEX);
+        std::string account = Botan::hex_encode(
+                keto::server_common::ServerInfo::getInstance()->getAccountHash(), true);
+        std::stringstream subject;
+        subject << Constants::FaucetRequest::SUBJECT << "/" << id;
+        keto::asn1::RDFSubjectHelper subjectHelper(subject.str());
+        subjectHelper.addPredicate(
+                buildPredicate(Constants::FaucetRequest::ID, keto::asn1::Constants::RDF_NODE::LITERAL,
+                               keto::asn1::Constants::RDF_TYPES::STRING, id));
+        subjectHelper.addPredicate(
+                buildPredicate(Constants::FaucetRequest::ACCOUNT, keto::asn1::Constants::RDF_NODE::LITERAL,
+                               keto::asn1::Constants::RDF_TYPES::STRING, account));
+        subjectHelper.addPredicate(
+                buildPredicate(Constants::FaucetRequest::DATE_TIME, keto::asn1::Constants::RDF_NODE::LITERAL,
+                               keto::asn1::Constants::RDF_TYPES::DATE_TIME,
+                               keto::server_common::RDFUtils::convertTimeToRDFDateTime(std::time(0))));
+        std::stringstream tangleStream;
+        for (keto::asn1::HashHelper tangle : tangles) {
+            tangleStream << tangle.getHash(keto::common::StringEncoding::HEX) << ",";
+        }
+        subjectHelper.addPredicate(
+                buildPredicate(Constants::FaucetRequest::TANGLES, keto::asn1::Constants::RDF_NODE::LITERAL,
+                               keto::asn1::Constants::RDF_TYPES::STRING, tangleStream.str()));
+        subjectHelper.addPredicate(
+                buildPredicate(Constants::FaucetRequest::PROOF, keto::asn1::Constants::RDF_NODE::LITERAL,
+                               keto::asn1::Constants::RDF_TYPES::STRING,
+                               Botan::hex_encode((std::vector<uint8_t>) *signedElectNodeHelperPtr, true)));
+
+
+        keto::asn1::AnyHelper anyModel = modelHelper;
+        std::shared_ptr<keto::chain_common::ActionBuilder> actionBuilderPtr =
+                keto::chain_common::ActionBuilder::createAction();
+        actionBuilderPtr->setModel(anyModel);
+        actionBuilderPtr->setContractName(Constants::SYSTEM_CONTRACT::FAUCET_TRANSACTION);
+        transactionPtr->addAction(actionBuilderPtr);
+
+        std::shared_ptr<keto::chain_common::SignedTransactionBuilder> signedTransBuild =
+                keto::chain_common::SignedTransactionBuilder::createTransaction(
+                        BlockProducer::getInstance()->getKeyLoader());
+        signedTransBuild->setTransaction(transactionPtr).sign();
+        keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelperPtr(
+                new keto::transaction_common::TransactionWrapperHelper(
+                        signedTransBuild->operator SignedTransaction *()));
+
+
+        transactionWrapperHelperPtr->addTransactionTrace(
+                *keto::transaction_common::TransactionTraceBuilder::createTransactionTrace(
+                        keto::server_common::ServerInfo::getInstance()->getAccountHash(),
+                        BlockProducer::getInstance()->getKeyLoader()));
+
+        keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr =
+                keto::transaction_common::TransactionMessageHelperPtr(
+                        new keto::transaction_common::TransactionMessageHelper(
+                                transactionWrapperHelperPtr));
+
+        keto::transaction_common::TransactionProtoHelper
+                transactionProtoHelper(transactionMessageHelperPtr);
+
+
+        keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper;
+        messageWrapperProtoHelper.setTransaction(transactionProtoHelper);
+
+        keto::proto::MessageWrapper messageWrapper = messageWrapperProtoHelper;
+        messageWrapper = keto::server_common::fromEvent<keto::proto::MessageWrapper>(
+                keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
+                        keto::key_store_utils::Events::TRANSACTION::ENCRYPT_TRANSACTION, messageWrapper)));
+
+        keto::proto::MessageWrapperResponse messageWrapperResponse =
+                keto::server_common::fromEvent<keto::proto::MessageWrapperResponse>(
+                        keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
+                                keto::server_common::Events::ROUTE_MESSAGE, messageWrapper)));
+    } catch (keto::common::Exception& ex) {
+        if (ex.getType() == "NoMatchingTangleFound") {
+            KETO_LOG_WARNING << "[generateTransaction] The election failed as no tangle information is availble: " << ex.what();
+            KETO_LOG_WARNING << "[generateTransaction] Cause: " << boost::diagnostic_information(ex, true);
+            KETO_LOG_WARNING << "[generateTransaction] This should only ever  occur with the first network election";
+        } else {
+            KETO_LOG_ERROR << "[generateTransaction] Faucet transaction failed : " << ex.what();
+            KETO_LOG_ERROR << "[generateTransaction] Cause: " << boost::diagnostic_information(ex, true);
+        }
+    } catch (boost::exception& ex) {
+        KETO_LOG_ERROR << "[generateTransaction] Faucet transaction failed";
+        KETO_LOG_ERROR << "[generateTransaction] Cause: " << boost::diagnostic_information(ex,true);
+    } catch (std::exception& ex) {
+        KETO_LOG_ERROR << "[generateTransaction] Faucet transaction failed";
+        KETO_LOG_ERROR << "[generateTransaction] The cause is : " << ex.what();
+    } catch (...) {
+        KETO_LOG_ERROR << "[generateTransaction] Faucet transaction failed for unknown reasons";
     }
-    subjectHelper.addPredicate(buildPredicate(Constants::FaucetRequest::TANGLES, keto::asn1::Constants::RDF_NODE::LITERAL,
-                                              keto::asn1::Constants::RDF_TYPES::STRING,tangleStream.str()));
-    subjectHelper.addPredicate(buildPredicate(Constants::FaucetRequest::PROOF, keto::asn1::Constants::RDF_NODE::LITERAL,
-                                              keto::asn1::Constants::RDF_TYPES::STRING,
-                                              Botan::hex_encode((std::vector<uint8_t>)*signedElectNodeHelperPtr,true)));
-
-
-    keto::asn1::AnyHelper anyModel = modelHelper;
-    std::shared_ptr<keto::chain_common::ActionBuilder> actionBuilderPtr =
-            keto::chain_common::ActionBuilder::createAction();
-    actionBuilderPtr->setModel(anyModel);
-    actionBuilderPtr->setContractName(Constants::SYSTEM_CONTRACT::FAUCET_TRANSACTION);
-    transactionPtr->addAction(actionBuilderPtr);
-
-    std::shared_ptr<keto::chain_common::SignedTransactionBuilder> signedTransBuild =
-            keto::chain_common::SignedTransactionBuilder::createTransaction(
-                    BlockProducer::getInstance()->getKeyLoader());
-    signedTransBuild->setTransaction(transactionPtr).sign();
-    keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelperPtr(
-            new keto::transaction_common::TransactionWrapperHelper(signedTransBuild->operator SignedTransaction*()));
-
-
-    transactionWrapperHelperPtr->addTransactionTrace(
-            *keto::transaction_common::TransactionTraceBuilder::createTransactionTrace(
-                    keto::server_common::ServerInfo::getInstance()->getAccountHash(),
-                    BlockProducer::getInstance()->getKeyLoader()));
-
-    keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr =
-            keto::transaction_common::TransactionMessageHelperPtr(
-                    new keto::transaction_common::TransactionMessageHelper(
-                            transactionWrapperHelperPtr));
-
-    keto::transaction_common::TransactionProtoHelper
-            transactionProtoHelper(transactionMessageHelperPtr);
-
-
-    keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper;
-    messageWrapperProtoHelper.setTransaction(transactionProtoHelper);
-
-    keto::proto::MessageWrapper messageWrapper = messageWrapperProtoHelper;
-    messageWrapper = keto::server_common::fromEvent<keto::proto::MessageWrapper>(
-            keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
-                    keto::key_store_utils::Events::TRANSACTION::REENCRYPT_TRANSACTION,messageWrapper)));
-
-    keto::proto::MessageWrapperResponse  messageWrapperResponse =
-            keto::server_common::fromEvent<keto::proto::MessageWrapperResponse>(
-                    keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
-                            keto::server_common::Events::ROUTE_MESSAGE,messageWrapper)));
 }
 
 keto::asn1::RDFPredicateHelper ElectionManager::buildPredicate(const std::string& predicate, const std::string& datatype,

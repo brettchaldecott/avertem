@@ -115,7 +115,7 @@ RpcSession::BufferScope::~BufferScope() {
     bufferCachePtr->remove(buffer);
 }
 
-RpcSession::ReadQueue::ReadQueue(RpcSession* session) : session(session) {
+RpcSession::ReadQueue::ReadQueue(const RpcSessionPtr& session) : session(session) {
 }
 
 RpcSession::ReadQueue::~ReadQueue() {
@@ -141,6 +141,9 @@ void RpcSession::ReadQueue::deactivate() {
     {
         std::unique_lock<std::mutex> guard(classMutex);
         if (!this->active) {
+            if (this->session) {
+                this->session.reset();
+            }
             return;
         }
         this->active = false;
@@ -149,6 +152,9 @@ void RpcSession::ReadQueue::deactivate() {
     if (queueThreadPtr) {
         queueThreadPtr->join();
         queueThreadPtr.reset();
+    }
+    if (this->session) {
+        this->session.reset();
     }
 }
 
@@ -181,20 +187,28 @@ void RpcSession::ReadQueue::run() {
 
 // Report a failure
 void
-RpcSession::fail(boost::system::error_code ec, const std::string& what)
-{
+RpcSession::fail(boost::system::error_code ec, const std::string& what) {
     KETO_LOG_ERROR << "Failed processing : " << what << ": " << ec.message();
     rpcPeer.incrementReconnectCount();
     if (what == Constants::SESSION::CONNECT) {
         KETO_LOG_DEBUG << this->sessionNumber << ":Attempt to reconnect";
         RpcSessionManager::getInstance()->reconnect(rpcPeer);
+    }
 
-        // Close the WebSocket connection
+    if (what != "close" && what != Constants::SESSION::RESOLVE && what != Constants::SESSION::SSL_HANDSHAKE
+                                                                  && what != Constants::SESSION::HANDSHAKE) {
         ws_.async_close(websocket::close_code::normal,
                         beast::bind_front_handler(
                                 &RpcSession::on_close,
                                 shared_from_this()));
     }
+
+    if (this->readQueuePtr) {
+        this->readQueuePtr->deactivate();
+        this->readQueuePtr.reset();
+    }
+
+
 }
 
 std::string RpcSession::getSourceVersion() {
@@ -230,7 +244,6 @@ RpcSession::RpcSession(
             config->getVariablesMap()[Constants::PUBLIC_KEY].as<std::string>();
     keyLoaderPtr = std::make_shared<keto::crypto::KeyLoader>(privateKeyPath,
             publicKeyPath);
-    this->readQueuePtr = ReadQueuePtr(new RpcSession::ReadQueue(this));
 }
 
 RpcSession::~RpcSession() {
@@ -244,7 +257,6 @@ RpcSession::~RpcSession() {
 void
 RpcSession::run()
 {
-    this->readQueuePtr->activate();
 
     // Look up the domain name
     this->resolver.async_resolve(
@@ -329,6 +341,10 @@ RpcSession::on_handshake(boost::system::error_code ec)
 {
     if(ec)
         return fail(ec, Constants::SESSION::HANDSHAKE);
+
+    this->readQueuePtr = ReadQueuePtr(new RpcSession::ReadQueue(shared_from_this()));
+    this->readQueuePtr->activate();
+
 
     // Send the message
     std::stringstream ss;
@@ -550,12 +566,19 @@ RpcSession::on_close(boost::system::error_code ec)
                         keto::server_common::Events::DEREGISTER_RPC_PEER,rpcPeerHelper));
     }
 
-    if(ec)
-        return fail(ec, "close");
     // If we get here then the connection is closed gracefully
     if (this->rpcPeer.getPeered() && !this->accountHash.empty()) {
         RpcSessionManager::getInstance()->removeAccountSessionMapping(this->accountHash);
     }
+
+    if(ec)
+        return fail(ec, "close");
+
+    if (this->readQueuePtr) {
+        this->readQueuePtr->deactivate();
+        this->readQueuePtr.reset();
+    }
+
     KETO_LOG_INFO << this->sessionNumber << ": Close the connection";
 }
 

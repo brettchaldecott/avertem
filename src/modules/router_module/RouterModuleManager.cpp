@@ -60,10 +60,10 @@ const std::string RouterModuleManager::getVersion() const {
 
 // lifecycle methods
 void RouterModuleManager::start() {
+    ConsensusService::init(getConsensusHash());
     RouterRegistry::init();
     StorageManager::init();
     RouterService::init();
-    ConsensusService::init(getConsensusHash());
     PeerCache::init();
     TangleServiceCache::init();
     modules["routerModule"] = std::make_shared<RouterModule>();
@@ -76,11 +76,11 @@ void RouterModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
     modules.clear();
     PeerCache::fin();
-    ConsensusService::fin();
     RouterService::fin();
     StorageManager::fin();
     RouterRegistry::fin();
     TangleServiceCache::fin();
+    ConsensusService::fin();
     KETO_LOG_INFO << "[RouterModuleManager] The RouterModuleManager is being stopped";
 }
 

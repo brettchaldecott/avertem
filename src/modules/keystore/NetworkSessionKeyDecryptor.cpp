@@ -38,6 +38,10 @@ keto::crypto::SecureVector NetworkSessionKeyDecryptor::decrypt(const std::vector
     for (int level = 0; level < Constants::ONION_LEVELS; level++) {
         //auto start = std::chrono::steady_clock::now();
 
+        if (content.size() <= 3) {
+            BOOST_THROW_EXCEPTION(CorruptedEncryptedValueException());
+        }
+
         keto::crypto::SecureVector indexes(&content[0],&content[2]);
         keto::crypto::SecureVector encryptedValue(&content[2],&content[content.size()]);
 
@@ -47,7 +51,7 @@ keto::crypto::SecureVector NetworkSessionKeyDecryptor::decrypt(const std::vector
         //KETO_LOG_DEBUG << "[NetworkSessionKeyDecryptor::decrypt][" <<
         //    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "get base index [" << (int)baseIndex;
         keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr memoryVaultSessionKeyWrapperPtr =
-                this->networkSessionKeyManager->getKey(baseIndex);
+                NetworkSessionKeyManager::getInstance()->getKey(baseIndex);
         if (!memoryVaultSessionKeyWrapperPtr) {
             BOOST_THROW_EXCEPTION(NetworkSessionKeyNotFoundException());
         }
@@ -55,7 +59,7 @@ keto::crypto::SecureVector NetworkSessionKeyDecryptor::decrypt(const std::vector
         std::unique_ptr<Botan::StreamCipher> cipher(Botan::StreamCipher::create(keto::crypto::Constants::CIPHER_STREAM));
         //KETO_LOG_DEBUG << "[NetworkSessionKeyDecryptor::decrypt][" <<
         //    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] pIndex [" << (int)pIndex << "]";
-        keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr pIndexKeyWrapperPtr = this->networkSessionKeyManager->getKey(pIndex);
+        keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr pIndexKeyWrapperPtr = NetworkSessionKeyManager::getInstance()->getKey(pIndex);
         if (!pIndexKeyWrapperPtr) {
             BOOST_THROW_EXCEPTION(NetworkSessionKeyNotFoundException());
         }
@@ -71,8 +75,7 @@ keto::crypto::SecureVector NetworkSessionKeyDecryptor::decrypt(const std::vector
     return content;
 }
 
-NetworkSessionKeyDecryptor::NetworkSessionKeyDecryptor(NetworkSessionKeyManager* networkSessionKeyManager) :
-    networkSessionKeyManager(networkSessionKeyManager) {
+NetworkSessionKeyDecryptor::NetworkSessionKeyDecryptor() {
 
 }
 

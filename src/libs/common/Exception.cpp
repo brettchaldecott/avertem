@@ -11,18 +11,26 @@
 namespace keto {
 namespace common {  
 
-Exception::Exception() noexcept : msg("Exception"){}
+Exception::Exception() noexcept : type("Exception"), msg("Exception"){}
 
-Exception::Exception(const std::string& msg) noexcept : msg(msg) {}
+Exception::Exception(const std::string& msg) noexcept: type("Exception"), msg(msg) {}
 
-Exception::Exception(const Exception& orig) noexcept : std::exception(orig), boost::exception(orig), msg(orig.msg) {}
+Exception::Exception(const std::string& type, const std::string& msg) noexcept : type(type), msg(msg) {}
+
+Exception::Exception(const Exception& orig) noexcept : std::exception(orig), boost::exception(orig), type(orig.type), msg(orig.msg) {}
 
 Exception::~Exception() {
 }
 
 Exception& Exception::operator= (const Exception& orig) noexcept {
-	this->msg = orig.msg;
+    this->type = orig.type;
+    this->msg = orig.msg;
+
 	return *this;
+}
+
+std::string Exception::getType() const noexcept {
+    return this->type;
 }
 	
 const char* Exception::what() const noexcept {

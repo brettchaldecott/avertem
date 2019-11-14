@@ -64,13 +64,13 @@ const std::string BlockModuleManager::getVersion() const {
 // lifecycle methods
 void BlockModuleManager::start() {
     KETO_LOG_INFO << "[BlockModuleManager] Start the BlockModuleManager";
+    ConsensusService::init(getConsensusHash());
     BlockProducer::init();
     TransactionProcessor::init();
     StorageManager::init();
     modules["blockModule"] = std::make_shared<BlockModule>();
     BlockService::init();
     NetworkFeeManager::init();
-    ConsensusService::init(getConsensusHash());
     ElectionManager::init();
     EventRegistry::registerEventHandlers();
     KETO_LOG_INFO << "[BlockModuleManager] Started the BlockModuleManager";
@@ -103,13 +103,13 @@ void BlockModuleManager::preStop() {
 void BlockModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
     ElectionManager::fin();
-    ConsensusService::fin();
     NetworkFeeManager::fin();
     BlockService::fin();
     modules.clear();
     TransactionProcessor::fin();
     BlockProducer::fin();
     StorageManager::fin();
+    ConsensusService::fin();
     KETO_LOG_INFO << "[BlockModuleManager] The BlockModuleManager is being stopped";
 }
 

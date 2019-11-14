@@ -204,7 +204,7 @@ keto::transaction_common::TransactionProtoHelper TransactionProcessor::processTr
         for (keto::transaction_common::ActionHelperPtr action : actions) {
             //KETO_LOG_DEBUG << "The action is contract : " << action->getContract().getHash(keto::common::HEX);
             keto::asn1::AnyHelper anyHelper(*transactionMessageHelperPtr);
-            if (action->getContract().empty()) {
+            if (!action->getContract().empty()) {
                 transactionProtoHelper.setTransaction(executeContract(
                         getContractByHash(currentAccount,action->getContract()),transactionProtoHelper,action->getModel(),transactionTracker)
                         .transaction());

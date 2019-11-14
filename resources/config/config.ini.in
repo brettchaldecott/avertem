@@ -46,3 +46,4 @@ master_password=123456
 master-public-key=keys/ketod/master/public_key.pem
 master-private-key=keys/ketod/master/private_key.pem
 network_fee_ratio=1
+faucet_account=D594F22DC389E38B3DE7FA5630DBD9DCA16DA8A77097516FD37F9E25C6BE24D2

@@ -74,8 +74,8 @@ void ConsensusModuleManager::postStart() {
 void ConsensusModuleManager::stop() {
     consensusServerPtr.reset();
     EventRegistry::deregisterEventHandlers();
-    ConsensusServices::fin();
     keto::software_consensus::ConsensusSessionManager::fin();
+    ConsensusServices::fin();
     modules.clear();
     KETO_LOG_INFO << "[ConsensusModuleManager] The ConsensusModuleManager is being stopped";
 }

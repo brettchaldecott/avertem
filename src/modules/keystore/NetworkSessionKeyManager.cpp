@@ -146,11 +146,11 @@ keto::event::Event NetworkSessionKeyManager::setNetworkSessionKeys(const keto::e
 
 
 NetworkSessionKeyEncryptorPtr NetworkSessionKeyManager::getEncryptor() {
-    return NetworkSessionKeyEncryptorPtr(new NetworkSessionKeyEncryptor(this));
+    return NetworkSessionKeyEncryptorPtr(new NetworkSessionKeyEncryptor());
 }
 
 NetworkSessionKeyDecryptorPtr NetworkSessionKeyManager::getDecryptor() {
-    return NetworkSessionKeyDecryptorPtr(new NetworkSessionKeyDecryptor(this));
+    return NetworkSessionKeyDecryptorPtr(new NetworkSessionKeyDecryptor());
 }
 
 int NetworkSessionKeyManager::getNumberOfKeys() {

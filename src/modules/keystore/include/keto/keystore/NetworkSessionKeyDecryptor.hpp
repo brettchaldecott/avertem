@@ -39,9 +39,7 @@ public:
     keto::crypto::SecureVector decrypt(const std::vector<uint8_t>& value) const;
 
 private:
-    NetworkSessionKeyManager* networkSessionKeyManager;
-
-    NetworkSessionKeyDecryptor(NetworkSessionKeyManager* networkSessionKeyManager);
+    NetworkSessionKeyDecryptor();
 
 };
 
