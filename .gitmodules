@@ -7,3 +7,9 @@
 [submodule "docker"]
 	path = docker
 	url = https://github.com/keto-coin/keto_docker.git
+[submodule "src/web/keto-middlware-proxy"]
+	path = src/web/keto-middlware-proxy
+	url = https://github.com/keto-coin/keto-middlware-proxy.git
+[submodule "src/web/keto-blockchain-explorer"]
+	path = src/web/keto-blockchain-explorer
+	url = https://github.com/brettchaldecott/keto-explorer.git
