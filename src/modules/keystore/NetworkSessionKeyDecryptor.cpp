@@ -42,11 +42,10 @@ keto::crypto::SecureVector NetworkSessionKeyDecryptor::decrypt(const std::vector
             BOOST_THROW_EXCEPTION(CorruptedEncryptedValueException());
         }
 
-        keto::crypto::SecureVector indexes(&content[0],&content[2]);
         keto::crypto::SecureVector encryptedValue(&content[2],&content[content.size()]);
 
-        uint8_t baseIndex = indexes[0];
-        uint8_t pIndex = indexes[1];
+        uint8_t baseIndex = content[0];
+        uint8_t pIndex = content[1];
 
         //KETO_LOG_DEBUG << "[NetworkSessionKeyDecryptor::decrypt][" <<
         //    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "get base index [" << (int)baseIndex;
