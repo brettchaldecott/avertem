@@ -60,7 +60,8 @@ HttpRequestManager::checkRequest(boost::beast::http::request<boost::beast::http:
     std::string target = keto::server_common::StringUtils(path.to_string()).replaceAll("//","/");
     if (0 == target.compare(keto::common::HttpEndPoints::HAND_SHAKE)) {
         return true;
-    } else if (0 == target.compare(keto::common::HttpEndPoints::TRANSACTION)) {
+    } else if (strlen(keto::common::HttpEndPoints::TRANSACTION) <= target.size() &&
+            0 == target.compare(0,strlen(keto::common::HttpEndPoints::TRANSACTION),keto::common::HttpEndPoints::TRANSACTION)) {
         return true;
     } else if (strlen(keto::common::HttpEndPoints::DATA_QUERY) <= target.size() &&
         0 == target.compare(0,strlen(keto::common::HttpEndPoints::DATA_QUERY),keto::common::HttpEndPoints::DATA_QUERY)) {
@@ -90,7 +91,8 @@ HttpRequestManager::handle_request(
         return this->httpSessionManagerPtr->processAuthentication(req,req.body());
     } else if (0 == target.compare(keto::common::HttpEndPoints::HAND_SHAKE)) {
         return this->httpSessionManagerPtr->processHello(req.body());
-    } else if (0 == target.compare(keto::common::HttpEndPoints::TRANSACTION)) {
+    } else if (strlen(keto::common::HttpEndPoints::TRANSACTION) <= target.size() &&
+               0 == target.compare(0,strlen(keto::common::HttpEndPoints::TRANSACTION),keto::common::HttpEndPoints::TRANSACTION)) {
         result = this->httpTransactionManagerPtr->processTransaction(req,req.body());
     } else if (strlen(keto::common::HttpEndPoints::DATA_QUERY) <= target.size() &&
                0 == target.compare(0,strlen(keto::common::HttpEndPoints::DATA_QUERY),keto::common::HttpEndPoints::DATA_QUERY)) {

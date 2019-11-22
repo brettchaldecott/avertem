@@ -223,6 +223,7 @@ bool BlockChain::requireGenesis() {
 
 
 void BlockChain::applyDirtyTransaction(keto::transaction_common::TransactionMessageHelperPtr& transactionMessageHelperPtr, const BlockChainCallback& callback) {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
 
     keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelperPtr = transactionMessageHelperPtr->getTransactionWrapper();
     callback.applyDirtyTransaction(this->blockChainMetaPtr->getHashId(),*transactionWrapperHelperPtr);
@@ -579,12 +580,13 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
 
     callback.postPersistBlock(blockChainMetaPtr->getHashId(),signedBlock);
 
-    KETO_LOG_DEBUG << "[BlockChain::writeBlock] Completed writing the block : " << blockHash.getHash(keto::common::StringEncoding::HEX);
+    KETO_LOG_INFO << "[BlockChain::writeBlock] Completed writing the block : " << blockHash.getHash(keto::common::StringEncoding::HEX);
     return true;
 }
 
 
 std::vector<keto::asn1::HashHelper> BlockChain::getLastBlockHashs() {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     std::vector<keto::asn1::HashHelper> result;
     for (int count = 0; count < this->blockChainMetaPtr->tangleCount(); count++) {
         result.push_back(this->blockChainMetaPtr->getTangleEntry(count)->getLastBlockHash());
@@ -594,6 +596,8 @@ std::vector<keto::asn1::HashHelper> BlockChain::getLastBlockHashs() {
 }
 
 keto::proto::SignedBlockBatchMessage BlockChain::requestBlocks(const std::vector<keto::asn1::HashHelper>& tangledHashes) {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+
     keto::proto::SignedBlockBatchMessage result;
 
     BlockResourcePtr resource = blockResourceManagerPtr->getResource();
@@ -609,6 +613,8 @@ keto::proto::SignedBlockBatchMessage BlockChain::requestBlocks(const std::vector
 }
 
 bool BlockChain::processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage, const BlockChainCallback& callback) {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+
     bool complete = true;
     for (int index = 0; index < signedBlockBatchMessage.tangle_batches_size(); index++) {
         const keto::proto::SignedBlockBatch& signedBlockBatch = signedBlockBatchMessage.tangle_batches(index);
@@ -621,6 +627,7 @@ bool BlockChain::processBlockSyncResponse(const keto::proto::SignedBlockBatchMes
 
 
 bool BlockChain::processBlockSyncResponse(const keto::proto::SignedBlockBatch& signedBlockBatch, const BlockChainCallback& callback) {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     bool complete = true;
     KETO_LOG_DEBUG << "[BlockChain::processBlockSyncResponse] process the block : " << signedBlockBatch.blocks_size();
     for (int index = 0; index < signedBlockBatch.blocks_size(); index++) {
@@ -811,6 +818,7 @@ keto::proto::SignedBlockWrapper BlockChain::getBlock(keto::asn1::HashHelper hash
 
 
 keto::proto::AccountChainTangle BlockChain::getAccountBlockTangle(const keto::proto::AccountChainTangle& accountChainTangle) {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     keto::proto::AccountChainTangle result = accountChainTangle;
     BlockResourcePtr resource = blockResourceManagerPtr->getResource();
     rocksdb::Transaction* accountTransaction =  resource->getTransaction(Constants::ACCOUNTS_INDEX);
@@ -840,6 +848,7 @@ keto::proto::AccountChainTangle BlockChain::getAccountBlockTangle(const keto::pr
 
 
 bool BlockChain::getAccountTangle(const keto::asn1::HashHelper& accountHash, keto::asn1::HashHelper& tangleHash) {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     BlockResourcePtr resource = blockResourceManagerPtr->getResource();
     rocksdb::Transaction* accountTransaction =  resource->getTransaction(Constants::ACCOUNTS_INDEX);
 
@@ -884,6 +893,7 @@ void BlockChain::setCurrentTangle(const keto::asn1::HashHelper& tangle) {
 
 keto::chain_query_common::BlockResultSetProtoHelperPtr BlockChain::performBlockQuery(
         const keto::chain_query_common::BlockQueryProtoHelper& blockQueryProtoHelper) {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     BlockResourcePtr resource = blockResourceManagerPtr->getResource();
 
     keto::chain_query_common::BlockResultSetProtoHelperPtr blockResultSetProtoHelperPtr(

@@ -16,6 +16,7 @@
 
 #include <string>
 #include <memory>
+#include <mutex>
 
 #include "SignedBlock.h"
 #include "BlockChain.pb.h"

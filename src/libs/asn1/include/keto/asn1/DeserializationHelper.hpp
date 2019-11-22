@@ -49,7 +49,7 @@ public:
         } else if (rval.code != RC_OK) {
             type_descriptor->op->free_struct(type_descriptor,instance, ASFM_FREE_EVERYTHING);
             std::ostringstream oss;
-            oss << "Failed code is [" << rval.code << "] data [" << rval.consumed << "]" ;
+            oss << "Failed code is [" << rval.code << "] data [" << rval.consumed << "][" << size << "]";
             BOOST_THROW_EXCEPTION(keto::asn1::DeserializationException(oss.str()));
         }
     }

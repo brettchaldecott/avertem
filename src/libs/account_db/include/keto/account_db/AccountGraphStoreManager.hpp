@@ -17,6 +17,7 @@
 #include <string>
 #include <memory>
 #include <map>
+#include <mutex>
 
 #include "keto/account_db/AccountGraphStore.hpp"
 #include "keto/obfuscate/MetaString.hpp"
@@ -43,6 +44,7 @@ public:
     AccountGraphStorePtr createStore(const std::string& dbName);
     
 private:
+    std::recursive_mutex classMutex;
     std::map<std::string,AccountGraphStorePtr> graphs;
 };
 

@@ -37,6 +37,7 @@ AccountGraphStoreManager::~AccountGraphStoreManager() {
 }
 
 AccountGraphStorePtr AccountGraphStoreManager::operator[](const std::string& dbName) {
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     if (this->graphs.count(dbName)) {
         return this->graphs[dbName];
     }
@@ -44,18 +45,22 @@ AccountGraphStorePtr AccountGraphStoreManager::operator[](const std::string& dbN
         return AccountGraphStorePtr();
     }
     AccountGraphStorePtr result(new AccountGraphStore(dbName));
-    this->graphs[Constants::BASE_GRAPH] = result;
+    this->graphs[dbName] = result;
     return result;
 }
 
 bool AccountGraphStoreManager::checkForDb(const std::string& dbName) {
-    if (this->graphs.count(dbName)) {
-        return true;
+    {
+        std::lock_guard<std::recursive_mutex> guard(classMutex);
+        if (this->graphs.count(dbName)) {
+            return true;
+        }
     }
     return AccountGraphStore::checkForDb(dbName);
 }
 
 AccountGraphStorePtr AccountGraphStoreManager::createStore(const std::string& dbName) {
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     if (AccountGraphStore::checkForDb(dbName)) {
         std::stringstream ss;
         ss << "Graph db has been created by this name : " << dbName;
@@ -63,7 +68,7 @@ AccountGraphStorePtr AccountGraphStoreManager::createStore(const std::string& db
             ss.str()));
     }
     AccountGraphStorePtr result(new AccountGraphStore(dbName));
-    this->graphs[Constants::BASE_GRAPH] = result;
+    this->graphs[dbName] = result;
     return result;
 }
 

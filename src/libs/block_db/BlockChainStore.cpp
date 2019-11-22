@@ -125,7 +125,6 @@ bool BlockChainStore::processBlockSyncResponse(const keto::proto::SignedBlockBat
     if (!masterChain) {
         BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
     }
-
     return this->masterChain->processBlockSyncResponse(signedBlockBatchMessage,callback);
 }
 
@@ -133,7 +132,6 @@ keto::proto::AccountChainTangle BlockChainStore::getAccountBlockTangle(const ket
     if (!masterChain) {
         BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
     }
-
     return this->masterChain->getAccountBlockTangle(accountChainTangle);
 }
 

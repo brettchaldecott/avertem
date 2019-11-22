@@ -46,7 +46,6 @@ AccountGraphStore::AccountGraphStore(const std::string& dbName) : dbName(dbName)
     world = librdf_new_world();
     librdf_world_open(world);
 
-    
     // setup the bdb hash db
     std::shared_ptr<keto::environment::Config> config = 
             keto::environment::EnvironmentManager::getInstance()->getConfig();

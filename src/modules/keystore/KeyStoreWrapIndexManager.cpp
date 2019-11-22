@@ -130,6 +130,9 @@ void KeyStoreWrapIndexManager::loadWrapperIndex() {
 void KeyStoreWrapIndexManager::setWrapperIndex() {
     keto::key_store_db::OnionKeys onionKeys;
     onionKeys.push_back(KeyStoreStorageManager::getInstance()->getKeyLoader()->getPrivateKey());
+    if (!this->derivedKey) {
+        BOOST_THROW_EXCEPTION(keto::keystore::DerivedKeyNotConfigured())    ;
+    }
     onionKeys.push_back(this->derivedKey->getPrivateKey());
 
     nlohmann::json json;

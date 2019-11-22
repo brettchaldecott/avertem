@@ -196,15 +196,15 @@ handle_request(
             return;
         } catch (keto::common::Exception& ex) {
             KETO_LOG_ERROR << "Failed to process the request : " << req;
-            //KETO_LOG_ERROR << "Cause: " << boost::diagnostic_information_what(ex,true);
+            KETO_LOG_ERROR << "Cause: " << boost::diagnostic_information(ex,true);
             std::stringstream ss;
             ss << "Process the request : " << req << std::endl;
-            //ss << "Cause : " << boost::diagnostic_information_what(ex,true);
+            ss << "Cause : " << boost::diagnostic_information(ex,true);
             return send(server_error(ss.str()));
         } catch (boost::exception& ex) {
-            //KETO_LOG_ERROR << "Failed to process because : " << boost::diagnostic_information_what(ex,true);
+            KETO_LOG_ERROR << "Failed to process because : " << boost::diagnostic_information(ex,true);
             std::stringstream ss;
-            //ss << "Failed process the request : " << boost::diagnostic_information_what(ex,true);
+            ss << "Failed process the request : " << boost::diagnostic_information(ex,true);
             return send(server_error(ss.str()));
         } catch (std::exception& ex) {
             KETO_LOG_ERROR << "Failed process the request : " << ex.what();

@@ -14,6 +14,8 @@
 #include "asn_SEQUENCE_OF.h"
 #include "EncryptedDataWrapper.h"
 
+#include <botan/hex.h>
+
 #include "keto/transaction_common/TransactionMessageHelper.hpp"
 #include "keto/common/MetaInfo.hpp"
 #include "keto/asn1/HashHelper.hpp"
@@ -67,7 +69,7 @@ TransactionMessageHelper::TransactionMessageHelper(const TransactionMessage_t& t
 }
 
 TransactionMessageHelper::TransactionMessageHelper(const std::string& transactionMessage) {
-    this->transactionMessage = 
+    this->transactionMessage =
             keto::asn1::DeserializationHelper<TransactionMessage_t>((const uint8_t*)transactionMessage.data(), 
             transactionMessage.size(),&asn_DEF_TransactionMessage).takePtr();
 }

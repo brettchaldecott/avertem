@@ -41,6 +41,8 @@
 #include "keto/crypto/SecureVectorUtils.hpp"
 #include "keto/crypto/SignatureVerification.hpp"
 
+#include "keto/server_common/StringUtils.hpp"
+
 #include "keto/transaction_common/MessageWrapperProtoHelper.hpp"
 #include "keto/account_query/AccountSparqlQueryHelper.hpp"
 
@@ -63,7 +65,20 @@ HttpTransactionManager::~HttpTransactionManager() {
 std::string HttpTransactionManager::processTransaction(
         boost::beast::http::request<boost::beast::http::string_body>& req,
         const std::string& transactionMsg) {
-    std::string sessionHash = (const std::string&)req.base().at(keto::common::HttpEndPoints::HEADER_SESSION_HASH);
+    boost::beast::string_view path = req.target();
+    std::string target = keto::server_common::StringUtils(path.to_string()).replaceAll("//","/");
+    std::string subUri = target.substr(strlen(keto::common::HttpEndPoints::TRANSACTION));
+
+    std::string sessionHash;
+    if (req.base().count(keto::common::HttpEndPoints::HEADER_SESSION_HASH)) {
+        sessionHash = (const std::string &) req.base().at(keto::common::HttpEndPoints::HEADER_SESSION_HASH);
+    } else {
+        int nextSlash = subUri.find("/");
+        if (nextSlash == std::string::npos) {
+            BOOST_THROW_EXCEPTION(keto::server_session::InvalidSessionException());
+        }
+        sessionHash = subUri.substr(nextSlash+1);
+    }
     keto::asn1::HashHelper hashHelper(
             sessionHash,keto::common::HEX);
     std::vector<uint8_t> vectorHash = keto::crypto::SecureVectorUtils().copyFromSecure(hashHelper);
