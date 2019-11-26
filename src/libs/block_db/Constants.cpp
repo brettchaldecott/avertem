@@ -39,6 +39,9 @@ const std::vector<std::string> Constants::DB_LIST =
 
 const int Constants::MAX_BLOCK_REQUEST = 500;
 
+// cache size
+const int Constants::MAX_BLOCK_CACHE_SIZE = 100;
+
 
 }
 }

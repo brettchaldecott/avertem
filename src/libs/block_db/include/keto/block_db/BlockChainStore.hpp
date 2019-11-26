@@ -83,6 +83,7 @@ public:
     keto::chain_query_common::TransactionResultSetProtoHelperPtr performTransactionQuery(const keto::chain_query_common::TransactionQueryProtoHelper& transactionQueryProtoHelper);
 
 private:
+    std::recursive_mutex classMutex;
     std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr;
 
     BlockResourceManagerPtr blockResourceManagerPtr;

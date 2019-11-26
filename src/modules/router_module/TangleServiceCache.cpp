@@ -129,7 +129,7 @@ TangleServiceCache::AccountTanglePtr TangleServiceCache::getTangle(const keto::a
         }
     }
     std::stringstream ss;
-    ss << "Cannot find the account [" << tangle.getHash(keto::common::StringEncoding::HEX) << "]";
+    ss << "Cannot find the tangle [" << tangle.getHash(keto::common::StringEncoding::HEX) << "][" << this->sessionAccounts.size() << "]";
     BOOST_THROW_EXCEPTION(NoMatchingTangleFound(ss.str()));
 }
 

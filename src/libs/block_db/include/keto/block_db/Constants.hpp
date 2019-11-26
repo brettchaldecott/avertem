@@ -56,6 +56,8 @@ public:
     // block count limit
     static const int MAX_BLOCK_REQUEST;
 
+    // cache size
+    static const int MAX_BLOCK_CACHE_SIZE;
 };
 
 

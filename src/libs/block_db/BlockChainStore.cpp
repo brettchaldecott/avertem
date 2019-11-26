@@ -68,6 +68,7 @@ std::shared_ptr<BlockChainStore> BlockChainStore::getInstance() {
 }
 
 void BlockChainStore::load() {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (this->masterChain) {
         return;
     }
@@ -75,18 +76,22 @@ void BlockChainStore::load() {
 }
 
 bool BlockChainStore::requireGenesis() {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     return this->masterChain->requireGenesis();
 }
 
 void BlockChainStore::applyDirtyTransaction(keto::transaction_common::TransactionMessageHelperPtr& transactionMessageHelperPtr, const BlockChainCallback& callback) {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     return this->masterChain->applyDirtyTransaction(transactionMessageHelperPtr, callback);
 }
 
 bool BlockChainStore::writeBlock(const SignedBlockBuilderPtr& signedBlock, const BlockChainCallback& callback) {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     return this->masterChain->writeBlock(signedBlock,callback);
 }
 
 bool BlockChainStore::writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlock, const BlockChainCallback& callback) {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (!masterChain) {
         KETO_LOG_DEBUG << "The block chain has not been initialized yet, ignore new blocks";
         return false;
@@ -95,6 +100,7 @@ bool BlockChainStore::writeBlock(const keto::proto::SignedBlockWrapperMessage& s
 }
 
 std::vector<keto::asn1::HashHelper> BlockChainStore::getLastBlockHashs() {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (!masterChain) {
         KETO_LOG_DEBUG << "The block chain has not been initialized yet, ignore new blocks";
         return std::vector<keto::asn1::HashHelper>();
@@ -103,7 +109,7 @@ std::vector<keto::asn1::HashHelper> BlockChainStore::getLastBlockHashs() {
 }
 
 keto::proto::SignedBlockBatchMessage BlockChainStore::requestBlocks(const std::vector<keto::asn1::HashHelper>& tangledHashes) {
-
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (!masterChain) {
         BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
     }
@@ -122,6 +128,7 @@ keto::proto::SignedBlockBatchMessage BlockChainStore::requestBlocks(const std::v
 }
 
 bool BlockChainStore::processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage, const BlockChainCallback& callback) {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (!masterChain) {
         BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
     }
@@ -129,6 +136,7 @@ bool BlockChainStore::processBlockSyncResponse(const keto::proto::SignedBlockBat
 }
 
 keto::proto::AccountChainTangle BlockChainStore::getAccountBlockTangle(const keto::proto::AccountChainTangle& accountChainTangle) {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (!masterChain) {
         BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
     }
@@ -136,6 +144,7 @@ keto::proto::AccountChainTangle BlockChainStore::getAccountBlockTangle(const ket
 }
 
 bool BlockChainStore::getAccountTangle(const keto::asn1::HashHelper& accountHash, keto::asn1::HashHelper& tangleHash) {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (!masterChain) {
         BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
     }
@@ -143,6 +152,7 @@ bool BlockChainStore::getAccountTangle(const keto::asn1::HashHelper& accountHash
 }
 
 bool BlockChainStore::containsTangleInfo(const keto::asn1::HashHelper& tangleHash) {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (!masterChain) {
         BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
     }
@@ -150,6 +160,7 @@ bool BlockChainStore::containsTangleInfo(const keto::asn1::HashHelper& tangleHas
 }
 
 BlockChainTangleMetaPtr  BlockChainStore::getTangleInfo(const keto::asn1::HashHelper& tangleHash) {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (!masterChain) {
         BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
     }
@@ -158,6 +169,7 @@ BlockChainTangleMetaPtr  BlockChainStore::getTangleInfo(const keto::asn1::HashHe
 
 
 keto::asn1::HashHelper BlockChainStore::getParentHash() {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (!masterChain) {
         BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
     }
@@ -165,6 +177,7 @@ keto::asn1::HashHelper BlockChainStore::getParentHash() {
 }
 
 keto::asn1::HashHelper BlockChainStore::getParentHash(const keto::asn1::HashHelper& transactionHash) {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (!masterChain) {
         BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
     }
@@ -173,6 +186,7 @@ keto::asn1::HashHelper BlockChainStore::getParentHash(const keto::asn1::HashHelp
 
 
 std::vector<keto::asn1::HashHelper> BlockChainStore::getActiveTangles() {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (!masterChain) {
         BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
     }
@@ -180,6 +194,7 @@ std::vector<keto::asn1::HashHelper> BlockChainStore::getActiveTangles() {
 }
 
 keto::asn1::HashHelper BlockChainStore::getGrowTangle() {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (!masterChain) {
         BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
     }
@@ -187,6 +202,7 @@ keto::asn1::HashHelper BlockChainStore::getGrowTangle() {
 }
 
 void BlockChainStore::setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles) {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (!masterChain) {
         BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
     }
@@ -194,6 +210,7 @@ void BlockChainStore::setActiveTangles(const std::vector<keto::asn1::HashHelper>
 }
 
 void BlockChainStore::setCurrentTangle(const keto::asn1::HashHelper& tangle) {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (!masterChain) {
         BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
     }
@@ -210,6 +227,7 @@ keto::chain_query_common::BlockResultSetProtoHelperPtr BlockChainStore::performB
 
 keto::chain_query_common::TransactionResultSetProtoHelperPtr BlockChainStore::performTransactionQuery(
         const keto::chain_query_common::TransactionQueryProtoHelper& transactionQueryProtoHelper) {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (!masterChain) {
         BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
     }

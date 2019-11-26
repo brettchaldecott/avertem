@@ -35,6 +35,7 @@ KETO_DECLARE_DERIVED_EXCEPTION (AccountsDBException, FailedToRollbackGraphTransa
 KETO_DECLARE_DERIVED_EXCEPTION (AccountsDBException, UnsupportedDataTypeTransactionException , "Failed to rollback a graph transaction.");
 KETO_DECLARE_DERIVED_EXCEPTION (AccountsDBException, UnknownContractException , "The contract was not found to execute.");
 KETO_DECLARE_DERIVED_EXCEPTION (AccountsDBException, InvalidQueryFormat , "Invalid query format.");
+KETO_DECLARE_DERIVED_EXCEPTION (AccountsDBException, InvalidGraphStore , "Invalid graph store.");
 
 }
 }

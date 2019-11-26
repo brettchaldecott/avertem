@@ -11,9 +11,12 @@
  * Created on February 28, 2018, 10:56 AM
  */
 
+#include <sstream>
+
 #include <rocksdb/utilities/transaction.h>
 
 #include "keto/account_db/AccountResource.hpp"
+#include "keto/account_db/Exception.hpp"
 
 namespace keto {
 namespace account_db {
@@ -87,6 +90,11 @@ rocksdb::Transaction* AccountResource::getTransaction(const std::string& name) {
 AccountGraphSessionPtr AccountResource::getGraphSession(const std::string& name) {
     if (!this->sessionMap.count(name)) {
         AccountGraphStorePtr accountGraphStorePtr = (*this->accountGraphStoreManagerPtr)[name];
+        if (!accountGraphStorePtr) {
+            std::stringstream ss;
+            ss << "The graph store could not be found [" << name << "]";
+            BOOST_THROW_EXCEPTION(keto::account_db::InvalidGraphStore(ss.str()));
+        }
         this->sessionMap[name] = AccountGraphSessionPtr(
                 new AccountGraphSession(accountGraphStorePtr));
     }

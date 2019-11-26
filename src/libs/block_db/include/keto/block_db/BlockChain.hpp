@@ -38,6 +38,21 @@ typedef std::shared_ptr<BlockChain> BlockChainPtr;
 class BlockChain {
 public:
 
+    class BlockChainWriteCache;
+    typedef std::shared_ptr<BlockChainWriteCache> BlockChainWriteCachePtr;
+    class BlockChainWriteCache {
+    public:
+        BlockChainWriteCache();
+        BlockChainWriteCache(const BlockChainWriteCache& orig) = delete;
+        virtual ~BlockChainWriteCache();
+
+        bool checkCache(const keto::asn1::HashHelper& blockHash);
+    private:
+        std::set<std::string> cacheLookup;
+        std::deque<std::string> cacheHistory;
+    };
+
+
     class BlockChainCache;
     typedef std::shared_ptr<BlockChainCache> BlockChainCachePtr;
     class BlockChainCache {
@@ -166,7 +181,7 @@ public:
             const keto::chain_query_common::TransactionQueryProtoHelper& transactionQueryProtoHelper);
 
 private:
-    std::recursive_mutex classMutex;
+    //std::recursive_mutex classMutex;
     bool inited;
     bool masterChain;
     std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr;
@@ -175,6 +190,7 @@ private:
     TangleManagerInterfacePtr tangleManagerInterfacePtr;
     //BlockChainTangleMetaPtr activeTangle;
     std::vector<BlockChainPtr> sideChains;
+    BlockChainWriteCachePtr blockChainWriteCachePtr;
 
 
     BlockChain(std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr,
@@ -205,6 +221,9 @@ private:
     bool containsBlock(keto::asn1::HashHelper hash, BlockResourcePtr resource);
 
     bool accountExists(const keto::asn1::HashHelper& accountHash);
+
+
+    bool duplicateCheck(rocksdb::Transaction* blockTransaction, keto::asn1::HashHelper blockHash);
 };
 
 }

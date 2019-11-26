@@ -39,6 +39,30 @@ namespace block_db {
 
 static BlockChain::BlockChainCachePtr singleton;
 
+
+BlockChain::BlockChainWriteCache::BlockChainWriteCache() {
+
+}
+
+BlockChain::BlockChainWriteCache::~BlockChainWriteCache() {
+
+}
+
+bool BlockChain::BlockChainWriteCache::checkCache(const keto::asn1::HashHelper& blockHash) {
+    if (this->cacheLookup.count(blockHash)) {
+        KETO_LOG_DEBUG << "[BlockChain::checkCache] The cache contains the block : " << blockHash.getHash(keto::common::StringEncoding::HEX);
+        return true;
+    }
+    if (this->cacheHistory.size() >= Constants::MAX_BLOCK_CACHE_SIZE) {
+        this->cacheLookup.erase(this->cacheHistory.front());
+        this->cacheHistory.pop_front();
+    }
+    this->cacheHistory.push_back(blockHash);
+    this->cacheLookup.insert(blockHash);
+    KETO_LOG_DEBUG << "[BlockChain::checkCache] Adding the block to the cache : " << blockHash.getHash(keto::common::StringEncoding::HEX);
+    return false;
+}
+
 BlockChain::BlockChainCache::BlockChainCache() {
 
 }
@@ -223,7 +247,7 @@ bool BlockChain::requireGenesis() {
 
 
 void BlockChain::applyDirtyTransaction(keto::transaction_common::TransactionMessageHelperPtr& transactionMessageHelperPtr, const BlockChainCallback& callback) {
-    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+    //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
 
     keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelperPtr = transactionMessageHelperPtr->getTransactionWrapper();
     callback.applyDirtyTransaction(this->blockChainMetaPtr->getHashId(),*transactionWrapperHelperPtr);
@@ -286,12 +310,14 @@ BlockChain::BlockChain(std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr,
         BlockResourceManagerPtr blockResourceManagerPtr) :
         inited(false), masterChain(true), dbManagerPtr(dbManagerPtr), blockResourceManagerPtr(blockResourceManagerPtr) {
     load(Constants::MASTER_CHAIN_HASH);
+    this->blockChainWriteCachePtr = BlockChain::BlockChainWriteCachePtr(new BlockChainWriteCache());
 }
 
 BlockChain::BlockChain(std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr,
         BlockResourceManagerPtr blockResourceManagerPtr,const std::vector<uint8_t>& id) :
         inited(false), masterChain(false), dbManagerPtr(dbManagerPtr), blockResourceManagerPtr(blockResourceManagerPtr) {
     load(id);
+    this->blockChainWriteCachePtr = BlockChain::BlockChainWriteCachePtr(new BlockChainWriteCache());
 }
 
 //keto::asn1::HashHelper BlockChain::selectParentHash() {
@@ -307,7 +333,7 @@ BlockChain::BlockChain(std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr,
 //}
 
 bool BlockChain::writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage, const BlockChainCallback& callback) {
-    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+    //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     SignedBlockWrapperMessageProtoHelper signedBlockWrapperMessageProtoHelper(signedBlockWrapperMessage);
 
     SignedBlockWrapperProtoHelperPtr signedBlockWrapperProtoHelperPtr =
@@ -324,25 +350,12 @@ bool BlockChain::writeBlock(const keto::proto::SignedBlockWrapperMessage& signed
 }
 
 bool BlockChain::writeBlock(const SignedBlockWrapperProtoHelperPtr& signedBlockWrapperProtoHelperPtr, const BlockChainCallback& callback) {
+    //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     SignedBlock& signedBlock = *signedBlockWrapperProtoHelperPtr;
 
     BlockResourcePtr resource = blockResourceManagerPtr->getResource();
 
-    // check for a duplicate block
-    rocksdb::Transaction* blockTransaction = resource->getTransaction(Constants::BLOCKS_INDEX);
-    rocksdb::ReadOptions readOptions;
-    keto::rocks_db::SliceHelper keyHelper((const std::vector<uint8_t>)signedBlockWrapperProtoHelperPtr->getHash());
-    std::string value;
-
-    KETO_LOG_DEBUG << "[BlockChain::writeBlock] Look for the block : " << signedBlockWrapperProtoHelperPtr->getHash().getHash(keto::common::StringEncoding::HEX);
-    auto status = blockTransaction->Get(readOptions,keyHelper,&value);
-
-    if (rocksdb::Status::OK() == status && rocksdb::Status::NotFound() != status) {
-        // ignore as the block already exists
-        KETO_LOG_DEBUG << "[BlockChain::writeBlock] The block already exists in the store ignore it.";
-        return false;
-    }
-
+    // write the block
     bool result = writeBlock(resource, signedBlock, callback);
     if (!result) {
         return result;
@@ -383,7 +396,7 @@ bool BlockChain::writeBlock(const SignedBlockWrapperProtoHelperPtr& signedBlockW
 }
 
 bool BlockChain::writeBlock(const SignedBlockBuilderPtr& signedBlockBuilderPtr, const BlockChainCallback& callback) {
-    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+    //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     SignedBlock& signedBlock = *signedBlockBuilderPtr;
 
     BlockResourcePtr resource = blockResourceManagerPtr->getResource();
@@ -430,6 +443,7 @@ bool BlockChain::writeBlock(const SignedBlockBuilderPtr& signedBlockBuilderPtr, 
 
 
 bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock, const BlockChainCallback& callback) {
+    //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
 
     KETO_LOG_DEBUG << "[BlockChain::writeBlock]Write a new block";
     rocksdb::Transaction* blockTransaction = resource->getTransaction(Constants::BLOCKS_INDEX);
@@ -440,14 +454,9 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
     keto::asn1::HashHelper blockHash(signedBlock.hash);
 
     KETO_LOG_DEBUG << "[BlockChain::writeBlock] Look for the block : " << blockHash.getHash(keto::common::StringEncoding::HEX);
-    rocksdb::ReadOptions readOptions;
-    keto::rocks_db::SliceHelper keyHelper((const std::vector<uint8_t>)blockHash);
-    std::string value;
-    auto blockStatus = blockTransaction->Get(readOptions,keyHelper,&value);
-
-    if (rocksdb::Status::OK() == blockStatus && rocksdb::Status::NotFound() != blockStatus) {
+    if (duplicateCheck(blockTransaction,blockHash)) {
         // ignore as the block already exists
-        KETO_LOG_DEBUG << "[BlockChain::writeBlock] The block already exists in the store ignore it.";
+        KETO_LOG_INFO << "[BlockChain::writeBlock] The block already exists in the store ignore it.";
         return false;
     }
 
@@ -555,6 +564,7 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
     blockTransaction->Put(blockHashHelper,valueHelper);
 
     // add the children
+    rocksdb::ReadOptions readOptions;
     std::string childBlocks;
     auto childStatus = childTransaction->Get(readOptions, parentHashHelper, &childBlocks);
     keto::proto::BlockChildren blockChildren;
@@ -586,7 +596,7 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
 
 
 std::vector<keto::asn1::HashHelper> BlockChain::getLastBlockHashs() {
-    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+    //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     std::vector<keto::asn1::HashHelper> result;
     for (int count = 0; count < this->blockChainMetaPtr->tangleCount(); count++) {
         result.push_back(this->blockChainMetaPtr->getTangleEntry(count)->getLastBlockHash());
@@ -596,7 +606,7 @@ std::vector<keto::asn1::HashHelper> BlockChain::getLastBlockHashs() {
 }
 
 keto::proto::SignedBlockBatchMessage BlockChain::requestBlocks(const std::vector<keto::asn1::HashHelper>& tangledHashes) {
-    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+    //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
 
     keto::proto::SignedBlockBatchMessage result;
 
@@ -613,7 +623,7 @@ keto::proto::SignedBlockBatchMessage BlockChain::requestBlocks(const std::vector
 }
 
 bool BlockChain::processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage, const BlockChainCallback& callback) {
-    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+    //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
 
     bool complete = true;
     for (int index = 0; index < signedBlockBatchMessage.tangle_batches_size(); index++) {
@@ -627,7 +637,7 @@ bool BlockChain::processBlockSyncResponse(const keto::proto::SignedBlockBatchMes
 
 
 bool BlockChain::processBlockSyncResponse(const keto::proto::SignedBlockBatch& signedBlockBatch, const BlockChainCallback& callback) {
-    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+    //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     bool complete = true;
     KETO_LOG_DEBUG << "[BlockChain::processBlockSyncResponse] process the block : " << signedBlockBatch.blocks_size();
     for (int index = 0; index < signedBlockBatch.blocks_size(); index++) {
@@ -818,7 +828,7 @@ keto::proto::SignedBlockWrapper BlockChain::getBlock(keto::asn1::HashHelper hash
 
 
 keto::proto::AccountChainTangle BlockChain::getAccountBlockTangle(const keto::proto::AccountChainTangle& accountChainTangle) {
-    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+    //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     keto::proto::AccountChainTangle result = accountChainTangle;
     BlockResourcePtr resource = blockResourceManagerPtr->getResource();
     rocksdb::Transaction* accountTransaction =  resource->getTransaction(Constants::ACCOUNTS_INDEX);
@@ -848,7 +858,7 @@ keto::proto::AccountChainTangle BlockChain::getAccountBlockTangle(const keto::pr
 
 
 bool BlockChain::getAccountTangle(const keto::asn1::HashHelper& accountHash, keto::asn1::HashHelper& tangleHash) {
-    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+    //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     BlockResourcePtr resource = blockResourceManagerPtr->getResource();
     rocksdb::Transaction* accountTransaction =  resource->getTransaction(Constants::ACCOUNTS_INDEX);
 
@@ -893,7 +903,7 @@ void BlockChain::setCurrentTangle(const keto::asn1::HashHelper& tangle) {
 
 keto::chain_query_common::BlockResultSetProtoHelperPtr BlockChain::performBlockQuery(
         const keto::chain_query_common::BlockQueryProtoHelper& blockQueryProtoHelper) {
-    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+    //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     BlockResourcePtr resource = blockResourceManagerPtr->getResource();
 
     keto::chain_query_common::BlockResultSetProtoHelperPtr blockResultSetProtoHelperPtr(
@@ -1081,6 +1091,21 @@ bool BlockChain::accountExists(const keto::asn1::HashHelper& accountHash) {
     return true;
 }
 
+
+bool BlockChain::duplicateCheck(rocksdb::Transaction* blockTransaction, keto::asn1::HashHelper blockHash) {
+    rocksdb::ReadOptions readOptions;
+    keto::rocks_db::SliceHelper keyHelper((const std::vector<uint8_t>)blockHash);
+    std::string value;
+    auto blockStatus = blockTransaction->Get(readOptions,keyHelper,&value);
+
+    if (rocksdb::Status::OK() == blockStatus && rocksdb::Status::NotFound() != blockStatus) {
+        // ignore as the block already exists
+        KETO_LOG_DEBUG << "[BlockChain::duplicatieCheck] The block already exists in the store ignore it : " << blockHash.getHash(keto::common::StringEncoding::HEX);
+        return true;
+    }
+
+    return this->blockChainWriteCachePtr->checkCache(blockHash);
+}
 
 
 }
