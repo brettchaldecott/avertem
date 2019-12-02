@@ -49,6 +49,9 @@ public:
     keto::asn1::HashHelper getFirstTransactionHash();
     keto::asn1::HashHelper getParentHash();
 
+    void setProducerEnding(bool ending);
+    bool getProducerEnding();
+
     operator SignedBlock_t&();
     operator SignedBlock_t*();
 

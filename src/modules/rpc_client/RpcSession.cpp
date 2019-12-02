@@ -90,25 +90,25 @@ RpcSession::BufferCache::BufferCache() {
 }
 
 RpcSession::BufferCache::~BufferCache() {
-    for (boost::beast::multi_buffer* buffer : buffers) {
+    for (boost::beast::flat_buffer* buffer : buffers) {
         delete buffer;
     }
     buffers.clear();
 }
 
-boost::beast::multi_buffer* RpcSession::BufferCache::create() {
-    boost::beast::multi_buffer* buffer = new boost::beast::multi_buffer();
+boost::beast::flat_buffer* RpcSession::BufferCache::create() {
+    boost::beast::flat_buffer* buffer = new boost::beast::flat_buffer();
     this->buffers.insert(buffer);
     return buffer;
 }
 
-void RpcSession::BufferCache::remove(boost::beast::multi_buffer* buffer) {
+void RpcSession::BufferCache::remove(boost::beast::flat_buffer* buffer) {
     this->buffers.erase(buffer);
     delete buffer;
 }
 
 RpcSession::BufferScope::BufferScope(const BufferCachePtr& bufferCachePtr,
-        boost::beast::multi_buffer* buffer) : bufferCachePtr(bufferCachePtr), buffer(buffer) {
+        boost::beast::flat_buffer* buffer) : bufferCachePtr(bufferCachePtr), buffer(buffer) {
 }
 
 RpcSession::BufferScope::~BufferScope() {
@@ -362,7 +362,7 @@ RpcSession::on_write(
     KETO_LOG_DEBUG << this->sessionNumber << ": [RpcSession][on_write] handle the complete write call";
     std::lock_guard<std::recursive_mutex> guard(classMutex);
     boost::ignore_unused(bytes_transferred);
-    queue_.pop();
+    queue_.pop_front();
 
     if(ec)
         return fail(ec, "write");
@@ -1132,7 +1132,7 @@ RpcSession::sendMessage(std::shared_ptr<std::string> ss) {
     std::lock_guard<std::recursive_mutex> guard(classMutex);
 
     // Always add to queue
-    queue_.push(ss);
+    queue_.push_back(ss);
 
     // Are we already writing?
     if (queue_.size() > 1) {

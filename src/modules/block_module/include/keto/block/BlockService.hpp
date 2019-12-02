@@ -34,6 +34,22 @@ public:
     
     static std::string getSourceVersion();
 
+    class SignedBlockWrapperCache;
+    typedef std::shared_ptr<SignedBlockWrapperCache> SignedBlockWrapperCachePtr;
+    class SignedBlockWrapperCache {
+    public:
+        SignedBlockWrapperCache();
+        SignedBlockWrapperCache(const SignedBlockWrapperCache& orig) = delete;
+        virtual ~SignedBlockWrapperCache();
+
+        bool checkCache(const keto::asn1::HashHelper& signedBlockWrapperCacheHash);
+    private:
+        std::mutex classMutex;
+        std::set<std::string> cacheLookup;
+        std::deque<std::string> cacheHistory;
+    };
+
+
     BlockService();
     BlockService(const BlockService& orig) = delete;
     virtual ~BlockService();
@@ -60,6 +76,8 @@ public:
     keto::event::Event getAccountTransactions(const keto::event::Event& event);
 private:
     std::mutex classMutex;
+
+    SignedBlockWrapperCachePtr signedBlockWrapperCachePtr;
     std::map<AccountHashVector,std::mutex> accountLocks;
     
     std::mutex& getAccountLock(const AccountHashVector& accountHash);

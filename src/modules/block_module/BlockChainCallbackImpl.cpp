@@ -13,8 +13,8 @@
 namespace keto {
 namespace block {
 
-BlockChainCallbackImpl::BlockChainCallbackImpl() {
-
+BlockChainCallbackImpl::BlockChainCallbackImpl(bool ending) {
+    this->ending = ending;
 }
 
 BlockChainCallbackImpl::~BlockChainCallbackImpl() {
@@ -51,6 +51,11 @@ void BlockChainCallbackImpl::postPersistTransaction(const keto::asn1::HashHelper
 
 void BlockChainCallbackImpl::postPersistBlock(const keto::asn1::HashHelper chainId, SignedBlock& signedBlock) const {
 
+}
+
+
+bool BlockChainCallbackImpl::producerEnding() const {
+    return this->ending;
 }
 
 }

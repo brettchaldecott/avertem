@@ -40,10 +40,14 @@ message AccountTransactionInfo {
 message SignedBlockWrapper {
     bytes asn1_block_message = 1;
     repeated SignedBlockWrapper nested_blocks = 2;
+    bool producer_ending = 3;
 }
 
 message SignedBlockWrapperMessage {
-    bytes encrypted_bytes = 1;
+    repeated bytes encrypted_bytes = 1;
+    bool producer_ending = 2;
+    bytes message_hash = 3;
+    repeated bytes tangles = 4;
 }
 
 message SignedBlockBatchRequest {

@@ -18,6 +18,7 @@ std::string SignedBlockWrapperProtoHelper::getSourceVersion() {
 
 SignedBlockWrapperProtoHelper::SignedBlockWrapperProtoHelper(const keto::proto::BlockWrapper& blockWrapper) : signedBlock(NULL) {
     signedBlockWrapper.set_asn1_block_message(blockWrapper.asn1_block());
+    signedBlockWrapper.set_producer_ending(false);
 }
 
 SignedBlockWrapperProtoHelper::SignedBlockWrapperProtoHelper(const keto::proto::SignedBlockWrapper& wrapper) :
@@ -81,6 +82,13 @@ keto::asn1::HashHelper SignedBlockWrapperProtoHelper::getParentHash() {
     return this->signedBlock->block.parent;
 }
 
+void SignedBlockWrapperProtoHelper::setProducerEnding(bool ending) {
+    signedBlockWrapper.set_producer_ending(ending);
+}
+
+bool SignedBlockWrapperProtoHelper::getProducerEnding() {
+    return signedBlockWrapper.producer_ending();
+}
 
 SignedBlockWrapperProtoHelper::operator SignedBlock_t&() {
     this->loadSignedBlock();

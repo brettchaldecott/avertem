@@ -20,6 +20,7 @@
 #include "keto/block_db/SignedBlockBuilder.hpp"
 #include "keto/block_db/BlockChainCallback.hpp"
 #include "keto/block_db/SignedBlockWrapperProtoHelper.hpp"
+#include "keto/block_db/SignedBlockWrapperMessageProtoHelper.hpp"
 
 #include "keto/obfuscate/MetaString.hpp"
 
@@ -160,6 +161,7 @@ public:
 
 
     std::vector<keto::asn1::HashHelper> getLastBlockHashs();
+    bool processProducerEnding(const keto::block_db::SignedBlockWrapperMessageProtoHelper& signedBlockWrapperMessageProtoHelper);
     keto::proto::SignedBlockBatchMessage requestBlocks(const std::vector<keto::asn1::HashHelper>& tangledHashes);
     bool processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage, const BlockChainCallback& callback);
     bool processBlockSyncResponse(const keto::proto::SignedBlockBatch& signedBlockBatch, const BlockChainCallback& callback);
@@ -211,7 +213,6 @@ private:
 
     bool writeBlock(const SignedBlockWrapperProtoHelperPtr& signedBlockWrapperProtoHelperPtr, const BlockChainCallback& callback);
     bool writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock, const BlockChainCallback& callback);
-    void broadcastBlock(const keto::block_db::SignedBlockWrapperProtoHelper& signedBlockWrapperProtoHelper);
 
 
     keto::proto::SignedBlockBatch getBlockBatch(keto::asn1::HashHelper hash, BlockResourcePtr resource);

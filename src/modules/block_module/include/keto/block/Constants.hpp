@@ -67,6 +67,7 @@ public:
     static const int BLOCK_TIME;
     static const int BLOCK_PRDUCER_DEACTIVATE_CHECK_DELAY;
     static const int BLOCK_PRODUCER_RETRY_MAX;
+    static const int MAX_SIGNED_BLOCK_WRAPPER_CACHE_SIZE;
 
 
     class FaucetRequest {

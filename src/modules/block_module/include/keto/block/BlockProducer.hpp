@@ -30,6 +30,8 @@
 #include "keto/software_consensus/ConsensusMessageHelper.hpp"
 #include "keto/transaction_common/TransactionProtoHelper.hpp"
 
+#include "keto/block_db/SignedBlockWrapperMessageProtoHelper.hpp"
+
 
 namespace keto {
 namespace block {
@@ -117,10 +119,18 @@ public:
     enum State {
         unloaded,
         inited,
+        block_producer_wait,
         block_producer,
         block_producer_complete,
         terminated,
         sync_blocks
+    };
+
+    enum ProducerState {
+        idle,
+        producing,
+        ending,
+        complete
     };
     
     BlockProducer();
@@ -149,12 +159,15 @@ public:
     // setup the active tangles
     std::vector<keto::asn1::HashHelper> getActiveTangles();
     void setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles);
+    void processProducerEnding(
+            const keto::block_db::SignedBlockWrapperMessageProtoHelper& signedBlockWrapperMessageProtoHelper);
 
 private:
     bool enabled;
     bool loaded;
     int delay;
     State currentState;
+    ProducerState producerState;
     bool safe;
     std::condition_variable stateCondition;
     std::mutex classMutex;
@@ -165,12 +178,17 @@ private:
 
     State checkState();
     void processTransactions();
-    void generateBlock(const BlockProducer::PendingTransactionsTanglePtr& pendingTransactionTanglePtr);
+    keto::block_db::SignedBlockBuilderPtr generateBlock(const BlockProducer::PendingTransactionsTanglePtr& pendingTransactionTanglePtr);
 
     void load();
     void sync();
     void _setState(const State& state);
     State _getState();
+
+    void setProducerState(const ProducerState& state, bool notify = false);
+    void _setProducerState(const ProducerState& state, bool notify = false);
+    ProducerState getProducerState();
+    ProducerState _getProducerState();
 };
 
 

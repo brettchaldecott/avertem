@@ -336,15 +336,15 @@ bool BlockChain::writeBlock(const keto::proto::SignedBlockWrapperMessage& signed
     //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     SignedBlockWrapperMessageProtoHelper signedBlockWrapperMessageProtoHelper(signedBlockWrapperMessage);
 
-    SignedBlockWrapperProtoHelperPtr signedBlockWrapperProtoHelperPtr =
-            signedBlockWrapperMessageProtoHelper.getSignedBlockWrapper();
+    bool result = true;
+    for (int index = 0; index < signedBlockWrapperMessageProtoHelper.size(); index++) {
+        SignedBlockWrapperProtoHelperPtr signedBlockWrapperProtoHelperPtr =
+                signedBlockWrapperMessageProtoHelper.getSignedBlockWrapper(index);
 
-    // write the block and broadcast it if the block was written
-    bool result = writeBlock(signedBlockWrapperProtoHelperPtr, callback);
-    if (result) {
-        // broadcast the block if we had to write it
-        // if we did not the broadcast will not be proppergated
-        broadcastBlock(*signedBlockWrapperProtoHelperPtr);
+        // write the block and broadcast it if the block was written
+        if (!writeBlock(signedBlockWrapperProtoHelperPtr, callback)) {
+            result = false;
+        }
     }
     return result;
 }
@@ -436,8 +436,6 @@ bool BlockChain::writeBlock(const SignedBlockBuilderPtr& signedBlockBuilderPtr, 
 
     persist();
 
-    keto::block_db::SignedBlockWrapperProtoHelper signedBlockWrapperProtoHelper(signedBlockBuilderPtr);
-    broadcastBlock(signedBlockWrapperProtoHelper);
     return result;
 }
 
@@ -456,7 +454,7 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
     KETO_LOG_DEBUG << "[BlockChain::writeBlock] Look for the block : " << blockHash.getHash(keto::common::StringEncoding::HEX);
     if (duplicateCheck(blockTransaction,blockHash)) {
         // ignore as the block already exists
-        KETO_LOG_INFO << "[BlockChain::writeBlock] The block already exists in the store ignore it.";
+        KETO_LOG_DEBUG << "[BlockChain::writeBlock] The block already exists in the store ignore it.";
         return false;
     }
 
@@ -519,7 +517,7 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
         accountMeta.set_block_chain_hash(this->blockChainMetaPtr->getHashId());
         std::string accountValue;
         accountMeta.SerializeToString(&accountValue);
-        KETO_LOG_INFO << "[BlockChain::writeBlock] for account [" << transactionWrapperHelper.getCurrentAccount().getHash(keto::common::StringEncoding::HEX)
+        KETO_LOG_DEBUG << "[BlockChain::writeBlock] for account [" << transactionWrapperHelper.getCurrentAccount().getHash(keto::common::StringEncoding::HEX)
                       << "] set the hash id to [" << blockChainTangleMetaPtr->getHash().getHash(keto::common::StringEncoding::HEX) << "] data size [" <<
                       accountValue.size() << "]";
         keto::rocks_db::SliceHelper accountMetaHelper(accountValue);
@@ -605,6 +603,19 @@ std::vector<keto::asn1::HashHelper> BlockChain::getLastBlockHashs() {
     return result;
 }
 
+bool BlockChain::processProducerEnding(const keto::block_db::SignedBlockWrapperMessageProtoHelper& signedBlockWrapperMessageProtoHelper) {
+    std::set<std::string> hashes;
+    for (keto::asn1::HashHelper hashHelper: getActiveTangles()) {
+        hashes.insert(hashHelper);
+    }
+    for (keto::asn1::HashHelper hashHelper: signedBlockWrapperMessageProtoHelper.getTangles()) {
+        if (hashes.count(hashHelper)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 keto::proto::SignedBlockBatchMessage BlockChain::requestBlocks(const std::vector<keto::asn1::HashHelper>& tangledHashes) {
     //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
 
@@ -668,7 +679,8 @@ keto::proto::SignedBlockBatch BlockChain::getBlockBatch(keto::asn1::HashHelper h
         KETO_LOG_DEBUG<< "[BlockChain::getBlockBatch]" << " get the block : " << blockHash.getHash(keto::common::StringEncoding::HEX);
         keto::proto::SignedBlockWrapper signedBlockWrapper = getBlock(blockHash, resource);
 
-        keto::block_db::SignedBlockWrapperMessageProtoHelper signedBlockWrapperMessageProtoHelper(signedBlockWrapper);
+        keto::block_db::SignedBlockWrapperMessageProtoHelper signedBlockWrapperMessageProtoHelper;
+        signedBlockWrapperMessageProtoHelper.addSignedBlockWrapper(signedBlockWrapper);
         *signedBlockBatch.add_blocks() = (keto::proto::SignedBlockWrapperMessage)signedBlockWrapperMessageProtoHelper;
         if (signedBlockBatch.blocks_size() >= Constants::MAX_BLOCK_REQUEST) {
             break;
@@ -1059,21 +1071,6 @@ BlockChainPtr BlockChain::getChildByTransactionId(const keto::asn1::HashHelper& 
     transactionMeta.ParseFromString(value);
     return BlockChainPtr(new BlockChain(this->dbManagerPtr,this->blockResourceManagerPtr,
                                         keto::server_common::VectorUtils().copyStringToVector(transactionMeta.block_chain_hash())));
-}
-
-void BlockChain::broadcastBlock(const keto::block_db::SignedBlockWrapperProtoHelper& signedBlockWrapperProtoHelper) {
-    if (!masterChain) {
-        return;
-    }
-    SignedBlockWrapperMessageProtoHelper signedBlockWrapperMessageProtoHelper(signedBlockWrapperProtoHelper);
-    KETO_LOG_DEBUG << "[BlockChain::broadcastBlock] push block via the server : " <<
-        signedBlockWrapperMessageProtoHelper.getSignedBlockWrapper()->getHash().getHash(keto::common::StringEncoding::HEX);
-    keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::SignedBlockWrapperMessage>(
-            keto::server_common::Events::RPC_SERVER_BLOCK,signedBlockWrapperMessageProtoHelper));
-    KETO_LOG_DEBUG << "[BlockChain::broadcastBlock] push block via the client : " <<
-                   signedBlockWrapperMessageProtoHelper.getSignedBlockWrapper()->getHash().getHash(keto::common::StringEncoding::HEX);
-    keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::SignedBlockWrapperMessage>(
-            keto::server_common::Events::RPC_CLIENT_BLOCK,signedBlockWrapperMessageProtoHelper));
 }
 
 

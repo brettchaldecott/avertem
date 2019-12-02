@@ -55,10 +55,11 @@ const int Constants::MAX_TANGLE_ACCOUNTS = 50;
 const int Constants::MAX_TANGLES_TO_ACCOUNT = 50;
 
 // the delay values
-const int Constants::ACTIVATE_PRODUCER_DELAY    = 40;
+const int Constants::ACTIVATE_PRODUCER_DELAY    = 45;
 const int Constants::BLOCK_TIME                 = 15;
 const int Constants::BLOCK_PRDUCER_DEACTIVATE_CHECK_DELAY    = 10;
 const int Constants::BLOCK_PRODUCER_RETRY_MAX   = 4;
+const int Constants::MAX_SIGNED_BLOCK_WRAPPER_CACHE_SIZE = 100;
 
 const char* Constants::FaucetRequest::SUBJECT   = "http://keto-coin.io/schema/rdf/1.0/keto/Faucet#Faucet";
 const char* Constants::FaucetRequest::ID        = "http://keto-coin.io/schema/rdf/1.0/keto/Faucet#id";

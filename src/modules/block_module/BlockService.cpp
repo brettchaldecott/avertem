@@ -21,6 +21,7 @@
 #include "keto/block/BlockChainCallbackImpl.hpp"
 #include "keto/block/BlockService.hpp"
 #include "keto/block_db/BlockChainStore.hpp"
+#include "keto/block_db/SignedBlockWrapperMessageProtoHelper.hpp"
 
 #include "keto/environment/EnvironmentManager.hpp"
 #include "keto/environment/Config.hpp"
@@ -58,6 +59,31 @@ std::string BlockService::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
+BlockService::SignedBlockWrapperCache::SignedBlockWrapperCache() {
+
+}
+
+BlockService::SignedBlockWrapperCache::~SignedBlockWrapperCache() {
+
+}
+
+bool BlockService::SignedBlockWrapperCache::checkCache(const keto::asn1::HashHelper& signedBlockWrapperCacheHash) {
+    std::lock_guard<std::mutex> guard(this->classMutex);
+    if (this->cacheLookup.count(signedBlockWrapperCacheHash)) {
+        KETO_LOG_DEBUG << "[SignedBlockWrapperCache::checkCache] The cache contains the block : " << signedBlockWrapperCacheHash.getHash(keto::common::StringEncoding::HEX);
+        return true;
+    }
+    if (this->cacheHistory.size() >= Constants::MAX_SIGNED_BLOCK_WRAPPER_CACHE_SIZE) {
+        this->cacheLookup.erase(this->cacheHistory.front());
+        this->cacheHistory.pop_front();
+    }
+    this->cacheHistory.push_back(signedBlockWrapperCacheHash);
+    this->cacheLookup.insert(signedBlockWrapperCacheHash);
+    KETO_LOG_DEBUG << "[SignedBlockWrapperCache::checkCache] Adding the block to the cache : " << signedBlockWrapperCacheHash.getHash(keto::common::StringEncoding::HEX);
+    return false;
+}
+
+
 BlockService::BlockService() {
     BlockSyncManager::createInstance(BlockProducer::getInstance()->isEnabled());
 
@@ -69,6 +95,8 @@ BlockService::BlockService() {
     } else {
         keto::server_common::StatePersistanceManager::init(Constants::STATE_STORAGE_DEFAULT);
     }
+
+    this->signedBlockWrapperCachePtr = BlockService::SignedBlockWrapperCachePtr(new SignedBlockWrapperCache());
 }
 
 BlockService::~BlockService() {
@@ -116,6 +144,7 @@ void BlockService::sync() {
 }
 
 keto::event::Event BlockService::persistBlockMessage(const keto::event::Event& event) {
+
     if (BlockSyncManager::getInstance()->getStatus() != BlockSyncManager::COMPLETE) {
         KETO_LOG_DEBUG << "[BlockService::persistBlockMessage]" << "Block sync is not complete ignore block.";
         keto::proto::MessageWrapperResponse response;
@@ -125,10 +154,16 @@ keto::event::Event BlockService::persistBlockMessage(const keto::event::Event& e
         return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
     }
 
-    keto::proto::SignedBlockWrapperMessage signedBlockWrapperMessage =
-            keto::server_common::fromEvent<keto::proto::SignedBlockWrapperMessage>(event);
-    keto::block_db::BlockChainStore::getInstance()->writeBlock(signedBlockWrapperMessage,BlockChainCallbackImpl());
 
+    keto::block_db::SignedBlockWrapperMessageProtoHelper signedBlockWrapperMessageProtoHelper(
+            keto::server_common::fromEvent<keto::proto::SignedBlockWrapperMessage>(event));
+    if (keto::block_db::BlockChainStore::getInstance()->writeBlock(signedBlockWrapperMessageProtoHelper,
+            BlockChainCallbackImpl()) && !this->signedBlockWrapperCachePtr->checkCache(signedBlockWrapperMessageProtoHelper.getMessageHash())) {
+        BlockSyncManager::getInstance()->broadcastBlock(signedBlockWrapperMessageProtoHelper);
+        if (signedBlockWrapperMessageProtoHelper.getProducerEnding()) {
+            BlockProducer::getInstance()->processProducerEnding(signedBlockWrapperMessageProtoHelper);
+        }
+    }
 
     keto::proto::MessageWrapperResponse response;
     response.set_success(true);

@@ -19,7 +19,7 @@ typedef std::shared_ptr<BlockChainCallbackImpl> BlockChainCallbackImplPtr;
 
 class BlockChainCallbackImpl : virtual public keto::block_db::BlockChainCallback {
 public:
-    BlockChainCallbackImpl();
+    BlockChainCallbackImpl(bool ending = false);
     BlockChainCallbackImpl(const BlockChainCallbackImpl& orig) = delete;
     virtual ~BlockChainCallbackImpl();
 
@@ -29,8 +29,10 @@ public:
     virtual void postPersistTransaction(const keto::asn1::HashHelper chainId, const SignedBlock& signedBlock, const TransactionWrapper_t& transactionWrapper) const;
     virtual void postPersistBlock(const keto::asn1::HashHelper chainId, SignedBlock& signedBlock) const;
 
-private:
 
+    virtual bool producerEnding() const;
+private:
+    bool ending;
 };
 
 

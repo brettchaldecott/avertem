@@ -135,6 +135,14 @@ bool BlockChainStore::processBlockSyncResponse(const keto::proto::SignedBlockBat
     return this->masterChain->processBlockSyncResponse(signedBlockBatchMessage,callback);
 }
 
+bool BlockChainStore::processProducerEnding(const keto::block_db::SignedBlockWrapperMessageProtoHelper& signedBlockWrapperMessageProtoHelper) {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+    if (!masterChain) {
+        BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
+    }
+    return this->masterChain->processProducerEnding(signedBlockWrapperMessageProtoHelper);
+}
+
 keto::proto::AccountChainTangle BlockChainStore::getAccountBlockTangle(const keto::proto::AccountChainTangle& accountChainTangle) {
     std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (!masterChain) {

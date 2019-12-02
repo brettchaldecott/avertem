@@ -72,7 +72,7 @@ namespace rpc_client {
 class RpcSession;
 
 typedef std::shared_ptr<RpcSession> RpcSessionPtr;
-typedef std::shared_ptr<boost::beast::multi_buffer> MultiBufferPtr;
+typedef std::shared_ptr<boost::beast::flat_buffer> FlatBufferPtr;
 typedef std::shared_ptr<std::lock_guard<std::mutex>> LockGuardPtr;
 
 class RpcSession : public std::enable_shared_from_this<RpcSession> {
@@ -83,21 +83,21 @@ public:
         BufferCache(const BufferCache& orig) = delete;
         virtual ~BufferCache();
 
-        boost::beast::multi_buffer* create();
-        void remove(boost::beast::multi_buffer* buffer);
+        boost::beast::flat_buffer* create();
+        void remove(boost::beast::flat_buffer* buffer);
     private:
-        std::set<boost::beast::multi_buffer*> buffers;
+        std::set<boost::beast::flat_buffer*> buffers;
     };
     typedef std::shared_ptr<BufferCache> BufferCachePtr;
     class BufferScope {
     public:
-        BufferScope(const BufferCachePtr& bufferCachePtr, boost::beast::multi_buffer* buffer);
+        BufferScope(const BufferCachePtr& bufferCachePtr, boost::beast::flat_buffer* buffer);
         BufferScope(const BufferScope& orig) = delete;
         virtual ~BufferScope();
 
     private:
         BufferCachePtr bufferCachePtr;
-        boost::beast::multi_buffer* buffer;
+        boost::beast::flat_buffer* buffer;
     };
 
     class ReadQueueEntry {
@@ -228,9 +228,9 @@ private:
     std::recursive_mutex classMutex;
     tcp::resolver resolver;
     websocket::stream<beast::ssl_stream<beast::tcp_stream>> ws_;
-    boost::beast::multi_buffer buffer_;
+    boost::beast::flat_buffer buffer_;
     ReadQueuePtr readQueuePtr;
-    std::queue<std::shared_ptr<std::string>> queue_;
+    std::deque<std::shared_ptr<std::string>> queue_;
 
     //bool peered;
     RpcPeer rpcPeer;

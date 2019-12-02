@@ -150,7 +150,9 @@ Botan::SymmetricKey CipherBuilder::resizeCipher(size_t size, Botan::SymmetricKey
     Botan::BigInt bigInt(key.begin(),key.size());
     bigInt%=modulas;
 
-    return Botan::SymmetricKey(Botan::BigInt::encode(bigInt));
+    std::vector<uint8_t> result(size);
+    bigInt.binary_encode(result.data(),size);
+    return Botan::SymmetricKey(result);
 }
 
 }

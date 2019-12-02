@@ -40,11 +40,11 @@ public:
     static constexpr const char* NETWORK_CONSENSUS_HEARTBEAT_CONFIGURATION     = "network_consensus_heartbeat";
     static constexpr const int NETWORK_CONSENSUS_HEARTBEAT_DEFAULT     = 60;
     static constexpr const char* NETWORK_CONSENSUS_HEARTBEAT_NETWORK_ELECTION_SLOT     = "network_consensus_election_slot";
-    static constexpr const int NETWORK_CONSENSUS_HEARTBEAT_ELECTION_PUBLISH_SLOT_DEFAULT     = 7;
+    static constexpr const int NETWORK_CONSENSUS_HEARTBEAT_ELECTION_PUBLISH_SLOT_DEFAULT     = 6;
     static constexpr const char* NETWORK_CONSENSUS_HEARTBEAT_NETWORK_ELECTION_PUBLISH_SLOT     = "network_consensus_election_publish_slot";
-    static constexpr const int NETWORK_CONSENSUS_HEARTBEAT_ELECTION_SLOT_DEFAULT     = 6;
+    static constexpr const int NETWORK_CONSENSUS_HEARTBEAT_ELECTION_SLOT_DEFAULT     = 5;
     static constexpr const char* NETWORK_CONSENSUS_HEARTBEAT_NETWORK_CONFIRMATION_SLOT     = "network_consensus_confirmation_slot";
-    static constexpr const int NETWORK_CONSENSUS_HEARTBEAT_CONFIRMATION_SLOT_DEFAULT     = 8;
+    static constexpr const int NETWORK_CONSENSUS_HEARTBEAT_CONFIRMATION_SLOT_DEFAULT     = 7;
 
 };
 

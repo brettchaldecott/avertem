@@ -14,6 +14,7 @@
 
 #include "keto/asn1/HashHelper.hpp"
 
+#include "keto/block_db/SignedBlockWrapperMessageProtoHelper.hpp"
 
 namespace keto {
 namespace block {
@@ -53,6 +54,8 @@ public:
     notifyPeers();
     bool
     isEnabled();
+
+    void broadcastBlock(const keto::block_db::SignedBlockWrapperMessageProtoHelper& signedBlockWrapperProtoHelper);
 
 private:
     std::mutex classMutex;

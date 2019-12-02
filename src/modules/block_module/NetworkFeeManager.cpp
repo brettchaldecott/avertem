@@ -62,7 +62,11 @@ void NetworkFeeManager::clear() {
 }
 
 keto::transaction_common::FeeInfoMsgProtoHelperPtr NetworkFeeManager::getFeeInfo() {
-    return this->feeInfoMsgProtoHelperPtr;
+    if (this->feeInfoMsgProtoHelperPtr) {
+        return this->feeInfoMsgProtoHelperPtr;
+    }  else {
+        BOOST_THROW_EXCEPTION(keto::block::NetworkFeeRatioNotSetException());
+    }
 }
 
 void NetworkFeeManager::setFeeInfo(const keto::transaction_common::FeeInfoMsgProtoHelperPtr& feeInfoMsgProtoHelperPtr) {

@@ -30,6 +30,8 @@ public:
     virtual void prePersistTransaction(const keto::asn1::HashHelper chainId, const SignedBlock& signedBlock, const TransactionWrapper_t& transactionWrapper) const {};
     virtual void postPersistTransaction(const keto::asn1::HashHelper chainId, const SignedBlock& signedBlock, const TransactionWrapper_t& transactionWrapper) const {};
     virtual void postPersistBlock(const keto::asn1::HashHelper chainId, SignedBlock& signedBlock) const {};
+
+    virtual bool producerEnding() const = 0;
 };
 
 }

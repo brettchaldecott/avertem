@@ -167,6 +167,20 @@ BlockSyncManager::isEnabled() {
     return this->enabled;
 }
 
+void BlockSyncManager::broadcastBlock(const keto::block_db::SignedBlockWrapperMessageProtoHelper& signedBlockWrapperMessageProtoHelper) {
+    keto::block_db::SignedBlockWrapperMessageProtoHelper _signedBlockWrapperMessageProtoHelper =
+            signedBlockWrapperMessageProtoHelper;
+    keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::SignedBlockWrapperMessage>(
+            keto::server_common::Events::RPC_SERVER_BLOCK,_signedBlockWrapperMessageProtoHelper));
+    KETO_LOG_DEBUG << "[BlockSyncManager::broadcastBlock] push block via the client : "
+                << signedBlockWrapperMessageProtoHelper.getMessageHash().getHash(keto::common::StringEncoding::HEX);
+    keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::SignedBlockWrapperMessage>(
+            keto::server_common::Events::RPC_CLIENT_BLOCK,_signedBlockWrapperMessageProtoHelper));
+    KETO_LOG_DEBUG << "[BlockSyncManager::broadcastBlock] push block via the server : "
+                   << signedBlockWrapperMessageProtoHelper.getMessageHash().getHash(keto::common::StringEncoding::HEX);
+}
+
+
 bool BlockSyncManager::isExpired() {
     std::time_t now = time(0);
     return now > (this->startTime + Constants::SYNC_EXPIRY_TIME);
