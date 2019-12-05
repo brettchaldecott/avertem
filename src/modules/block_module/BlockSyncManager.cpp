@@ -167,6 +167,11 @@ BlockSyncManager::isEnabled() {
     return this->enabled;
 }
 
+void
+BlockSyncManager::forceResync() {
+    this->status = INIT;
+}
+
 void BlockSyncManager::broadcastBlock(const keto::block_db::SignedBlockWrapperMessageProtoHelper& signedBlockWrapperMessageProtoHelper) {
     keto::block_db::SignedBlockWrapperMessageProtoHelper _signedBlockWrapperMessageProtoHelper =
             signedBlockWrapperMessageProtoHelper;

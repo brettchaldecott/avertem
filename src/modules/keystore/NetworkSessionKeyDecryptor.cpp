@@ -30,10 +30,11 @@ NetworkSessionKeyDecryptor::~NetworkSessionKeyDecryptor() {
 }
 
 keto::crypto::SecureVector NetworkSessionKeyDecryptor::decrypt(const std::vector<uint8_t>& value) const {
-    keto::crypto::SecureVector content = keto::crypto::SecureVectorUtils().copyToSecure(value);
-    if (content.empty()) {
+    if (value.empty() || value .size() <= 4) {
         BOOST_THROW_EXCEPTION(EmptyDataToDecryptException());
     }
+    uint8_t slot = value[0];
+    keto::crypto::SecureVector content(&value[1],&value[value.size()]);
     //KETO_LOG_DEBUG << "The content decrypt : " << content.size();
     for (int level = 0; level < Constants::ONION_LEVELS; level++) {
         //auto start = std::chrono::steady_clock::now();
@@ -50,7 +51,7 @@ keto::crypto::SecureVector NetworkSessionKeyDecryptor::decrypt(const std::vector
         //KETO_LOG_DEBUG << "[NetworkSessionKeyDecryptor::decrypt][" <<
         //    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "get base index [" << (int)baseIndex;
         keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr memoryVaultSessionKeyWrapperPtr =
-                NetworkSessionKeyManager::getInstance()->getKey(baseIndex);
+                NetworkSessionKeyManager::getInstance()->getKey(slot,baseIndex);
         if (!memoryVaultSessionKeyWrapperPtr) {
             BOOST_THROW_EXCEPTION(NetworkSessionKeyNotFoundException());
         }
@@ -58,7 +59,7 @@ keto::crypto::SecureVector NetworkSessionKeyDecryptor::decrypt(const std::vector
         std::unique_ptr<Botan::StreamCipher> cipher(Botan::StreamCipher::create(keto::crypto::Constants::CIPHER_STREAM));
         //KETO_LOG_DEBUG << "[NetworkSessionKeyDecryptor::decrypt][" <<
         //    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "] pIndex [" << (int)pIndex << "]";
-        keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr pIndexKeyWrapperPtr = NetworkSessionKeyManager::getInstance()->getKey(pIndex);
+        keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr pIndexKeyWrapperPtr = NetworkSessionKeyManager::getInstance()->getKey(slot,pIndex);
         if (!pIndexKeyWrapperPtr) {
             BOOST_THROW_EXCEPTION(NetworkSessionKeyNotFoundException());
         }

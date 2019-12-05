@@ -471,6 +471,7 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
     BlockChainTangleMetaPtr blockChainTangleMetaPtr =
             this->blockChainMetaPtr->getTangleEntryByLastBlock(parentHash);
     if (!blockChainTangleMetaPtr) {
+        checkForParent(blockTransaction, parentHash);
         KETO_LOG_INFO << "[BlockChain::writeBlock] parent hash is [" << parentHash.getHash(keto::common::StringEncoding::HEX)
                        << "] Add a new block chain tangle : " << blockHash.getHash(keto::common::StringEncoding::HEX);
         blockChainTangleMetaPtr = this->blockChainMetaPtr->addTangle(blockHash);
@@ -517,7 +518,7 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
         accountMeta.set_block_chain_hash(this->blockChainMetaPtr->getHashId());
         std::string accountValue;
         accountMeta.SerializeToString(&accountValue);
-        KETO_LOG_DEBUG << "[BlockChain::writeBlock] for account [" << transactionWrapperHelper.getCurrentAccount().getHash(keto::common::StringEncoding::HEX)
+        KETO_LOG_INFO << "[BlockChain::writeBlock] for account [" << transactionWrapperHelper.getCurrentAccount().getHash(keto::common::StringEncoding::HEX)
                       << "] set the hash id to [" << blockChainTangleMetaPtr->getHash().getHash(keto::common::StringEncoding::HEX) << "] data size [" <<
                       accountValue.size() << "]";
         keto::rocks_db::SliceHelper accountMetaHelper(accountValue);
@@ -1102,6 +1103,22 @@ bool BlockChain::duplicateCheck(rocksdb::Transaction* blockTransaction, keto::as
     }
 
     return this->blockChainWriteCachePtr->checkCache(blockHash);
+}
+
+void BlockChain::checkForParent(rocksdb::Transaction* blockTransaction, keto::asn1::HashHelper parentHash) {
+    // ignore the genesis hash as it will not be found in the store.
+    if (parentHash == keto::block_db::Constants::GENESIS_HASH) {
+        return;
+    }
+    rocksdb::ReadOptions readOptions;
+    keto::rocks_db::SliceHelper keyHelper((const std::vector<uint8_t>)parentHash);
+    std::string value;
+    auto blockStatus = blockTransaction->Get(readOptions,keyHelper,&value);
+
+    if (rocksdb::Status::NotFound() == blockStatus) {
+        BOOST_THROW_EXCEPTION(keto::block_db::ParentHashIdentifierNotFoundException());
+    }
+
 }
 
 

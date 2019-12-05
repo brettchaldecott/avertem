@@ -58,6 +58,15 @@ NetworkKeysHelper::operator keto::proto::NetworkKeys() {
     return this->networkKeys;
 }
 
+NetworkKeysHelper& NetworkKeysHelper::setSlot(int slot) {
+    this->networkKeys.set_slot(slot);
+    return *this;
+}
+
+int NetworkKeysHelper::getSlot() {
+    return this->networkKeys.slot();
+}
+
 
 NetworkKeysHelper::operator std::string() {
     std::string result;

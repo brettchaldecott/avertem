@@ -23,9 +23,29 @@ namespace keystore {
 
 class NetworkSessionKeyManager;
 typedef std::shared_ptr<NetworkSessionKeyManager> NetworkSessionKeyManagerPtr;
+typedef std::map<std::vector<uint8_t>,keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr> SessionMap;
 
 class NetworkSessionKeyManager {
 public:
+    class NetworkSessionSlot {
+    public:
+        NetworkSessionSlot(uint8_t slot, std::vector<std::vector<uint8_t>> hashIndex, const SessionMap& sessionKeys);
+        NetworkSessionSlot(const NetworkSessionSlot& orig) = delete;
+        virtual ~NetworkSessionSlot();
+
+        int getNumberOfKeys();
+        keto::proto::NetworkKeysWrapper getSession();
+
+        keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr getKey(int index);
+        uint8_t getSlot();
+    private:
+        uint8_t slot;
+        SessionMap sessionKeys;
+        // the hash index is used to determine which key should be used to decrypt the entry
+        std::vector<std::vector<uint8_t>> hashIndex;
+    };
+    typedef std::shared_ptr<NetworkSessionSlot> NetworkSessionSlotPtr;
+
     friend class NetworkSessionKeyEncryptor;
     friend class NetworkSessionKeyDecryptor;
     inline static std::string getHeaderVersion() {
@@ -60,7 +80,8 @@ public:
 
 protected:
     int getNumberOfKeys();
-    keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr getKey(int index);
+    int getSlot();
+    keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr getKey(int slot, int index);
 
 private:
     std::mutex classMutex;
@@ -69,9 +90,12 @@ private:
     int networkSessionKeyNumber;
 
     keto::software_consensus::ConsensusHashGeneratorPtr consensusHashGenerator;
-    std::map<std::vector<uint8_t>,keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr> sessionKeys;
-    // the hash index is used to determine which key should be used to decrypt the entry
-    std::vector<std::vector<uint8_t>> hashIndex;
+    std::map<int,NetworkSessionSlotPtr> sessionSlots;
+    uint8_t slot;
+    std::deque<int> slots;
+
+
+    void popSlot();
 };
 
 

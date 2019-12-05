@@ -54,6 +54,8 @@ public:
     notifyPeers();
     bool
     isEnabled();
+    void
+    forceResync();
 
     void broadcastBlock(const keto::block_db::SignedBlockWrapperMessageProtoHelper& signedBlockWrapperProtoHelper);
 

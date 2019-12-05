@@ -225,6 +225,7 @@ private:
 
 
     bool duplicateCheck(rocksdb::Transaction* blockTransaction, keto::asn1::HashHelper blockHash);
+    void checkForParent(rocksdb::Transaction* blockTransaction, keto::asn1::HashHelper parentHash);
 };
 
 }

@@ -28,6 +28,9 @@ public:
     NetworkKeysHelper& addNetworkKey(const NetworkKeyHelper& networkKeyHelper);
     std::vector<NetworkKeyHelper> getNetworkKeys() const;
 
+    NetworkKeysHelper& setSlot(int slot);
+    int getSlot();
+
     operator keto::proto::NetworkKeys();
     operator std::string();
     operator keto::crypto::SecureVector();
