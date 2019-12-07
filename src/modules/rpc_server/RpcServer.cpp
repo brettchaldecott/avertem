@@ -334,7 +334,7 @@ typedef std::shared_ptr<ReadQueue> ReadQueuePtr;
 class session : public SessionBase, public std::enable_shared_from_this<session>
 {
 private:
-    std::recursive_mutex classMutex;
+    //std::recursive_mutex classMutex;
     websocket::stream<
             beast::ssl_stream<beast::tcp_stream>> ws_;
 
@@ -362,7 +362,7 @@ public:
         , registered(false)
         , active(false)
     {
-        //ws_.auto_fragment(false);
+        ws_.auto_fragment(false);
         this->generatorPtr = std::shared_ptr<Botan::AutoSeeded_RNG>(new Botan::AutoSeeded_RNG());
     }
         
@@ -431,7 +431,6 @@ public:
     void
     on_accept(boost::system::error_code ec)
     {
-        std::lock_guard<std::recursive_mutex> guard(classMutex);
         if(ec)
             return fail(ec, "accept");
 
@@ -500,7 +499,6 @@ public:
     on_read(
         boost::system::error_code ec,
         std::size_t bytes_transferred) {
-        std::lock_guard<std::recursive_mutex> guard(classMutex);
         keto::server_common::StringVector stringVector;
 
         boost::ignore_unused(bytes_transferred);
@@ -862,7 +860,6 @@ public:
         boost::system::error_code ec,
         std::size_t bytes_transferred)
     {
-        std::lock_guard<std::recursive_mutex> guard(classMutex);
         boost::ignore_unused(bytes_transferred);
         queue_.pop_front();
 
@@ -1213,14 +1210,18 @@ public:
 
     void
     send(const std::string& message) {
-        sendMessage(std::make_shared<std::string>(message));
+        net::post(
+            ws_.get_executor(),
+            beast::bind_front_handler(
+                &session::sendMessage,
+                shared_from_this(),
+                std::make_shared<std::string>(message)));
     }
 
 
     void
     sendMessage(std::shared_ptr<std::string> ss) {
         KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][sendMessage] : push an entry into the queue";
-        std::lock_guard<std::recursive_mutex> guard(classMutex);
 
         // Always add to queue
         queue_.push_back(ss);

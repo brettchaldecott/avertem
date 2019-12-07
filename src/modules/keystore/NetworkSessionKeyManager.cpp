@@ -242,6 +242,11 @@ keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr NetworkSessionKeyMan
     if (this->sessionSlots.empty()) {
         BOOST_THROW_EXCEPTION(keto::keystore::NetworkSessionNotStartedException());
     }
+    if (!this->sessionSlots.count(slot)) {
+        std::stringstream ss;
+        ss << "Network slot [" << slot << "was not found";
+        BOOST_THROW_EXCEPTION(keto::keystore::NetworkSessionKeyNotFoundException(ss.str()));
+    }
     return this->sessionSlots[slot]->getKey(index);
 }
 

@@ -351,6 +351,9 @@ RpcSession::on_handshake(boost::system::error_code ec)
     ss <<
             buildMessage(keto::server_common::Constants::RPC_COMMANDS::HELLO,buildHeloMessage());
     send(ss.str());
+
+    // do the read
+    do_read();
 }
 
 
@@ -360,7 +363,6 @@ RpcSession::on_write(
     std::size_t bytes_transferred)
 {
     KETO_LOG_DEBUG << this->sessionNumber << ": [RpcSession][on_write] handle the complete write call";
-    std::lock_guard<std::recursive_mutex> guard(classMutex);
     boost::ignore_unused(bytes_transferred);
     queue_.pop_front();
 
@@ -370,10 +372,10 @@ RpcSession::on_write(
     if (queue_.size()) {
         sendFirstQueueMessage();
     }
-    if (!reading) {
-        reading=true;
-        do_read();
-    }
+    //if (!reading) {
+    //    reading=true;
+    //    do_read();
+    //}
     KETO_LOG_DEBUG << this->sessionNumber << ": [RpcSession][on_write] handled the completed write call";
 
 }
@@ -393,7 +395,6 @@ void
 RpcSession::on_read(
     boost::system::error_code ec,
     std::size_t bytes_transferred) {
-    std::lock_guard<std::recursive_mutex> guard(classMutex);
     keto::server_common::StringVector stringVector;
     std::string command;
 
@@ -1123,13 +1124,17 @@ bool RpcSession::isRegistered() {
 
 void
 RpcSession::send(const std::string& message) {
-    sendMessage(std::make_shared<std::string>(message));
+    net::post(
+        ws_.get_executor(),
+        beast::bind_front_handler(
+            &RpcSession::sendMessage,
+            shared_from_this(),
+            std::make_shared<std::string>(message)));
 }
 
 void
 RpcSession::sendMessage(std::shared_ptr<std::string> ss) {
     KETO_LOG_DEBUG << "[RpcSession::sendMessage][" << this->sessionNumber << "][sendMessage] : push an entry into the queue";
-    std::lock_guard<std::recursive_mutex> guard(classMutex);
 
     // Always add to queue
     queue_.push_back(ss);

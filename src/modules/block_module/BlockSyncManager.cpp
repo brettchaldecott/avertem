@@ -42,6 +42,7 @@ void BlockSyncManager::finInstance() {
 }
 
 BlockSyncManager::Status BlockSyncManager::getStatus() {
+    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
     return this->status;
 }
 
@@ -51,19 +52,20 @@ std::time_t BlockSyncManager::getStartTime() {
 }
 
 void BlockSyncManager::sync() {
-    KETO_LOG_INFO << "[BlockSyncManager::sync] start of the sync";
+    Status status = getStatus();
+    KETO_LOG_INFO << "[BlockSyncManager::sync] start of the sync : " << status;
     if (!isExpired()) {
-        KETO_LOG_INFO << "[BlockSyncManager::sync] the timeout has not been reached yet [" << this->startTime << "][" <<
+        KETO_LOG_INFO << "[BlockSyncManager::sync] the timeout has not been reached yet [" << this->getStartTime() << "][" <<
             time(0) << "]";
         return;
-    } else if (getStatus() == COMPLETE) {
+    } else if (status == COMPLETE) {
         KETO_LOG_INFO << "[BlockSyncManager::sync] the processing is now complete ignore further sync requests";
         return;
     }
-    //if (!this->tangleHashes.size()) {
-        KETO_LOG_INFO << "[BlockSyncManager::sync] attempt to get the last block hash";
-        this->tangleHashes = keto::block_db::BlockChainStore::getInstance()->getLastBlockHashs();
-    //}
+
+    KETO_LOG_INFO << "[BlockSyncManager::sync] attempt to get the last block hash";
+    this->tangleHashes = keto::block_db::BlockChainStore::getInstance()->getLastBlockHashs();
+
     KETO_LOG_DEBUG << "[BlockSyncManager::sync] loop through the signed blocks : " << this->tangleHashes.size();
     keto::block_db::SignedBlockBatchRequestProtoHelper signedBlockBatchRequestProtoHelper;
     for (keto::asn1::HashHelper hash: this->tangleHashes) {
@@ -77,7 +79,10 @@ void BlockSyncManager::sync() {
                 keto::server_common::Events::RPC_CLIENT_REQUEST_BLOCK_SYNC, signedBlockBatchRequestProtoHelper));
 
         KETO_LOG_DEBUG << "[BlockSyncManager::sync] reset the start time for the sync";
-        this->startTime = time(0);
+        {
+            std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+            this->startTime = time(0);
+        }
         return;
     } catch (keto::common::Exception& ex) {
         KETO_LOG_ERROR << "[BlockSyncManager::sync]: Failed to request the block sync : " << boost::diagnostic_information(ex,true);
@@ -94,7 +99,7 @@ void BlockSyncManager::sync() {
 
 keto::proto::SignedBlockBatchMessage  BlockSyncManager::requestBlocks(const keto::proto::SignedBlockBatchRequest& signedBlockBatchRequest) {
     //std::unique_lock<std::mutex> uniqueLock(this->classMutex);
-    if (!keto::server_common::ServerInfo::getInstance()->isMaster() && this->status != COMPLETE) {
+    if (!keto::server_common::ServerInfo::getInstance()->isMaster() && this->getStatus() != COMPLETE) {
         KETO_LOG_DEBUG << "[BlockSyncManager::requestBlocks] This node is not synced and cannot return blocks";
         BOOST_THROW_EXCEPTION(keto::block::UnsyncedStateCannotProvideDate());
     }
@@ -118,7 +123,11 @@ keto::proto::MessageWrapperResponse  BlockSyncManager::processBlockSyncResponse(
     keto::proto::MessageWrapperResponse response;
     if (keto::block_db::BlockChainStore::getInstance()->processBlockSyncResponse(signedBlockBatchMessage,BlockChainCallbackImpl())) {
         response.set_result("complete");
-        this->status = COMPLETE;
+        {
+            std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+            this->startTime = 0;
+            this->status = COMPLETE;
+        }
         KETO_LOG_INFO << "[BlockSyncManager::processBlockSyncResponse]" << " ########################################################";
         KETO_LOG_INFO << "[BlockSyncManager::processBlockSyncResponse]" << " ######## Synchronization has now been completed ########";
         KETO_LOG_INFO << "[BlockSyncManager::processBlockSyncResponse]" << " ########################################################";
@@ -131,7 +140,10 @@ keto::proto::MessageWrapperResponse  BlockSyncManager::processBlockSyncResponse(
     } else {
         KETO_LOG_INFO << "[BlockSyncManager::processBlockSyncResponse] finished applying a block need to trigger the next request.";
         response.set_result("applied");
-        this->startTime = 0;
+        {
+            std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+            this->startTime = 0;
+        }
     }
     response.set_success(true);
 
@@ -142,6 +154,7 @@ keto::proto::MessageWrapperResponse  BlockSyncManager::processBlockSyncResponse(
 void
 BlockSyncManager::processRequestBlockSyncRetry() {
     KETO_LOG_DEBUG << "[BlockSyncManager::processRequestBlockSyncRetry] trigger the retry by resetting the start time";
+    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
     // reschedule to run in a minutes time
     this->startTime = time(0) - Constants::SYNC_RETRY_DELAY_MIN;
 }
@@ -164,11 +177,14 @@ BlockSyncManager::notifyPeers() {
 
 bool
 BlockSyncManager::isEnabled() {
+    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
     return this->enabled;
 }
 
 void
 BlockSyncManager::forceResync() {
+    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    KETO_LOG_INFO << "[BlockSyncManager::forceResync] force the resync : ";
     this->status = INIT;
 }
 
@@ -187,6 +203,7 @@ void BlockSyncManager::broadcastBlock(const keto::block_db::SignedBlockWrapperMe
 
 
 bool BlockSyncManager::isExpired() {
+    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
     std::time_t now = time(0);
     return now > (this->startTime + Constants::SYNC_EXPIRY_TIME);
 }

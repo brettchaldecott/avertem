@@ -13,6 +13,7 @@
 
 #include <vector>
 #include <sstream>
+#include <ChangeSet.h>
 
 #include "TransactionMessage.h"
 
@@ -72,6 +73,10 @@ AccountRDFStatementBuilder::AccountRDFStatementBuilder(
         SignedChangeSet* signedChangeSet =
                 transactionWrapperHelperPtr->operator TransactionWrapper_t&().changeSet.list.array[count];
         for (int index = 0 ; index < signedChangeSet->changeSet.changes.list.count; index++) {
+            // ignore changes not associated with the current transaction status
+            if (signedChangeSet->changeSet.status != transactionWrapperHelperPtr->getStatus()) {
+                continue;
+            }
             AccountRDFStatementPtr accountRDFStatement(new AccountRDFStatement(
                     signedChangeSet->changeSet.changes.list.array[index]));
 
@@ -215,6 +220,11 @@ AccountRDFStatementBuilder::AccountRDFStatementBuilder(
         SignedChangeSet* signedChangeSet =
                 transactionWrapperHelperPtr->operator TransactionWrapper_t&().changeSet.list.array[count];
         for (int index = 0 ; index < signedChangeSet->changeSet.changes.list.count; index++) {
+            // ignore changes not associated with the current transaction status
+            if (signedChangeSet->changeSet.status != transactionWrapperHelperPtr->getStatus()) {
+                continue;
+            }
+
             AccountRDFStatementPtr accountRDFStatement(new AccountRDFStatement(
                 signedChangeSet->changeSet.changes.list.array[index]));
             

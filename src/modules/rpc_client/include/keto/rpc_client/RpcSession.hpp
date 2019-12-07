@@ -225,7 +225,7 @@ private:
     bool closed;
     bool active;
     bool registered;
-    std::recursive_mutex classMutex;
+    //std::recursive_mutex classMutex;
     tcp::resolver resolver;
     websocket::stream<beast::ssl_stream<beast::tcp_stream>> ws_;
     boost::beast::flat_buffer buffer_;
