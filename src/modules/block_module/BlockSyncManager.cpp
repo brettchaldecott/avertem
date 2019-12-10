@@ -184,7 +184,7 @@ BlockSyncManager::isEnabled() {
 void
 BlockSyncManager::forceResync() {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
-    KETO_LOG_INFO << "[BlockSyncManager::forceResync] force the resync : ";
+    KETO_LOG_INFO << "[BlockSyncManager::forceResync] force the resync : " << this->status;
     this->status = INIT;
 }
 

@@ -174,6 +174,8 @@ keto::event::Event BlockService::persistBlockMessage(const keto::event::Event& e
 
         return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
     } catch (keto::block_db::ParentHashIdentifierNotFoundException& ex) {
+        KETO_LOG_ERROR << "[BlockService::persistBlockMessage] failed to persist the block : " << ex.what();
+        KETO_LOG_ERROR << "[BlockService::persistBlockMessage] cause: " << boost::diagnostic_information(ex, true);
         BlockSyncManager::getInstance()->forceResync();
         keto::proto::MessageWrapperResponse response;
         response.set_success(false);

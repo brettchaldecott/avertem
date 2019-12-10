@@ -189,9 +189,9 @@ void NetworkSessionKeyManager::setSession(const keto::proto::NetworkKeysWrapper&
 
 keto::proto::NetworkKeysWrapper NetworkSessionKeyManager::getSession() {
     std::lock_guard<std::mutex> uniqueLock(this->classMutex);
-    if (!networkSessionConfigured) {
-        BOOST_THROW_EXCEPTION(keto::keystore::NetworkSessionNotStartedException());
-    }
+    //if (!networkSessionConfigured) {
+    //    BOOST_THROW_EXCEPTION(keto::keystore::NetworkSessionNotStartedException());
+    //}
     if (this->sessionSlots.empty()) {
         BOOST_THROW_EXCEPTION(keto::keystore::NetworkSessionNotStartedException());
     }
@@ -221,9 +221,9 @@ NetworkSessionKeyDecryptorPtr NetworkSessionKeyManager::getDecryptor() {
 
 int NetworkSessionKeyManager::getNumberOfKeys() {
     std::lock_guard<std::mutex> uniqueLock(this->classMutex);
-    if (!networkSessionConfigured) {
-        BOOST_THROW_EXCEPTION(keto::keystore::NetworkSessionNotStartedException());
-    }
+    //if (!networkSessionConfigured) {
+    //    BOOST_THROW_EXCEPTION(keto::keystore::NetworkSessionNotStartedException());
+    //}
     if (this->sessionSlots.empty()) {
         BOOST_THROW_EXCEPTION(keto::keystore::NetworkSessionNotStartedException());
     }
@@ -236,9 +236,9 @@ int NetworkSessionKeyManager::getSlot() {
 }
 
 keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr NetworkSessionKeyManager::getKey(int slot, int index) {
-    if (!networkSessionConfigured) {
-        BOOST_THROW_EXCEPTION(keto::keystore::NetworkSessionNotStartedException());
-    }
+    //if (!networkSessionConfigured) {
+    //    BOOST_THROW_EXCEPTION(keto::keystore::NetworkSessionNotStartedException());
+    //}
     if (this->sessionSlots.empty()) {
         BOOST_THROW_EXCEPTION(keto::keystore::NetworkSessionNotStartedException());
     }

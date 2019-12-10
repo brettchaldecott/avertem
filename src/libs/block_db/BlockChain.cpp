@@ -53,14 +53,17 @@ bool BlockChain::BlockChainWriteCache::checkCache(const keto::asn1::HashHelper& 
         KETO_LOG_DEBUG << "[BlockChain::checkCache] The cache contains the block : " << blockHash.getHash(keto::common::StringEncoding::HEX);
         return true;
     }
+    return false;
+}
+
+void BlockChain::BlockChainWriteCache::addToCache(const keto::asn1::HashHelper& blockHash) {
+    KETO_LOG_DEBUG << "[BlockChain::checkCache] Adding the block to the cache : " << blockHash.getHash(keto::common::StringEncoding::HEX);
     if (this->cacheHistory.size() >= Constants::MAX_BLOCK_CACHE_SIZE) {
         this->cacheLookup.erase(this->cacheHistory.front());
         this->cacheHistory.pop_front();
     }
     this->cacheHistory.push_back(blockHash);
     this->cacheLookup.insert(blockHash);
-    KETO_LOG_DEBUG << "[BlockChain::checkCache] Adding the block to the cache : " << blockHash.getHash(keto::common::StringEncoding::HEX);
-    return false;
 }
 
 BlockChain::BlockChainCache::BlockChainCache() {
@@ -340,7 +343,8 @@ bool BlockChain::writeBlock(const keto::proto::SignedBlockWrapperMessage& signed
     for (int index = 0; index < signedBlockWrapperMessageProtoHelper.size(); index++) {
         SignedBlockWrapperProtoHelperPtr signedBlockWrapperProtoHelperPtr =
                 signedBlockWrapperMessageProtoHelper.getSignedBlockWrapper(index);
-
+        KETO_LOG_INFO << "[BlockChain::writeBlock] write a block : " <<
+            signedBlockWrapperProtoHelperPtr->getHash().getHash(keto::common::StringEncoding::HEX);
         // write the block and broadcast it if the block was written
         if (!writeBlock(signedBlockWrapperProtoHelperPtr, callback)) {
             result = false;
@@ -454,7 +458,8 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
     KETO_LOG_DEBUG << "[BlockChain::writeBlock] Look for the block : " << blockHash.getHash(keto::common::StringEncoding::HEX);
     if (duplicateCheck(blockTransaction,blockHash)) {
         // ignore as the block already exists
-        KETO_LOG_DEBUG << "[BlockChain::writeBlock] The block already exists in the store ignore it.";
+        KETO_LOG_INFO << "[BlockChain::writeBlock] The block already exists in the store ignore it : " <<
+            blockHash.getHash(keto::common::StringEncoding::HEX);
         return false;
     }
 
@@ -587,7 +592,11 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
     keto::rocks_db::SliceHelper parentKeyHelper((std::string(Constants::PARENT_KEY)));
     blockTransaction->Put(parentKeyHelper,blockHashHelper);
 
+    // add the entries into the accounting store
     callback.postPersistBlock(blockChainMetaPtr->getHashId(),signedBlock);
+
+    // add the entries into the
+    blockChainWriteCachePtr->addToCache(blockHash);
 
     KETO_LOG_INFO << "[BlockChain::writeBlock] Completed writing the block : " << blockHash.getHash(keto::common::StringEncoding::HEX);
     return true;
@@ -651,9 +660,10 @@ bool BlockChain::processBlockSyncResponse(const keto::proto::SignedBlockBatchMes
 bool BlockChain::processBlockSyncResponse(const keto::proto::SignedBlockBatch& signedBlockBatch, const BlockChainCallback& callback) {
     //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     bool complete = true;
-    KETO_LOG_DEBUG << "[BlockChain::processBlockSyncResponse] process the block : " << signedBlockBatch.blocks_size();
+    KETO_LOG_INFO << "[BlockChain::processBlockSyncResponse] process the block : " << signedBlockBatch.blocks_size();
     for (int index = 0; index < signedBlockBatch.blocks_size(); index++) {
-        bool write = this->writeBlock(signedBlockBatch.blocks(index),callback);
+        const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage = signedBlockBatch.blocks(index);
+        bool write = this->writeBlock(signedBlockWrapperMessage,callback);
         if (complete) {
             complete = !write;
         }
@@ -664,7 +674,7 @@ bool BlockChain::processBlockSyncResponse(const keto::proto::SignedBlockBatch& s
             complete = false;
         }
     }
-    KETO_LOG_DEBUG << "[BlockChain::processBlockSyncResponse] complete : " << complete;
+    KETO_LOG_INFO << "[BlockChain::processBlockSyncResponse] complete : " << complete;
     return complete;
 }
 
@@ -1115,8 +1125,10 @@ void BlockChain::checkForParent(rocksdb::Transaction* blockTransaction, keto::as
     std::string value;
     auto blockStatus = blockTransaction->Get(readOptions,keyHelper,&value);
 
-    if (rocksdb::Status::NotFound() == blockStatus) {
-        BOOST_THROW_EXCEPTION(keto::block_db::ParentHashIdentifierNotFoundException());
+    if (rocksdb::Status::OK() != blockStatus && rocksdb::Status::NotFound() == blockStatus) {
+        std::stringstream ss;
+        ss << "The parent [" << parentHash.getHash(keto::common::StringEncoding::HEX) << "] does not exist in the store.";
+        BOOST_THROW_EXCEPTION(keto::block_db::ParentHashIdentifierNotFoundException(ss.str()));
     }
 
 }

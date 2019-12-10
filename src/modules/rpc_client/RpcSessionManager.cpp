@@ -59,7 +59,7 @@ std::string RpcSessionManager::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
-RpcSessionManager::RpcSessionManager() : peered(true) {
+RpcSessionManager::RpcSessionManager() : peered(true), activated(false) {
     
     this->ioc = std::make_shared<net::io_context>();
     

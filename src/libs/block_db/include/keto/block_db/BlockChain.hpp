@@ -48,6 +48,7 @@ public:
         virtual ~BlockChainWriteCache();
 
         bool checkCache(const keto::asn1::HashHelper& blockHash);
+        void addToCache(const keto::asn1::HashHelper& blockHash);
     private:
         std::set<std::string> cacheLookup;
         std::deque<std::string> cacheHistory;

@@ -306,14 +306,26 @@ void BlockProducer::run() {
     // process the
     BlockProducer::State currentState;
     while((currentState = this->checkState()) != State::terminated) {
-        if (currentState == BlockProducer::State::block_producer &&
-        keto::software_consensus::ConsensusStateManager::getInstance()->getState()
-        == keto::software_consensus::ConsensusStateManager::State::ACCEPTED) {
-            processTransactions();
-        } else if (currentState == BlockProducer::State::sync_blocks &&
-                   keto::software_consensus::ConsensusStateManager::getInstance()->getState()
-                   == keto::software_consensus::ConsensusStateManager::State::ACCEPTED) {
-            sync();
+        try {
+            if (currentState == BlockProducer::State::block_producer &&
+                keto::software_consensus::ConsensusStateManager::getInstance()->getState()
+                == keto::software_consensus::ConsensusStateManager::State::ACCEPTED) {
+                processTransactions();
+            } else if (currentState == BlockProducer::State::sync_blocks &&
+                       keto::software_consensus::ConsensusStateManager::getInstance()->getState()
+                       == keto::software_consensus::ConsensusStateManager::State::ACCEPTED) {
+                sync();
+            }
+        } catch (keto::common::Exception &ex) {
+            KETO_LOG_ERROR << "[BlockProducer::run] failed to run block producer: " << ex.what();
+            KETO_LOG_ERROR << "[BlockProducer::run] cause: " << boost::diagnostic_information(ex, true);
+        } catch (boost::exception &ex) {
+            KETO_LOG_ERROR << "[BlockProducer::run] failed to run the block producer : "
+                           << boost::diagnostic_information(ex, true);
+        } catch (std::exception &ex) {
+            KETO_LOG_ERROR << "[BlockProducer::run] failed to run the block producer : " << ex.what();
+        } catch (...) {
+            KETO_LOG_ERROR << "[BlockProducer::run] failed to run the block producer";
         }
     }
 }
@@ -508,38 +520,60 @@ void BlockProducer::processTransactions() {
             keto::server_common::ServerInfo::getInstance()->getAccountHash());
     signedBlockWrapperMessageProtoHelper.setTangles(keto::block_db::BlockChainStore::getInstance()->getActiveTangles());
     signedBlockWrapperMessageProtoHelper.setProducerEnding(getProducerState()==BlockProducer::ProducerState::ending);
-    for (BlockProducer::PendingTransactionsTanglePtr pendingTransactionTanglePtr : this->pendingTransactionManagerPtr->takeTransactions()) {
-        keto::block_db::BlockChainStore::getInstance()->setCurrentTangle(pendingTransactionTanglePtr->getTangle()->getTangleHash());
-        keto::block_db::SignedBlockBuilderPtr signedBlockBuilderPtr = generateBlock(pendingTransactionTanglePtr);
-        if (signedBlockBuilderPtr) {
-            keto::block_db::SignedBlockWrapperProtoHelper signedBlockWrapperProtoHelper(signedBlockBuilderPtr);
-            signedBlockWrapperMessageProtoHelper.addSignedBlockWrapper(signedBlockWrapperProtoHelper);
-        }
-    }
+    std::deque<BlockProducer::PendingTransactionsTanglePtr> transactions = this->pendingTransactionManagerPtr->takeTransactions();
 
-    BlockSyncManager::getInstance()->broadcastBlock(signedBlockWrapperMessageProtoHelper);
+    // loop through and attemp to create transactions
+    do {
+        try {
+            // create a new transaction
+            keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
 
-    // producer state
-    {
-        std::unique_lock<std::mutex> uniqueLock(this->classMutex);
-        if (signedBlockWrapperMessageProtoHelper.getProducerEnding()) {
-            KETO_LOG_INFO << "[BlockProducer::processTransactions] Deactivate the block producer with the following block: "
-                          << signedBlockWrapperMessageProtoHelper.getMessageHash().getHash(keto::common::StringEncoding::HEX);
-            _setProducerState(BlockProducer::ProducerState::complete,true);
-            // clear the active tangles
-            keto::block_db::BlockChainStore::getInstance()->setActiveTangles(std::vector<keto::asn1::HashHelper>());
-            _setState(BlockProducer::State::sync_blocks);
+            for (BlockProducer::PendingTransactionsTanglePtr pendingTransactionTanglePtr : transactions) {
+                keto::block_db::BlockChainStore::getInstance()->setCurrentTangle(
+                        pendingTransactionTanglePtr->getTangle()->getTangleHash());
+                keto::block_db::SignedBlockBuilderPtr signedBlockBuilderPtr = generateBlock(
+                        pendingTransactionTanglePtr);
+                if (signedBlockBuilderPtr) {
+                    keto::block_db::SignedBlockWrapperProtoHelper signedBlockWrapperProtoHelper(signedBlockBuilderPtr);
+                    signedBlockWrapperMessageProtoHelper.addSignedBlockWrapper(signedBlockWrapperProtoHelper);
+                }
+            }
+            BlockSyncManager::getInstance()->broadcastBlock(signedBlockWrapperMessageProtoHelper);
+            // producer state
+            {
+                std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+                if (signedBlockWrapperMessageProtoHelper.getProducerEnding()) {
+                    KETO_LOG_INFO
+                        << "[BlockProducer::processTransactions] Deactivate the block producer with the following block: "
+                        << signedBlockWrapperMessageProtoHelper.getMessageHash().getHash(
+                                keto::common::StringEncoding::HEX);
+                    _setProducerState(BlockProducer::ProducerState::complete, true);
+                    // clear the active tangles
+                    keto::block_db::BlockChainStore::getInstance()->setActiveTangles(
+                            std::vector<keto::asn1::HashHelper>());
+                    _setState(BlockProducer::State::sync_blocks);
+                }
+            }
+            transactionPtr->commit();
+            return;
+        } catch (keto::common::Exception &ex) {
+            KETO_LOG_ERROR << "[BlockProducer::processTransactions]Failed to create a new block: " << ex.what();
+            KETO_LOG_ERROR << "[BlockProducer::processTransactions]Cause: " << boost::diagnostic_information(ex, true);
+        } catch (boost::exception &ex) {
+            KETO_LOG_ERROR << "[BlockProducer::processTransactions]Failed to create a new block: "
+                           << boost::diagnostic_information(ex, true);
+        } catch (std::exception &ex) {
+            KETO_LOG_ERROR << "[BlockProducer::processTransactions]Failed to create a new block: " << ex.what();
+        } catch (...) {
+            KETO_LOG_ERROR << "[BlockProducer::processTransactions]Failed to create a new block: unknown cause";
         }
-    }
+    } while (this->checkState() != State::terminated);
 }
 
 
 keto::block_db::SignedBlockBuilderPtr BlockProducer::generateBlock(const BlockProducer::PendingTransactionsTanglePtr& pendingTransactionTanglePtr) {
 
     try {
-
-        // create a new transaction
-        keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
 
         keto::asn1::HashHelper parentHash = pendingTransactionTanglePtr->getTangle()->getLastBlockHash();
         if (parentHash.empty()) {
@@ -581,7 +615,6 @@ keto::block_db::SignedBlockBuilderPtr BlockProducer::generateBlock(const BlockPr
                       signedBlockBuilderPtr->getHash().getHash(keto::common::StringEncoding::HEX)
                       << "]";
 
-        transactionPtr->commit();
         return signedBlockBuilderPtr;
     } catch (keto::common::Exception& ex) {
         KETO_LOG_ERROR << "[BlockProducer::generateBlock]Failed to create a new block: " << ex.what();
