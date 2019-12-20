@@ -40,3 +40,10 @@ message MessageWrapperResponse {
     bool  success = 1;
     string result = 2;
 }
+
+message ForkMessageWrapper {
+    string command = 1;
+    string event = 2;
+    bytes message = 3;
+    string exception = 4;
+}

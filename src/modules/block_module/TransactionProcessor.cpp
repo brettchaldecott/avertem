@@ -241,10 +241,14 @@ keto::transaction_common::TransactionProtoHelper TransactionProcessor::processTr
     }
 
     if (master) {
-        // set the elapsed time on the transaction
-        transactionProtoHelper.getTransactionMessageHelper()->setElapsedTime(
+        // set the elapsed time on the transaction using an extended process as the original code assumed that the
+        // transaction message would be returned as a reference and that would remain updatable but that is not the case
+        keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr =
+                transactionProtoHelper.getTransactionMessageHelper();
+        transactionMessageHelperPtr->setElapsedTime(
                 transactionProtoHelper.getTransactionMessageHelper()->getElapsedTime() +
-                        round(transactionTracker.getElapsedTime() / keto::environment::Units::TIME::MILLISECONDS));
+                round(transactionTracker.getElapsedTime() / keto::environment::Units::TIME::MILLISECONDS));
+        transactionProtoHelper.setTransaction(transactionMessageHelperPtr);
 
         // set the transaction
         transactionProtoHelper.setTransaction(executeContract(

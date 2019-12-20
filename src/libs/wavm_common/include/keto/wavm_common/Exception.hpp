@@ -11,8 +11,8 @@
  * Created on January 31, 2018, 4:37 PM
  */
 
-#ifndef TRANSACTION_COMMON_EXCEPTION_HPP
-#define TRANSACTION_COMMON_EXCEPTION_HPP
+#ifndef KETO_WAVM_COMMON_EXCEPTION_HPP
+#define KETO_WAVM_COMMON_EXCEPTION_HPP
 
 #include <string>
 #include "keto/common/Exception.hpp"
@@ -52,6 +52,8 @@ KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, FailedToInstanciateModule ,
 KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, ModuleMemoryInvalid , "Module memory is invalid.");
 KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, InvalidActionModelRequest , "Invalid action model request.");
 KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, TransactionAlreadySubmitted , "Transaction already submitted.");
+KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, FailedToParseFormMessage , "Failed to parse the form message.");
+KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, ParentRequestException , "Parent requested resulted in an exception.");
 
 
 }

@@ -33,6 +33,33 @@ ResultVectorMap AccountSparqlQueryHelper::execute() {
             keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SparqlResultSetQuery>(
                     this->action,sparqlResultSetQuery)));
 
+    ResultVectorMap resultVectorMap;
+    for (int rowIndex = 0; rowIndex < sparqlResultSet.rows_size(); rowIndex++) {
+        const keto::proto::SparqlRow& row = sparqlResultSet.rows(rowIndex);
+        ResultMap resultMap;
+        for (int columnIndex = 0; columnIndex < row.entries_size(); columnIndex++) {
+            const keto::proto::SparqlRowEntry& entry = row.entries(columnIndex);
+            KETO_LOG_DEBUG << "Add the entry [" << entry.key() << "][" << entry.value() << "]";
+            resultMap[entry.key()] = entry.value();
+        }
+        resultVectorMap.push_back(resultMap);
+    }
+
+    KETO_LOG_DEBUG << "Return the query results";
+    return resultVectorMap;
+}
+
+keto::event::Event AccountSparqlQueryHelper::generateEvent() {
+    keto::proto::SparqlResultSetQuery sparqlResultSetQuery;
+    sparqlResultSetQuery.set_account_hash(accountHash);
+    sparqlResultSetQuery.set_query(query);
+
+    return keto::server_common::toEvent<keto::proto::SparqlResultSetQuery>(
+                    this->action,sparqlResultSetQuery);
+}
+
+ResultVectorMap AccountSparqlQueryHelper::processResult(const keto::event::Event& event) {
+    keto::proto::SparqlResultSet sparqlResultSet = keto::server_common::fromEvent<keto::proto::SparqlResultSet>(event);
 
     ResultVectorMap resultVectorMap;
     for (int rowIndex = 0; rowIndex < sparqlResultSet.rows_size(); rowIndex++) {

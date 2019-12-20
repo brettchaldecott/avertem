@@ -522,11 +522,11 @@ void RpcSession::processQueueEntry(const ReadQueueEntryPtr& readQueueEntryPtr) {
         transactionPtr->commit();
     } catch (keto::common::Exception &ex) {
         KETO_LOG_ERROR << "[RPCSession::processQueueEntry][" << this->sessionNumber << "]" << command
-                       << " : Failed to process because : " << boost::diagnostic_information(ex, true);
+                       << " : Failed to process because : " << boost::diagnostic_information_what(ex, true);
         message = handleRetryResponse(command);
     } catch (boost::exception &ex) {
         KETO_LOG_ERROR << "[RPCSession::processQueueEntry][" << this->sessionNumber << "]" << command
-                       << " : Failed to process because : " << boost::diagnostic_information(ex, true);
+                       << " : Failed to process because : " << boost::diagnostic_information_what(ex, true);
         message = handleRetryResponse(command);
     } catch (std::exception &ex) {
         KETO_LOG_ERROR << "[RPCSession::processQueueEntry][" << this->sessionNumber << "]" << command
@@ -983,6 +983,12 @@ std::string RpcSession::handleRetryResponse(const std::string& command) {
         this->setClosed(true);
     } else if (command == keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST ||
                command == keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_RESPONSE) {
+        // this indicates the up stream server is currently out of sync and cannot be relied upon we therefore
+        // need to use an alternative and mark this one as inactive until it is activated.
+        KETO_LOG_INFO << "[RpcSession::handleRetryResponse] Deactive this session and re-schedule the retry";
+        this->deactivate();
+
+        // reschedule the block sync retry
         keto::proto::MessageWrapper messageWrapper;
         keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
                 keto::server_common::Events::BLOCK_DB_REQUEST_BLOCK_SYNC_RETRY,messageWrapper));
@@ -1169,6 +1175,9 @@ void RpcSession::setClosed(bool closed) {
     this->closed = closed;
 }
 
+void RpcSession::deactivate() {
+    this->active = false;
+}
 
 void RpcSession::setActive(bool active) {
     this->active = active;

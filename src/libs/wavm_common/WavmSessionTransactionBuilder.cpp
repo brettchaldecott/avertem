@@ -25,6 +25,8 @@
 
 #include "keto/transaction_common/MessageWrapperProtoHelper.hpp"
 
+#include "keto/wavm_common/ParentForkGateway.hpp"
+
 namespace keto {
 namespace wavm_common {
 
@@ -352,12 +354,12 @@ void WavmSessionTransactionBuilder::submit() {
 
     keto::proto::MessageWrapper messageWrapper = messageWrapperProtoHelper;
     messageWrapper = keto::server_common::fromEvent<keto::proto::MessageWrapper>(
-            keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
+            ParentForkGateway::processEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
                     keto::key_store_utils::Events::TRANSACTION::ENCRYPT_TRANSACTION,messageWrapper)));
 
     keto::proto::MessageWrapperResponse  messageWrapperResponse =
             keto::server_common::fromEvent<keto::proto::MessageWrapperResponse>(
-                    keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
+                    ParentForkGateway::processEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
                             keto::server_common::Events::ROUTE_MESSAGE,messageWrapper)));
 
 }

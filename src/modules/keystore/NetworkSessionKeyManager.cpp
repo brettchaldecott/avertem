@@ -140,7 +140,7 @@ void NetworkSessionKeyManager::generateSession() {
 
     // increment the lost
     this->slot++;
-    if (slot >= 256) {
+    if (slot >= 255) {
         this->slot = 0;
     }
     this->sessionSlots[this->slot] = NetworkSessionSlotPtr(new NetworkSessionSlot(slot,hashIndex,sessionKeys));

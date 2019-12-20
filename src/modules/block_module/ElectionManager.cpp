@@ -120,18 +120,18 @@ keto::event::Event ElectionManager::consensusHeartbeat(const keto::event::Event&
                    protocolHeartbeatMessageHelper.getConfirmationSlot() << "]";
 
     if (protocolHeartbeatMessageHelper.getNetworkSlot() == protocolHeartbeatMessageHelper.getElectionSlot()) {
-        KETO_LOG_DEBUG << "[BlockProducer::consensusHeartbeat] clean out the election information : " << state;
+        KETO_LOG_DEBUG << "[ElectionManager::consensusHeartbeat] clean out the election information : " << state;
         this->accountElectionResult.clear();
         this->responseCount = 0;
         this->nextWindow.clear();
         this->state = ElectionManager::State::ELECT;
         if (state == BlockProducer::State::block_producer) {
-            KETO_LOG_INFO << "[BlockProducer::consensusHeartbeat] run the election to choose a new node as state is : " << state;
+            KETO_LOG_INFO << "[ElectionManager::consensusHeartbeat] run the election to choose a new node as state is : " << state;
             invokeElection(keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_CLIENT,
                            keto::server_common::Events::PEER_TYPES::CLIENT);
             invokeElection(keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_SERVER,
                            keto::server_common::Events::PEER_TYPES::SERVER);
-            KETO_LOG_INFO << "[BlockProducer::consensusHeartbeat] after running the election";
+            KETO_LOG_INFO << "[ElectionManager::consensusHeartbeat] after running the election";
         }
 
     } else if (protocolHeartbeatMessageHelper.getNetworkSlot() == protocolHeartbeatMessageHelper.getElectionPublishSlot()){

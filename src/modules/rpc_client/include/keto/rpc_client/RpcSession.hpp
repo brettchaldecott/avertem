@@ -289,6 +289,7 @@ private:
     void setClosed(bool closed);
 
     // set active
+    void deactivate();
     void setActive(bool active);
 };
 

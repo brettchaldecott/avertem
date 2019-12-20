@@ -36,9 +36,17 @@ public:
     Event(std::vector<uint8_t> message) : 
         message(message)  {
     }
+
+    Event(const std::string& message) :
+            message(message.begin(),message.end())  {
+    }
         
     Event(const std::string& name,std::vector<uint8_t> message) : 
         name(name),message(message)  {
+    }
+
+    Event(const std::string& name,const std::string& message) :
+            name(name),message(message.begin(),message.end())  {
     }
         
     Event(const std::string& name,
@@ -91,7 +99,7 @@ public:
         return (*this);
     }
     
-    std::vector<uint8_t> getMessage() {
+    std::vector<uint8_t> getMessage() const {
         return this->message;
     }
     

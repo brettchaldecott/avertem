@@ -10,8 +10,9 @@
 #include <map>
 
 
+#include "keto/event/Event.hpp"
 #include "keto/asn1/HashHelper.hpp"
-
+#include "keto/server_common/Events.hpp"
 
 namespace keto {
 namespace account_query {
@@ -27,6 +28,9 @@ public:
     virtual ~AccountSparqlQueryHelper();
 
     ResultVectorMap execute();
+
+    keto::event::Event generateEvent();
+    ResultVectorMap processResult(const keto::event::Event& event);
 
 private:
     std::string action;

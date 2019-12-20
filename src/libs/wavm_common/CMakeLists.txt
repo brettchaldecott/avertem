@@ -30,7 +30,9 @@ add_library( keto_wavm_common
             RDFURLUtils.cpp
             RDFConstants.cpp
             Constants.cpp
-            
+            ParentForkGateway.cpp
+            ForkMessageWrapperHelper.cpp
+
              ${HEADERS}
            )
 

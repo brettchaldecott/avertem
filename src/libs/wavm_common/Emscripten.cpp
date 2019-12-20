@@ -190,7 +190,7 @@ namespace keto {
         };
 
 
-        bool resizeHeap(Process* process, U32 desiredNumBytes)
+        /*bool resizeHeap(Process* process, U32 desiredNumBytes)
         {
             const Uptr desiredNumPages
                     = (Uptr(desiredNumBytes) + WAVM::IR::numBytesPerPage - 1) / WAVM::IR::numBytesPerPage;
@@ -210,7 +210,7 @@ namespace keto {
             {
                 return true;
             }
-        }
+        }*/
 
 
         inline Emscripten::Process* getEmscriptenInstance(
@@ -1028,7 +1028,7 @@ namespace keto {
 
         WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_getTransactionValue",I64,keto_transaction_getTransactionValue, I32 transactionId)
         {
-            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            //Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
 
             return castToTransactionSession(
                             keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->
@@ -1037,7 +1037,7 @@ namespace keto {
 
         WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_setTransactionValue",void,keto_transaction_setTransactionValue, I32 transactionId, I64 value)
         {
-            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            //Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
 
             castToTransactionSession(
                     keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->

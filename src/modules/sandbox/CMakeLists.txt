@@ -18,6 +18,7 @@ add_library( 0020_keto_sandbox_module
             EventRegistry.cpp
             SandboxService.cpp
             ConsensusService.cpp
+            SandboxFork.cpp
 
              ${HEADERS}
            )

@@ -164,7 +164,7 @@ void ConsensusServer::process() {
                     this->sessionKeys[this->currentPos], true);
             keto::software_consensus::ConsensusSessionManager::getInstance()->updateSessionKey(initVector);
             internalConsensusInit(keto::crypto::HashGenerator().generateHash(initVector));
-            this->networkHeartbeatPoint = this->networkPoint = this->sessionkeyPoint = currentTime;
+            this->networkHeartbeatPoint = this->networkPoint = this->sessionkeyPoint = std::chrono::system_clock::now();
             this->networkHeartbeatCurrentSlot = 0;
         } else if (networkDiff.count() > this->netwokProtocolDelay) {
             KETO_LOG_DEBUG << "Time to retest the network.";
@@ -175,13 +175,21 @@ void ConsensusServer::process() {
             keto::crypto::SecureVector timeBytesVector(ptr,ptr+4);
             initVector.insert(initVector.begin(),timeBytesVector.begin(),timeBytesVector.end());
             internalConsensusProtocolCheck(keto::crypto::HashGenerator().generateHash(initVector));
-            this->networkHeartbeatPoint = this->networkPoint = currentTime;
+            std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
+            this->networkHeartbeatPoint = this->networkPoint = endTime;
             this->networkHeartbeatCurrentSlot = 0;
+            // recalculate the points
+            this->sessionkeyPoint = this->sessionkeyPoint + (endTime - currentTime);
+
         } else if (heartbeatDiff.count() > this->networkHeartbeatDelay) {
             KETO_LOG_DEBUG << "The network heartbeat.";
             initNetworkHeartbeat();
-            this->networkHeartbeatPoint = currentTime;
+            std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
+            this->networkHeartbeatPoint = endTime;
 
+            // reculculate the points
+            this->networkPoint = this->networkPoint + (endTime - currentTime);
+            this->sessionkeyPoint = this->sessionkeyPoint + (endTime - currentTime);
         }
 
     } catch (...) {
