@@ -24,8 +24,13 @@ int rasqal_graph_pattern_visit_fn(rasqal_query *query, rasqal_graph_pattern *gp,
     raptor_sequence* patternTrippleSequence = (raptor_sequence*)user_data;
     gp->end_column = gp->end_column + (raptor_sequence_size(patternTrippleSequence) -
         raptor_sequence_size(gp->triples));
-    while(raptor_sequence_pop(gp->triples)){}
-    //raptor_free_sequence(gp->triples);
+    while(true) {
+        rasqal_triple* temp = (rasqal_triple*)raptor_sequence_pop(gp->triples);
+        if (!temp) {
+            break;
+        }
+        rasqal_free_triple(temp);
+    }
     gp->triples = patternTrippleSequence;
     return 0;
 }
@@ -36,7 +41,9 @@ std::string RDFQueryParser::getSourceVersion() {
 
 RDFQueryParser::RDFQueryParser(const std::string& sparql) : sparql(sparql){
     this->world=rasqal_new_world();
+    rasqal_world_open(world);
     this->query=rasqal_new_query(world, keto::rdf_utils::Constants::SPARQL, NULL);
+
 
     rasqal_query_prepare(query, (const unsigned char *)sparql.c_str(), NULL);
 
@@ -49,6 +56,7 @@ RDFQueryParser::RDFQueryParser(const std::string& sparql, const std::vector<uint
     this->account = Botan::hex_encode(account,true);
 
     this->world=rasqal_new_world();
+    rasqal_world_open(world);
     this->query=rasqal_new_query(world, keto::rdf_utils::Constants::SPARQL, NULL);
 
     rasqal_query_prepare(query, (const unsigned char *)sparql.c_str(), NULL);
@@ -58,6 +66,7 @@ RDFQueryParser::RDFQueryParser(const std::string& sparql, const std::vector<uint
 
 RDFQueryParser::RDFQueryParser(const std::string& sparql, const std::string& account) : sparql(sparql), account(account){
     this->world=rasqal_new_world();
+    rasqal_world_open(world);
     this->query=rasqal_new_query(world, keto::rdf_utils::Constants::SPARQL, NULL);
 
     rasqal_query_prepare(query, (const unsigned char *)sparql.c_str(), NULL);
@@ -94,7 +103,6 @@ void RDFQueryParser::processPattern(rasqal_query *query) {
 
     KETO_LOG_DEBUG << "Get the first trippled sequence";
     raptor_sequence* patternTrippleSequence = rasqal_graph_pattern_get_triples(query,pattern);
-    //raptor_sequence* patternTrippleSequence = rasqal_query_get_graph_pattern_sequence(query);
     if (!patternTrippleSequence) {
         BOOST_THROW_EXCEPTION(keto::rdf_utils::InvalidQueryPatternException());
     }
@@ -306,13 +314,17 @@ std::string RDFQueryParser::getLiteralDecimal(rasqal_literal* variable) {
 
 std::string RDFQueryParser::getLiteralDateTime(rasqal_literal* variable) {
     std::stringstream ss;
-    ss << rasqal_xsd_datetime_to_string(variable->value.datetime);
+    char * dateTime = rasqal_xsd_datetime_to_string(variable->value.datetime);
+    ss << dateTime;
+    rasqal_free_memory(dateTime);
     return ss.str();
 }
 
 std::string RDFQueryParser::getLiteralDate(rasqal_literal* variable) {
     std::stringstream ss;
-    ss << rasqal_xsd_date_to_string(variable->value.date);
+    char * date = rasqal_xsd_date_to_string(variable->value.date);
+    ss << date;
+    rasqal_free_memory(date);
     return ss.str();
 }
 

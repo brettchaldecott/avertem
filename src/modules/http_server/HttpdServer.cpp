@@ -189,9 +189,9 @@ handle_request(
     if (keto::server_session::HttpRequestManager::getInstance()->checkRequest(req)) {
         keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
         try {
-            send(
+            send(std::move(
                 keto::server_session::HttpRequestManager::getInstance()->
-                handle_request(req));
+                handle_request(req)));
             transactionPtr->commit();
             return;
         } catch (keto::common::Exception& ex) {
@@ -200,35 +200,35 @@ handle_request(
             std::stringstream ss;
             ss << "Process the request : " << req << std::endl;
             ss << "Cause : " << boost::diagnostic_information(ex,true);
-            return send(server_error(ss.str()));
+            return send(std::move(server_error(ss.str())));
         } catch (boost::exception& ex) {
             KETO_LOG_ERROR << "Failed to process because : " << boost::diagnostic_information(ex,true);
             std::stringstream ss;
             ss << "Failed process the request : " << boost::diagnostic_information(ex,true);
-            return send(server_error(ss.str()));
+            return send(std::move(server_error(ss.str())));
         } catch (std::exception& ex) {
             KETO_LOG_ERROR << "Failed process the request : " << ex.what();
             std::stringstream ss;
             ss << "Failed process the request : " << ex.what();
-            return send(server_error(ss.str()));
+            return send(std::move(server_error(ss.str())))  ;
         } catch (...) {
-            return send(server_error("Failed to handle the request"));
+            return send(std::move(server_error("Failed to handle the request")));
         }
     } else {
 
         if( req.method() == httpBeast::verb::options)
-            return send(cors_options());
+            return send(std::move(cors_options()));
 
         // Make sure we can handle the method
         if( req.method() != httpBeast::verb::get &&
             req.method() != httpBeast::verb::head)
-            return send(bad_request("Unknown HTTP-method"));
+            return send(std::move(bad_request("Unknown HTTP-method")));
 
         // Request path must be absolute and not contain "..".
         if( req.target().empty() ||
             req.target()[0] != '/' ||
             req.target().find("..") != boost::beast::string_view::npos)
-            return send(bad_request("Illegal request-target"));
+            return send(std::move(bad_request("Illegal request-target")));
 
 
         std::string path = path_cat(doc_root, req.target());
@@ -242,11 +242,11 @@ handle_request(
 
         // Handle the case where the file doesn't exist
         if(ec == boost::system::errc::no_such_file_or_directory)
-            return send(not_found(req.target()));
+            return send(std::move(not_found(req.target())));
 
         // Handle an unknown error
         if(ec)
-            return send(server_error(ec.message()));
+            return send(std::move(server_error(ec.message())));
 
         // Respond to HEAD request
         if(req.method() == httpBeast::verb::head)
@@ -342,6 +342,11 @@ public:
         , doc_root_(doc_root)
         , lambda_(*this)
     {
+        KETO_LOG_ERROR << "[session::session] the session has been started.";
+    }
+
+    virtual ~session() {
+        KETO_LOG_ERROR << "[session::~session] the session is closing.";
     }
 
     // Start the asynchronous operation
@@ -452,6 +457,7 @@ public:
         }
 
         // At this point the connection is closed gracefully
+        KETO_LOG_ERROR << "[session::on_shutdown] shutting down the session";
     }
 };
 

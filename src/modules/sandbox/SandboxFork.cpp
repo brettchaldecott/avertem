@@ -46,43 +46,13 @@ std::string SandboxFork::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
-struct CloneArgument {
-    keto::wavm_common::PipePtr inPtr;
-    keto::wavm_common::PipePtr outPtr;
-    keto::event::Event event;
-};
-
-static int _executeActionMessage(void* args) {
-    std::cout << "[_executeActionMessage] Execution process" << std::endl;
-    CloneArgument* argument = (CloneArgument*)args;
-    std::cout << "[_executeActionMessage] execute the action" << std::endl;
-    SandboxFork::Child(argument->inPtr,argument->outPtr).executeActionMessage(argument->event);
-    std::cout << "[_executeActionMessage] Return from the process" << std::endl;
-    return 0;
-}
-
-static int _executeHttpActionMessage(void* args) {
-    std::cout << "[_executeActionMessage] Execution http process process" << std::endl;
-    CloneArgument* argument = (CloneArgument*)args;
-    std::cout << "[_executeActionMessage] execute the http action" << std::endl;
-    SandboxFork::Child(argument->inPtr,argument->outPtr).executeHttpActionMessage(argument->event);
-    std::cout << "[_executeActionMessage] return from the process" << std::endl;
-    return 0;
-}
-
-const long SandboxFork::Child::CHILD_STACK_SIZE = (1024 * 1024);
-
 SandboxFork::Child::Child(const keto::wavm_common::PipePtr& inPipe, const keto::wavm_common::PipePtr& outPipe) {
     keto::wavm_common::ParentForkGateway::init(inPipe,outPipe);
 }
 
 SandboxFork::Child::~Child() {
     // exit this method
-    //KETO_LOG_ERROR << "[SandboxFork::Child::~Child] Sandbox fork child exit";
     keto::wavm_common::ParentForkGateway::fin();
-    //KETO_LOG_ERROR << "[SandboxFork::Child::~Child] Exit the process";
-    //std::quick_exit(0);
-    //exit(0);
 }
 
 keto::event::Event SandboxFork::Child::executeActionMessage(const keto::event::Event& event) {
@@ -157,21 +127,14 @@ keto::event::Event SandboxFork::Child::executeHttpActionMessage(const keto::even
 
 SandboxFork::Parent::Parent()
     : inPipe(new boost::process::pipe()), outPipe(new boost::process::pipe()), stack(NULL) {
-    //this->stack = (char*)mmap(NULL, SandboxFork::Child::CHILD_STACK_SIZE, PROT_READ | PROT_WRITE,
-    //             MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
-    //if (this->stack == MAP_FAILED) {
-    //    BOOST_THROW_EXCEPTION(ChildStackCreationFailedException());
-    //}
 }
 
 SandboxFork::Parent::~Parent() {
     try {
         if (childPtr) {
-            //childPtr->terminate();
             childPtr->wait();
             childPtr.reset();
         }
-        //munmap(stack, SandboxFork::Child::CHILD_STACK_SIZE);
     } catch (keto::common::Exception& ex) {
         KETO_LOG_ERROR << "[SandboxFork::Parent::~Parent]Failed to process the contract : " << ex.what();
         KETO_LOG_ERROR << "Cause: " << boost::diagnostic_information(ex,true);
@@ -185,21 +148,6 @@ SandboxFork::Parent::~Parent() {
 }
 
 keto::event::Event SandboxFork::Parent::executeActionMessage(const keto::event::Event& event) {
-    /*CloneArgument cloneArgument;
-    cloneArgument.outPtr = this->outPipe;
-    cloneArgument.inPtr = this->inPipe;
-    cloneArgument.event = event;
-
-    char *stackTop = this->stack + SandboxFork::Child::CHILD_STACK_SIZE;
-    int pid = clone(_executeActionMessage,stackTop,CLONE_NEWUTS | SIGCHLD,&cloneArgument);
-    if (pid == -1) {
-        int errsv = errno;
-        std::string error = strerror(errsv);
-        std::stringstream ss;
-        ss << "Failed to clone : " << error;
-        BOOST_THROW_EXCEPTION(CloneFailedException(ss.str()));
-    }
-    this->childPtr = std::make_shared<boost::process::child>(pid);*/
     int pid = fork();
     if (pid == 0) {
         try {
@@ -215,21 +163,6 @@ keto::event::Event SandboxFork::Parent::executeActionMessage(const keto::event::
 }
 
 keto::event::Event SandboxFork::Parent::executeHttpActionMessage(const keto::event::Event& event) {
-    /*CloneArgument cloneArgument;
-    cloneArgument.outPtr = this->outPipe;
-    cloneArgument.inPtr = this->inPipe;
-    cloneArgument.event = event;
-
-    char *stackTop = this->stack + SandboxFork::Child::CHILD_STACK_SIZE;
-    int pid = clone(_executeHttpActionMessage,stackTop,CLONE_NEWUTS | SIGCHLD,&cloneArgument);
-    if (pid == -1) {
-        int errsv = errno;
-        std::string error = strerror(errsv);
-        std::stringstream ss;
-        ss << "Failed to clone : " << error;
-        BOOST_THROW_EXCEPTION(CloneFailedException(ss.str()));
-    }
-    this->childPtr = std::make_shared<boost::process::child>(pid);*/
     int pid = fork();
     if (pid == 0) {
         try {
@@ -366,22 +299,16 @@ keto::event::Event SandboxFork::Parent::execute() {
 
 void SandboxFork::Parent::write(boost::process::opstream& pout, const keto::wavm_common::ForkMessageWrapperHelper& forkMessageWrapperHelper) {
     std::vector<uint8_t> message = forkMessageWrapperHelper;
-    //KETO_LOG_ERROR << "[SandboxFork::Parent::write] message size : " << message.size();
     pout << (size_t)message.size();
     pout.write((char*)message.data(),message.size());
     pout.flush();
-    //KETO_LOG_ERROR << "[SandboxFork::Parent::write] hex is : " << Botan::hex_encode(message);
 }
 
 keto::wavm_common::ForkMessageWrapperHelper SandboxFork::Parent::read(boost::process::ipstream& pin) {
     size_t size;
     pin >> size;
-    //KETO_LOG_ERROR << "[SandboxFork::Parent::read] Read the bytes in until EOF : " << size;
     std::vector<uint8_t> message(size);
     pin.read((char*)message.data(),size);
-    //KETO_LOG_ERROR << "[SandboxFork::Parent::read] read the message from the pipe : " << message.size();
-    //KETO_LOG_ERROR << "[SandboxFork::Parent::read] read in the buffer size : " << message.size();
-    //KETO_LOG_ERROR << "[SandboxFork::Parent::read] hex is : " << Botan::hex_encode(message);
     return keto::wavm_common::ForkMessageWrapperHelper(message);
 }
 

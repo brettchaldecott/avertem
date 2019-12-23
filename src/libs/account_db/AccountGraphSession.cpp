@@ -195,10 +195,10 @@ ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryS
                 unsigned char *value = librdf_node_get_literal_value(nodes[index]);
                 if (value) {
                     resultMap[names[index]] = std::string((const char *) value);
-                    librdf_free_node(nodes[index]);
                 } else {
                     resultMap[names[index]] = "";
                 }
+                librdf_free_node(nodes[index]);
             }
         }
         resultVectorMap.push_back(resultMap);
@@ -256,14 +256,13 @@ ResultVectorMap AccountGraphSession::executeQueryInternal(const std::string& que
             break;
         if (names) {
             for (int index=0; names[index]; index++) {
-
                 unsigned char *value = librdf_node_get_literal_value(nodes[index]);
                 if (value) {
                     resultMap[names[index]] = std::string((const char *) value);
-                    librdf_free_node(nodes[index]);
                 } else {
                     resultMap[names[index]] = "";
                 }
+                librdf_free_node(nodes[index]);
             }
         }
         resultVectorMap.push_back(resultMap);
