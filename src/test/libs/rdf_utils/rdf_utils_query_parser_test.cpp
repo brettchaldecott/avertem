@@ -58,7 +58,24 @@ BOOST_AUTO_TEST_CASE( rdf_utils_query_parser_test ) {
 ?accountTransaction <http://keto-coin.io/schema/rdf/1.0/keto/AccountTransaction#value> ?value .
 } ORDER BY DESC(?date) LIMIT 10 )";
 
-    keto::rdf_utils::RDFQueryParser rdfQueryParser3(query2,"account_value");
-    BOOST_CHECK( rdfQueryParser3.isValidQuery() );
-    std::cout<< "Query : " << rdfQueryParser3.getQuery() << std::endl;
+    for (int count = 0; count < 100; count++) {
+        keto::rdf_utils::RDFQueryParser rdfQueryParser3(query2, "account_value");
+        BOOST_CHECK(rdfQueryParser3.isValidQuery());
+        std::cout << "Query : " << rdfQueryParser3.getQuery() << std::endl;
+    }
+    getchar();
+
+    for (int count = 0; count < 100; count++) {
+        keto::rdf_utils::RDFQueryParser rdfQueryParser3(query2, "account_value");
+        BOOST_CHECK(rdfQueryParser3.isValidQuery());
+        std::cout << "Query : " << rdfQueryParser3.getQuery() << std::endl;
+    }
+    getchar();
+
+    for (int count = 0; count < 100; count++) {
+        keto::rdf_utils::RDFQueryParser rdfQueryParser3(query2, "account_value");
+        BOOST_CHECK(rdfQueryParser3.isValidQuery());
+        std::cout << "Query : " << rdfQueryParser3.getQuery() << std::endl;
+    }
+    getchar();
 }

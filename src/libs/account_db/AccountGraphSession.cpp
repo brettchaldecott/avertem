@@ -309,6 +309,10 @@ void AccountGraphSession::rollback() {
                     ss.str()));
         }
         this->activeTransaction = false;
+    } else {
+        // sync the changes to the store otherwise we have to wait for close
+        // this is required
+        librdf_model_sync(this->accountGraphStore->getModel());
     }
 }
 

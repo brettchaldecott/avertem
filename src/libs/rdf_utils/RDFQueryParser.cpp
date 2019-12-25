@@ -24,13 +24,13 @@ int rasqal_graph_pattern_visit_fn(rasqal_query *query, rasqal_graph_pattern *gp,
     raptor_sequence* patternTrippleSequence = (raptor_sequence*)user_data;
     gp->end_column = gp->end_column + (raptor_sequence_size(patternTrippleSequence) -
         raptor_sequence_size(gp->triples));
-    while(true) {
-        rasqal_triple* temp = (rasqal_triple*)raptor_sequence_pop(gp->triples);
-        if (!temp) {
-            break;
-        }
-        rasqal_free_triple(temp);
-    }
+    //while(true) {
+    //    rasqal_triple* temp = (rasqal_triple*)raptor_sequence_pop(gp->triples);
+    //    if (!temp) {
+    //        break;
+    //    }
+    //    rasqal_free_triple(temp);
+    //}
     gp->triples = patternTrippleSequence;
     return 0;
 }
@@ -140,18 +140,37 @@ void RDFQueryParser::processPattern(rasqal_query *query) {
     raptor_iostream* stream = raptor_new_iostream_to_string(
             rasqal_world_get_raptor(this->world),(void**)&updatedQuery,&querySize,malloc);
     if (rasqal_query_write(stream,query,NULL,NULL)) {
+        raptor_free_sequence(patternTrippleSequence);
         BOOST_THROW_EXCEPTION(keto::rdf_utils::FailedToProcessQueryException());
     }
     raptor_free_iostream(stream);
     KETO_LOG_DEBUG << "The number of bytes written is : " << querySize;
 
     if (!updatedQuery) {
+        raptor_free_sequence(patternTrippleSequence);
         BOOST_THROW_EXCEPTION(keto::rdf_utils::FailedToProcessQueryException());
     }
     KETO_LOG_DEBUG << "Update the query";
     this->sparql = std::string(updatedQuery,querySize);
     KETO_LOG_DEBUG << "After getting they query";
-    free(updatedQuery);
+    raptor_free_memory(updatedQuery);
+
+    // free the existing world
+    raptor_free_sequence(patternTrippleSequence);
+    KETO_LOG_DEBUG << "free the query";
+    rasqal_free_query(this->query);
+    KETO_LOG_DEBUG << "free the world";
+    rasqal_free_world(this->world);
+
+    // reload the internals
+    KETO_LOG_DEBUG << "new world";
+    this->world=rasqal_new_world();
+    KETO_LOG_DEBUG << "open the world";
+    rasqal_world_open(world);
+    KETO_LOG_DEBUG << "new query";
+    this->query=rasqal_new_query(world, keto::rdf_utils::Constants::SPARQL, NULL);
+    KETO_LOG_DEBUG << "prepar";
+    rasqal_query_prepare(this->query, (const unsigned char *)this->sparql.c_str(), NULL);
 }
 
 
