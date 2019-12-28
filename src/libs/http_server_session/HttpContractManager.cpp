@@ -89,8 +89,8 @@ boost::beast::http::response<boost::beast::http::string_body> HttpContractManage
     httpRequestMessage.set_account_hash(keto::server_common::VectorUtils().copyVectorToString(
             httpSession->getAccountHash()));
     for (std::vector<uint8_t> role : httpSession->getRoles()) {
-        *httpRequestMessage.add_roles() = keto::server_common::VectorUtils().copyVectorToString(
-                role);
+        httpRequestMessage.add_roles(keto::server_common::VectorUtils().copyVectorToString(
+                role));
     }
     httpRequestMessage.set_method(req.method_string().to_string());
     httpRequestMessage.set_body(req.body());

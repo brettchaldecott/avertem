@@ -29,10 +29,11 @@ public:
     };
     static std::string getSourceVersion();
 
-    MemoryVault(const keto::crypto::SecureVector& hashId, const MemoryVaultEncryptorPtr encryptorPtr);
+    MemoryVault(uint8_t slotId, const keto::crypto::SecureVector& hashId, const MemoryVaultEncryptorPtr encryptorPtr);
     MemoryVault(const MemoryVault& orig) = delete;
     virtual ~MemoryVault();
 
+    uint8_t getSlot();
     keto::crypto::SecureVector getHashId();
 
     void setValue(const keto::crypto::SecureVector& id,
@@ -46,6 +47,7 @@ public:
 
 
 private:
+    uint8_t slotId;
     const keto::crypto::SecureVector hashId;
     MemoryVaultEncryptorPtr encryptorPtr;
     MemoryVaultPasswordEncryptorPtr memoryVaultPasswordEncryptorPtr;

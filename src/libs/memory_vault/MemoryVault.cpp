@@ -12,8 +12,8 @@ std::string MemoryVault::getSourceVersion() {
     return OBFUSCATED("$Id:");
 }
 
-MemoryVault::MemoryVault(const keto::crypto::SecureVector& hashId, const MemoryVaultEncryptorPtr encryptorPtr) :
-    hashId(hashId), encryptorPtr(encryptorPtr) {
+MemoryVault::MemoryVault(uint8_t slotId, const keto::crypto::SecureVector& hashId, const MemoryVaultEncryptorPtr encryptorPtr) :
+        slotId(slotId), hashId(hashId), encryptorPtr(encryptorPtr) {
     memoryVaultPasswordEncryptorPtr = MemoryVaultPasswordEncryptorPtr(new MemoryVaultPasswordEncryptor());
     storagePtr = MemoryVaultStoragePtr(new MemoryVaultStorage());
     keyStoragePtr = MemoryVaultStoragePtr(new MemoryVaultStorage());
@@ -21,6 +21,10 @@ MemoryVault::MemoryVault(const keto::crypto::SecureVector& hashId, const MemoryV
 
 MemoryVault::~MemoryVault() {
 
+}
+
+uint8_t MemoryVault::getSlot() {
+    return this->slotId;
 }
 
 keto::crypto::SecureVector MemoryVault::getHashId() {

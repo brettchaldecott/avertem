@@ -132,7 +132,15 @@ SandboxFork::Parent::Parent()
 SandboxFork::Parent::~Parent() {
     try {
         if (childPtr) {
-            childPtr->wait();
+            std::error_code ec;
+            if (!childPtr->wait_for(std::chrono::seconds(10),ec)) {
+                KETO_LOG_ERROR << "[SandboxFork::Parent::~Parent]Child failed to exit cleanly : " << ec.message();
+                ec.clear();
+                childPtr->terminate(ec);
+                if (ec) {
+                    KETO_LOG_ERROR << "[SandboxFork::Parent::~Parent]Failed to terminate the child : " << ec.message();
+                }
+            }
             childPtr.reset();
         }
     } catch (keto::common::Exception& ex) {
@@ -154,6 +162,7 @@ keto::event::Event SandboxFork::Parent::executeActionMessage(const keto::event::
             SandboxFork::Child(this->inPipe, this->outPipe).executeActionMessage(event);
             std::quick_exit(0);
         } catch (...) {
+            KETO_LOG_ERROR << "[SandboxFork::Parent::executeActionMessage] failed execute correctly unexpected exception. Child is terminating";
             std::quick_exit(-1);
         }
         return keto::event::Event();
@@ -169,6 +178,7 @@ keto::event::Event SandboxFork::Parent::executeHttpActionMessage(const keto::eve
             SandboxFork::Child(this->inPipe, this->outPipe).executeHttpActionMessage(event);
             std::quick_exit(0);
         } catch (...) {
+            KETO_LOG_ERROR << "[SandboxFork::Parent::executeHttpActionMessage] failed execute correctly unexpected exception. Child is terminating";
             std::quick_exit(-1);
         }
 
@@ -305,11 +315,16 @@ void SandboxFork::Parent::write(boost::process::opstream& pout, const keto::wavm
 }
 
 keto::wavm_common::ForkMessageWrapperHelper SandboxFork::Parent::read(boost::process::ipstream& pin) {
-    size_t size;
-    pin >> size;
-    std::vector<uint8_t> message(size);
-    pin.read((char*)message.data(),size);
-    return keto::wavm_common::ForkMessageWrapperHelper(message);
+    while (true) {
+        size_t size;
+        pin >> size;
+        if (!size) {
+            continue;
+        }
+        std::vector<uint8_t> message(size);
+        pin.read((char *) message.data(), size);
+        return keto::wavm_common::ForkMessageWrapperHelper(message);
+    }
 }
 
 SandboxFork::SandboxFork(const keto::event::Event& event) : event(event){

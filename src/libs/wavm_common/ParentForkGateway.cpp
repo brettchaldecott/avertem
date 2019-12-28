@@ -113,13 +113,18 @@ void ParentForkGateway::_returnResult(const keto::event::Event& event) {
 
 keto::wavm_common::ForkMessageWrapperHelper ParentForkGateway::read() {
     //KETO_LOG_ERROR << "[ParentForkGateway::read] Read the bytes in until EOF";
-    size_t size;
-    pin >> size;
-    //KETO_LOG_ERROR << "[ParentForkGateway::read] Read the bytes in until EOF : " << size;
-    std::vector<uint8_t> message(size);
-    pin.read((char*)message.data(),size);
-    //KETO_LOG_ERROR << "[ParentForkGateway::read] read in the buffer size : " << message.size();
-    return keto::wavm_common::ForkMessageWrapperHelper(message);
+    while(true) {
+        size_t size;
+        pin >> size;
+        if (!size) {
+            continue;
+        }
+        //KETO_LOG_ERROR << "[ParentForkGateway::read] Read the bytes in until EOF : " << size;
+        std::vector<uint8_t> message(size);
+        pin.read((char *) message.data(), size);
+        //KETO_LOG_ERROR << "[ParentForkGateway::read] read in the buffer size : " << message.size();
+        return keto::wavm_common::ForkMessageWrapperHelper(message);
+    }
 }
 
 void ParentForkGateway::write(const keto::wavm_common::ForkMessageWrapperHelper& forkMessageWrapperHelper) {
