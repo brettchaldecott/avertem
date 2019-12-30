@@ -66,6 +66,7 @@ void MemoryVaultSession::initSession() {
                             keto::server_common::toEvent<keto::proto::MemoryVaultCreate>(
                                     keto::server_common::Events::MEMORY_VAULT::CREATE_VAULT,request)));
 
+    this->slot = response.slot_id();
 }
 
 void MemoryVaultSession::clearSession() {
@@ -127,6 +128,10 @@ keto::crypto::SecureVector MemoryVaultSession::generatePassword() {
 
 std::string MemoryVaultSession::getVaultName() {
     return this->vaultName;
+}
+
+uint8_t MemoryVaultSession::getSlot() {
+    return this->slot;
 }
 
 }

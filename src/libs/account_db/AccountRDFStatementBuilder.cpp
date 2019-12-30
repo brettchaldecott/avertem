@@ -230,7 +230,7 @@ AccountRDFStatementBuilder::AccountRDFStatementBuilder(
             
             for (std::string subject : accountRDFStatement->getModel()->subjects()) {
                 keto::asn1::RDFSubjectHelperPtr subjectPtr = 
-                        accountRDFStatement->getModel()->operator [](subject);
+                        (*accountRDFStatement->getModel())[subject];
 
                 // add the account information
                 keto::asn1::RDFPredicateHelper transactionAccountRDFPredicate =

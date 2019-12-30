@@ -93,7 +93,7 @@ public:
 
     MemoryVaultPtr createVault(const std::string& name,
                 const keto::crypto::SecureVector& sessionId, const keto::crypto::SecureVector& password);
-    MemoryVaultPtr getVault(const std::string& name, const keto::crypto::SecureVector& password);
+    MemoryVaultPtr getVault(const uint8_t& slot, const std::string& name, const keto::crypto::SecureVector& password);
 
 
 

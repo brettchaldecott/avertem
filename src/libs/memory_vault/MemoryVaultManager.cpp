@@ -55,7 +55,7 @@ MemoryVaultManager::MemoryVaultSlot::MemoryVaultSlot(const uint8_t& slot, const 
 }
 
 MemoryVaultManager::MemoryVaultSlot::~MemoryVaultSlot() {
-
+    KETO_LOG_ERROR << "The slot destructor : " << (int)slot;
 }
 
 
@@ -147,15 +147,14 @@ MemoryVaultPtr MemoryVaultManager::createVault(const std::string& name,
     return this->slots.front()->createVault(name,sessionId,password);
 }
 
-MemoryVaultPtr MemoryVaultManager::getVault(const std::string& name, const keto::crypto::SecureVector& password) {
+MemoryVaultPtr MemoryVaultManager::getVault(const uint8_t& slot, const std::string& name, const keto::crypto::SecureVector& password) {
     std::lock_guard<std::mutex> guard(classMutex);
-    for (std::deque<MemoryVaultSlotPtr>::iterator iter = this->slots.begin(); iter != this->slots.end(); iter++) {
-        if ((*iter)->isVault(name,password)) {
-            return (*iter)->getVault(name,password);
-        }
+    if (this->slotIndex.count(slot)) {
+        return this->slotIndex[slot]->getVault(name,password);
     }
+
     std::stringstream ss;
-    ss << "Unknown vault [" << name << "] cannot retrieve it.";
+    ss << "Unknown vault [" << slot << "][" << name << "] cannot retrieve it.";
     BOOST_THROW_EXCEPTION(UnknownVaultException(ss.str()));
 }
 

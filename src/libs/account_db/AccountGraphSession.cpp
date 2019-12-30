@@ -123,7 +123,7 @@ void AccountGraphSession::remove(keto::asn1::RDFSubjectHelperPtr& subject) {
 
 std::string AccountGraphSession::query(const std::string& queryStr, const std::vector<uint8_t>& accountHash) {
     std::lock_guard<std::recursive_mutex> guard(classMutex);
-    keto::rdf_utils::RDFQueryParser rdfQueryParser(queryStr);
+    keto::rdf_utils::RDFQueryParser rdfQueryParser(queryStr,accountHash);
     if (!rdfQueryParser.isValidQuery()) {
         BOOST_THROW_EXCEPTION(keto::account_db::InvalidQueryFormat());
     }

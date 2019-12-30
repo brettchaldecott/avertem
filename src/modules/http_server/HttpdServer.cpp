@@ -25,6 +25,7 @@
 #include "keto/environment/EnvironmentManager.hpp"
 #include "keto/common/HttpEndPoints.hpp"
 #include "keto/server_session/HttpRequestManager.hpp"
+#include "keto/server_common/StringUtils.hpp"
 
 #include "keto/transaction/Transaction.hpp"
 #include "keto/server_common/TransactionHelper.hpp"
@@ -225,13 +226,16 @@ handle_request(
             return send(std::move(bad_request("Unknown HTTP-method")));
 
         // Request path must be absolute and not contain "..".
-        if( req.target().empty() ||
-            req.target()[0] != '/' ||
-            req.target().find("..") != boost::beast::string_view::npos)
+        boost::beast::string_view pathView = req.target();
+        std::string target = keto::server_common::StringUtils(pathView.to_string()).replaceAll("//","/");
+
+        if( target.empty() ||
+            target[0] != '/' ||
+            target.find("..") != boost::beast::string_view::npos)
             return send(std::move(bad_request("Illegal request-target")));
 
 
-        std::string path = path_cat(doc_root, req.target());
+        std::string path = path_cat(doc_root, target);
         if(req.target().back() == '/')
             path.append("index.html");
 

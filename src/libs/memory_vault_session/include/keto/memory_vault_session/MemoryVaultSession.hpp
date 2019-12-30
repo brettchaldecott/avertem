@@ -59,12 +59,13 @@ public:
 protected:
     keto::crypto::SecureVector generatePassword();
     std::string getVaultName();
-
+    uint8_t getSlot();
 
 private:
     keto::software_consensus::ConsensusHashGeneratorPtr consensusHashGenerator;
     std::string vaultName;
     keto::crypto::PasswordPipeLinePtr passwordPipeLinePtr;
+    uint8_t slot;
     std::map<std::string,MemoryVaultSessionEntryPtr> sessionEntries;
 
 

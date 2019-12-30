@@ -38,8 +38,8 @@ BOOST_AUTO_TEST_CASE( memory_vault_manager_test ) {
     memoryVaultManagerPtr->createSession(sessions);
     keto::memory_vault::MemoryVaultPtr memoryVaultPtr =
             memoryVaultManagerPtr->createVault("test",keto::crypto::SecureVectorUtils().copyStringToSecure("test"),keto::crypto::SecureVectorUtils().copyStringToSecure("test"));
-
-    memoryVaultPtr = memoryVaultManagerPtr->getVault("test",keto::crypto::SecureVectorUtils().copyStringToSecure("test"));
+    uint8_t slot = memoryVaultPtr->getSlot();
+    memoryVaultPtr = memoryVaultManagerPtr->getVault(slot,"test",keto::crypto::SecureVectorUtils().copyStringToSecure("test"));
 
     keto::crypto::SecureVector testValue = keto::crypto::SecureVectorUtils().copyStringToSecure("here be dragons");
     memoryVaultPtr->setValue(keto::crypto::SecureVectorUtils().copyStringToSecure("test"),
@@ -51,8 +51,26 @@ BOOST_AUTO_TEST_CASE( memory_vault_manager_test ) {
     BOOST_CHECK_EQUAL_COLLECTIONS(value.begin(),value.end(),testValue.begin(),testValue.end());
 
     memoryVaultManagerPtr->clearSession();
+    memoryVaultManagerPtr->createSession(sessions);
+    memoryVaultPtr =
+            memoryVaultManagerPtr->createVault("test",keto::crypto::SecureVectorUtils().copyStringToSecure("test"),keto::crypto::SecureVectorUtils().copyStringToSecure("test"));
+    memoryVaultManagerPtr->getVault(slot,"test",keto::crypto::SecureVectorUtils().copyStringToSecure("test"));
 
-    BOOST_REQUIRE_THROW(memoryVaultManagerPtr->getVault("test",keto::crypto::SecureVectorUtils().copyStringToSecure("test")), keto::memory_vault::UnknownVaultException);
+    BOOST_CHECK_NE(slot,memoryVaultPtr->getSlot());
+
+    memoryVaultManagerPtr->clearSession();
+    memoryVaultManagerPtr->createSession(sessions);
+    memoryVaultPtr =
+            memoryVaultManagerPtr->createVault("test",keto::crypto::SecureVectorUtils().copyStringToSecure("test"),keto::crypto::SecureVectorUtils().copyStringToSecure("test"));
+    memoryVaultManagerPtr->getVault(slot,"test",keto::crypto::SecureVectorUtils().copyStringToSecure("test"));
+    BOOST_CHECK_NE(slot,memoryVaultPtr->getSlot());
+
+    memoryVaultManagerPtr->clearSession();
+    memoryVaultManagerPtr->createSession(sessions);
+    memoryVaultPtr =
+            memoryVaultManagerPtr->createVault("test",keto::crypto::SecureVectorUtils().copyStringToSecure("test"),keto::crypto::SecureVectorUtils().copyStringToSecure("test"));
+
+    BOOST_REQUIRE_THROW(memoryVaultManagerPtr->getVault(slot,"test",keto::crypto::SecureVectorUtils().copyStringToSecure("test")), keto::memory_vault::UnknownVaultException);
 
     keto::memory_vault::MemoryVaultManager::fin();
 

@@ -9,6 +9,7 @@ message MemoryVaultCreate {
     bytes vault = 1;
     bytes session = 2;
     bytes password = 3;
+    uint32 slot_id = 4;
 }
 
 message MemoryVaultAddEntryRequest {
@@ -16,6 +17,7 @@ message MemoryVaultAddEntryRequest {
     bytes password = 2;
     bytes entry_id = 3;
     bytes value = 4;
+    uint32 slot_id = 5;
 }
 
 message MemoryVaultAddEntryResponse {
@@ -28,6 +30,7 @@ message MemoryVaultSetEntryRequest {
     bytes password = 2;
     bytes entry_id = 3;
     bytes value = 4;
+    uint32 slot_id = 5;
 }
 
 message MemoryVaultSetEntryResponse {
@@ -39,6 +42,7 @@ message MemoryVaultGetEntryRequest {
     bytes vault = 1;
     bytes password = 2;
     bytes entry_id = 3;
+    uint32 slot_id = 4;
 }
 
 message MemoryVaultGetEntryResponse {
@@ -52,6 +56,7 @@ message MemoryVaultRemoveEntryRequest {
     bytes vault = 1;
     bytes password = 2;
     bytes entry_id = 3;
+    uint32 slot_id = 4;
 }
 
 

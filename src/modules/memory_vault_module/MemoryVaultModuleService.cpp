@@ -51,12 +51,13 @@ keto::event::Event MemoryVaultModuleService::createVault(const keto::event::Even
             keto::server_common::fromEvent<keto::proto::MemoryVaultCreate>(event);
 
 
-    keto::memory_vault::MemoryVaultManager::getInstance()->createVault(memoryVaultCreate.vault(),
+    keto::memory_vault::MemoryVaultPtr memoryVaultPtr = keto::memory_vault::MemoryVaultManager::getInstance()->createVault(memoryVaultCreate.vault(),
             keto::crypto::SecureVectorUtils().copyStringToSecure(memoryVaultCreate.session()),
             keto::crypto::SecureVectorUtils().copyStringToSecure(memoryVaultCreate.password()));
 
+    memoryVaultCreate.set_slot_id(memoryVaultPtr->getSlot());
 
-    return event;
+    return keto::server_common::toEvent<keto::proto::MemoryVaultCreate>(memoryVaultCreate);
 }
 
 keto::event::Event MemoryVaultModuleService::addEntry(const keto::event::Event &event) {
@@ -66,6 +67,7 @@ keto::event::Event MemoryVaultModuleService::addEntry(const keto::event::Event &
 
     keto::memory_vault::MemoryVaultPtr memoryVaultPtr =
             keto::memory_vault::MemoryVaultManager::getInstance()->getVault(
+                    memoryVaultAddEntryRequest.slot_id(),
                     memoryVaultAddEntryRequest.vault(),
                     keto::crypto::SecureVectorUtils().copyStringToSecure(memoryVaultAddEntryRequest.password()));
 
@@ -85,6 +87,7 @@ keto::event::Event MemoryVaultModuleService::setEntry(const keto::event::Event &
 
     keto::memory_vault::MemoryVaultPtr memoryVaultPtr =
             keto::memory_vault::MemoryVaultManager::getInstance()->getVault(
+                    memoryVaultSetEntryRequest.slot_id(),
                     memoryVaultSetEntryRequest.vault(),
                     keto::crypto::SecureVectorUtils().copyStringToSecure(memoryVaultSetEntryRequest.password()));
 
@@ -111,6 +114,7 @@ keto::event::Event MemoryVaultModuleService::getEntry(const keto::event::Event &
     //          std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << "]get the value";
     keto::memory_vault::MemoryVaultPtr memoryVaultPtr =
             keto::memory_vault::MemoryVaultManager::getInstance()->getVault(
+                    memoryVaultGetEntryRequest.slot_id(),
                     memoryVaultGetEntryRequest.vault(),
                     keto::crypto::SecureVectorUtils().copyStringToSecure(memoryVaultGetEntryRequest.password()));
 
@@ -133,6 +137,7 @@ keto::event::Event MemoryVaultModuleService::removeEntry(const keto::event::Even
 
     keto::memory_vault::MemoryVaultPtr memoryVaultPtr =
             keto::memory_vault::MemoryVaultManager::getInstance()->getVault(
+                    memoryVaultRemoveEntryRequest.slot_id(),
                     memoryVaultRemoveEntryRequest.vault(),
                     keto::crypto::SecureVectorUtils().copyStringToSecure(memoryVaultRemoveEntryRequest.password()));
 
