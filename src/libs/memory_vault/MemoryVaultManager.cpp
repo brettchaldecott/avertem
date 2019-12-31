@@ -63,6 +63,16 @@ uint8_t MemoryVaultManager::MemoryVaultSlot::getSlot() {
     return slot;
 }
 
+void MemoryVaultManager::MemoryVaultSlot::addSessions(const vectorOfSecureVectors& sessions) {
+    for (keto::crypto::SecureVector vector : sessions) {
+        //KETO_LOG_DEBUG << "[createSession] vectors : " << Botan::hex_encode(vector);
+        if (!this->sessions.count(vector)) {
+            this->sessions.insert(
+                    std::pair<keto::crypto::SecureVector, MemoryVaultWrapperPtr>(vector, MemoryVaultWrapperPtr()));
+        }
+    }
+}
+
 MemoryVaultPtr MemoryVaultManager::MemoryVaultSlot::createVault(const std::string& name,
                            const keto::crypto::SecureVector& sessionId, const keto::crypto::SecureVector& password) {
     std::lock_guard<std::mutex> guard(classMutex);
@@ -126,15 +136,22 @@ MemoryVaultManagerPtr MemoryVaultManager::getInstance() {
 void MemoryVaultManager::createSession(
         const vectorOfSecureVectors& sessions) {
     std::lock_guard<std::mutex> guard(classMutex);
-    uint8_t slotId = nextSlot();
-    MemoryVaultSlotPtr memoryVaultSlotPtr(new MemoryVaultSlot(slotId,this->memoryVaultEncryptorPtr,sessions));
-    this->slots.push_front(memoryVaultSlotPtr);
-    this->slotIndex[slotId] = memoryVaultSlotPtr;
+    if (!currentMemoryVaultSlotPtr) {
+        uint8_t slotId = nextSlot();
+        MemoryVaultSlotPtr memoryVaultSlotPtr(new MemoryVaultSlot(slotId, this->memoryVaultEncryptorPtr, sessions));
+        this->slots.push_front(memoryVaultSlotPtr);
+        this->slotIndex[slotId] = memoryVaultSlotPtr;
+        this->currentMemoryVaultSlotPtr = memoryVaultSlotPtr;
+    } else {
+        // add sessions
+        this->currentMemoryVaultSlotPtr->addSessions(sessions);
+    }
 }
 
 void MemoryVaultManager::clearSession() {
     std::lock_guard<std::mutex> guard(classMutex);
-    if (this->slots.size() <= 2) {
+    currentMemoryVaultSlotPtr.reset();
+    if (this->slots.size() <= 3) {
         return;
     }
     this->slotIndex.erase(this->slots.back()->getSlot());

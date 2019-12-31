@@ -141,9 +141,10 @@ void NetworkSessionKeyManager::generateSession() {
     // increment the lost
     this->slot++;
     if (slot >= 255) {
-        this->slot = 0;
+        this->slot = 1;
     }
-    this->sessionSlots[this->slot] = NetworkSessionSlotPtr(new NetworkSessionSlot(slot,hashIndex,sessionKeys));
+    this->sessionSlots[this->slot] = NetworkSessionSlotPtr(new NetworkSessionSlot(this->slot,hashIndex,sessionKeys));
+    this->slots.push_back(this->slot);
 
     // remove the extra slot
     popSlot();
@@ -180,6 +181,7 @@ void NetworkSessionKeyManager::setSession(const keto::proto::NetworkKeysWrapper&
     // setup the slot
     this->slot = networkKeysHelper.getSlot();
     this->sessionSlots[networkKeysHelper.getSlot()] = NetworkSessionSlotPtr(new NetworkSessionSlot(networkKeysHelper.getSlot(),hashIndex,sessionKeys));
+    this->slots.push_back(networkKeysHelper.getSlot());
 
     // remove the extra slot
     popSlot();
@@ -251,7 +253,7 @@ keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr NetworkSessionKeyMan
 }
 
 void NetworkSessionKeyManager::popSlot() {
-    if (this->slots.size() <= 2) {
+    if (this->slots.size() <= 3) {
         return;
     }
     this->sessionSlots.erase(this->slots.front());

@@ -58,6 +58,7 @@ public:
         virtual ~MemoryVaultSlot();
 
         uint8_t getSlot();
+        void addSessions(const vectorOfSecureVectors& sessions);
         MemoryVaultPtr createVault(const std::string& name,
                                    const keto::crypto::SecureVector& sessionId, const keto::crypto::SecureVector& password);
         MemoryVaultPtr getVault(const std::string& name, const keto::crypto::SecureVector& password);
@@ -103,6 +104,7 @@ private:
     MemoryVaultEncryptorPtr memoryVaultEncryptorPtr;
     std::deque<MemoryVaultSlotPtr> slots;
     std::map<uint8_t,MemoryVaultSlotPtr> slotIndex;
+    MemoryVaultSlotPtr currentMemoryVaultSlotPtr;
 
     uint8_t nextSlot();
 };
