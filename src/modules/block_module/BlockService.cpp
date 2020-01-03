@@ -191,7 +191,10 @@ keto::event::Event BlockService::blockMessage(const keto::event::Event& event) {
     BlockProducer::ProducerScopeLockPtr producerScopeLockPtr =  BlockProducer::getInstance()->aquireTransactionLock();
     keto::proto::MessageWrapper  _messageWrapper =
             keto::server_common::fromEvent<keto::proto::MessageWrapper>(event);
-    if (BlockProducer::getInstance()->getState() != BlockProducer::State::block_producer) {
+    BlockProducer::State currentState = BlockProducer::getInstance()->getState();
+    if (currentState == BlockProducer::State::block_producer_wait) {
+        BOOST_THROW_EXCEPTION(keto::block::ReScheduleTransactionException());
+    } else if (currentState != BlockProducer::State::block_producer) {
         // to prevent any chance of a deadlock that might occur to do this thread looping round on itself here
         // we release the producer stop lock before making this call
         BOOST_THROW_EXCEPTION(keto::block::ReRouteMessageException());

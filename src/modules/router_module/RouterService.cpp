@@ -103,7 +103,7 @@ std::shared_ptr<RouterService> RouterService::getInstance() {
 
 keto::event::Event RouterService::routeMessage(const keto::event::Event& event) {
     int retry_count =0;
-    while (retry_count < 20) {
+    while (retry_count < 120) {
         try {
             keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper =
                     keto::server_common::fromEvent<keto::proto::MessageWrapper>(event);
@@ -193,20 +193,24 @@ keto::event::Event RouterService::routeMessage(const keto::event::Event& event) 
             return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
         } catch (keto::common::Exception &ex) {
             KETO_LOG_ERROR << "[RouterService::routeMessage] Failed to route the message because: "
-                        << boost::diagnostic_information_what(ex, true) << std::endl <<  " : will retry";
+                        << boost::diagnostic_information_what(ex, true) << std::endl <<  " : will retry in 1.5 seconds";
+            if (ex.getType() == "ReScheduleTransactionException") {
+                KETO_LOG_ERROR << "[RouterService::routeMessage] Re-schedule requested will zero the retry count";
+                retry_count=0;
+            }
         } catch (boost::exception &ex) {
             KETO_LOG_ERROR << "[RouterService::routeMessage] Failed to route the message because :"
-                        << boost::diagnostic_information_what(ex, true) << std::endl <<  " : will retry";
+                        << boost::diagnostic_information_what(ex, true) << std::endl <<  "  : will retry in 1.5 seconds";
         } catch (std::exception &ex) {
             KETO_LOG_ERROR << "[RouterService::routeMessage] Failed to route the message because :" << ex.what()
-                        << std::endl <<  " : will retry";
+                        << std::endl <<  "  : will retry in 1.5 seconds";
         } catch (...) {
             KETO_LOG_ERROR << "[RouterService::routeMessage] Failed to route the message because : unknown error"
-                        << std::endl <<  " : will retry";
+                        << std::endl <<  "  : will retry in 1.5 seconds";
         }
         retry_count++;
         // sleep for half a second before retrying
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1500));
     }
     KETO_LOG_FATAL << "[RouterService::routeMessage] Failed to route the message fatal error";
     keto::proto::MessageWrapperResponse response;
