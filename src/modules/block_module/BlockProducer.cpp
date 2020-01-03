@@ -228,6 +228,55 @@ BlockProducer::PendingTransactionsTanglePtr BlockProducer::PendingTransactionMan
     }
 }
 
+BlockProducer::ProducerLock::ProducerLock() : transactionLock(0), blockLock(0) {
+
+}
+
+BlockProducer::ProducerLock::~ProducerLock() {
+
+}
+
+BlockProducer::ProducerScopeLockPtr BlockProducer::ProducerLock::aquireBlockLock() {
+    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    this->blockLock++;
+    while(this->transactionLock){
+        this->stateCondition.wait(uniqueLock);
+    }
+    return BlockProducer::ProducerScopeLockPtr(new BlockProducer::ProducerScopeLock(this,false,true));
+}
+
+BlockProducer::ProducerScopeLockPtr BlockProducer::ProducerLock::aquireTransactionLock() {
+    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    while(this->blockLock) {
+        this->stateCondition.wait(uniqueLock);
+    }
+    this->transactionLock++;
+    return BlockProducer::ProducerScopeLockPtr(new BlockProducer::ProducerScopeLock(this,true,false));
+}
+
+void BlockProducer::ProducerLock::release(bool _transactionLock, bool _blockLock) {
+    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    KETO_LOG_ERROR << "[BlockProducer::ProducerLock::release]Release the lock [" << this->transactionLock << "][" <<this->blockLock << "]";
+    if (_transactionLock) {
+        this->transactionLock--;
+    } else if (_blockLock) {
+        this->blockLock--;
+    }
+    // use notify all this is cumbersome but a lot more effective than having aquires individually release until a lock is
+    // aquired
+    this->stateCondition.notify_all();
+}
+
+BlockProducer::ProducerScopeLock::ProducerScopeLock(BlockProducer::ProducerLock* reference, bool transactionLock, bool blockLock) :
+    reference(reference),transactionLock(transactionLock), blockLock(blockLock) {
+    KETO_LOG_ERROR << "[BlockProducer::ProducerScopeLock::ProducerScopeLock]gain the lock the lock [" << this->transactionLock << "][" <<this->blockLock << "]";
+}
+
+BlockProducer::ProducerScopeLock::~ProducerScopeLock() {
+    KETO_LOG_ERROR << "[BlockProducer::ProducerScopeLock::~ProducerScopeLock]Release the lock [" << this->transactionLock << "][" <<this->blockLock << "]";
+    reference->release(this->transactionLock,this->blockLock);
+}
+
 BlockProducer::BlockProducer() :
         enabled(false),
         loaded(false),
@@ -264,6 +313,8 @@ BlockProducer::BlockProducer() :
 
     this->pendingTransactionManagerPtr =
             BlockProducer::PendingTransactionManagerPtr(new BlockProducer::PendingTransactionManager());
+
+    this->producerLockPtr = BlockProducer::ProducerLockPtr(new ProducerLock());
 }
 
 BlockProducer::~BlockProducer() {
@@ -489,6 +540,11 @@ void BlockProducer::processProducerEnding(
     }
 }
 
+// get transaction lock
+BlockProducer::ProducerScopeLockPtr BlockProducer::aquireTransactionLock() {
+    return this->producerLockPtr->aquireTransactionLock();
+}
+
 BlockProducer::State BlockProducer::checkState() {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
     KETO_LOG_DEBUG << "[BlockProducer::checkState] check the state";
@@ -509,6 +565,8 @@ BlockProducer::State BlockProducer::checkState() {
 
 
 void BlockProducer::processTransactions() {
+    BlockProducer::ProducerScopeLockPtr producerScopeLockPtr = this->producerLockPtr->aquireBlockLock();
+
     // clear the account cache
     keto::proto::ClearDirtyCache clearDirtyCache;
     keto::server_common::triggerEvent(

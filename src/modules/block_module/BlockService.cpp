@@ -30,7 +30,8 @@
 #include "keto/block/GenesisReader.hpp"
 #include "keto/block/GenesisLoader.hpp"
 #include "keto/block/BlockSyncManager.hpp"
-#include "include/keto/block/GenesisLoader.hpp"
+#include "keto/block/GenesisLoader.hpp"
+#include "keto/block/Exception.hpp"
 
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
@@ -186,8 +187,15 @@ keto::event::Event BlockService::persistBlockMessage(const keto::event::Event& e
 }
 
 keto::event::Event BlockService::blockMessage(const keto::event::Event& event) {
+    // aquire a transaction lock
+    BlockProducer::ProducerScopeLockPtr producerScopeLockPtr =  BlockProducer::getInstance()->aquireTransactionLock();
     keto::proto::MessageWrapper  _messageWrapper =
             keto::server_common::fromEvent<keto::proto::MessageWrapper>(event);
+    if (BlockProducer::getInstance()->getState() != BlockProducer::State::block_producer) {
+        // to prevent any chance of a deadlock that might occur to do this thread looping round on itself here
+        // we release the producer stop lock before making this call
+        BOOST_THROW_EXCEPTION(keto::block::ReRouteMessageException());
+    }
 
     //KETO_LOG_DEBUG << "Decrypt the transaction";
     keto::proto::MessageWrapper  decryptedMessageWrapper =
@@ -219,7 +227,8 @@ keto::event::Event BlockService::blockMessage(const keto::event::Event& event) {
             transactionProtoHelperPtr);
     }
 
-
+    // release the producer scope lock to prevent recursion on this flag
+    producerScopeLockPtr.reset();
 
     // move transaction to next phase and submit to router
     //KETO_LOG_DEBUG << "###### set the transaction";

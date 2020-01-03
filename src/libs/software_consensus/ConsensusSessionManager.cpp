@@ -240,7 +240,16 @@ void ConsensusSessionManager::initNetworkHeartbeat(const keto::proto::ProtocolHe
     if (!checkHeartbeatTimestamp(msg)) {
         return;
     }
-    for (std::string event : Constants::CONSENSUS_HEARTBEAT) {
+
+    // check for a confirmation slot. This requires the heart beat to run in a slightly different order so
+    // as to not drop transactions and make sure the block producer is the last to execute
+    std::vector<std::string> heartBeatList = Constants::CONSENSUS_HEARTBEAT;
+    keto::software_consensus::ProtocolHeartbeatMessageHelper protocolHeartbeatMessageHelper(msg);
+    if (protocolHeartbeatMessageHelper.getNetworkSlot() == protocolHeartbeatMessageHelper.getConfirmationSlot()) {
+        heartBeatList = Constants::CONSENSUS_CONFIMATION_HEARTBEAT;
+    }
+
+    for (std::string event : heartBeatList) {
         try {
             keto::server_common::triggerEvent(
                     keto::server_common::toEvent<keto::proto::ProtocolHeartbeatMessage>(

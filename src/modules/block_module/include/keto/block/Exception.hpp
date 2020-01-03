@@ -36,7 +36,7 @@ KETO_DECLARE_DERIVED_EXCEPTION (BlockException, UnsupportedTransactionStatusExce
 KETO_DECLARE_DERIVED_EXCEPTION (BlockException, UnprocessedTransactionsException , "Unprocessed transactions in the pending queue.");
 KETO_DECLARE_DERIVED_EXCEPTION (BlockException, ElectionFailedException , "The election failed.");
 KETO_DECLARE_DERIVED_EXCEPTION (BlockException, UnsyncedStateCannotProvideDate , "This node is unsynced and cannot provide data.");
-
+KETO_DECLARE_DERIVED_EXCEPTION (BlockException, ReRouteMessageException , "The message must be rerouted.");
 
     
 }

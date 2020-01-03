@@ -111,6 +111,40 @@ public:
     };
     typedef std::shared_ptr<PendingTransactionManager> PendingTransactionManagerPtr;
 
+    class ProducerScopeLock;
+    typedef std::shared_ptr<ProducerScopeLock> ProducerScopeLockPtr;
+
+    class ProducerLock {
+    public:
+        friend class ProducerScopeLock;
+
+        ProducerLock();
+        ProducerLock(const ProducerLock& orig) = delete;
+        virtual ~ProducerLock();
+
+        ProducerScopeLockPtr aquireBlockLock();
+        ProducerScopeLockPtr aquireTransactionLock();
+    protected:
+        void release(bool _transactionLock, bool _blockLock);
+    public:
+        std::mutex classMutex;
+        std::condition_variable stateCondition;
+        int transactionLock;
+        int blockLock;
+    };
+    typedef std::shared_ptr<ProducerLock> ProducerLockPtr;
+
+    class ProducerScopeLock {
+    public:
+        ProducerScopeLock(ProducerLock* reference, bool transactionLock, bool blockLock);
+        ProducerScopeLock(const ProducerScopeLock& orig) = delete;
+        virtual ~ProducerScopeLock();
+    public:
+        ProducerLock* reference;
+        bool transactionLock;
+        bool blockLock;
+    };
+
 
     /**
      * The state enum containing the various states that the module manager can
@@ -162,6 +196,8 @@ public:
     void processProducerEnding(
             const keto::block_db::SignedBlockWrapperMessageProtoHelper& signedBlockWrapperMessageProtoHelper);
 
+    // get transaction lock
+    ProducerScopeLockPtr aquireTransactionLock();
 private:
     bool enabled;
     bool loaded;
@@ -174,7 +210,7 @@ private:
     PendingTransactionManagerPtr pendingTransactionManagerPtr;
     std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr;
     keto::software_consensus::ConsensusMessageHelper consensusMessageHelper;
-
+    ProducerLockPtr producerLockPtr;
 
     State checkState();
     void processTransactions();
