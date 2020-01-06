@@ -86,6 +86,7 @@ librdf_model* AccountGraphDirtySession::getDirtyModel() {
 
 
 void AccountGraphDirtySession::addDirtyNodesToContext(librdf_model* model) {
+
     librdf_node* context = buildDirtyContext();
     librdf_stream* stream = librdf_model_as_stream(this->model);
     librdf_model_context_add_statements(model,context,stream);

@@ -16,6 +16,8 @@
 
 #include <string>
 #include <memory>
+#include <thread>
+#include <condition_variable>
 
 #include "Protocol.pb.h"
 
@@ -32,7 +34,9 @@
 
 namespace keto {
 namespace router {
-        
+
+class RouterService;
+typedef std::shared_ptr<RouterService> RouterServicePtr;
 
 class RouterService {
 public:
@@ -42,15 +46,55 @@ public:
     
     static std::string getSourceVersion();
 
+    class RouteQueueEntry {
+    public:
+        RouteQueueEntry(keto::event::Event event, int retryCount);
+        RouteQueueEntry(const RouteQueueEntry& orig) = delete;
+        virtual ~RouteQueueEntry();
+
+        keto::event::Event getEvent();
+        std::chrono::milliseconds getDelay();
+        int getRetryCount();
+    private:
+        keto::event::Event event;
+        int retryCount;
+        time_t runtime;
+    };
+    typedef std::shared_ptr<RouteQueueEntry> RouteQueueEntryPtr;
+
+    class RouteQueue {
+    public:
+        RouteQueue(RouterService* service);
+        RouteQueue(const RouteQueue& orig) = delete;
+        virtual ~RouteQueue();
+
+        bool isActive();
+        void activate();
+        void deactivate();
+        void pushEntry(const RouteQueueEntryPtr& event);
+
+    private:
+        RouterService* service;
+        bool active;
+        std::mutex classMutex;
+        std::condition_variable stateCondition;
+        std::deque<RouteQueueEntryPtr> routeQueue;
+        std::shared_ptr<std::thread> queueThreadPtr;
+
+        bool popEntry(RouteQueueEntryPtr& event);
+        void run();
+    };
+    typedef std::shared_ptr<RouteQueue> RouteQueuePtr;
+
     RouterService(const RouterService& orig) = delete;
     virtual ~RouterService();
     
     static std::shared_ptr<RouterService> init();
     static void fin();
     static std::shared_ptr<RouterService> getInstance();
-    
-    
-    keto::event::Event routeMessage(const keto::event::Event& event);
+
+    keto::event::Event routeMessage(const keto::event::Event& event, int retryCount = 0);
+    void processQueueEntry(const RouteQueueEntryPtr& event);
     keto::event::Event registerRpcPeerClient(const keto::event::Event& event);
     keto::event::Event registerRpcPeerServer(const keto::event::Event& event);
     keto::event::Event processPushRpcPeer(const keto::event::Event& event);
@@ -62,6 +106,7 @@ public:
     
 private:
     std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr;
+    RouteQueuePtr routeQueuePtr;
 
     RouterService();
     

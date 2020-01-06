@@ -115,7 +115,7 @@ RpcSession::BufferScope::~BufferScope() {
     bufferCachePtr->remove(buffer);
 }
 
-RpcSession::ReadQueue::ReadQueue(const RpcSessionPtr& session) : session(session) {
+RpcSession::ReadQueue::ReadQueue(const RpcSessionPtr& session) : session(session), active(false) {
 }
 
 RpcSession::ReadQueue::~ReadQueue() {

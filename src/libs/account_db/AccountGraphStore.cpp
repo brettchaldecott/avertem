@@ -41,6 +41,59 @@ std::string AccountGraphStore::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
+AccountGraphStore::StorageLock::StorageLock() : readLock(0), writeLock(0) {
+
+}
+
+AccountGraphStore::StorageLock::~StorageLock() {
+
+}
+
+AccountGraphStore::StorageScopeLockPtr AccountGraphStore::StorageLock::aquireReadLock() {
+    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    while(this->writeLock) {
+        this->stateCondition.wait(uniqueLock);
+    }
+    this->readLock++;
+    KETO_LOG_ERROR << "[AccountGraphStore::StorageLock::aquireWriteLock]Aquire read lock [" << this->readLock << "][" <<this->writeLock << "]";
+    return AccountGraphStore::StorageScopeLockPtr(new AccountGraphStore::StorageScopeLock(this,true,false));
+}
+
+AccountGraphStore::StorageScopeLockPtr AccountGraphStore::StorageLock::aquireWriteLock() {
+    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    // write lock must be unique
+    while(this->writeLock) {
+        this->stateCondition.wait(uniqueLock);
+    }
+    this->writeLock++;
+    while(this->readLock){
+        this->stateCondition.wait(uniqueLock);
+    }
+    KETO_LOG_ERROR << "[AccountGraphStore::StorageLock::aquireWriteLock]Aquire write lock [" << this->readLock << "][" <<this->writeLock << "]";
+    return AccountGraphStore::StorageScopeLockPtr(new AccountGraphStore::StorageScopeLock(this,false,true));
+}
+
+void AccountGraphStore::StorageLock::release(bool _readLock, bool _writeLock) {
+    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    KETO_LOG_ERROR << "[AccountGraphStore::StorageLock::release]Release the lock [" << this->readLock << "][" <<this->writeLock << "]";
+    if (_readLock) {
+        this->readLock--;
+    } else if (_writeLock) {
+        this->writeLock--;
+    }
+    // use notify all this is cumbersome but a lot more effective than having aquires individually release until a lock is
+    // aquired
+    this->stateCondition.notify_all();
+}
+
+AccountGraphStore::StorageScopeLock::StorageScopeLock(StorageLock* reference, bool readLock, bool writeLock)
+    : reference(reference), readLock(readLock), writeLock(writeLock) {
+}
+
+AccountGraphStore::StorageScopeLock::~StorageScopeLock() {
+    this->reference->release(this->readLock,this->writeLock);
+}
+
 AccountGraphStore::AccountGraphStore(const std::string& dbName) : dbName(dbName) {
     // setup the world
     world = librdf_new_world();
@@ -74,7 +127,7 @@ AccountGraphStore::AccountGraphStore(const std::string& dbName) : dbName(dbName)
     // request the database name
     std::stringstream ss;
     if (dbName == Constants::BASE_GRAPH) {
-        ss << "hash-type='bdb',dir='" << dbPath.c_str() << "',contexts='yes'";
+        ss << "hash-type='bdb',dir='" << dbPath.c_str() << "',write='yes',contexts='yes',index-predicates='yes'";
     } else {
         keto::proto::PasswordRequest passwordRequest;
         passwordRequest.set_identifier(dbName);
@@ -82,7 +135,7 @@ AccountGraphStore::AccountGraphStore(const std::string& dbName) : dbName(dbName)
                 keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::PasswordRequest>(
                         keto::server_common::Events::REQUEST_PASSWORD, passwordRequest)));
         KETO_LOG_DEBUG << "The db path is : " << dbPath;
-        ss << "hash-type='bdb',dir='" << dbPath.c_str() << "',contexts='yes',password='" << passwordResponse.password()
+        ss << "hash-type='bdb',dir='" << dbPath.c_str() << "',write='yes',contexts='yes',index-predicates='yes',password='" << passwordResponse.password()
            << "'";
     }
 
@@ -94,7 +147,8 @@ AccountGraphStore::AccountGraphStore(const std::string& dbName) : dbName(dbName)
     if (!storage || !model) {
         BOOST_THROW_EXCEPTION(keto::account_db::AccountDBInitFailureException());
     }
-    
+
+    this->storageLockPtr = AccountGraphStore::StorageLockPtr(new AccountGraphStore::StorageLock);
 }
 
 AccountGraphStore::~AccountGraphStore() {
@@ -147,6 +201,11 @@ librdf_storage* AccountGraphStore::getStorage() {
 
 librdf_model* AccountGraphStore::getModel() {
     return this->model;
+}
+
+
+AccountGraphStore::StorageLockPtr AccountGraphStore::getStorageLock() {
+    return this->storageLockPtr;
 }
 
 }

@@ -35,39 +35,51 @@ std::string AccountGraphSession::getSourceVersion() {
     
     
 AccountGraphSession::~AccountGraphSession() {
-    if (activeTransaction) {
-        // rollback if active still at this point
-        this->rollback();
+
+    KETO_LOG_ERROR << "[AccountGraphSession::AccountGraphSession] The destructor has been called";
+    // free all the extras
+    if (world) {
+        librdf_free_model(removeModel);
+        removeModel = 0;
+        librdf_free_model(addModel);
+        addModel = 0;
+        //librdf_free_model(searchModel);
+        //searchModel = 0;
+        librdf_free_storage(removeStorage);
+        removeStorage = 0;
+        librdf_free_storage(addStorage);
+        addStorage = 0;
+        librdf_free_world(world);
+        world = 0;
     }
 }
 
 void AccountGraphSession::persistDirty(keto::asn1::RDFSubjectHelperPtr& subject) {
-    std::lock_guard<std::recursive_mutex> guard(classMutex);
     AccountGraphDirtySessionManager::getInstance()->getDirtySession(this->accountGraphStore->dbName)->persistDirty(subject);
 }
 
 void AccountGraphSession::persist(keto::asn1::RDFSubjectHelperPtr& subject) {
-    std::lock_guard<std::recursive_mutex> guard(classMutex);
+    // create a memory model to steam into the disk store
     for (keto::asn1::RDFPredicateHelperPtr predicateHelper : subject->getPredicates()) {
         for (keto::asn1::RDFObjectHelperPtr objectHelper : predicateHelper->listObjects()) {
             librdf_statement* statement= 0;
             if (objectHelper->getType().compare(keto::asn1::Constants::RDF_NODE::LITERAL) == 0) {
-                statement = librdf_new_statement_from_nodes(this->accountGraphStore->getWorld(), 
-                    librdf_new_node_from_uri_string(this->accountGraphStore->getWorld(), (const unsigned char*)subject->getSubject().c_str()),
-                    librdf_new_node_from_uri_string(this->accountGraphStore->getWorld(), (const unsigned char*)predicateHelper->getPredicate().c_str()),
+                statement = librdf_new_statement_from_nodes(world,
+                    librdf_new_node_from_uri_string(world, (const unsigned char*)subject->getSubject().c_str()),
+                    librdf_new_node_from_uri_string(world, (const unsigned char*)predicateHelper->getPredicate().c_str()),
                     librdf_new_node_from_typed_literal(
-                            this->accountGraphStore->getWorld(), 
+                            world,
                             (const unsigned char*)objectHelper->getValue().c_str(),
                             NULL, 
                             librdf_new_uri(
-                                this->accountGraphStore->getWorld(),
+                                world,
                                 (const unsigned char*)objectHelper->getDataType().c_str()))
                     );
             } else if (objectHelper->getType().compare(keto::asn1::Constants::RDF_NODE::URI) == 0) {
-                    statement= librdf_new_statement_from_nodes(this->accountGraphStore->getWorld(), 
-                        librdf_new_node_from_uri_string(this->accountGraphStore->getWorld(), (const unsigned char*)subject->getSubject().c_str()),
-                        librdf_new_node_from_uri_string(this->accountGraphStore->getWorld(), (const unsigned char*)predicateHelper->getPredicate().c_str()),
-                        librdf_new_node_from_uri_string(this->accountGraphStore->getWorld(), (const unsigned char*)objectHelper->getValue().c_str())
+                    statement= librdf_new_statement_from_nodes(world,
+                        librdf_new_node_from_uri_string(world, (const unsigned char*)subject->getSubject().c_str()),
+                        librdf_new_node_from_uri_string(world, (const unsigned char*)predicateHelper->getPredicate().c_str()),
+                        librdf_new_node_from_uri_string(world, (const unsigned char*)objectHelper->getValue().c_str())
                         );
             } else {
                 std::stringstream ss;
@@ -75,8 +87,7 @@ void AccountGraphSession::persist(keto::asn1::RDFSubjectHelperPtr& subject) {
                 BOOST_THROW_EXCEPTION(keto::account_db::UnsupportedDataTypeTransactionException(
                         ss.str()));
             }
-            librdf_model_add_statement(this->accountGraphStore->getModel(), statement);
-
+            librdf_model_add_statement(addModel, statement);
              /* Free what we just used to add to the model - now it should be stored */
             librdf_free_statement(statement);
         }
@@ -84,27 +95,26 @@ void AccountGraphSession::persist(keto::asn1::RDFSubjectHelperPtr& subject) {
 }
     
 void AccountGraphSession::remove(keto::asn1::RDFSubjectHelperPtr& subject) {
-    std::lock_guard<std::recursive_mutex> guard(classMutex);
     for (keto::asn1::RDFPredicateHelperPtr predicateHelper : subject->getPredicates()) {
         for (keto::asn1::RDFObjectHelperPtr objectHelper : predicateHelper->listObjects()) {
             librdf_statement* statement= 0;
             if (objectHelper->getType().compare(keto::asn1::Constants::RDF_NODE::LITERAL) == 0) {
-                    statement = librdf_new_statement_from_nodes(this->accountGraphStore->getWorld(), 
-                        librdf_new_node_from_uri_string(this->accountGraphStore->getWorld(), (const unsigned char*)subject->getSubject().c_str()),
-                        librdf_new_node_from_uri_string(this->accountGraphStore->getWorld(), (const unsigned char*)predicateHelper->getPredicate().c_str()),
+                    statement = librdf_new_statement_from_nodes(world,
+                        librdf_new_node_from_uri_string(world, (const unsigned char*)subject->getSubject().c_str()),
+                        librdf_new_node_from_uri_string(world, (const unsigned char*)predicateHelper->getPredicate().c_str()),
                         librdf_new_node_from_typed_literal(
-                                this->accountGraphStore->getWorld(), 
+                                world,
                                 (const unsigned char*)objectHelper->getValue().c_str(),
                                 NULL, 
                                 librdf_new_uri(
-                                    this->accountGraphStore->getWorld(),
+                                    world,
                                     (const unsigned char*)objectHelper->getDataType().c_str()))
                         );
             } else if (objectHelper->getType().compare(keto::asn1::Constants::RDF_NODE::URI) == 0) {
-                    statement= librdf_new_statement_from_nodes(this->accountGraphStore->getWorld(), 
-                        librdf_new_node_from_uri_string(this->accountGraphStore->getWorld(), (const unsigned char*)subject->getSubject().c_str()),
-                        librdf_new_node_from_uri_string(this->accountGraphStore->getWorld(), (const unsigned char*)predicateHelper->getPredicate().c_str()),
-                        librdf_new_node_from_uri_string(this->accountGraphStore->getWorld(), (const unsigned char*)objectHelper->getValue().c_str())
+                    statement= librdf_new_statement_from_nodes(world,
+                        librdf_new_node_from_uri_string(world, (const unsigned char*)subject->getSubject().c_str()),
+                        librdf_new_node_from_uri_string(world, (const unsigned char*)predicateHelper->getPredicate().c_str()),
+                        librdf_new_node_from_uri_string(world, (const unsigned char*)objectHelper->getValue().c_str())
                         );
             } else {
                 std::stringstream ss;
@@ -112,7 +122,7 @@ void AccountGraphSession::remove(keto::asn1::RDFSubjectHelperPtr& subject) {
                 BOOST_THROW_EXCEPTION(keto::account_db::UnsupportedDataTypeTransactionException(
                         ss.str()));
             }
-            librdf_model_remove_statement(this->accountGraphStore->getModel(), statement);
+            librdf_model_add_statement(removeModel, statement);
 
              /* Free what we just used to add to the model - now it should be stored */
             librdf_free_statement(statement);
@@ -122,21 +132,25 @@ void AccountGraphSession::remove(keto::asn1::RDFSubjectHelperPtr& subject) {
 
 
 std::string AccountGraphSession::query(const std::string& queryStr, const std::vector<uint8_t>& accountHash) {
-    std::lock_guard<std::recursive_mutex> guard(classMutex);
-    keto::rdf_utils::RDFQueryParser rdfQueryParser(queryStr,accountHash);
+    //keto::rdf_utils::RDFQueryParser rdfQueryParser(queryStr,accountHash);
+    keto::rdf_utils::RDFQueryParser rdfQueryParser(queryStr);
     if (!rdfQueryParser.isValidQuery()) {
         BOOST_THROW_EXCEPTION(keto::account_db::InvalidQueryFormat());
     }
-    librdf_query* query;
-    librdf_query_results* results;
+    // aquire the read lock
+    AccountGraphStore::StorageScopeLockPtr scopeLockPtr = this->accountGraphStore->getStorageLock()->aquireReadLock();
+
     std::string formatedQuery = rdfQueryParser.getQuery();
-    query = librdf_new_query(this->accountGraphStore->getWorld(), "sparql",
+    KETO_LOG_ERROR << "[AccountGraphSession::query]Prepare the query [" << formatedQuery << "]";
+    librdf_query* query = librdf_new_query(this->accountGraphStore->getWorld(), "sparql",
             NULL, (const unsigned char *)formatedQuery.c_str(), NULL);
-    results = librdf_model_query_execute(this->accountGraphStore->getModel(), query);
+    KETO_LOG_ERROR << "[AccountGraphSession::query]Execute the query";
+    librdf_query_results* results = librdf_model_query_execute(this->accountGraphStore->getModel(), query);
     if (!results) {
         librdf_free_query(query);
         return "NA";
     }
+    KETO_LOG_ERROR << "[AccountGraphSession::query]get the results";
     unsigned char* strBuffer = librdf_query_results_to_string2(results,"json",NULL,NULL,NULL);
     if (!strBuffer) {
         librdf_free_query_results(results);
@@ -148,12 +162,12 @@ std::string AccountGraphSession::query(const std::string& queryStr, const std::v
     librdf_free_memory(strBuffer);
     librdf_free_query_results(results);
     librdf_free_query(query);
-    
+    librdf_model_sync(this->accountGraphStore->getModel());
+    KETO_LOG_ERROR << "[AccountGraphSession::query]return the results";
     return strResult;
 }
 
 ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryStr, const std::vector<uint8_t>& accountHash) {
-    std::lock_guard<std::recursive_mutex> guard(classMutex);
     //if (librdf_model_add_submodel(this->accountGraphStore->getModel(),
     //        AccountGraphDirtySessionManager::getInstance()->getDirtySession(this->accountGraphStore->dbName)->getDirtyModel())) {
     //    KETO_LOG_DEBUG << "Faild to add the sub models";
@@ -163,16 +177,20 @@ ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryS
     if (!rdfQueryParser.isValidQuery()) {
         BOOST_THROW_EXCEPTION(keto::account_db::InvalidQueryFormat());
     }
+
+    // aquire a write lock as the underlying store has to be modified
+    AccountGraphStore::StorageScopeLockPtr scopeLockPtr = this->accountGraphStore->getStorageLock()->aquireWriteLock();
+
     AccountGraphDirtySession::AccountGraphDirtySessionScope accountGraphDirtySessionScope(
             this->accountGraphStore->dbName,this->accountGraphStore->getModel());
+
     KETO_LOG_DEBUG << "[AccountGraphSession::executeDirtyQuery]Execute the query [" << rdfQueryParser.getQuery() << "]";
     std::string formatedQuery = rdfQueryParser.getQuery();
-    librdf_query* query;
-    librdf_query_results* results;
-    query = librdf_new_query(this->accountGraphStore->getWorld(), "sparql",
+
+    librdf_query* query = librdf_new_query(this->accountGraphStore->getWorld(), "sparql",
                              NULL, (const unsigned char *)formatedQuery.c_str(), NULL);
 
-    results = librdf_model_query_execute(this->accountGraphStore->getModel(), query);
+    librdf_query_results* results = librdf_model_query_execute(this->accountGraphStore->getModel(), query);
     ResultVectorMap resultVectorMap;
     if (!results) {
         KETO_LOG_DEBUG << "[AccountGraphSession::executeDirtyQuery]Return the empty results";
@@ -208,6 +226,7 @@ ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryS
 
     librdf_free_query_results(results);
     librdf_free_query(query);
+    librdf_model_sync(this->accountGraphStore->getModel());
     //if (librdf_model_remove_submodel(this->accountGraphStore->getModel(),
     //                          AccountGraphDirtySessionManager::getInstance()->getDirtySession(this->accountGraphStore->dbName)->getDirtyModel())) {
     //    KETO_LOG_DEBUG << "Failed to remove the sub model";
@@ -220,7 +239,6 @@ ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryS
 
 
 ResultVectorMap AccountGraphSession::executeQuery(const std::string& queryStr, const std::vector<uint8_t>& accountHash) {
-    std::lock_guard<std::recursive_mutex> guard(classMutex);
     keto::rdf_utils::RDFQueryParser rdfQueryParser(queryStr,accountHash);
     if (!rdfQueryParser.isValidQuery()) {
         BOOST_THROW_EXCEPTION(keto::account_db::InvalidQueryFormat());
@@ -230,23 +248,26 @@ ResultVectorMap AccountGraphSession::executeQuery(const std::string& queryStr, c
 }
 
 ResultVectorMap AccountGraphSession::executeQueryInternal(const std::string& queryStr) {
-    std::lock_guard<std::recursive_mutex> guard(classMutex);
     keto::rdf_utils::RDFQueryParser rdfQueryParser(queryStr);
     if (!rdfQueryParser.isValidQuery()) {
         BOOST_THROW_EXCEPTION(keto::account_db::InvalidQueryFormat());
     }
 
+    // aquire the read lock
+    AccountGraphStore::StorageScopeLockPtr scopeLockPtr = this->accountGraphStore->getStorageLock()->aquireReadLock();
+
     std::string formatedQuery = rdfQueryParser.getQuery();
-    librdf_query* query;
-    librdf_query_results* results;
-    query = librdf_new_query(this->accountGraphStore->getWorld(), "sparql",
+    KETO_LOG_ERROR << "[AccountGraphSession::executeQueryInternal]Prepare the query [" << formatedQuery << "]";
+    librdf_query* query = librdf_new_query(this->accountGraphStore->getWorld(), "sparql",
                              NULL, (const unsigned char *)formatedQuery.c_str(), NULL);
-    results = librdf_model_query_execute(this->accountGraphStore->getModel(), query);
+    KETO_LOG_ERROR << "[AccountGraphSession::executeQueryInternal]Execute the query";
+    librdf_query_results* results = librdf_model_query_execute(this->accountGraphStore->getModel(), query);
     ResultVectorMap resultVectorMap;
     if (!results) {
         librdf_free_query(query);
         return resultVectorMap;
     }
+    KETO_LOG_ERROR << "[AccountGraphSession::executeQueryInternal]loop through the results";
     while (!librdf_query_results_finished(results)) {
         ResultMap resultMap;
         const char **names=NULL;
@@ -270,50 +291,61 @@ ResultVectorMap AccountGraphSession::executeQueryInternal(const std::string& que
     }
     librdf_free_query_results(results);
     librdf_free_query(query);
+    librdf_model_sync(this->accountGraphStore->getModel());
+    KETO_LOG_ERROR << "[AccountGraphSession::executeQueryInternal]return the results";
     return resultVectorMap;
 }
 
 AccountGraphSession::AccountGraphSession(const AccountGraphStorePtr& accountGraphStore) :
-    activeTransaction(true), accountGraphStore(accountGraphStore) {
-    
-    if (librdf_model_transaction_start(this->accountGraphStore->getModel())) {
-        // the current back end store does not support transactions
-        this->activeTransaction = false;
-        KETO_LOG_DEBUG << "Bankend store for this model does not support transactions : "  << this->accountGraphStore->getDbName();
-    }
+    accountGraphStore(accountGraphStore), world(0), addStorage(0), removeStorage(0), addModel(0), removeModel(0) {
+
+    // fall back to using a seperate storage model as the transaction scope for changes
+    this->world = librdf_new_world();
+    librdf_world_open(this->world);
+    this->addStorage=librdf_new_storage(world, "memory", NULL, NULL);
+    this->removeStorage=librdf_new_storage(world, "memory", NULL, NULL);
+    //this->searchModel = librdf_new_model(this->accountGraphStore->getWorld(),this->accountGraphStore->getStorage(),NULL);
+    this->addModel = librdf_new_model(world,addStorage,NULL);
+    this->removeModel = librdf_new_model(world,removeStorage,NULL);
+
 }
 
 void AccountGraphSession::commit() {
-    std::lock_guard<std::recursive_mutex> guard(classMutex);
-    if (this->activeTransaction) {
-        if (librdf_model_transaction_commit(this->accountGraphStore->getModel()) ) {
-            std::stringstream ss;
-            ss << "Failed to commit graph transaction for [" << accountGraphStore->getDbName() << "]";
-            BOOST_THROW_EXCEPTION(keto::account_db::FailedToCommitGraphTransactionException(
-                    ss.str()));
+    KETO_LOG_ERROR << "[AccountGraphSession::commit] commit the changes [" << librdf_model_size(addModel) << "][" << librdf_model_size(removeModel) << "]";
+    if (librdf_model_size(addModel) || librdf_model_size(removeModel)) {
+
+        // aquire the write lock
+        AccountGraphStore::StorageScopeLockPtr scopeLockPtr = this->accountGraphStore->getStorageLock()->aquireWriteLock();
+
+        // only commit if there are changes in the model
+        if (librdf_model_size(addModel)) {
+            // now we stream the memory into the db object
+            KETO_LOG_ERROR << "[AccountGraphSession::commit] changes are being streamed to model";
+            librdf_stream *stream = librdf_model_as_stream(this->addModel);
+            librdf_model_add_statements(this->accountGraphStore->getModel(), stream);
+            librdf_free_stream(stream);
+            // sync the changes to the store otherwise we have to wait for close
+            librdf_model_sync(this->accountGraphStore->getModel());
+            KETO_LOG_ERROR << "[AccountGraphSession::commit] changes have been applied";
         }
-        this->activeTransaction = false;
-    } else {
-        // sync the changes to the store otherwise we have to wait for close
-        librdf_model_sync(this->accountGraphStore->getModel());
+        if (librdf_model_size(removeModel)) {
+            KETO_LOG_ERROR << "[AccountGraphSession::commit] changes are being removed";
+            // now we stream into the memory object and remove statement by statement
+            librdf_stream *stream = librdf_model_as_stream(this->addModel);
+            while (!librdf_stream_end(stream)) {
+                librdf_model_remove_statement(this->accountGraphStore->getModel(), librdf_stream_get_object(stream));
+                librdf_stream_next(stream);
+            }
+            librdf_free_stream(stream);
+            // sync the changes to the store otherwise we have to wait for close
+            librdf_model_sync(this->accountGraphStore->getModel());
+            KETO_LOG_ERROR << "[AccountGraphSession::commit] changes are been removed";
+        }
     }
 }
 
 void AccountGraphSession::rollback() {
-    std::lock_guard<std::recursive_mutex> guard(classMutex);
-    if (this->activeTransaction) {
-        if (librdf_model_transaction_rollback(this->accountGraphStore->getModel()) ) {
-            std::stringstream ss;
-            ss << "Failed to rollback graph transaction for [" << accountGraphStore->getDbName() << "]";
-            BOOST_THROW_EXCEPTION(keto::account_db::FailedToRollbackGraphTransactionException(
-                    ss.str()));
-        }
-        this->activeTransaction = false;
-    } else {
-        // sync the changes to the store otherwise we have to wait for close
-        // this is required
-        librdf_model_sync(this->accountGraphStore->getModel());
-    }
+
 }
 
 

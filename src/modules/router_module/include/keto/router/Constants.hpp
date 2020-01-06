@@ -23,6 +23,8 @@ public:
     static const char* PRIVATE_KEY;
     static const char* PUBLIC_KEY;
 
+    static const int DEFAULT_ROUTER_QUEUE_DELAY;
+
 };
 
 }

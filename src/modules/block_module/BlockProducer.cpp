@@ -256,7 +256,7 @@ BlockProducer::ProducerScopeLockPtr BlockProducer::ProducerLock::aquireTransacti
 
 void BlockProducer::ProducerLock::release(bool _transactionLock, bool _blockLock) {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
-    KETO_LOG_ERROR << "[BlockProducer::ProducerLock::release]Release the lock [" << this->transactionLock << "][" <<this->blockLock << "]";
+    KETO_LOG_DEBUG << "[BlockProducer::ProducerLock::release]Release the lock [" << this->transactionLock << "][" <<this->blockLock << "]";
     if (_transactionLock) {
         this->transactionLock--;
     } else if (_blockLock) {
@@ -269,11 +269,11 @@ void BlockProducer::ProducerLock::release(bool _transactionLock, bool _blockLock
 
 BlockProducer::ProducerScopeLock::ProducerScopeLock(BlockProducer::ProducerLock* reference, bool transactionLock, bool blockLock) :
     reference(reference),transactionLock(transactionLock), blockLock(blockLock) {
-    KETO_LOG_ERROR << "[BlockProducer::ProducerScopeLock::ProducerScopeLock]gain the lock the lock [" << this->transactionLock << "][" <<this->blockLock << "]";
+    KETO_LOG_DEBUG << "[BlockProducer::ProducerScopeLock::ProducerScopeLock]gain the lock the lock [" << this->transactionLock << "][" <<this->blockLock << "]";
 }
 
 BlockProducer::ProducerScopeLock::~ProducerScopeLock() {
-    KETO_LOG_ERROR << "[BlockProducer::ProducerScopeLock::~ProducerScopeLock]Release the lock [" << this->transactionLock << "][" <<this->blockLock << "]";
+    KETO_LOG_DEBUG << "[BlockProducer::ProducerScopeLock::~ProducerScopeLock]Release the lock [" << this->transactionLock << "][" <<this->blockLock << "]";
     reference->release(this->transactionLock,this->blockLock);
 }
 

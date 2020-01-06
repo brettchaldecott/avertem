@@ -75,7 +75,7 @@ public:
 private:
     // the LIBRDF libraries are not completely thread safe and this is an attempt to work around the problem.
     // If this confirms the problem, then changes will have to be made
-    std::recursive_mutex classMutex;
+    //std::recursive_mutex classMutex;
     std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr;
     AccountGraphStoreManagerPtr accountGraphStoreManagerPtr;
     AccountResourceManagerPtr accountResourceManagerPtr;

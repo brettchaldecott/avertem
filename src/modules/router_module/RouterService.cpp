@@ -44,6 +44,9 @@
 #include "keto/transaction_common/TransactionMessageHelper.hpp"
 #include "keto/transaction_common/TransactionTraceBuilder.hpp"
 
+#include "keto/transaction/Transaction.hpp"
+#include "keto/server_common/TransactionHelper.hpp"
+
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
 #include "keto/server_common/ServerInfo.hpp"
@@ -57,9 +60,103 @@ namespace keto {
 namespace router {
 
 static std::shared_ptr<RouterService> singleton;
+static std::shared_ptr<std::thread> routerServiceThreadPtr;
 
 std::string RouterService::getSourceVersion() {
     return OBFUSCATED("$Id$");
+}
+
+RouterService::RouteQueueEntry::RouteQueueEntry(keto::event::Event event, int retryCount) :
+    event(event), retryCount(retryCount), runtime(time(0)) {
+}
+
+RouterService::RouteQueueEntry::~RouteQueueEntry() {
+}
+
+keto::event::Event RouterService::RouteQueueEntry::getEvent() {
+    return event;
+}
+
+std::chrono::milliseconds RouterService::RouteQueueEntry::getDelay() {
+    time_t currentTime = time(0);
+    if ((runtime + 2) < currentTime) {
+        return std::chrono::milliseconds(0);
+    }
+    return std::chrono::milliseconds( (((runtime + 2) - currentTime) * 1000) + 500);
+}
+
+int RouterService::RouteQueueEntry::getRetryCount() {
+    return this->retryCount;
+}
+
+RouterService::RouteQueue::RouteQueue(RouterService* service) : service(service), active(false) {
+
+}
+
+RouterService::RouteQueue::~RouteQueue() {
+}
+
+bool RouterService::RouteQueue::isActive() {
+    std::unique_lock<std::mutex> guard(classMutex);
+    return this->active;
+}
+
+void RouterService::RouteQueue::activate() {
+    std::unique_lock<std::mutex> guard(classMutex);
+    queueThreadPtr = std::shared_ptr<std::thread>(new std::thread(
+            [this]
+            {
+                this->run();
+            }));
+    this->active = true;
+}
+
+void RouterService::RouteQueue::deactivate() {
+    {
+        std::unique_lock<std::mutex> guard(classMutex);
+        if (!this->active) {
+            if (this->service) {
+                this->service = NULL;
+            }
+            return;
+        }
+        this->active = false;
+        stateCondition.notify_all();
+    }
+    if (queueThreadPtr) {
+        queueThreadPtr->join();
+        queueThreadPtr.reset();
+    }
+    if (this->service) {
+        this->service = NULL;
+    }
+}
+
+void RouterService::RouteQueue::pushEntry(const RouteQueueEntryPtr& event) {
+    std::unique_lock<std::mutex> guard(classMutex);
+    this->routeQueue.push_back(event);
+    stateCondition.notify_all();
+}
+
+bool RouterService::RouteQueue::popEntry(RouteQueueEntryPtr& event) {
+    std::unique_lock<std::mutex> uniqueLock(classMutex);
+    if (!this->routeQueue.empty()) {
+        event = this->routeQueue.front();
+        this->routeQueue.pop_front();
+        return true;
+    }
+    this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(
+            Constants::DEFAULT_ROUTER_QUEUE_DELAY));
+    return false;
+}
+
+void RouterService::RouteQueue::run() {
+    while(this->isActive() || !this->routeQueue.empty()) {
+        RouterService::RouteQueueEntryPtr entry;
+        if (popEntry(entry)) {
+            this->service->processQueueEntry(entry);
+        }
+    }
 }
 
 RouterService::RouterService() {
@@ -80,9 +177,13 @@ RouterService::RouterService() {
     keyLoaderPtr = std::make_shared<keto::crypto::KeyLoader>(privateKeyPath,
                                                              publicKeyPath);
 
+    this->routeQueuePtr = RouterService::RouteQueuePtr(new RouteQueue(this));
+    this->routeQueuePtr->activate();
 }
 
 RouterService::~RouterService() {
+    this->routeQueuePtr->deactivate();
+    this->routeQueuePtr.reset();
 }
 
 std::shared_ptr<RouterService> RouterService::init() {
@@ -100,122 +201,124 @@ std::shared_ptr<RouterService> RouterService::getInstance() {
     return singleton;
 }
 
+void RouterService::processQueueEntry(const RouterService::RouteQueueEntryPtr& event) {
+    std::chrono::milliseconds delay = event->getDelay();
+    if (delay.count()) {
+        KETO_LOG_INFO << "[RouterService::processQueueEntry] retry message delayed to reduce load by : " << delay.count();
+        std::this_thread::sleep_for(delay);
+    }
+    KETO_LOG_INFO << "[RouterService::processQueueEntry] Transaction is being retried : " << event->getRetryCount();
+    keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
+    this->routeMessage(event->getEvent(),event->getRetryCount());
+}
 
-keto::event::Event RouterService::routeMessage(const keto::event::Event& event) {
-    int retry_count =0;
-    while (retry_count < 120) {
-        try {
-            keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper =
-                    keto::server_common::fromEvent<keto::proto::MessageWrapper>(event);
+keto::event::Event RouterService::routeMessage(const keto::event::Event& event, int retryCount) {
+    try {
+        keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper =
+                keto::server_common::fromEvent<keto::proto::MessageWrapper>(event);
 
-            // add to the transaction trace
-            keto::asn1::HashHelper currentAccountHash = messageWrapperProtoHelper.getAccountHash();
-            keto::transaction_common::TransactionProtoHelperPtr transactionProtoHelperPtr = messageWrapperProtoHelper.getTransaction();
-            keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr = transactionProtoHelperPtr->getTransactionMessageHelper();
-            transactionMessageHelperPtr->getTransactionWrapper()->addTransactionTrace(
-                    *keto::transaction_common::TransactionTraceBuilder::createTransactionTrace(
-                            keto::server_common::ServerInfo::getInstance()->getAccountHash(),
-                            this->keyLoaderPtr));
-            transactionProtoHelperPtr->setTransaction(transactionMessageHelperPtr);
-            messageWrapperProtoHelper.setTransaction(
-                    transactionProtoHelperPtr);
-            messageWrapperProtoHelper.setAccountHash(currentAccountHash);
+        // add to the transaction trace
+        keto::asn1::HashHelper currentAccountHash = messageWrapperProtoHelper.getAccountHash();
+        keto::transaction_common::TransactionProtoHelperPtr transactionProtoHelperPtr = messageWrapperProtoHelper.getTransaction();
+        keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr = transactionProtoHelperPtr->getTransactionMessageHelper();
+        transactionMessageHelperPtr->getTransactionWrapper()->addTransactionTrace(
+                *keto::transaction_common::TransactionTraceBuilder::createTransactionTrace(
+                        keto::server_common::ServerInfo::getInstance()->getAccountHash(),
+                        this->keyLoaderPtr));
+        transactionProtoHelperPtr->setTransaction(transactionMessageHelperPtr);
+        messageWrapperProtoHelper.setTransaction(
+                transactionProtoHelperPtr);
+        messageWrapperProtoHelper.setAccountHash(currentAccountHash);
 
-            // update the rooting
-            if (!TangleServiceCache::getInstance()->containsAccount(messageWrapperProtoHelper.getAccountHash())) {
-                keto::proto::AccountChainTangle requestAccountChainTangle;
-                requestAccountChainTangle.set_account_id(messageWrapperProtoHelper.getSourceAccountHash());
-                keto::proto::AccountChainTangle accountChainTangle =
-                        keto::server_common::fromEvent<keto::proto::AccountChainTangle>(
-                                keto::server_common::processEvent(
-                                        keto::server_common::toEvent<keto::proto::AccountChainTangle>(
-                                                keto::server_common::Events::GET_ACCOUNT_TANGLE,
-                                                requestAccountChainTangle)));
-                if (!accountChainTangle.found()) {
-                    messageWrapperProtoHelper.setAccountHash(
-                            TangleServiceCache::getInstance()->getGrowing()->getAccountHash());
-                    KETO_LOG_INFO << "Attempt to route to a new growing tangle ["
-                                  << messageWrapperProtoHelper.getAccountHash().getHash(
-                                          keto::common::StringEncoding::HEX) << "] for source ["
-                                  << messageWrapperProtoHelper.getSourceAccountHash().getHash(
-                                          keto::common::StringEncoding::HEX) << "]";
+        // update the rooting
+        if (!TangleServiceCache::getInstance()->containsAccount(messageWrapperProtoHelper.getAccountHash())) {
+            keto::proto::AccountChainTangle requestAccountChainTangle;
+            requestAccountChainTangle.set_account_id(messageWrapperProtoHelper.getSourceAccountHash());
+            keto::proto::AccountChainTangle accountChainTangle =
+                    keto::server_common::fromEvent<keto::proto::AccountChainTangle>(
+                            keto::server_common::processEvent(
+                                    keto::server_common::toEvent<keto::proto::AccountChainTangle>(
+                                            keto::server_common::Events::GET_ACCOUNT_TANGLE,
+                                            requestAccountChainTangle)));
+            if (!accountChainTangle.found()) {
+                messageWrapperProtoHelper.setAccountHash(
+                        TangleServiceCache::getInstance()->getGrowing()->getAccountHash());
+                KETO_LOG_INFO << "Attempt to route to a new growing tangle ["
+                              << messageWrapperProtoHelper.getAccountHash().getHash(
+                                      keto::common::StringEncoding::HEX) << "] for source ["
+                              << messageWrapperProtoHelper.getSourceAccountHash().getHash(
+                                      keto::common::StringEncoding::HEX) << "]";
 
-                } else {
-                    messageWrapperProtoHelper.setAccountHash(
-                            TangleServiceCache::getInstance()->getTangle(
-                                    accountChainTangle.chain_tangle_id())->getAccountHash());
-                    KETO_LOG_INFO << "Attempt to route to an existing tangle ["
-                                  << messageWrapperProtoHelper.getAccountHash().getHash(
-                                          keto::common::StringEncoding::HEX) << "] for source ["
-                                  << messageWrapperProtoHelper.getSourceAccountHash().getHash(
-                                          keto::common::StringEncoding::HEX) << "]";
-                }
+            } else {
+                messageWrapperProtoHelper.setAccountHash(
+                        TangleServiceCache::getInstance()->getTangle(
+                                accountChainTangle.chain_tangle_id())->getAccountHash());
+                KETO_LOG_INFO << "Attempt to route to an existing tangle ["
+                              << messageWrapperProtoHelper.getAccountHash().getHash(
+                                      keto::common::StringEncoding::HEX) << "] for source ["
+                              << messageWrapperProtoHelper.getSourceAccountHash().getHash(
+                                      keto::common::StringEncoding::HEX) << "]";
             }
+        }
 
-            // look to see if the message account is for this server
-            if (messageWrapperProtoHelper.getAccountHash() ==
-                keto::server_common::ServerInfo::getInstance()->getAccountHash()) {
+        // look to see if the message account is for this server
+        if (messageWrapperProtoHelper.getAccountHash() ==
+            keto::server_common::ServerInfo::getInstance()->getAccountHash()) {
 
-                routeLocal(messageWrapperProtoHelper);
-                // the result of the local routing
-                keto::proto::MessageWrapperResponse response;
-                response.set_success(true);
-                response.set_result("local");
-                return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
-            }
-
-            // check if we can rout to a peer
-            keto::proto::RpcPeer rpcPeer;
-            keto::asn1::HashHelper peerAccountHash = messageWrapperProtoHelper.getAccountHash();
-            while (keto::router_db::RouterStore::getInstance()->getAccountRouting(
-                    peerAccountHash, rpcPeer)) {
-                keto::router_utils::RpcPeerHelper rpcPeerHelper(
-                        rpcPeer);
-                if (PeerCache::getInstance()->contains(rpcPeerHelper.getAccountHash())) {
-                    this->routeToRpcClient(messageWrapperProtoHelper,
-                                           PeerCache::getInstance()->getPeer(rpcPeerHelper.getAccountHash()));
-
-                    // route
-                    keto::proto::MessageWrapperResponse response;
-                    response.set_success(true);
-                    response.set_result("routed");
-                    return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
-                } else {
-                    peerAccountHash = rpcPeerHelper.getPeerAccountHash();
-                }
-            }
-
-            this->routeToRpcPeer(messageWrapperProtoHelper);
-
+            routeLocal(messageWrapperProtoHelper);
+            // the result of the local routing
             keto::proto::MessageWrapperResponse response;
             response.set_success(true);
-            response.set_result("to peer");
+            response.set_result("local");
             return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
-        } catch (keto::common::Exception &ex) {
-            KETO_LOG_ERROR << "[RouterService::routeMessage] Failed to route the message because: "
-                        << boost::diagnostic_information_what(ex, true) << std::endl <<  " : will retry in 1.5 seconds";
-            if (ex.getType() == "ReScheduleTransactionException") {
-                KETO_LOG_ERROR << "[RouterService::routeMessage] Re-schedule requested will zero the retry count";
-                retry_count=0;
-            }
-        } catch (boost::exception &ex) {
-            KETO_LOG_ERROR << "[RouterService::routeMessage] Failed to route the message because :"
-                        << boost::diagnostic_information_what(ex, true) << std::endl <<  "  : will retry in 1.5 seconds";
-        } catch (std::exception &ex) {
-            KETO_LOG_ERROR << "[RouterService::routeMessage] Failed to route the message because :" << ex.what()
-                        << std::endl <<  "  : will retry in 1.5 seconds";
-        } catch (...) {
-            KETO_LOG_ERROR << "[RouterService::routeMessage] Failed to route the message because : unknown error"
-                        << std::endl <<  "  : will retry in 1.5 seconds";
         }
-        retry_count++;
-        // sleep for half a second before retrying
-        std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+
+        // check if we can rout to a peer
+        keto::proto::RpcPeer rpcPeer;
+        keto::asn1::HashHelper peerAccountHash = messageWrapperProtoHelper.getAccountHash();
+        while (keto::router_db::RouterStore::getInstance()->getAccountRouting(
+                peerAccountHash, rpcPeer)) {
+            keto::router_utils::RpcPeerHelper rpcPeerHelper(
+                    rpcPeer);
+            if (PeerCache::getInstance()->contains(rpcPeerHelper.getAccountHash())) {
+                this->routeToRpcClient(messageWrapperProtoHelper,
+                                       PeerCache::getInstance()->getPeer(rpcPeerHelper.getAccountHash()));
+
+                // route
+                keto::proto::MessageWrapperResponse response;
+                response.set_success(true);
+                response.set_result("routed");
+                return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
+            } else {
+                peerAccountHash = rpcPeerHelper.getPeerAccountHash();
+            }
+        }
+
+        this->routeToRpcPeer(messageWrapperProtoHelper);
+
+        keto::proto::MessageWrapperResponse response;
+        response.set_success(true);
+        response.set_result("to peer");
+        return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
+    } catch (keto::common::Exception &ex) {
+        KETO_LOG_ERROR << "[RouterService::routeMessage] Failed to route the message because: "
+                    << boost::diagnostic_information_what(ex, true) << std::endl <<  " : will retry in 1.5 seconds";
+    } catch (boost::exception &ex) {
+        KETO_LOG_ERROR << "[RouterService::routeMessage] Failed to route the message because :"
+                    << boost::diagnostic_information_what(ex, true) << std::endl <<  "  : will retry in 1.5 seconds";
+    } catch (std::exception &ex) {
+        KETO_LOG_ERROR << "[RouterService::routeMessage] Failed to route the message because :" << ex.what()
+                    << std::endl <<  "  : will retry in 1.5 seconds";
+    } catch (...) {
+        KETO_LOG_ERROR << "[RouterService::routeMessage] Failed to route the message because : unknown error"
+                    << std::endl <<  "  : will retry in 1.5 seconds";
     }
-    KETO_LOG_FATAL << "[RouterService::routeMessage] Failed to route the message fatal error";
+    this->routeQueuePtr->pushEntry(RouterService::RouteQueueEntryPtr(
+            new RouterService::RouteQueueEntry(event,retryCount++)));
+    KETO_LOG_INFO << "[RouterService::routeMessage] failed to route message has been queued";
     keto::proto::MessageWrapperResponse response;
     response.set_success(false);
-    response.set_result("fatal routing");
+    response.set_result("message queued");
     return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
 }
 

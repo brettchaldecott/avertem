@@ -17,6 +17,7 @@ std::string Constants::getSourceVersion() {
 const char* Constants::PRIVATE_KEY      = "server-private-key";
 const char* Constants::PUBLIC_KEY       = "server-public-key";
 
+const int Constants::DEFAULT_ROUTER_QUEUE_DELAY = 1;
 
 }
 }

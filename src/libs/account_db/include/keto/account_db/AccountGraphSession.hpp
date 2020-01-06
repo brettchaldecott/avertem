@@ -65,9 +65,15 @@ protected:
     void rollback();
     
 private:
-    std::recursive_mutex classMutex;
-    bool activeTransaction;
     AccountGraphStorePtr accountGraphStore;
+
+    // active transaction models
+    librdf_world* world;
+    librdf_storage* addStorage;
+    librdf_storage* removeStorage;
+    //librdf_model* searchModel;
+    librdf_model* addModel;
+    librdf_model* removeModel;
     
     // transaction methods
     
