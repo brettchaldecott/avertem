@@ -34,12 +34,14 @@
 #include "keto/rdf_utils/RDFQueryParser.hpp"
 
 BOOST_AUTO_TEST_CASE( rdf_utils_query_parser_test ) {
+    KETO_LOG_DEBUG << "Basic test";
     const char* query = R"(SELECT * WHERE { ?a ?b ?c . } )";
     keto::rdf_utils::RDFQueryParser rdfQueryParser(query);
     BOOST_CHECK( rdfQueryParser.isValidQuery() );
 
     std::cout<< "Query : " << rdfQueryParser.getQuery() << std::endl;
 
+    KETO_LOG_DEBUG << "Set the basic query account";
     keto::rdf_utils::RDFQueryParser rdfQueryParser2(query,"account_value");
     BOOST_CHECK( rdfQueryParser2.isValidQuery() );
     std::cout<< "Query : " << rdfQueryParser2.getQuery() << std::endl;

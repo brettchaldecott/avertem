@@ -132,8 +132,7 @@ void AccountGraphSession::remove(keto::asn1::RDFSubjectHelperPtr& subject) {
 
 
 std::string AccountGraphSession::query(const std::string& queryStr, const std::vector<uint8_t>& accountHash) {
-    //keto::rdf_utils::RDFQueryParser rdfQueryParser(queryStr,accountHash);
-    keto::rdf_utils::RDFQueryParser rdfQueryParser(queryStr);
+    keto::rdf_utils::RDFQueryParser rdfQueryParser(queryStr,accountHash);
     if (!rdfQueryParser.isValidQuery()) {
         BOOST_THROW_EXCEPTION(keto::account_db::InvalidQueryFormat());
     }
@@ -168,11 +167,6 @@ std::string AccountGraphSession::query(const std::string& queryStr, const std::v
 }
 
 ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryStr, const std::vector<uint8_t>& accountHash) {
-    //if (librdf_model_add_submodel(this->accountGraphStore->getModel(),
-    //        AccountGraphDirtySessionManager::getInstance()->getDirtySession(this->accountGraphStore->dbName)->getDirtyModel())) {
-    //    KETO_LOG_DEBUG << "Faild to add the sub models";
-    //    BOOST_THROW_EXCEPTION(keto::account_db::UnsupportedDataTypeTransactionException());
-    //}
     keto::rdf_utils::RDFQueryParser rdfQueryParser(queryStr,accountHash);
     if (!rdfQueryParser.isValidQuery()) {
         BOOST_THROW_EXCEPTION(keto::account_db::InvalidQueryFormat());
@@ -227,11 +221,6 @@ ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryS
     librdf_free_query_results(results);
     librdf_free_query(query);
     librdf_model_sync(this->accountGraphStore->getModel());
-    //if (librdf_model_remove_submodel(this->accountGraphStore->getModel(),
-    //                          AccountGraphDirtySessionManager::getInstance()->getDirtySession(this->accountGraphStore->dbName)->getDirtyModel())) {
-    //    KETO_LOG_DEBUG << "Failed to remove the sub model";
-    //    BOOST_THROW_EXCEPTION(keto::account_db::UnsupportedDataTypeTransactionException());
-    //}
 
     KETO_LOG_DEBUG << "Return the results of the query";
     return resultVectorMap;

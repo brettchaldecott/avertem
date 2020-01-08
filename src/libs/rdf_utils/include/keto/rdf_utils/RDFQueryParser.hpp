@@ -44,10 +44,11 @@ private:
     std::string account;
     rasqal_world *world;
     rasqal_query *query;
+    rasqal_variables_table* variablesTable;
 
 
 
-    void processPattern(rasqal_query *query);
+    void processPattern();
 
     bool containsUri(raptor_sequence* patternTrippleSequence, const std::string& uri);
     std::vector<rasqal_literal*> getSubjects(raptor_sequence* patternTrippleSequence);

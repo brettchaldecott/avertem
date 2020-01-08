@@ -26,8 +26,10 @@ public:
 
     static constexpr const char* ACCOUNT_OWNER_REF = "http://keto-coin.io/schema/rdf/1.0/keto/Account#accountOwner";
     static constexpr const char* ACCOUNT_OWNER_URI = "http://keto-coin.io/schema/rdf/1.0/keto/Account#Account/";
+    static constexpr const char* ACCOUNT_OWNER_SUBJECT = "__accountOwnerSubject";
     static constexpr const char* ACCOUNT_GROUP_REF = "http://keto-coin.io/schema/rdf/1.0/keto/AccountGroup#accountGroup";
     static constexpr const char* ACCOUNT_GROUP_URI = "http://keto-coin.io/schema/rdf/1.0/keto/AccountGroup#AccountGroup/";
+    static constexpr const char* ACCOUNT_GROUP_SUBJECT = "__accountGroupSubject";
 
     static constexpr const int  SPARQL_DEFAULT_LIMIT = 250;
     static constexpr const int  SPARQL_MAX_LIMIT = 2500;

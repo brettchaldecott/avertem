@@ -67,6 +67,18 @@ std::string StringUtils::replaceAll(const std::string& oldVal, const std::string
     return result;
 }
 
+std::string StringUtils::replace(const std::string& oldVal, const std::string& newVal) {
+    std::string result = this->value;
+    int pos = 0;
+    int begin = 0;
+    if ( (begin = result.find(oldVal,pos)) != result.npos ) {
+        result.replace(begin,oldVal.size(),newVal);
+        pos = begin;
+    }
+    return result;
+}
+
+
 bool StringUtils::isIEqual(const std::string& val) {
     std::string value = val;
     return ((this->value.size() == value.size()) && std::equal(this->value.begin(), this->value.end(), value.begin(), [](char & c1, char & c2){
