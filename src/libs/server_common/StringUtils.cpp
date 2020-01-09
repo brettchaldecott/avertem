@@ -62,7 +62,8 @@ std::string StringUtils::replaceAll(const std::string& oldVal, const std::string
     int begin = 0;
     while ( (begin = result.find(oldVal,pos)) != result.npos ) {
         result.replace(begin,oldVal.size(),newVal);
-        pos = begin;
+        // reset pos so as to prevent duplicate replacement
+        pos = begin+newVal.size();
     }
     return result;
 }

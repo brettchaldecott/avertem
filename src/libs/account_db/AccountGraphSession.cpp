@@ -140,16 +140,16 @@ std::string AccountGraphSession::query(const std::string& queryStr, const std::v
     AccountGraphStore::StorageScopeLockPtr scopeLockPtr = this->accountGraphStore->getStorageLock()->aquireReadLock();
 
     std::string formatedQuery = rdfQueryParser.getQuery();
-    KETO_LOG_ERROR << "[AccountGraphSession::query]Prepare the query [" << formatedQuery << "]";
+    KETO_LOG_DEBUG << "[AccountGraphSession::query]Prepare the query";
     librdf_query* query = librdf_new_query(this->accountGraphStore->getWorld(), "sparql",
             NULL, (const unsigned char *)formatedQuery.c_str(), NULL);
-    KETO_LOG_ERROR << "[AccountGraphSession::query]Execute the query";
+    KETO_LOG_DEBUG << "[AccountGraphSession::query]Execute the query";
     librdf_query_results* results = librdf_model_query_execute(this->accountGraphStore->getModel(), query);
     if (!results) {
         librdf_free_query(query);
         return "NA";
     }
-    KETO_LOG_ERROR << "[AccountGraphSession::query]get the results";
+    KETO_LOG_DEBUG << "[AccountGraphSession::query]get the results";
     unsigned char* strBuffer = librdf_query_results_to_string2(results,"json",NULL,NULL,NULL);
     if (!strBuffer) {
         librdf_free_query_results(results);
@@ -162,7 +162,7 @@ std::string AccountGraphSession::query(const std::string& queryStr, const std::v
     librdf_free_query_results(results);
     librdf_free_query(query);
     librdf_model_sync(this->accountGraphStore->getModel());
-    KETO_LOG_ERROR << "[AccountGraphSession::query]return the results";
+    KETO_LOG_DEBUG << "[AccountGraphSession::query]return the results";
     return strResult;
 }
 
@@ -178,7 +178,7 @@ ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryS
     AccountGraphDirtySession::AccountGraphDirtySessionScope accountGraphDirtySessionScope(
             this->accountGraphStore->dbName,this->accountGraphStore->getModel());
 
-    KETO_LOG_DEBUG << "[AccountGraphSession::executeDirtyQuery]Execute the query [" << rdfQueryParser.getQuery() << "]";
+    KETO_LOG_DEBUG << "[AccountGraphSession::executeDirtyQuery]Execute the query.";
     std::string formatedQuery = rdfQueryParser.getQuery();
 
     librdf_query* query = librdf_new_query(this->accountGraphStore->getWorld(), "sparql",
@@ -246,17 +246,17 @@ ResultVectorMap AccountGraphSession::executeQueryInternal(const std::string& que
     AccountGraphStore::StorageScopeLockPtr scopeLockPtr = this->accountGraphStore->getStorageLock()->aquireReadLock();
 
     std::string formatedQuery = rdfQueryParser.getQuery();
-    KETO_LOG_ERROR << "[AccountGraphSession::executeQueryInternal]Prepare the query [" << formatedQuery << "]";
+    KETO_LOG_DEBUG << "[AccountGraphSession::executeQueryInternal]Prepare the query";
     librdf_query* query = librdf_new_query(this->accountGraphStore->getWorld(), "sparql",
                              NULL, (const unsigned char *)formatedQuery.c_str(), NULL);
-    KETO_LOG_ERROR << "[AccountGraphSession::executeQueryInternal]Execute the query";
+    KETO_LOG_DEBUG << "[AccountGraphSession::executeQueryInternal]Execute the query";
     librdf_query_results* results = librdf_model_query_execute(this->accountGraphStore->getModel(), query);
     ResultVectorMap resultVectorMap;
     if (!results) {
         librdf_free_query(query);
         return resultVectorMap;
     }
-    KETO_LOG_ERROR << "[AccountGraphSession::executeQueryInternal]loop through the results";
+    KETO_LOG_DEBUG << "[AccountGraphSession::executeQueryInternal]loop through the results";
     while (!librdf_query_results_finished(results)) {
         ResultMap resultMap;
         const char **names=NULL;
@@ -281,7 +281,7 @@ ResultVectorMap AccountGraphSession::executeQueryInternal(const std::string& que
     librdf_free_query_results(results);
     librdf_free_query(query);
     librdf_model_sync(this->accountGraphStore->getModel());
-    KETO_LOG_ERROR << "[AccountGraphSession::executeQueryInternal]return the results";
+    KETO_LOG_DEBUG << "[AccountGraphSession::executeQueryInternal]return the results";
     return resultVectorMap;
 }
 
@@ -300,7 +300,7 @@ AccountGraphSession::AccountGraphSession(const AccountGraphStorePtr& accountGrap
 }
 
 void AccountGraphSession::commit() {
-    KETO_LOG_ERROR << "[AccountGraphSession::commit] commit the changes [" << librdf_model_size(addModel) << "][" << librdf_model_size(removeModel) << "]";
+    KETO_LOG_DEBUG << "[AccountGraphSession::commit] commit the changes [" << librdf_model_size(addModel) << "][" << librdf_model_size(removeModel) << "]";
     if (librdf_model_size(addModel) || librdf_model_size(removeModel)) {
 
         // aquire the write lock

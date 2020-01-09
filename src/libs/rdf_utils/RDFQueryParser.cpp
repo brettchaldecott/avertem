@@ -101,30 +101,51 @@ void RDFQueryParser::processPattern() {
 
     //KETO_LOG_DEBUG << "Get the first trippled sequence";
     raptor_sequence* patternTrippleSequence = rasqal_graph_pattern_get_triples(query,pattern);
-    if (!patternTrippleSequence) {
-        BOOST_THROW_EXCEPTION(keto::rdf_utils::InvalidQueryPatternException());
+    if (patternTrippleSequence) {
+        //KETO_LOG_DEBUG << "The account owner ref";
+        addTripplePattern(patternTrippleSequence, Constants::ACCOUNT_OWNER_REF,
+                          Constants::ACCOUNT_OWNER_SUBJECT);
+
+        // add the group ref
+        //KETO_LOG_DEBUG << "The account group ref";
+        addTripplePattern(patternTrippleSequence, Constants::ACCOUNT_GROUP_REF,
+                          Constants::ACCOUNT_GROUP_SUBJECT);
+
+        // update the triple information
+        rasqal_query_graph_pattern_visit2(this->query,&rasqal_graph_pattern_visit_fn,patternTrippleSequence);
+    } else {
+        int index = 0;
+        do  {
+            rasqal_graph_pattern *subPattern = rasqal_graph_pattern_get_sub_graph_pattern(pattern, index);
+            if (!subPattern) {
+                break;
+            }
+            raptor_sequence* patternTrippleSequence = rasqal_graph_pattern_get_triples(query,subPattern);
+            if (patternTrippleSequence) {
+                //KETO_LOG_DEBUG << "The account owner ref";
+                addTripplePattern(patternTrippleSequence, Constants::ACCOUNT_OWNER_REF,
+                                  Constants::ACCOUNT_OWNER_SUBJECT);
+
+                // add the group ref
+                //KETO_LOG_DEBUG << "The account group ref";
+                addTripplePattern(patternTrippleSequence, Constants::ACCOUNT_GROUP_REF,
+                                  Constants::ACCOUNT_GROUP_SUBJECT);
+
+                // update the triple information
+                rasqal_query_graph_pattern_visit2(this->query,&rasqal_graph_pattern_visit_fn,patternTrippleSequence);
+            }
+        } while(true);
+    }
+
+
+    // check the limit is on the query
+    if (rasqal_query_get_limit(this->query) < 0 || rasqal_query_get_limit(this->query)> Constants::SPARQL_MAX_LIMIT) {
+        rasqal_query_set_limit(this->query,Constants::SPARQL_DEFAULT_LIMIT);
     }
 
     //KETO_LOG_DEBUG << "Number of entries is [" << raptor_sequence_size(patternTrippleSequence) << "]";
     if (rasqal_query_get_wildcard(query)) {
         rasqal_query_set_wildcard(query,0);
-    }
-
-    //KETO_LOG_DEBUG << "The account owner ref";
-    addTripplePattern(patternTrippleSequence, Constants::ACCOUNT_OWNER_REF,
-            Constants::ACCOUNT_OWNER_SUBJECT);
-
-    // add the group ref
-    //KETO_LOG_DEBUG << "The account group ref";
-    addTripplePattern(patternTrippleSequence, Constants::ACCOUNT_GROUP_REF,
-            Constants::ACCOUNT_GROUP_SUBJECT);
-
-    // update the triple information
-    rasqal_query_graph_pattern_visit2(this->query,&rasqal_graph_pattern_visit_fn,patternTrippleSequence);
-
-    // check the limit is on the query
-    if (rasqal_query_get_limit(this->query) < 0 || rasqal_query_get_limit(this->query)> Constants::SPARQL_MAX_LIMIT) {
-        rasqal_query_set_limit(this->query,Constants::SPARQL_DEFAULT_LIMIT);
     }
 
     //KETO_LOG_DEBUG << "The raptor new iostream an store with extr data [" << raptor_sequence_size(patternTrippleSequence) << "]";
@@ -159,7 +180,7 @@ void RDFQueryParser::processPattern() {
     std::stringstream oldValue;
     oldValue << "?" << Constants::ACCOUNT_GROUP_SUBJECT << " .";
 
-    this->sparql = keto::server_common::StringUtils(this->sparql).replace(oldValue.str(), ss.str());
+    this->sparql = keto::server_common::StringUtils(this->sparql).replaceAll(oldValue.str(), ss.str());
 
     // free the existing world
     raptor_free_sequence(patternTrippleSequence);
