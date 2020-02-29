@@ -19,6 +19,8 @@
 #include <sstream>
 #include <iostream>
 
+#include <botan/hex.h>
+
 #include "ber_decoder.h"
 #include "keto/crypto/Containers.hpp"
 #include "keto/asn1/Exception.hpp"
@@ -49,7 +51,8 @@ public:
         } else if (rval.code != RC_OK) {
             type_descriptor->op->free_struct(type_descriptor,instance, ASFM_FREE_EVERYTHING);
             std::ostringstream oss;
-            oss << "Failed code is [" << rval.code << "] data [" << rval.consumed << "][" << size << "]";
+            oss << "Failed code is [" << rval.code << "] data [" << rval.consumed << "][" << size << "][" <<
+                printStringByteArray(buffer,size) << "]";
             BOOST_THROW_EXCEPTION(keto::asn1::DeserializationException(oss.str()));
         }
     }
@@ -67,7 +70,8 @@ public:
         } else if (rval.code != RC_OK) {
             type_descriptor->op->free_struct(type_descriptor,instance, ASFM_FREE_EVERYTHING);
             std::ostringstream oss;
-            oss << "Failed code is [" << rval.code << "] data [" << rval.consumed << "]" ;
+            oss << "Failed code is [" << rval.code << "] data [" << rval.consumed << "][" <<
+                printStringByteArray(buffer) << "]";
             BOOST_THROW_EXCEPTION(keto::asn1::DeserializationException(oss.str()));
         }
     }
@@ -114,7 +118,18 @@ public:
 private:
     const struct asn_TYPE_descriptor_s *type_descriptor;
     Data* instance;
-    
+
+    std::string printStringByteArray(const uint8_t* buffer, size_t size) {
+        return Botan::hex_encode(buffer,size);
+    }
+
+    std::string printStringByteArray(const keto::crypto::SecureVector& buffer) {
+        return Botan::hex_encode(buffer);
+    }
+
+    std::string printStringByteArray(const std::vector<uint8_t>& buffer) {
+        return Botan::hex_encode(buffer);
+    }
 };
 
 }

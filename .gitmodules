@@ -13,3 +13,6 @@
 [submodule "src/web/keto-blockchain-explorer"]
 	path = src/web/keto-blockchain-explorer
 	url = https://github.com/brettchaldecott/keto-explorer.git
+[submodule "src/web/avertem-restapi"]
+	path = src/web/avertem-restapi
+	url = https://github.com/avertem/avertem-restapi.git

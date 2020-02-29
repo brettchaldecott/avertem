@@ -17,6 +17,8 @@ add_library( keto_asn1_common
             RDFObjectHelper.cpp
             RDFPredicateHelper.cpp
             RDFSubjectHelper.cpp
+            RDFNtHelper.cpp
+            RDFNtGroupHelper.cpp
             RDFModelHelper.cpp
             ChangeSetHelper.cpp
             ChangeSetDataHelper.cpp

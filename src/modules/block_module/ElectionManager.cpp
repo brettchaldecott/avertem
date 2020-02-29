@@ -464,6 +464,8 @@ void ElectionManager::generateTransaction(const keto::election_common::SignedEle
                                keto::asn1::Constants::RDF_TYPES::STRING,
                                Botan::hex_encode((std::vector<uint8_t>) *signedElectNodeHelperPtr, true)));
 
+        // add entries to the model helper to persist with this transaction
+        modelHelper.addSubject(subjectHelper);
 
         keto::asn1::AnyHelper anyModel = modelHelper;
         std::shared_ptr<keto::chain_common::ActionBuilder> actionBuilderPtr =
@@ -527,8 +529,8 @@ void ElectionManager::generateTransaction(const keto::election_common::SignedEle
     }
 }
 
-keto::asn1::RDFPredicateHelper ElectionManager::buildPredicate(const std::string& predicate, const std::string& datatype,
-        const std::string& type, const std::string& value) {
+keto::asn1::RDFPredicateHelper ElectionManager::buildPredicate(const std::string& predicate,
+        const std::string& type, const std::string& datatype, const std::string& value) {
     keto::asn1::RDFPredicateHelper predicateHelper(predicate);
 
     keto::asn1::RDFObjectHelper objectHelper;

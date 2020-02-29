@@ -77,6 +77,20 @@ void RDFMemorySession::persist(keto::asn1::RDFSubjectHelperPtr& subject) {
     }
 }
 
+
+void RDFMemorySession::persist(keto::asn1::RDFNtGroupHelperPtr& group) {
+
+    for (keto::asn1::RDFNtHelperPtr rdfNtHelperPtr : group->getRDFNts()) {
+        librdf_statement* statement= librdf_new_statement_from_nodes(this->world,
+                                                   librdf_new_node_from_uri_string(this->world, (const unsigned char*)rdfNtHelperPtr->getSubject().c_str()),
+                                                   librdf_new_node_from_uri_string(this->world, (const unsigned char*)rdfNtHelperPtr->getPredicate().c_str()),
+                                                   librdf_new_node_from_uri_string(this->world, (const unsigned char*)rdfNtHelperPtr->getObject().c_str()));
+        librdf_model_add_statement(this->model, statement);
+        /* Free what we just used to add to the model - now it should be stored */
+        librdf_free_statement(statement);
+    }
+}
+
 ResultVectorMap RDFMemorySession::executeQuery(const std::string& queryStr) {
     librdf_query* query;
     librdf_query_results* results;
@@ -102,8 +116,15 @@ ResultVectorMap RDFMemorySession::executeQuery(const std::string& queryStr) {
             for (int index = 0; index < bindingCount; index++) {
                 librdf_node* node = librdf_query_results_get_binding_value_by_name(results,
                         names[index]);
-                unsigned char* value = librdf_node_get_literal_value(node);
-                resultMap[names[index]] = std::string((const char*)value);
+                unsigned char *value = librdf_node_get_literal_value(node);
+                if (!librdf_node_is_literal(node)) {
+                    value = librdf_uri_as_string(librdf_node_get_uri(node));
+                }
+                if (value) {
+                    resultMap[names[index]] = std::string((const char *) value);
+                } else {
+                    resultMap[names[index]] = std::string();
+                }
                 librdf_free_node(node);
             }
             resultVectorMap.push_back(resultMap);

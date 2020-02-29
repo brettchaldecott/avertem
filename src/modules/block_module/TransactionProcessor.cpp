@@ -161,6 +161,7 @@ keto::proto::SandboxCommandMessage TransactionProcessor::executeContract(const k
     sandboxCommandMessage.set_contract(contract.contract());
     sandboxCommandMessage.set_contract_hash(contract.contract_hash());
     sandboxCommandMessage.set_contract_name(contract.contract_name());
+    sandboxCommandMessage.set_contract_namespace(contract.contract_namespace());
     sandboxCommandMessage.set_transaction((const std::string)transactionProtoHelper);
     sandboxCommandMessage.set_model(model);
     sandboxCommandMessage.set_available_time(transactionTracker.getAvailableTime());
@@ -201,8 +202,10 @@ keto::transaction_common::TransactionProtoHelper TransactionProcessor::processTr
         transactionWrapperHelperPtr->getSignedTransaction()->getTransaction()) {
         std::vector<keto::transaction_common::ActionHelperPtr> actions =
                 transactionWrapperHelperPtr->getSignedTransaction()->getTransaction()->getActions();
+        KETO_LOG_INFO << "[TransactionProcessor::processTransaction] Process the actions in the transaction [" << actions.size() << "]";
         for (keto::transaction_common::ActionHelperPtr action : actions) {
-            //KETO_LOG_DEBUG << "The action is contract : " << action->getContract().getHash(keto::common::HEX);
+            KETO_LOG_INFO << "The action is contract [" << action->getContract().getHash(keto::common::HEX) << "]["
+                << action->getContractName() << "]";
             keto::asn1::AnyHelper anyHelper(*transactionMessageHelperPtr);
             if (!action->getContract().empty()) {
                 transactionProtoHelper.setTransaction(executeContract(

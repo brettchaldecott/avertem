@@ -99,8 +99,10 @@ private:
     keto::election_common::SignedElectNodeHelperPtr generateSignedElectedNode(std::vector<std::vector<uint8_t>>& accounts);
     void generateTransaction(const keto::election_common::SignedElectNodeHelperPtr& signedElectNodeHelperPtr,
             const std::vector<keto::asn1::HashHelper>& tangles);
-    keto::asn1::RDFPredicateHelper buildPredicate(const std::string& predicate, const std::string& datatype,
-                                                                   const std::string& type, const std::string& value);
+    keto::asn1::RDFPredicateHelper buildPredicate(const std::string& predicate,
+                                                                   const std::string& type,
+                                                                   const std::string& datatype,
+                                                                   const std::string& value);
 
 };
 

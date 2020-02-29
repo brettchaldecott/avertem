@@ -18,11 +18,13 @@
 #include <vector>
 #include <memory>
 
-#include "RDFChange.h"
-#include "RDFModel.h"
 
 #include "keto/asn1/RDFSubjectHelper.hpp"
+#include "keto/asn1/RDFNtGroupHelper.hpp"
 #include "keto/asn1/AnyHelper.hpp"
+
+#include "RDFChange.h"
+#include "RDFModel.h"
 
 #include "keto/obfuscate/MetaString.hpp"
 
@@ -49,9 +51,11 @@ public:
     
     RDFModelHelper& setChange(const RDFChange_t& change);
     RDFModelHelper& addSubject(RDFSubjectHelper& rdfSubject);
+    RDFModelHelper& addGroup(RDFNtGroupHelper& rdfNtGroupHelper);
     
     std::vector<std::string> subjects();
     std::vector<RDFSubjectHelperPtr> getSubjects();
+    std::vector<RDFNtGroupHelperPtr> getRDFNtGroups();
     bool contains(const std::string& subject);
     RDFSubjectHelperPtr operator [](const std::string& subject); 
     

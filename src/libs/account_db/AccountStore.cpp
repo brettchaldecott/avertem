@@ -212,11 +212,12 @@ void AccountStore::getContract(
     keto::asn1::HashHelper accountHash(accountInfo.account_hash());
     if (!contractMessage.contract_name().empty()) {
 
-        ss << "SELECT ?code ?accountHash ?contractName ?contractHash WHERE { " <<
+        ss << "SELECT ?code ?accountHash ?contractName ?contractNamespace ?contractHash  WHERE { " <<
            "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#name> '" << contractMessage.contract_name() << "'^^<http://www.w3.org/2001/XMLSchema#string> . " <<
            "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#accountHash> ?accountHash . " <<
            "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#name> ?contractName . " <<
            "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#hash> ?contractHash . " <<
+           "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#namespace> ?contractNamespace . " <<
            "?contractVersion <http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#contract> ?contract . " <<
            "?contractVersion <http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#dateTime> ?dateTime . " <<
            "?contractVersion <http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#value> ?code . } " <<
@@ -224,11 +225,12 @@ void AccountStore::getContract(
 
     } else {
         keto::asn1::HashHelper contractHash(contractMessage.contract_hash());
-        ss << "SELECT ?code ?accountHash ?contractName ?contractHash WHERE { " <<
+        ss << "SELECT ?code ?accountHash ?contractName ?contractNamespace ?contractHash WHERE { " <<
             "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#hash> '" << contractHash.getHash(keto::common::StringEncoding::HEX) << "'^^<http://www.w3.org/2001/XMLSchema#string> . " <<
             "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#accountHash> ?accountHash . " <<
             "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#name> ?contractName . " <<
             "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#hash> ?contractHash . " <<
+            "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#namespace> ?contractNamespace . " <<
             "?contractVersion <http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#contract> ?contract . " <<
             "?contractVersion <http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#dateTime> ?dateTime . " <<
             "?contractVersion <http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#value> ?code . } " <<
@@ -238,6 +240,7 @@ void AccountStore::getContract(
     if (result.size() == 1) {
         contractMessage.set_contract(result[0]["code"]);
         contractMessage.set_contract_name(result[0]["contractName"]);
+        contractMessage.set_contract_namespace(result[0]["contractNamespace"]);
         keto::asn1::HashHelper contractHash(result[0]["contractHash"],keto::common::StringEncoding::HEX);
         contractMessage.set_contract_hash(contractHash);
     } else {
@@ -258,8 +261,10 @@ void AccountStore::createAccount(
     if (accountRDFStatementBuilder->accountAction().compare(
                 AccountSystemOntologyTypes::ACCOUNT_CREATE_OBJECT_STATUS)) {
         std::stringstream ss;
-        ss << "The account does not exist [" << 
-                accountHash.getHash(keto::common::HEX) << "]";
+        ss << "Cannot create the account because [" <<
+                accountHash.getHash(keto::common::HEX) << "] because the action is invalid [" <<
+                accountRDFStatementBuilder->accountAction() << "]";
+        KETO_LOG_ERROR << "[AccountStore::createAccount] " << ss.str();
         BOOST_THROW_EXCEPTION(keto::account_db::InvalidAccountOperationException(
                 ss.str()));
     }

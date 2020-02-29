@@ -9,12 +9,13 @@ message SandboxCommandMessage {
     string contract = 1;
     bytes contract_hash = 2;
     string contract_name = 3;
-    bytes model = 4;
-    bytes transaction = 5;
-    bytes changes = 6;
-    int64 available_time = 7;
-    int64 elapsed_time = 8;
-    float fee_ratio = 9;
+    string contract_namespace = 4;
+    bytes model = 5;
+    bytes transaction = 6;
+    bytes changes = 7;
+    int64 available_time = 8;
+    int64 elapsed_time = 9;
+    float fee_ratio = 10;
 }
 
 message HttpRequestEntry {

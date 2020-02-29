@@ -62,7 +62,7 @@ HttpTransactionManager::HttpTransactionManager(
 HttpTransactionManager::~HttpTransactionManager() {
 }
 
-std::string HttpTransactionManager::processTransaction(
+std::string HttpTransactionManager::    processTransaction(
         boost::beast::http::request<boost::beast::http::string_body>& req,
         const std::string& transactionMsg) {
     boost::beast::string_view path = req.target();

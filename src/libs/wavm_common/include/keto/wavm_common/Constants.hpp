@@ -33,6 +33,7 @@ public:
         static const char* FEE_PAYMENT;
         static const char* NESTED_TRANSACTION;
         static const char* FAUCET_TRANSACTION;
+        static const char* ACCOUNT_MANAGEMENT_TRANSACTION;
     };
     static const std::vector<const char*> SYSTEM_CONTRACTS;
 

@@ -26,6 +26,7 @@
 #include <rdf_model.h>
 
 #include "keto/asn1/RDFSubjectHelper.hpp"
+#include "keto/asn1/RDFNtGroupHelper.hpp"
 
 #include "keto/obfuscate/MetaString.hpp"
 
@@ -52,6 +53,7 @@ public:
     virtual ~RDFMemorySession();
     
     void persist(keto::asn1::RDFSubjectHelperPtr& subject);
+    void persist(keto::asn1::RDFNtGroupHelperPtr& group);
     ResultVectorMap executeQuery(const std::string& queryStr);
     
     // get methods

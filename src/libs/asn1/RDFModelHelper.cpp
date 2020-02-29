@@ -78,6 +78,17 @@ RDFModelHelper& RDFModelHelper::addSubject(RDFSubjectHelper& rdfSubject) {
     return (*this);
 }
 
+RDFModelHelper& RDFModelHelper::addGroup(RDFNtGroupHelper& rdfNtGroupHelper) {
+    RDFDataFormat_t* dataFormat = (RDFDataFormat_t*)calloc(1, sizeof *dataFormat);
+    dataFormat->present = RDFDataFormat_PR_rdfNtGroup;
+    RDFNtGroup_t* group = rdfNtGroupHelper;
+    dataFormat->choice.rdfNtGroup = *group;
+    if (0!= ASN_SEQUENCE_ADD(&this->rdfModel->rdfDataFormat,dataFormat)) {
+        BOOST_THROW_EXCEPTION(keto::asn1::FailedToAddSubjectToModelException());
+    }
+    return (*this);
+}
+
 std::vector<std::string> RDFModelHelper::subjects() {
     std::vector<std::string> result;
     for (int index = 0; index < this->rdfModel->rdfDataFormat.list.count; index++) {
@@ -94,10 +105,25 @@ std::vector<std::string> RDFModelHelper::subjects() {
 std::vector<RDFSubjectHelperPtr> RDFModelHelper::getSubjects() {
     std::vector<RDFSubjectHelperPtr> result;
     for (int index = 0; index < this->rdfModel->rdfDataFormat.list.count; index++) {
+        if (this->rdfModel->rdfDataFormat.list.array[index]->present != RDFDataFormat_PR_rdfSubject) {
+            continue;
+        }
         result.push_back(RDFSubjectHelperPtr(new RDFSubjectHelper(
                 &this->rdfModel->rdfDataFormat.list.array[index]->choice.rdfSubject,false)));
     }
     
+    return result;
+}
+
+std::vector<RDFNtGroupHelperPtr> RDFModelHelper::getRDFNtGroups() {
+    std::vector<RDFNtGroupHelperPtr> result;
+    for (int index = 0; index < this->rdfModel->rdfDataFormat.list.count; index++) {
+        if (this->rdfModel->rdfDataFormat.list.array[index]->present != RDFDataFormat_PR_rdfNtGroup) {
+            continue;
+        }
+        result.push_back(RDFNtGroupHelperPtr(new RDFNtGroupHelper(
+                &this->rdfModel->rdfDataFormat.list.array[index]->choice.rdfNtGroup,false)));
+    }
     return result;
 }
 

@@ -302,6 +302,7 @@ keto::event::Event RouterService::routeMessage(const keto::event::Event& event, 
         return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
     } catch (keto::common::Exception &ex) {
         KETO_LOG_ERROR << "[RouterService::routeMessage] Failed to route the message because: "
+                    << boost::diagnostic_information(ex, true) << std::endl
                     << boost::diagnostic_information_what(ex, true) << std::endl <<  " : will retry in 1.5 seconds";
     } catch (boost::exception &ex) {
         KETO_LOG_ERROR << "[RouterService::routeMessage] Failed to route the message because :"

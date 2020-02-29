@@ -45,10 +45,10 @@ AnyHelper::AnyHelper(ANY_t* any) :
 
 AnyHelper::AnyHelper(const std::string& value) {
     this->anyInterface = 0;
-    std::vector<uint8_t> bytes;
-    for (uint8_t entry: value) {
-        bytes.push_back(entry);
-    }
+    std::vector<uint8_t> bytes(value.begin(), value.end());
+    //for (uint8_t entry: value) {
+    //    bytes.push_back(entry);
+    //}
     this->any = keto::asn1::DeserializationHelper<ANY_t>(bytes,&asn_DEF_ANY).takePtr();
 }
 
@@ -101,10 +101,10 @@ AnyHelper::operator std::string() const {
         bytes = keto::asn1::SerializationHelper<ANY_t>(ptr,&asn_DEF_ANY);
         ASN_STRUCT_FREE(asn_DEF_ANY, ptr);
     }
-    std::string result;
-    for (uint8_t entry: bytes) {
-        result += entry;
-    }
+    std::string result(bytes.begin(),bytes.end());
+    //for (uint8_t entry: bytes) {
+    //    result += entry;
+    //}
     return result;
 }
 
