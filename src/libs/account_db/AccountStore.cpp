@@ -84,7 +84,7 @@ bool AccountStore::getAccountInfo(const keto::asn1::HashHelper& accountHash,
     rocksdb::ReadOptions readOptions;
     std::string value;
     auto status = accountTransaction->Get(readOptions,accountHashHelper,&value);
-    if (rocksdb::Status::OK() != status || rocksdb::Status::NotFound() == status) {
+    if (rocksdb::Status::OK() != status && rocksdb::Status::NotFound() == status) {
         return false;
     }
     result.ParseFromString(value);
@@ -258,6 +258,7 @@ void AccountStore::createAccount(
             const keto::transaction_common::TransactionWrapperHelperPtr& transactionWrapperHelperPtr,
             AccountRDFStatementBuilderPtr accountRDFStatementBuilder,
             keto::proto::AccountInfo& accountInfo) {
+    KETO_LOG_ERROR << "[AccountStore::createAccount] Create the account [" << accountHash.getHash(keto::common::HEX) << "]";
     if (accountRDFStatementBuilder->accountAction().compare(
                 AccountSystemOntologyTypes::ACCOUNT_CREATE_OBJECT_STATUS)) {
         std::stringstream ss;

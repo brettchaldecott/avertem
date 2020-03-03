@@ -106,39 +106,39 @@ TransactionWrapperHelperPtr TransactionMessageHelper::getTransactionWrapper() {
 }
 
 TransactionMessageHelper& TransactionMessageHelper::addNestedTransaction(TransactionMessage_t* nestedTransaction) {
-    TransactionMessage__nestedTransactions__Member* _nestedTransaction =
-            (TransactionMessage__nestedTransactions__Member*)calloc(1, sizeof *nestedTransaction);
+    //TransactionMessage__nestedTransactions__Member* _nestedTransaction =
+    //        (TransactionMessage__nestedTransactions__Member*)calloc(1, sizeof *nestedTransaction);
 
-    _nestedTransaction->present = TransactionMessage__nestedTransactions__Member_PR_sideTransaction;
-    _nestedTransaction->choice.sideTransaction = nestedTransaction;
+    //_nestedTransaction->present = TransactionMessage__nestedTransactions__Member_PR_sideTransaction;
+    //_nestedTransaction->choice.sideTransaction = nestedTransaction;
 
-    ASN_SEQUENCE_ADD(&transactionMessage->nestedTransactions,_nestedTransaction);
+    ASN_SEQUENCE_ADD(&transactionMessage->sideTransactions,nestedTransaction);
     return *this;
 }
 
 
 TransactionMessageHelper& TransactionMessageHelper::addNestedTransaction(
         const TransactionMessageHelperPtr& nestedTransaction) {
-    TransactionMessage__nestedTransactions__Member* _nestedTransaction =
-            (TransactionMessage__nestedTransactions__Member*)calloc(1, sizeof *nestedTransaction);
+    //TransactionMessage__nestedTransactions__Member* _nestedTransaction =
+    //        (TransactionMessage__nestedTransactions__Member*)calloc(1, sizeof *nestedTransaction);
 
-    _nestedTransaction->present = TransactionMessage__nestedTransactions__Member_PR_sideTransaction;
-    _nestedTransaction->choice.sideTransaction = *nestedTransaction;
+    //_nestedTransaction->present = TransactionMessage__nestedTransactions__Member_PR_sideTransaction;
+    //_nestedTransaction->choice.sideTransaction = *nestedTransaction;
 
-    ASN_SEQUENCE_ADD(&transactionMessage->nestedTransactions,_nestedTransaction);
+    ASN_SEQUENCE_ADD(&transactionMessage->sideTransactions,(TransactionMessage_t*)*nestedTransaction);
 
     return *this;
 }
 TransactionMessageHelper& TransactionMessageHelper::addNestedTransaction(
         const TransactionMessageHelper& nestedTransaction) {
 
-    TransactionMessage__nestedTransactions__Member* _nestedTransaction =
-            (TransactionMessage__nestedTransactions__Member*)calloc(1, sizeof *nestedTransaction);
+    //TransactionMessage__nestedTransactions__Member* _nestedTransaction =
+    //        (TransactionMessage__nestedTransactions__Member*)calloc(1, sizeof *nestedTransaction);
 
-    _nestedTransaction->present = TransactionMessage__nestedTransactions__Member_PR_sideTransaction;
-    _nestedTransaction->choice.sideTransaction = nestedTransaction;
+    //_nestedTransaction->present = TransactionMessage__nestedTransactions__Member_PR_sideTransaction;
+    //_nestedTransaction->choice.sideTransaction = nestedTransaction;
 
-    ASN_SEQUENCE_ADD(&transactionMessage->nestedTransactions,_nestedTransaction);
+    ASN_SEQUENCE_ADD(&transactionMessage->sideTransactions,(TransactionMessage_t*)nestedTransaction);
 
     return *this;
 }
@@ -146,15 +146,15 @@ TransactionMessageHelper& TransactionMessageHelper::addNestedTransaction(
 std::vector<TransactionMessageHelperPtr> TransactionMessageHelper::getNestedTransactions() {
     std::vector<TransactionMessageHelperPtr> nestedTransactions;
     //KETO_LOG_DEBUG << "The size of the nested asn1 buffer : " << this->transactionMessage->nestedTransactions.list.count;
-    for (int index = 0; index < this->transactionMessage->nestedTransactions.list.count; index++) {
-        TransactionMessage__nestedTransactions__Member* nestedTransaction =
-                this->transactionMessage->nestedTransactions.list.array[index];
+    for (int index = 0; index < this->transactionMessage->sideTransactions.list.count; index++) {
+        //TransactionMessage__nestedTransactions__Member* nestedTransaction =
+        //        this->transactionMessage->nestedTransactions.list.array[index];
         //KETO_LOG_DEBUG << "Retrieve the nested transactions of state : " << nestedTransaction->present;
-        if (nestedTransaction->present == TransactionMessage__nestedTransactions__Member_PR_sideTransaction) {
+        //if (nestedTransaction->present == TransactionMessage__nestedTransactions__Member_PR_sideTransaction) {
             //KETO_LOG_DEBUG << "Add the side transaction : " << nestedTransaction->present;
             nestedTransactions.push_back(TransactionMessageHelperPtr(new TransactionMessageHelper(
-                    keto::asn1::clone<TransactionMessage_t>(nestedTransaction->choice.sideTransaction,&asn_DEF_TransactionMessage))));
-        }
+                    keto::asn1::clone<TransactionMessage_t>(this->transactionMessage->sideTransactions.list.array[index],&asn_DEF_TransactionMessage))));
+        //}
     }
     return nestedTransactions;
 }
@@ -209,50 +209,58 @@ TransactionMessage_t* TransactionMessageHelper::getMessage() const {
 TransactionMessage_t* TransactionMessageHelper::getMessage(TransactionEncryptionHandler& 
         transactionEncryptionHandler) {
     TransactionMessage_t* _transactionMessage =  cloneTransaction(this->transactionMessage);
-    for (int index = 0; index < this->transactionMessage->nestedTransactions.list.count; index++) {
-        TransactionMessage__nestedTransactions__Member* currentNestedTransaction =
-                this->transactionMessage->nestedTransactions.list.array[index];
+    for (int index = 0; index < this->transactionMessage->sideTransactions.list.count; index++) {
+        //TransactionMessage__nestedTransactions__Member* currentNestedTransaction =
+        //        this->transactionMessage->nestedTransactions.list.array[index];
         //KETO_LOG_DEBUG << "Retrieve the nested transactions of state : " << currentNestedTransaction->present;
 
-        TransactionMessage__nestedTransactions__Member* newNestedTransaction =
-                (TransactionMessage__nestedTransactions__Member*)calloc(1, sizeof *newNestedTransaction);
-
-        if (currentNestedTransaction->present == TransactionMessage__nestedTransactions__Member_PR_sideTransaction) {
+        //TransactionMessage__nestedTransactions__Member* newNestedTransaction =
+        //        (TransactionMessage__nestedTransactions__Member*)calloc(1, sizeof *newNestedTransaction);
+        //if (currentNestedTransaction->present == TransactionMessage__nestedTransactions__Member_PR_sideTransaction) {
             TransactionMessageHelperPtr transactionMessageHelperPtr(new TransactionMessageHelper(
-                    keto::asn1::clone<TransactionMessage_t>(currentNestedTransaction->choice.sideTransaction,&asn_DEF_TransactionMessage)));
+                    keto::asn1::clone<TransactionMessage_t>(this->transactionMessage->sideTransactions.list.array[index],&asn_DEF_TransactionMessage)));
             TransactionMessage_t* childTransaction = transactionMessageHelperPtr->getMessage(transactionEncryptionHandler);
             if (transactionMessageHelperPtr->isEncrypted()) {
-                newNestedTransaction->present = TransactionMessage__nestedTransactions__Member_PR_encryptedSideTransaction;
-                newNestedTransaction->choice.encryptedSideTransaction = *transactionEncryptionHandler.encrypt(*childTransaction);
+                // newNestedTransaction->present = TransactionMessage__nestedTransactions__Member_PR_encryptedSideTransaction;
+                EncryptedDataWrapper_t* encryptedDataWrapper = transactionEncryptionHandler.encrypt(*childTransaction);
+                ASN_SEQUENCE_ADD(&_transactionMessage->encryptedSideTransactions,encryptedDataWrapper);
                 ASN_STRUCT_FREE(asn_DEF_TransactionMessage, childTransaction);
             } else {
-                newNestedTransaction->present = TransactionMessage__nestedTransactions__Member_PR_sideTransaction;
-                newNestedTransaction->choice.sideTransaction = childTransaction;
+                //newNestedTransaction->present = TransactionMessage__nestedTransactions__Member_PR_sideTransaction;
+                //newNestedTransaction->choice.sideTransaction = childTransaction;
+                ASN_SEQUENCE_ADD(&_transactionMessage->sideTransactions,childTransaction);
             }
-        } else {
-            newNestedTransaction->present = TransactionMessage__nestedTransactions__Member_PR_encryptedSideTransaction;
-            EncryptedDataWrapper_t* newEncryptedSideTransaction =
-                    keto::asn1::clone<EncryptedDataWrapper_t>(&currentNestedTransaction->choice.encryptedSideTransaction,&asn_DEF_EncryptedDataWrapper);
-            newNestedTransaction->choice.encryptedSideTransaction = *newEncryptedSideTransaction;
-            free(newEncryptedSideTransaction);
-        }
+        //}// else {
+         //   newNestedTransaction->present = TransactionMessage__nestedTransactions__Member_PR_encryptedSideTransaction;
+         //   EncryptedDataWrapper_t* newEncryptedSideTransaction =
+         //           keto::asn1::clone<EncryptedDataWrapper_t>(&currentNestedTransaction->choice.encryptedSideTransaction,&asn_DEF_EncryptedDataWrapper);
+         //   newNestedTransaction->choice.encryptedSideTransaction = *newEncryptedSideTransaction;
+         //   free(newEncryptedSideTransaction);
+        //}
 
-        ASN_SEQUENCE_ADD(&_transactionMessage->nestedTransactions,newNestedTransaction);
+        //ASN_SEQUENCE_ADD(&_transactionMessage->nestedTransactions,newNestedTransaction);
     }
     //KETO_LOG_DEBUG << "Return the transaction";
     return _transactionMessage;
 }
 
-TransactionMessageHelperPtr TransactionMessageHelper::decryptMessage(TransactionEncryptionHandler& 
-        transactionEncryptionHandler) {
+TransactionMessageHelperPtr TransactionMessageHelper::decryptMessage(TransactionEncryptionHandler& transactionEncryptionHandler) {
     TransactionMessageHelperPtr transactionMessageHelperPtr(new TransactionMessageHelper(*this->transactionMessage));
     transactionMessageHelperPtr->setTransactionWrapper(keto::asn1::clone<TransactionWrapper_t>(
             &this->transactionMessage->transaction,&asn_DEF_TransactionWrapper));
     
-    for (int index = 0; index < this->transactionMessage->nestedTransactions.list.count; index++) {
-        TransactionMessage__nestedTransactions__Member* nestedTransaction =
-            this->transactionMessage->nestedTransactions.list.array[index];
-        decryptMessage(transactionEncryptionHandler,transactionMessageHelperPtr,nestedTransaction);
+    for (int index = 0; index < this->transactionMessage->encryptedSideTransactions.list.count; index++) {
+        //TransactionMessage__nestedTransactions__Member* nestedTransaction =
+        //    this->transactionMessage->nestedTransactions.list.array[index];
+        decryptMessage(transactionEncryptionHandler,transactionMessageHelperPtr,
+                this->transactionMessage->encryptedSideTransactions.list.array[index]);
+    }
+    for (int index = 0; index < this->transactionMessage->sideTransactions.list.count; index++) {
+        //TransactionMessage__nestedTransactions__Member* nestedTransaction =
+        //    this->transactionMessage->nestedTransactions.list.array[index];
+        decryptMessage(transactionEncryptionHandler,transactionMessageHelperPtr,
+                       keto::asn1::clone<TransactionMessage_t>(
+                               this->transactionMessage->sideTransactions.list.array[index],&asn_DEF_TransactionMessage));
     }
     return transactionMessageHelperPtr;
 }
@@ -279,38 +287,54 @@ TransactionMessageHelper& TransactionMessageHelper::setElapsedTime(time_t elapse
     return *this;
 }
 
-void TransactionMessageHelper::decryptMessage(TransactionEncryptionHandler&
-        transactionEncryptionHandler, TransactionMessageHelperPtr transactionMessageHelperPtr, 
-        TransactionMessage__nestedTransactions__Member* nestedTransaction) {
-    TransactionMessage_t* transactionMessage = NULL;
-    if (nestedTransaction->present == TransactionMessage__nestedTransactions__Member_PR_NOTHING) {
-        return;
-    } else if (nestedTransaction->present == TransactionMessage__nestedTransactions__Member_PR_sideTransaction) {
-        transactionMessage = 
-                keto::asn1::clone<TransactionMessage_t>(nestedTransaction->choice.sideTransaction,&asn_DEF_TransactionMessage);
-    } else if (nestedTransaction->present == TransactionMessage__nestedTransactions__Member_PR_encryptedSideTransaction) {
-        transactionMessage = 
-                transactionEncryptionHandler.decrypt(nestedTransaction->choice.encryptedSideTransaction);
-    }
+void TransactionMessageHelper::decryptMessage(TransactionEncryptionHandler& transactionEncryptionHandler,
+        TransactionMessageHelperPtr transactionMessageHelperPtr,
+        EncryptedDataWrapper_t* encryptedDataWrapper) {
+    decryptMessage(transactionEncryptionHandler, transactionMessageHelperPtr, transactionEncryptionHandler.decrypt(*encryptedDataWrapper));
+}
+
+void TransactionMessageHelper::decryptMessage(TransactionEncryptionHandler& transactionEncryptionHandler,
+        TransactionMessageHelperPtr transactionMessageHelperPtr,
+        TransactionMessage_t* transactionMessage) {
+
+    //if (nestedTransaction->present == TransactionMessage__nestedTransactions__Member_PR_NOTHING) {
+    //    return;
+    //} else if (nestedTransaction->present == TransactionMessage__nestedTransactions__Member_PR_sideTransaction) {
+    //    transactionMessage =
+    //            keto::asn1::clone<TransactionMessage_t>(nestedTransaction->choice.sideTransaction,&asn_DEF_TransactionMessage);
+    //} else if (nestedTransaction->present == TransactionMessage__nestedTransactions__Member_PR_encryptedSideTransaction) {
+    //    transactionMessage =
+    //            transactionEncryptionHandler.decrypt(*encryptedDataWrapper);
+    //}
     
     TransactionMessageHelperPtr _transactionMessageHelperPtr(new TransactionMessageHelper(
-            transactionMessage));
-    for (int index = 0; index < transactionMessage->nestedTransactions.list.count; index++) {
-        TransactionMessage__nestedTransactions__Member* _nestedTransaction =
-            transactionMessage->nestedTransactions.list.array[index];    
+            *transactionMessage));
+    for (int index = 0; index < transactionMessage->encryptedSideTransactions.list.count; index++) {
+        //TransactionMessage__nestedTransactions__Member* _nestedTransaction =
+        //    transactionMessage->nestedTransactions.list.array[index];
         decryptMessage(transactionEncryptionHandler, _transactionMessageHelperPtr,
-                _nestedTransaction);
+                transactionMessage->encryptedSideTransactions.list.array[index]);
     }
-    
+    for (int index = 0; index < transactionMessage->sideTransactions.list.count; index++) {
+        //TransactionMessage__nestedTransactions__Member* _nestedTransaction =
+        //    transactionMessage->nestedTransactions.list.array[index];
+        decryptMessage(transactionEncryptionHandler, _transactionMessageHelperPtr,
+                       keto::asn1::clone<TransactionMessage_t>(
+                               transactionMessage->sideTransactions.list.array[index],&asn_DEF_TransactionMessage));
+    }
     transactionMessageHelperPtr->addNestedTransaction(_transactionMessageHelperPtr);
+    ASN_STRUCT_FREE(asn_DEF_TransactionMessage, transactionMessage);
 }
 
 
 TransactionMessage_t* TransactionMessageHelper::cloneTransaction(TransactionMessage_t* source) {
     TransactionMessage_t* _transactionMessage =
             keto::asn1::clone<TransactionMessage_t>(source,&asn_DEF_TransactionMessage);
-    while (_transactionMessage->nestedTransactions.list.count) {
-        asn_sequence_del(&_transactionMessage->nestedTransactions,0,true);
+    while (_transactionMessage->sideTransactions.list.count) {
+        asn_sequence_del(&_transactionMessage->sideTransactions,0,true);
+    }
+    while (_transactionMessage->encryptedSideTransactions.list.count) {
+        asn_sequence_del(&_transactionMessage->encryptedSideTransactions,0,true);
     }
     return _transactionMessage;
 }

@@ -65,17 +65,17 @@ ServerInfo::ServerInfo() : checkedMaster(false), master(false){
     if (!config->getVariablesMap().count(keto::server_common::Constants::ACCOUNT_HASH)) {
         BOOST_THROW_EXCEPTION(keto::server_common::NoServerAccountConfiguredException());
     }
-    std::string accountHash = 
+    std::string accountHashStr =
             config->getVariablesMap()[keto::server_common::Constants::ACCOUNT_HASH].as<std::string>();
     
-    this->accountHash = Botan::hex_decode(accountHash,true);
+    this->accountHash = Botan::hex_decode(accountHashStr,true);
     
     this->feeAccountHash = this->accountHash;
     if (config->getVariablesMap().count(keto::server_common::Constants::FEE_ACCOUNT_HASH)) {
-        accountHash = 
+        std::string  feeAccountHashStr =
             config->getVariablesMap()[keto::server_common::Constants::FEE_ACCOUNT_HASH].as<std::string>();
     
-        this->feeAccountHash = Botan::hex_decode(accountHash,true);
+        this->feeAccountHash = Botan::hex_decode(feeAccountHashStr,true);
     } 
 }
 

@@ -97,9 +97,13 @@ private:
     TransactionMessageHelper(const TransactionMessage_t& transactionMessage);
 
 
-    void decryptMessage(TransactionEncryptionHandler&
-        transactionEncryptionHandler, TransactionMessageHelperPtr transactionMessageHelperPtr, 
-        TransactionMessage__nestedTransactions__Member* transactionMessage);
+    void decryptMessage(TransactionEncryptionHandler& transactionEncryptionHandler,
+            TransactionMessageHelperPtr transactionMessageHelperPtr,
+            EncryptedDataWrapper_t* encryptedDataWrapper);
+
+    void decryptMessage(TransactionEncryptionHandler& transactionEncryptionHandler,
+            TransactionMessageHelperPtr transactionMessageHelperPtr,
+            TransactionMessage_t* transactionMessage);
 
     TransactionMessage_t* cloneTransaction(TransactionMessage_t* source);
 

@@ -113,7 +113,10 @@ AccountRDFStatementBuilder::AccountRDFStatementBuilder(
 
                 if (!AccountSystemOntologyTypes::validateClassOperation(
                         accountHash,existingAccount,subjectPtr)) {
-                    BOOST_THROW_EXCEPTION(keto::account_db::InvalidAccountOperationException());
+                    std::stringstream  ss;
+                    ss << "Invalid operation on account [" << accountHash.getHash(keto::common::StringEncoding::HEX) << "]["
+                        << existingAccount << "][" << subjectPtr->getSubject() << "]";
+                    BOOST_THROW_EXCEPTION(keto::account_db::InvalidAccountOperationException(ss.str()));
                 }
                 if (AccountSystemOntologyTypes::isAccountOntologyClass(subjectPtr)) {
                     this->action =
@@ -261,7 +264,10 @@ AccountRDFStatementBuilder::AccountRDFStatementBuilder(
 
                 if (!AccountSystemOntologyTypes::validateClassOperation(
                     accountHash,existingAccount,subjectPtr)) {
-                    BOOST_THROW_EXCEPTION(keto::account_db::InvalidAccountOperationException());
+                    std::stringstream ss;
+                    ss << "Invalid operation on account [" << accountHash.getHash(keto::common::StringEncoding::HEX) << "]["
+                       << existingAccount << "][" << subjectPtr->getSubject() << "]";
+                    BOOST_THROW_EXCEPTION(keto::account_db::InvalidAccountOperationException(ss.str()));
                 }
                 if (AccountSystemOntologyTypes::isAccountOntologyClass(subjectPtr)) {
                     this->action = 

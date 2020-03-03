@@ -69,11 +69,14 @@ TransactionMessage ::= SEQUENCE {
     transaction          TransactionWrapper,
     availableTime        Int,
     elapsedTime          Int,
-    nestedTransactions   SEQUENCE OF CHOICE {
-        sideTransaction  TransactionMessage,
+    sideTransactions     SEQUENCE OF TransactionMessage,
+    encryptedSideTransactions  SEQUENCE OF EncryptedDataWrapper
+
+    -- nestedTransactions   SEQUENCE OF CHOICE {
+        --sideTransaction  TransactionMessage,
         -- the data that is encrypted this will be an encrypted transaction message
-        encryptedSideTransaction    EncryptedDataWrapper
-    }
+        --encryptedSideTransaction    EncryptedDataWrapper
+    -- }
 }
 
 

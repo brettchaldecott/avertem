@@ -72,6 +72,8 @@ WavmSessionTransaction::WavmSessionTransaction(const keto::proto::SandboxCommand
         TransactionMessage_t* transactionMessage;
         if ((rdfModel = anyHelper.extract<RDFModel_t>(&asn_DEF_RDFModel)) != NULL) {
             KETO_LOG_ERROR << "[WavmSessionTransaction::WavmSessionTransaction] Load the RDF model " << sandboxCommandMessage.contract_name();
+            KETO_LOG_ERROR << "[WavmSessionTransaction::WavmSessionTransaction] Deserialize the any [" << Botan::hex_encode((uint8_t*)sandboxCommandMessage.model().c_str(),
+                                                                                    sandboxCommandMessage.model().size()) << "]";
             keto::asn1::RDFModelHelper rdfModelHelper(rdfModel);
             for (keto::asn1::RDFSubjectHelperPtr subject : rdfModelHelper.getSubjects()) {
                 KETO_LOG_ERROR << "[WavmSessionTransaction::WavmSessionTransaction] load the subject : " << subject->getSubject();
@@ -86,8 +88,8 @@ WavmSessionTransaction::WavmSessionTransaction(const keto::proto::SandboxCommand
                     new keto::transaction_common::TransactionMessageHelper(transactionMessage));
             addTransaction(transactionMessageHelperPtr,true);
         } else {
-            KETO_LOG_ERROR << "Failed to deserialize the data" << Botan::hex_encode((uint8_t*)sandboxCommandMessage.model().c_str(),
-                                                                                    sandboxCommandMessage.model().size());
+            KETO_LOG_ERROR << "Failed to deserialize the data [" << Botan::hex_encode((uint8_t*)sandboxCommandMessage.model().c_str(),
+                                                                                    sandboxCommandMessage.model().size()) << "]";
         }
     } else {
         KETO_LOG_ERROR << "[WavmSessionTransaction::WavmSessionTransaction]The model is empty for the contract : " << sandboxCommandMessage.contract_name();

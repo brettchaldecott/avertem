@@ -37,15 +37,17 @@ RDFNtGroup ::= SEQUENCE {
     rdfNT           SEQUENCE OF RDFNT
 }
 
-RDFDataFormat ::= CHOICE {
-    rdfSubject      RDFSubject,
-    rdfNtGroup      RDFNtGroup
-}
+-- RDFDataFormat ::= CHOICE {
+--     rdfSubject      RDFSubject,
+--     rdfNtGroup      RDFNtGroup
+-- }
 
 
 RDFModel ::= SEQUENCE {
     action          RDFChange,
-    rdfDataFormat   SEQUENCE OF RDFDataFormat
+    rdfSubjects      SEQUENCE OF RDFSubject,
+    rdfNtGroups      SEQUENCE OF RDFNtGroup
+    -- rdfDataFormat   SEQUENCE OF RDFDataFormat
 }
 
 END
