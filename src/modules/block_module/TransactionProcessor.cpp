@@ -140,6 +140,7 @@ keto::proto::SandboxCommandMessage TransactionProcessor::executeContract(const k
     sandboxCommandMessage.set_contract(contract.contract());
     sandboxCommandMessage.set_contract_hash(contract.contract_hash());
     sandboxCommandMessage.set_contract_name(contract.contract_name());
+    sandboxCommandMessage.set_contract_owner(contract.contract_owner());
     sandboxCommandMessage.set_transaction((const std::string)transactionProtoHelper);
     sandboxCommandMessage.set_available_time(transactionTracker.getAvailableTime());
     sandboxCommandMessage.set_elapsed_time(transactionTracker.getElapsedTime());
@@ -161,6 +162,7 @@ keto::proto::SandboxCommandMessage TransactionProcessor::executeContract(const k
     sandboxCommandMessage.set_contract(contract.contract());
     sandboxCommandMessage.set_contract_hash(contract.contract_hash());
     sandboxCommandMessage.set_contract_name(contract.contract_name());
+    sandboxCommandMessage.set_contract_owner(contract.contract_owner());
     sandboxCommandMessage.set_contract_namespace(contract.contract_namespace());
     sandboxCommandMessage.set_transaction((const std::string)transactionProtoHelper);
     sandboxCommandMessage.set_model(model);

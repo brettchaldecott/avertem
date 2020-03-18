@@ -60,8 +60,14 @@ public:
     // the contract facade methods
     std::string getSessionType();
 
+    std::string getContractName();
+    std::string getContractHash();
+    std::string getContractOwner();
+
     std::string getFeeAccount();
     std::string getAccount();
+    std::string getDebitAccount();
+    std::string getCreditAccount();
     std::string getTransaction();
     Status getStatus();
     keto::asn1::NumberHelper getTransactionValue();

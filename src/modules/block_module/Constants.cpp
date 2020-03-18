@@ -69,10 +69,10 @@ const char* Constants::FaucetRequest::TANGLES   = "http://keto-coin.io/schema/rd
 const char* Constants::FaucetRequest::PROOF     = "http://keto-coin.io/schema/rdf/1.0/keto/Faucet#proof";
 
 
-const char* Constants::SYSTEM_CONTRACT::BASE_ACCOUNT_TRANSACTION = "base_account_transaction";
-const char* Constants::SYSTEM_CONTRACT::FEE_PAYMENT = "fee_payment";
-const char* Constants::SYSTEM_CONTRACT::NESTED_TRANSACTION = "nested_transaction";
-const char* Constants::SYSTEM_CONTRACT::FAUCET_TRANSACTION = "faucet_transaction";
+const char* Constants::SYSTEM_CONTRACT::BASE_ACCOUNT_TRANSACTION = "avertem__base_account_transaction";
+const char* Constants::SYSTEM_CONTRACT::FEE_PAYMENT = "avertem__fee_payment";
+const char* Constants::SYSTEM_CONTRACT::NESTED_TRANSACTION = "avertem__nested_transaction";
+const char* Constants::SYSTEM_CONTRACT::FAUCET_TRANSACTION = "avertem__faucet_transaction";
 
 
 const std::vector<const char*> Constants::SYSTEM_CONTRACTS{

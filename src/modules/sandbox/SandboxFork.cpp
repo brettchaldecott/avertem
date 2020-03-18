@@ -107,7 +107,7 @@ keto::event::Event SandboxFork::Child::executeHttpActionMessage(const keto::even
         std::stringstream ss;
         ss << "[SandboxFork::Child::executeHttpActionMessage]Failed to process the contract : " << ex.what() << std::endl;
         ss << "Cause: " << boost::diagnostic_information(ex,true) << std::endl;
-        KETO_LOG_ERROR << ss.str();
+        KETO_LOG_ERROR <<   ss.str();
         keto::wavm_common::ParentForkGateway::raiseException(ss.str());
     } catch (boost::exception& ex) {
         std::stringstream ss;

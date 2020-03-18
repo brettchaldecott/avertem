@@ -143,7 +143,7 @@
                      ],
                      "http://keto-coin.io/schema/rdf/1.0/keto/Contract#name":[
                         {
-                           "value":"base_account_transaction",
+                           "value":"avertem__base_account_transaction",
                            "type":"literal",
                            "datatype":"http://www.w3.org/2001/XMLSchema#string"
                         }
@@ -158,6 +158,13 @@
                      "http://keto-coin.io/schema/rdf/1.0/keto/Contract#namespace":[
                         {
                            "value":"http://keto-coin.io/",
+                           "type":"literal",
+                           "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                        }
+                     ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/AccountModifier#accountModifier":[
+                        {
+                           "value":"PUBLIC",
                            "type":"literal",
                            "datatype":"http://www.w3.org/2001/XMLSchema#string"
                         }
@@ -201,7 +208,14 @@
                            "datatype":"http://www.w3.org/2001/XMLSchema#decimal"
                         }
                      ],
-                     "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#format":[
+                     "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#fee":[
+                          {
+                              "value":"100",
+                              "type":"literal",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#decimal"
+                          }
+                      ],
+                      "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#format":[
                         {
                            "value":"wasm",
                            "type":"literal",
@@ -242,7 +256,7 @@
                      ],
                      "http://keto-coin.io/schema/rdf/1.0/keto/Contract#name":[
                         {
-                           "value":"fee_payment",
+                           "value":"avertem__fee_payment",
                            "type":"literal",
                            "datatype":"http://www.w3.org/2001/XMLSchema#string"
                         }
@@ -257,6 +271,13 @@
                      "http://keto-coin.io/schema/rdf/1.0/keto/Contract#namespace":[
                         {
                            "value":"http://keto-coin.io/",
+                           "type":"literal",
+                           "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                        }
+                     ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/AccountModifier#accountModifier":[
+                        {
+                           "value":"PUBLIC",
                            "type":"literal",
                            "datatype":"http://www.w3.org/2001/XMLSchema#string"
                         }
@@ -300,7 +321,14 @@
                            "datatype":"http://www.w3.org/2001/XMLSchema#decimal"
                         }
                      ],
-                     "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#format":[
+                     "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#fee":[
+                          {
+                              "value":"100",
+                              "type":"literal",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#decimal"
+                          }
+                      ],
+                      "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#format":[
                         {
                            "value":"wasm",
                            "type":"literal",
@@ -334,7 +362,7 @@
                      ],
                      "http://keto-coin.io/schema/rdf/1.0/keto/Contract#name":[
                         {
-                           "value":"nested_transaction",
+                           "value":"avertem__nested_transaction",
                            "type":"literal",
                            "datatype":"http://www.w3.org/2001/XMLSchema#string"
                         }
@@ -351,6 +379,13 @@
                          "value":"http://keto-coin.io/",
                          "type":"literal",
                          "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                        }
+                     ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/AccountModifier#accountModifier":[
+                        {
+                          "value":"PUBLIC",
+                          "type":"literal",
+                          "datatype":"http://www.w3.org/2001/XMLSchema#string"
                         }
                      ]
                   }
@@ -392,6 +427,13 @@
                            "datatype":"http://www.w3.org/2001/XMLSchema#decimal"
                         }
                      ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#fee":[
+                         {
+                             "value":"100",
+                             "type":"literal",
+                             "datatype":"http://www.w3.org/2001/XMLSchema#decimal"
+                         }
+                     ],
                      "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#format":[
                         {
                            "value":"wasm",
@@ -426,7 +468,7 @@
                      ],
                      "http://keto-coin.io/schema/rdf/1.0/keto/Contract#name":[
                         {
-                           "value":"faucet_transaction",
+                           "value":"avertem__faucet_transaction",
                            "type":"literal",
                            "datatype":"http://www.w3.org/2001/XMLSchema#string"
                         }
@@ -441,6 +483,13 @@
                      "http://keto-coin.io/schema/rdf/1.0/keto/Contract#namespace":[
                         {
                            "value":"http://keto-coin.io/",
+                           "type":"literal",
+                           "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                        }
+                     ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/AccountModifier#accountModifier":[
+                        {
+                           "value":"PUBLIC",
                            "type":"literal",
                            "datatype":"http://www.w3.org/2001/XMLSchema#string"
                         }
@@ -484,6 +533,13 @@
                            "datatype":"http://www.w3.org/2001/XMLSchema#decimal"
                         }
                      ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#fee":[
+                         {
+                             "value":"100",
+                             "type":"literal",
+                             "datatype":"http://www.w3.org/2001/XMLSchema#decimal"
+                         }
+                     ],
                      "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#format":[
                         {
                            "value":"wasm",
@@ -501,24 +557,24 @@
                   }
                },
                {
-                  "http://keto-coin.io/schema/rdf/1.0/keto/Contract#Contract/DEA8E695ECDD055EF0820342AA65E7D2BCB34EAE1D29D8E060BC14262968A8B5":{
+                  "http://keto-coin.io/schema/rdf/1.0/keto/Contract#Contract/BB2DBC44D90DCA25D2F10D09E173A89E876C3ABBE7D9C6BD118FCBE0EFA0E5F9":{
                      "http://keto-coin.io/schema/rdf/1.0/keto/Contract#id":[
                         {
-                           "value":"DEA8E695ECDD055EF0820342AA65E7D2BCB34EAE1D29D8E060BC14262968A8B5",
+                           "value":"BB2DBC44D90DCA25D2F10D09E173A89E876C3ABBE7D9C6BD118FCBE0EFA0E5F9",
                            "type":"literal",
                            "datatype":"http://www.w3.org/2001/XMLSchema#string"
                         }
                      ],
                      "http://keto-coin.io/schema/rdf/1.0/keto/Contract#hash":[
                         {
-                           "value":"DEA8E695ECDD055EF0820342AA65E7D2BCB34EAE1D29D8E060BC14262968A8B5",
+                           "value":"BB2DBC44D90DCA25D2F10D09E173A89E876C3ABBE7D9C6BD118FCBE0EFA0E5F9",
                            "type":"literal",
                            "datatype":"http://www.w3.org/2001/XMLSchema#string"
                         }
                      ],
                      "http://keto-coin.io/schema/rdf/1.0/keto/Contract#name":[
                         {
-                           "value":"account_management_contract",
+                           "value":"avertem__account_management_contract",
                            "type":"literal",
                            "datatype":"http://www.w3.org/2001/XMLSchema#string"
                         }
@@ -536,28 +592,35 @@
                            "type":"literal",
                            "datatype":"http://www.w3.org/2001/XMLSchema#string"
                         }
+                     ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/AccountModifier#accountModifier":[
+                        {
+                               "value":"PUBLIC",
+                               "type":"literal",
+                               "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                        }
                      ]
                   }
                },
                {
-                  "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#ContractVersion/DEA8E695ECDD055EF0820342AA65E7D2BCB34EAE1D29D8E060BC14262968A8B5":{
+                  "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#ContractVersion/BB2DBC44D90DCA25D2F10D09E173A89E876C3ABBE7D9C6BD118FCBE0EFA0E5F9":{
                      "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#id":[
                         {
-                           "value":"DEA8E695ECDD055EF0820342AA65E7D2BCB34EAE1D29D8E060BC14262968A8B5",
+                           "value":"BB2DBC44D90DCA25D2F10D09E173A89E876C3ABBE7D9C6BD118FCBE0EFA0E5F9",
                            "type":"literal",
                            "datatype":"http://www.w3.org/2001/XMLSchema#string"
                         }
                      ],
                      "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#hash":[
                         {
-                           "value":"DEA8E695ECDD055EF0820342AA65E7D2BCB34EAE1D29D8E060BC14262968A8B5",
+                           "value":"BB2DBC44D90DCA25D2F10D09E173A89E876C3ABBE7D9C6BD118FCBE0EFA0E5F9",
                            "type":"literal",
                            "datatype":"http://www.w3.org/2001/XMLSchema#string"
                         }
                      ],
                      "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#contract":[
                         {
-                           "value":"http://keto-coin.io/schema/rdf/1.0/keto/Contract#Contract/DEA8E695ECDD055EF0820342AA65E7D2BCB34EAE1D29D8E060BC14262968A8B5",
+                           "value":"http://keto-coin.io/schema/rdf/1.0/keto/Contract#Contract/BB2DBC44D90DCA25D2F10D09E173A89E876C3ABBE7D9C6BD118FCBE0EFA0E5F9",
                            "type":"uri",
                            "datatype":"http://www.w3.org/2001/XMLSchema#string"
                         }
@@ -576,6 +639,13 @@
                            "datatype":"http://www.w3.org/2001/XMLSchema#decimal"
                         }
                      ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#fee":[
+                         {
+                             "value":"100",
+                             "type":"literal",
+                             "datatype":"http://www.w3.org/2001/XMLSchema#decimal"
+                         }
+                     ],
                      "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#format":[
                         {
                            "value":"wasm",
@@ -590,6 +660,335 @@
                            "datatype":"http://www.w3.org/2001/XMLSchema#string"
                         }
                      ]
+                  }
+               },
+               {
+                  "http://keto-coin.io/schema/rdf/1.0/keto/Contract#Contract/5C301417C4DC9480205383172A36F3B62349B2C46166D5EE2C5C030FAD41EE45":{
+                     "http://keto-coin.io/schema/rdf/1.0/keto/Contract#id":[
+                        {
+                              "value":"5C301417C4DC9480205383172A36F3B62349B2C46166D5EE2C5C030FAD41EE45",
+                              "type":"literal",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                           }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/Contract#hash":[
+                           {
+                              "value":"5C301417C4DC9480205383172A36F3B62349B2C46166D5EE2C5C030FAD41EE45",
+                              "type":"literal",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                           }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/Contract#name":[
+                           {
+                              "value":"avertem__contract_management_contract",
+                              "type":"literal",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                           }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/Contract#accountHash":[
+                           {
+                              "value":"D594F22DC389E38B3DE7FA5630DBD9DCA16DA8A77097516FD37F9E25C6BE24D2",
+                              "type":"literal",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                           }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/Contract#namespace":[
+                           {
+                              "value":"http://keto-coin.io/",
+                              "type":"literal",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                           }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/AccountModifier#accountModifier":[
+                           {
+                                  "value":"PUBLIC",
+                                  "type":"literal",
+                                  "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                           }
+                        ]
+                  }
+               },
+               {
+                  "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#ContractVersion/5C301417C4DC9480205383172A36F3B62349B2C46166D5EE2C5C030FAD41EE45":{
+                     "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#id":[
+                           {
+                              "value":"5C301417C4DC9480205383172A36F3B62349B2C46166D5EE2C5C030FAD41EE45",
+                              "type":"literal",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                           }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#hash":[
+                           {
+                              "value":"5C301417C4DC9480205383172A36F3B62349B2C46166D5EE2C5C030FAD41EE45",
+                              "type":"literal",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                           }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#contract":[
+                           {
+                              "value":"http://keto-coin.io/schema/rdf/1.0/keto/Contract#Contract/5C301417C4DC9480205383172A36F3B62349B2C46166D5EE2C5C030FAD41EE45",
+                              "type":"uri",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                           }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#dateTime":[
+                           {
+                              "value":"2019-01-01T00:00:00",
+                              "type":"literal",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#dateTime"
+                           }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#duration":[
+                           {
+                              "value":"1000",
+                              "type":"literal",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#decimal"
+                           }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#fee":[
+                            {
+                                "value":"100",
+                                "type":"literal",
+                                "datatype":"http://www.w3.org/2001/XMLSchema#decimal"
+                            }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#format":[
+                           {
+                              "value":"wasm",
+                              "type":"literal",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                           }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#value":[
+                           {
+                              "value":"CONTRACT_MANAGEMENT_CONTRACT",
+                              "type":"literal",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                           }
+                        ]
+                     }
+               },
+               {
+                  "http://keto-coin.io/schema/rdf/1.0/keto/Contract#Contract/9B37273E25CA8476B2B78FDC6305579BDF046547B354C8EBB1D2C29ECF02795E":{
+                     "http://keto-coin.io/schema/rdf/1.0/keto/Contract#id":[
+                        {
+                              "value":"9B37273E25CA8476B2B78FDC6305579BDF046547B354C8EBB1D2C29ECF02795E",
+                              "type":"literal",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                           }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/Contract#hash":[
+                           {
+                              "value":"9B37273E25CA8476B2B78FDC6305579BDF046547B354C8EBB1D2C29ECF02795E",
+                              "type":"literal",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                           }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/Contract#name":[
+                           {
+                              "value":"avertem__namespace_management_contract",
+                              "type":"literal",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                           }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/Contract#accountHash":[
+                           {
+                              "value":"D594F22DC389E38B3DE7FA5630DBD9DCA16DA8A77097516FD37F9E25C6BE24D2",
+                              "type":"literal",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                           }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/Contract#namespace":[
+                           {
+                              "value":"http://keto-coin.io/",
+                              "type":"literal",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                           }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/AccountModifier#accountModifier":[
+                           {
+                                  "value":"PUBLIC",
+                                  "type":"literal",
+                                  "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                           }
+                        ]
+                  }
+               },
+               {
+                  "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#ContractVersion/9B37273E25CA8476B2B78FDC6305579BDF046547B354C8EBB1D2C29ECF02795E":{
+                     "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#id":[
+                           {
+                              "value":"9B37273E25CA8476B2B78FDC6305579BDF046547B354C8EBB1D2C29ECF02795E",
+                              "type":"literal",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                           }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#hash":[
+                           {
+                              "value":"9B37273E25CA8476B2B78FDC6305579BDF046547B354C8EBB1D2C29ECF02795E",
+                              "type":"literal",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                           }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#contract":[
+                           {
+                              "value":"http://keto-coin.io/schema/rdf/1.0/keto/Contract#Contract/9B37273E25CA8476B2B78FDC6305579BDF046547B354C8EBB1D2C29ECF02795E",
+                              "type":"uri",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                           }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#dateTime":[
+                           {
+                              "value":"2019-01-01T00:00:00",
+                              "type":"literal",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#dateTime"
+                           }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#duration":[
+                           {
+                              "value":"1000",
+                              "type":"literal",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#decimal"
+                           }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#fee":[
+                            {
+                                "value":"100",
+                                "type":"literal",
+                                "datatype":"http://www.w3.org/2001/XMLSchema#decimal"
+                            }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#format":[
+                           {
+                              "value":"wasm",
+                              "type":"literal",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                           }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/ContractVersion#value":[
+                           {
+                              "value":"NAMESPACE_MANAGEMENT_CONTRACT",
+                              "type":"literal",
+                              "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                           }
+                        ]
+                     }
+               },
+               {
+                  "http://keto-coin.io/schema/rdf/1.0/keto/Namespace#Namespace/C67842BEE675E4F3858973A87197FC08B3827D7467AB87E22E14AD3DC3F8778A":{
+                     "http://keto-coin.io/schema/rdf/1.0/keto/Namespace#id":[
+                            {
+                               "value":"C67842BEE675E4F3858973A87197FC08B3827D7467AB87E22E14AD3DC3F8778A",
+                               "type":"literal",
+                               "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                            }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/Namespace#hash":[
+                            {
+                               "value":"C67842BEE675E4F3858973A87197FC08B3827D7467AB87E22E14AD3DC3F8778A",
+                               "type":"literal",
+                               "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                            }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/Namespace#namespace":[
+                            {
+                               "value":"http://keto-coin.io/",
+                               "type":"literal",
+                               "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                            }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/Namespace#accountHash":[
+                            {
+                               "value":"D594F22DC389E38B3DE7FA5630DBD9DCA16DA8A77097516FD37F9E25C6BE24D2",
+                               "type":"literal",
+                               "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                            }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/AccountModifier#accountModifier":[
+                            {
+                                "value":"PUBLIC",
+                                "type":"literal",
+                                "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                            }
+                        ]
+                  }
+               },
+               {
+                  "http://keto-coin.io/schema/rdf/1.0/keto/Namespace#Namespace/09160A0B04C9987E5FF885D29CC43EC6D05652C5840578A899CE8EE76306164A":{
+                     "http://keto-coin.io/schema/rdf/1.0/keto/Namespace#id":[
+                            {
+                               "value":"09160A0B04C9987E5FF885D29CC43EC6D05652C5840578A899CE8EE76306164A",
+                               "type":"literal",
+                               "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                            }
+                        ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/Namespace#hash":[
+                            {
+                               "value":"09160A0B04C9987E5FF885D29CC43EC6D05652C5840578A899CE8EE76306164A",
+                               "type":"literal",
+                               "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                            }
+                         ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/Namespace#namespace":[
+                            {
+                               "value":"http://avertem.io/",
+                               "type":"literal",
+                               "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                            }
+                         ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/Namespace#accountHash":[
+                            {
+                               "value":"D594F22DC389E38B3DE7FA5630DBD9DCA16DA8A77097516FD37F9E25C6BE24D2",
+                               "type":"literal",
+                               "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                            }
+                         ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/AccountModifier#accountModifier":[
+                            {
+                               "value":"PUBLIC",
+                               "type":"literal",
+                               "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                            }
+                        ]
+                  }
+               },
+               {
+                  "http://keto-coin.io/schema/rdf/1.0/keto/Namespace#Namespace/7084039237BE7BCD04D9939AD7903253DB7DC0CBCB4AE29A82881488F6871C04":{
+                     "http://keto-coin.io/schema/rdf/1.0/keto/Namespace#id":[
+                             {
+                                "value":"7084039237BE7BCD04D9939AD7903253DB7DC0CBCB4AE29A82881488F6871C04",
+                                "type":"literal",
+                                "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                             }
+                         ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/Namespace#hash":[
+                             {
+                                "value":"7084039237BE7BCD04D9939AD7903253DB7DC0CBCB4AE29A82881488F6871C04",
+                                "type":"literal",
+                                "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                             }
+                         ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/Namespace#namespace":[
+                             {
+                                "value":"avertem",
+                                "type":"literal",
+                                "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                             }
+                         ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/Namespace#accountHash":[
+                             {
+                                "value":"D594F22DC389E38B3DE7FA5630DBD9DCA16DA8A77097516FD37F9E25C6BE24D2",
+                                "type":"literal",
+                                "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                             }
+                         ],
+                     "http://keto-coin.io/schema/rdf/1.0/keto/AccountModifier#accountModifier":[
+                             {
+                                  "value":"PUBLIC",
+                                  "type":"literal",
+                                  "datatype":"http://www.w3.org/2001/XMLSchema#string"
+                             }
+                         ]
                   }
                }
             ]

@@ -10,12 +10,13 @@ message SandboxCommandMessage {
     bytes contract_hash = 2;
     string contract_name = 3;
     string contract_namespace = 4;
-    bytes model = 5;
-    bytes transaction = 6;
-    bytes changes = 7;
-    int64 available_time = 8;
-    int64 elapsed_time = 9;
-    float fee_ratio = 10;
+    bytes contract_owner = 5;
+    bytes model = 6;
+    bytes transaction = 7;
+    bytes changes = 8;
+    int64 available_time = 9;
+    int64 elapsed_time = 10;
+    float fee_ratio = 11;
 }
 
 message HttpRequestEntry {
@@ -25,15 +26,16 @@ message HttpRequestEntry {
 
 message HttpRequestMessage {
     string contract = 1;
-    string contract_hash = 2;
+    bytes contract_hash = 2;
     string contract_name = 3;
-    bytes account_hash = 4;
-    repeated bytes roles = 5;
-    string method = 6;
-    string uri = 7;
-    string query = 8;
-    repeated HttpRequestEntry request_properties = 9;
-    string body = 10;
+    bytes contract_owner = 4;
+    bytes account_hash = 5;
+    repeated bytes roles = 6;
+    string method = 7;
+    string uri = 8;
+    string query = 9;
+    repeated HttpRequestEntry request_properties = 10;
+    string body = 11;
 }
 
 message HttpResponseMessage {

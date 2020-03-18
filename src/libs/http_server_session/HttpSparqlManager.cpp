@@ -61,15 +61,17 @@ std::string HttpSparqlManager::processQuery(
     if (!httpSessionManagerPtr->isValid(vectorHash)) {
         BOOST_THROW_EXCEPTION(keto::server_session::InvalidSessionException());
     }
-    
+
+    std::shared_ptr<HttpSession> httpSession = httpSessionManagerPtr->getSession(vectorHash);
+
     boost::beast::string_view path = req.target();
     std::string target = keto::server_common::StringUtils(path.to_string()).replaceAll("//","/");
     URISparqlParser uriSparql(target,body);
     
-    keto::asn1::HashHelper hashHelper(uriSparql.getAccountHash(),keto::common::HEX);
+    //keto::asn1::HashHelper hashHelper(uriSparql.getAccountHash(),keto::common::HEX);
     
     keto::proto::SparqlQuery sparqlQuery;
-    sparqlQuery.set_account_hash(keto::crypto::SecureVectorUtils().copySecureToString(hashHelper));
+    sparqlQuery.set_account_hash(keto::asn1::HashHelper(httpSession->getAccountHash()));
     sparqlQuery.set_query(uriSparql.getQuery());
     
     sparqlQuery = 

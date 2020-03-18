@@ -486,10 +486,45 @@ namespace keto {
             return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),accountHash);
         }
 
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__getContractName",WAVM::Emscripten::emabi::Address,keto_getContractName)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string name = keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getContractName();
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),name);
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__getContractHash",WAVM::Emscripten::emabi::Address,keto_getContractHash)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string hash = keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getContractHash();
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),hash);
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__getContractOwner",WAVM::Emscripten::emabi::Address,keto_getContractOwner)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string account = keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getContractOwner();
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),account);
+        }
+
         WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__getAccount",WAVM::Emscripten::emabi::Address,keto_getAccount)
         {
             Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string account = keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getAccount();
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),account);
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__getDebitAccount",WAVM::Emscripten::emabi::Address,keto_getDebitAccount)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string account = keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getDebitAccount();
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),account);
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__getCreditAccount",WAVM::Emscripten::emabi::Address,keto_getCreditAccount)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string account = keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession()->getCreditAccount();
             return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),account);
         }
 

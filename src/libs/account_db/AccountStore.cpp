@@ -214,6 +214,7 @@ void AccountStore::getContract(
 
         ss << "SELECT ?code ?accountHash ?contractName ?contractNamespace ?contractHash  WHERE { " <<
            "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#name> '" << contractMessage.contract_name() << "'^^<http://www.w3.org/2001/XMLSchema#string> . " <<
+           "FILTER (STRSTARTS(STR(?contract),'http://keto-coin.io/schema/rdf/1.0/keto/Contract')) " <<
            "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#accountHash> ?accountHash . " <<
            "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#name> ?contractName . " <<
            "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#hash> ?contractHash . " <<
@@ -227,6 +228,7 @@ void AccountStore::getContract(
         keto::asn1::HashHelper contractHash(contractMessage.contract_hash());
         ss << "SELECT ?code ?accountHash ?contractName ?contractNamespace ?contractHash WHERE { " <<
             "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#hash> '" << contractHash.getHash(keto::common::StringEncoding::HEX) << "'^^<http://www.w3.org/2001/XMLSchema#string> . " <<
+            "FILTER (STRSTARTS(STR(?contract),'http://keto-coin.io/schema/rdf/1.0/keto/Contract')) " <<
             "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#accountHash> ?accountHash . " <<
             "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#name> ?contractName . " <<
             "?contract <http://keto-coin.io/schema/rdf/1.0/keto/Contract#hash> ?contractHash . " <<
@@ -243,6 +245,8 @@ void AccountStore::getContract(
         contractMessage.set_contract_namespace(result[0]["contractNamespace"]);
         keto::asn1::HashHelper contractHash(result[0]["contractHash"],keto::common::StringEncoding::HEX);
         contractMessage.set_contract_hash(contractHash);
+        keto::asn1::HashHelper accountHash(result[0]["accountHash"],keto::common::StringEncoding::HEX);
+        contractMessage.set_contract_owner(accountHash);
     } else {
         std::stringstream exceptionMsg;
         exceptionMsg << "Failed to retrieve the contract [" << contractMessage.DebugString() << "] account [" << accountInfo.DebugString() << "]";

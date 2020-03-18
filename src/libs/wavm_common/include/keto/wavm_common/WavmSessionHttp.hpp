@@ -55,8 +55,15 @@ public:
 
     std::string getSessionType();
 
+    std::string getContractName();
+    std::string getContractHash();
+    std::string getContractOwner();
+
     // The http request methods
     std::string getAccount();
+    std::string getDebitAccount();
+    std::string getCreditAccount();
+
     long getNumberOfRoles();
     std::string getRole(long index);
     std::string getTargetUri();

@@ -149,7 +149,8 @@ boost::beast::http::response<boost::beast::http::string_body> HttpSessionManager
             keto::account_query::AccountSparqlQueryHelper(keto::server_common::Events::SPARQL_QUERY_WITH_RESULTSET_MESSAGE,
                                                   uriAuthenticationParser.getAccountHash(),ss.str()).execute();
     if (resultVectorMap.size() != 1) {
-        KETO_LOG_INFO << "Cannot find the account";
+        KETO_LOG_INFO << "Cannot find the account ["
+            << uriAuthenticationParser.getAccountHash().getHash(keto::common::StringEncoding::HEX) << "]";
         return buildResponse("Invalid account",403);
     }
 

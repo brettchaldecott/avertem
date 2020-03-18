@@ -239,14 +239,16 @@ ResultVectorMap AccountGraphSession::executeQuery(const std::string& queryStr, c
 ResultVectorMap AccountGraphSession::executeQueryInternal(const std::string& queryStr) {
     keto::rdf_utils::RDFQueryParser rdfQueryParser(queryStr);
     if (!rdfQueryParser.isValidQuery()) {
-        BOOST_THROW_EXCEPTION(keto::account_db::InvalidQueryFormat());
+        std::stringstream ss;
+        ss << "Incorrectly formatted query [" << queryStr << "]";
+        BOOST_THROW_EXCEPTION(keto::account_db::InvalidQueryFormat(ss.str()));
     }
 
     // aquire the read lock
     AccountGraphStore::StorageScopeLockPtr scopeLockPtr = this->accountGraphStore->getStorageLock()->aquireReadLock();
 
     std::string formatedQuery = rdfQueryParser.getQuery();
-    KETO_LOG_DEBUG << "[AccountGraphSession::executeQueryInternal]Prepare the query";
+    KETO_LOG_INFO << "[AccountGraphSession::executeQueryInternal]Prepare the query : " << formatedQuery;
     librdf_query* query = librdf_new_query(this->accountGraphStore->getWorld(), "sparql",
                              NULL, (const unsigned char *)formatedQuery.c_str(), NULL);
     KETO_LOG_DEBUG << "[AccountGraphSession::executeQueryInternal]Execute the query";

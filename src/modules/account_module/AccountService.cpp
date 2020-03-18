@@ -127,6 +127,8 @@ keto::event::Event AccountService::sparqlQueryWithResultSet(const keto::event::E
                                                                       accountInfo)) {
         sparqlResultSet =
                 keto::account_db::AccountStore::getInstance()->sparqlQueryWithResultSet(accountInfo,sparqlQuery);
+    } else {
+        KETO_LOG_INFO << "[sparqlQueryWithResultSet]The account [" << accountHashHelper.getHash(keto::common::StringEncoding::HEX) << "]";
     }
 
     return keto::server_common::toEvent<keto::proto::SparqlResultSet>(sparqlResultSet);

@@ -43,6 +43,7 @@ const char* AccountSystemOntologyTypes::TRANSACTION_PREDICATES::ACCOUNT = "http:
 const char* AccountSystemOntologyTypes::ACCOUNT_DIRTY_ONTOLOGY_URI = "http://keto-coin.io/schema/rdf/1.0/keto/AccountDirty#AccountDirty";
 const char* AccountSystemOntologyTypes::ACCOUNT_ONTOLOGY_CLASS = "http://keto-coin.io/schema/rdf/1.0/keto/Account#Account";
 const char* AccountSystemOntologyTypes::GROUP_ONTOLOGY_CLASS = "http://keto-coin.io/schema/rdf/1.0/keto/AccountGroup#AccountGroup";
+const char* AccountSystemOntologyTypes::PUBLIC_ONTOLOGY_CLASS = "http://keto-coin.io/schema/rdf/1.0/keto/AccountGroup#AccountGroup";
 
 const char* AccountSystemOntologyTypes::ACCOUNT_PREDICATES::STATUS = "http://keto-coin.io/schema/rdf/1.0/keto/Account#status";
 const char* AccountSystemOntologyTypes::ACCOUNT_PREDICATES::ID = "http://keto-coin.io/schema/rdf/1.0/keto/Account#id";
@@ -62,6 +63,10 @@ const char* AccountSystemOntologyTypes::ACCOUNT_TYPE::SLAVE         = "slave";
 
 const char* AccountSystemOntologyTypes::ACCOUNT_PERMISSIONS::OWNER      = "http://keto-coin.io/schema/rdf/1.0/keto/Account#accountOwner";
 const char* AccountSystemOntologyTypes::ACCOUNT_PERMISSIONS::GROUP      = "http://keto-coin.io/schema/rdf/1.0/keto/AccountGroup#accountGroup";
+const char* AccountSystemOntologyTypes::ACCOUNT_PERMISSIONS::MODIFIER      = "http://keto-coin.io/schema/rdf/1.0/keto/AccountModifier#accountModifer";
+
+const char* AccountSystemOntologyTypes::ACCOUNT_MODIFIERS::_PRIVATE     = "PRIVATE";
+const char* AccountSystemOntologyTypes::ACCOUNT_MODIFIERS::_PUBLIC      = "PUBLIC";
 
 const std::vector<std::string> AccountSystemOntologyTypes::ONTOLOGY_CLASSES = {
     AccountSystemOntologyTypes::ACCOUNT_ONTOLOGY_CLASS

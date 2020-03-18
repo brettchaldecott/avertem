@@ -64,6 +64,7 @@ public:
 
     static const char* ACCOUNT_ONTOLOGY_CLASS;
     static const char* GROUP_ONTOLOGY_CLASS;
+    static const char* PUBLIC_ONTOLOGY_CLASS;
     
     // PREDICATE identifiers
     class ACCOUNT_PREDICATES {
@@ -91,6 +92,14 @@ public:
     public:
         static const char* OWNER;
         static const char* GROUP;
+        static const char* MODIFIER;
+    };
+
+    // MODIFIERS
+    class ACCOUNT_MODIFIERS {
+    public:
+        static const char* _PRIVATE;
+        static const char* _PUBLIC;
     };
     
     // object literal values

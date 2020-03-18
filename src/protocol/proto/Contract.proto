@@ -9,6 +9,7 @@ message ContractMessage {
     bytes account_hash = 1;
     bytes contract_hash = 2;
     string contract_name = 3;
-    string contract = 4;
-    string contract_namespace = 5;
+    bytes contract_owner = 4;
+    string contract = 5;
+    string contract_namespace = 6;
 }

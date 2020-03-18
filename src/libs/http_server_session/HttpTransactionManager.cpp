@@ -62,7 +62,7 @@ HttpTransactionManager::HttpTransactionManager(
 HttpTransactionManager::~HttpTransactionManager() {
 }
 
-std::string HttpTransactionManager::    processTransaction(
+std::string HttpTransactionManager::processTransaction(
         boost::beast::http::request<boost::beast::http::string_body>& req,
         const std::string& transactionMsg) {
     boost::beast::string_view path = req.target();
@@ -75,7 +75,9 @@ std::string HttpTransactionManager::    processTransaction(
     } else {
         int nextSlash = subUri.find("/");
         if (nextSlash == std::string::npos) {
-            BOOST_THROW_EXCEPTION(keto::server_session::InvalidSessionException());
+            std::stringstream ss;
+            ss << "The transaction uri is incorrectly formatted : " << subUri;
+            BOOST_THROW_EXCEPTION(keto::server_session::InvalidSessionException(ss.str()));
         }
         sessionHash = subUri.substr(nextSlash+1);
     }
@@ -83,7 +85,9 @@ std::string HttpTransactionManager::    processTransaction(
             sessionHash,keto::common::HEX);
     std::vector<uint8_t> vectorHash = keto::crypto::SecureVectorUtils().copyFromSecure(hashHelper);
     if (!httpSessionManagerPtr->isValid(vectorHash)) {
-        BOOST_THROW_EXCEPTION(keto::server_session::InvalidSessionException());
+        std::stringstream ss;
+        ss << "The session was not found : " << sessionHash;    
+        BOOST_THROW_EXCEPTION(keto::server_session::InvalidSessionException(ss.str()));
     }
     std::shared_ptr<HttpSession> httpSession = 
             httpSessionManagerPtr->getSession(vectorHash);

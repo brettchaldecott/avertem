@@ -52,7 +52,13 @@ public:
 
     virtual std::string getSessionType() = 0;
 
+    virtual std::string getContractName() = 0;
+    virtual std::string getContractHash() = 0;
+    virtual std::string getContractOwner() = 0;
+
     virtual std::string getAccount() = 0;
+    virtual std::string getDebitAccount() = 0;
+    virtual std::string getCreditAccount() = 0;
 
     // session queries
     virtual long executeQuery(const std::string& type, const std::string& query) = 0;

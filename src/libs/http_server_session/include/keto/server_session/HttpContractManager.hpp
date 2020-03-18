@@ -46,7 +46,7 @@ public:
 private:
     std::shared_ptr<HttpSessionManager> httpSessionManagerPtr;
 
-    std::string getContractByHash(const keto::asn1::HashHelper& account, const std::string& hash);
+    keto::proto::ContractMessage getContractByHash(const keto::asn1::HashHelper& account, const std::string& hash);
     keto::proto::ContractMessage getContract(keto::proto::ContractMessage& contractMessage);
     void copyHttpParameters(
             std::map<std::string,std::string> parameters,

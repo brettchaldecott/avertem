@@ -107,6 +107,18 @@ std::string WavmSessionTransaction::getSessionType() {
     return Constants::SESSION_TYPES::TRANSACTION;
 }
 
+std::string WavmSessionTransaction::getContractName() {
+    return this->sandboxCommandMessage.contract_name();
+}
+
+std::string WavmSessionTransaction::getContractHash() {
+    return keto::asn1::HashHelper(this->sandboxCommandMessage.contract_name()).getHash(keto::common::StringEncoding::HEX);
+}
+
+std::string WavmSessionTransaction::getContractOwner() {
+    return keto::asn1::HashHelper(this->sandboxCommandMessage.contract_owner()).getHash(keto::common::StringEncoding::HEX);
+}
+
 // the contract facade methods
 std::string WavmSessionTransaction::getFeeAccount() {
     return keto::server_common::ServerInfo::getInstance()->getFeeAccountHashHex();
@@ -115,6 +127,14 @@ std::string WavmSessionTransaction::getFeeAccount() {
 // the contract facade methods
 std::string WavmSessionTransaction::getAccount() {
     return getCurrentAccountHash().getHash(keto::common::StringEncoding::HEX);
+}
+
+std::string WavmSessionTransaction::getDebitAccount() {
+    return transactionMessageHelperPtr->getTransactionWrapper()->getSourceAccount().getHash(keto::common::StringEncoding::HEX);
+}
+
+std::string WavmSessionTransaction::getCreditAccount() {
+    return transactionMessageHelperPtr->getTransactionWrapper()->getTargetAccount().getHash(keto::common::StringEncoding::HEX);
 }
 
 std::string WavmSessionTransaction::getTransaction() {
@@ -368,94 +388,112 @@ keto::asn1::RDFPredicateHelperPtr WavmSessionTransaction::getPredicate(
 
 void WavmSessionTransaction::addModelEntry(const std::string& subjectUrl, const std::string predicateUrl,
         const std::string& value) {
-    keto::asn1::RDFSubjectHelperPtr subjectHelperPtr = getSubject(subjectUrl);
-    keto::asn1::RDFPredicateHelperPtr predicate = getPredicate(subjectHelperPtr,predicateUrl);
-    
-    keto::asn1::RDFObjectHelper objectHelper;
-    objectHelper.setDataType(RDFConstants::TYPES::STRING).
-        setType(RDFConstants::NODE_TYPES::LITERAL).
-        setValue(value);
-    
-    predicate->addObject(objectHelper);
+    try {
+        keto::asn1::RDFSubjectHelperPtr subjectHelperPtr = getSubject(subjectUrl);
+        keto::asn1::RDFPredicateHelperPtr predicate = getPredicate(subjectHelperPtr, predicateUrl);
 
-    rdfSessionPtr->setStringValue(
-        subjectUrl,predicateUrl,value);
+        keto::asn1::RDFObjectHelper objectHelper;
+        objectHelper.setDataType(RDFConstants::TYPES::STRING).
+                setType(RDFConstants::NODE_TYPES::LITERAL).
+                setValue(value);
 
+        predicate->addObject(objectHelper);
 
+        rdfSessionPtr->setStringValue(
+                subjectUrl, predicateUrl, value);
+
+    } catch (...) {
+        KETO_LOG_ERROR << "Ignore model request [" << subjectUrl << "][" << predicateUrl << "] it is invalid";
+    }
 }
 
 void WavmSessionTransaction::addModelEntry(const std::string& subjectUrl, const std::string predicateUrl,
         const long value) {
-    keto::asn1::RDFSubjectHelperPtr subjectHelperPtr = getSubject(subjectUrl);
-    keto::asn1::RDFPredicateHelperPtr predicate = getPredicate(subjectHelperPtr,predicateUrl);
-    
-    std::stringstream ss;
-    ss << value;
-    keto::asn1::RDFObjectHelper objectHelper;
-    objectHelper.setDataType(RDFConstants::TYPES::LONG).
-        setType(RDFConstants::NODE_TYPES::LITERAL).
-        setValue(ss.str());
-    
-    predicate->addObject(objectHelper);
-    
-    rdfSessionPtr->setLongValue(
-        subjectUrl,predicateUrl,value);
+    try {
+        keto::asn1::RDFSubjectHelperPtr subjectHelperPtr = getSubject(subjectUrl);
+        keto::asn1::RDFPredicateHelperPtr predicate = getPredicate(subjectHelperPtr, predicateUrl);
+
+        std::stringstream ss;
+        ss << value;
+        keto::asn1::RDFObjectHelper objectHelper;
+        objectHelper.setDataType(RDFConstants::TYPES::LONG).
+                setType(RDFConstants::NODE_TYPES::LITERAL).
+                setValue(ss.str());
+
+        predicate->addObject(objectHelper);
+
+        rdfSessionPtr->setLongValue(
+                subjectUrl, predicateUrl, value);
+    } catch (...) {
+        KETO_LOG_ERROR << "Ignore model request [" << subjectUrl << "][" << predicateUrl << "] it is invalid";
+    }
 }
 
 void WavmSessionTransaction::addModelEntry(const std::string& subjectUrl, const std::string predicateUrl,
         const float value) {
-    keto::asn1::RDFSubjectHelperPtr subjectHelperPtr = getSubject(subjectUrl);
-    keto::asn1::RDFPredicateHelperPtr predicate = getPredicate(subjectHelperPtr,predicateUrl);
-    
-    std::stringstream ss;
-    ss << value;
-    keto::asn1::RDFObjectHelper objectHelper;
-    objectHelper.setDataType(RDFConstants::TYPES::FLOAT).
-        setType(RDFConstants::NODE_TYPES::LITERAL).
-        setValue(ss.str());
-    
-    predicate->addObject(objectHelper);
-    
-    rdfSessionPtr->setFloatValue(
-        subjectUrl,predicateUrl,value);
-    
+    try {
+        keto::asn1::RDFSubjectHelperPtr subjectHelperPtr = getSubject(subjectUrl);
+        keto::asn1::RDFPredicateHelperPtr predicate = getPredicate(subjectHelperPtr, predicateUrl);
+
+        std::stringstream ss;
+        ss << value;
+        keto::asn1::RDFObjectHelper objectHelper;
+        objectHelper.setDataType(RDFConstants::TYPES::FLOAT).
+                setType(RDFConstants::NODE_TYPES::LITERAL).
+                setValue(ss.str());
+
+        predicate->addObject(objectHelper);
+
+        rdfSessionPtr->setFloatValue(
+                subjectUrl, predicateUrl, value);
+    } catch (...) {
+        KETO_LOG_ERROR << "Ignore model request [" << subjectUrl << "][" << predicateUrl << "] it is invalid";
+    }
 }
 
 void WavmSessionTransaction::addBooleanModelEntry(const std::string& subjectUrl, const std::string predicateUrl,
         const bool value) {
-    keto::asn1::RDFSubjectHelperPtr subjectHelperPtr = getSubject(subjectUrl);
-    keto::asn1::RDFPredicateHelperPtr predicate = getPredicate(subjectHelperPtr,predicateUrl);
-    
-    std::stringstream ss;
-    if (value) {
-        ss << "true";
-    } else {
-        ss << "false";
+    try {
+        keto::asn1::RDFSubjectHelperPtr subjectHelperPtr = getSubject(subjectUrl);
+        keto::asn1::RDFPredicateHelperPtr predicate = getPredicate(subjectHelperPtr, predicateUrl);
+
+        std::stringstream ss;
+        if (value) {
+            ss << "true";
+        } else {
+            ss << "false";
+        }
+        keto::asn1::RDFObjectHelper objectHelper;
+        objectHelper.setDataType(RDFConstants::TYPES::BOOLEAN).
+                setType(RDFConstants::NODE_TYPES::LITERAL).
+                setValue(ss.str());
+
+        predicate->addObject(objectHelper);
+
+        rdfSessionPtr->setBooleanValue(
+                subjectUrl, predicateUrl, value);
+    } catch (...) {
+        KETO_LOG_ERROR << "Ignore model request [" << subjectUrl << "][" << predicateUrl << "] it is invalid";
     }
-    keto::asn1::RDFObjectHelper objectHelper;
-    objectHelper.setDataType(RDFConstants::TYPES::BOOLEAN).
-        setType(RDFConstants::NODE_TYPES::LITERAL).
-        setValue(ss.str());
-    
-    predicate->addObject(objectHelper);
-    
-    rdfSessionPtr->setBooleanValue(
-        subjectUrl,predicateUrl,value);
 }
 
 void WavmSessionTransaction::addDateTimeModelEntry(const std::string& subjectUrl, const std::string predicateUrl,
         const time_t value) {
-    keto::asn1::RDFSubjectHelperPtr subjectHelperPtr = getSubject(subjectUrl);
-    keto::asn1::RDFPredicateHelperPtr predicate = getPredicate(subjectHelperPtr,predicateUrl);
+    try {
+        keto::asn1::RDFSubjectHelperPtr subjectHelperPtr = getSubject(subjectUrl);
+        keto::asn1::RDFPredicateHelperPtr predicate = getPredicate(subjectHelperPtr, predicateUrl);
 
-    keto::asn1::RDFObjectHelper objectHelper;
-    objectHelper.setDataType(RDFConstants::TYPES::DATE_TIME).
-        setType(RDFConstants::NODE_TYPES::LITERAL).
-        setValue(keto::server_common::RDFUtils::convertTimeToRDFDateTime(value));
-    predicate->addObject(objectHelper);
-    
-    rdfSessionPtr->setDateTimeValue(
-        subjectUrl,predicateUrl,value);
+        keto::asn1::RDFObjectHelper objectHelper;
+        objectHelper.setDataType(RDFConstants::TYPES::DATE_TIME).
+                setType(RDFConstants::NODE_TYPES::LITERAL).
+                setValue(keto::server_common::RDFUtils::convertTimeToRDFDateTime(value));
+        predicate->addObject(objectHelper);
+
+        rdfSessionPtr->setDateTimeValue(
+                subjectUrl, predicateUrl, value);
+    } catch (...) {
+        KETO_LOG_ERROR << "Ignore model request [" << subjectUrl << "][" << predicateUrl << "] it is invalid";
+    }
 }
 
 

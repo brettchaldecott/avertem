@@ -80,12 +80,14 @@ boost::beast::http::response<boost::beast::http::string_body> HttpContractManage
 
     std::shared_ptr<HttpSession> httpSession = httpSessionManagerPtr->getSession(vectorHash);
 
-    std::string contract =
-            getContractByHash(httpSession->getAccountHash(),
-                    keto::asn1::HashHelper(uriContract.getContractHash(),keto::common::HEX));
+    keto::proto::ContractMessage contractMessage = getContractByHash(httpSession->getAccountHash(),
+                                                                     keto::asn1::HashHelper(uriContract.getContractHash(),keto::common::HEX));
 
     keto::proto::HttpRequestMessage httpRequestMessage;
-    httpRequestMessage.set_contract(contract);
+    httpRequestMessage.set_contract(contractMessage.contract());
+    httpRequestMessage.set_contract_name(contractMessage.contract_name());
+    httpRequestMessage.set_contract_hash(contractMessage.contract_hash());
+    httpRequestMessage.set_contract_owner(contractMessage.contract_owner());
     httpRequestMessage.set_account_hash(keto::server_common::VectorUtils().copyVectorToString(
             httpSession->getAccountHash()));
     for (std::vector<uint8_t> role : httpSession->getRoles()) {
@@ -121,11 +123,11 @@ boost::beast::http::response<boost::beast::http::string_body> HttpContractManage
 }
 
 
-std::string HttpContractManager::getContractByHash(const keto::asn1::HashHelper& account, const std::string& hash) {
+keto::proto::ContractMessage HttpContractManager::getContractByHash(const keto::asn1::HashHelper& account, const std::string& hash) {
     keto::proto::ContractMessage contractMessage;
     contractMessage.set_account_hash(account);
     contractMessage.set_contract_hash(hash);
-    return getContract(contractMessage).contract();
+    return getContract(contractMessage);
 }
 
 keto::proto::ContractMessage HttpContractManager::getContract(keto::proto::ContractMessage& contractMessage) {

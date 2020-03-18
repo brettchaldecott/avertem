@@ -67,8 +67,30 @@ std::string WavmSessionHttp::getSessionType() {
     return Constants::SESSION_TYPES::HTTP;
 }
 
+std::string WavmSessionHttp::getContractName() {
+    return this->httpRequestMessage.contract_name();
+}
+
+std::string WavmSessionHttp::getContractHash() {
+    return keto::asn1::HashHelper(this->httpRequestMessage.contract_name()).getHash(keto::common::StringEncoding::HEX);
+}
+
+std::string WavmSessionHttp::getContractOwner() {
+    return keto::asn1::HashHelper(this->httpRequestMessage.contract_owner()).getHash(keto::common::StringEncoding::HEX);
+}
+
 // the contract facade methods
 std::string WavmSessionHttp::getAccount() {
+    keto::asn1::HashHelper hashHelper(httpRequestMessage.account_hash());
+    return hashHelper.getHash(keto::common::StringEncoding::HEX);
+}
+
+std::string WavmSessionHttp::getDebitAccount() {
+    keto::asn1::HashHelper hashHelper(httpRequestMessage.account_hash());
+    return hashHelper.getHash(keto::common::StringEncoding::HEX);
+}
+
+std::string WavmSessionHttp::getCreditAccount() {
     keto::asn1::HashHelper hashHelper(httpRequestMessage.account_hash());
     return hashHelper.getHash(keto::common::StringEncoding::HEX);
 }

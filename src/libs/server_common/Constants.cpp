@@ -37,9 +37,9 @@ const char* Constants::SERVICE::BLOCK       = "block";
 const char* Constants::SERVICE::PROCESS     = "process";
 
 
-const char* Constants::CONTRACTS::BASE_ACCOUNT_CONTRACT     =   "base_account_transaction";
-const char* Constants::CONTRACTS::NESTED_TRANSACTION_CONTRACT = "nested_transaction";
-const char* Constants::CONTRACTS::FEE_PAYMENT_CONTRACT =        "fee_payment";
+const char* Constants::CONTRACTS::BASE_ACCOUNT_CONTRACT     =   "avertem__base_account_transaction";
+const char* Constants::CONTRACTS::NESTED_TRANSACTION_CONTRACT = "avertem__nested_transaction";
+const char* Constants::CONTRACTS::FEE_PAYMENT_CONTRACT =        "avertem__fee_payment";
 
 const char* Constants::ACCOUNT_ACTIONS::DEBIT     = "debit";
 const char* Constants::ACCOUNT_ACTIONS::CREDIT     = "credit";

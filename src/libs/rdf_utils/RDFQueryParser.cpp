@@ -111,6 +111,10 @@ void RDFQueryParser::processPattern() {
         addTripplePattern(patternTrippleSequence, Constants::ACCOUNT_GROUP_REF,
                           Constants::ACCOUNT_GROUP_SUBJECT);
 
+        // add in the modifier
+        addTripplePattern(patternTrippleSequence, Constants::ACCOUNT_MODIFIER_REF,
+                          Constants::ACCOUNT_MODIFIER_OBJECT);
+
         // update the triple information
         rasqal_query_graph_pattern_visit2(this->query,&rasqal_graph_pattern_visit_fn,patternTrippleSequence);
     } else {
@@ -131,6 +135,9 @@ void RDFQueryParser::processPattern() {
                 addTripplePattern(patternTrippleSequence, Constants::ACCOUNT_GROUP_REF,
                                   Constants::ACCOUNT_GROUP_SUBJECT);
 
+                addTripplePattern(patternTrippleSequence, Constants::ACCOUNT_MODIFIER_REF,
+                                  Constants::ACCOUNT_MODIFIER_OBJECT);
+
                 // update the triple information
                 rasqal_query_graph_pattern_visit2(this->query,&rasqal_graph_pattern_visit_fn,patternTrippleSequence);
             }
@@ -148,7 +155,7 @@ void RDFQueryParser::processPattern() {
         rasqal_query_set_wildcard(query,0);
     }
 
-    //KETO_LOG_DEBUG << "The raptor new iostream an store with extr data [" << raptor_sequence_size(patternTrippleSequence) << "]";
+    KETO_LOG_ERROR << "[processPattern] update query  [" << raptor_sequence_size(patternTrippleSequence) << "]";
     char* updatedQuery;
     size_t querySize ;
     raptor_iostream* stream = raptor_new_iostream_to_string(
@@ -172,13 +179,15 @@ void RDFQueryParser::processPattern() {
     // set the filter expressly as there is no way of adding it via the RASQAL api this involves using the newly regenerated
     // sparql and then a simple search and replace and then running the sparql update. CRUDE BUT EFFECTIVE
     std::stringstream ss;
-    ss << "?" << Constants::ACCOUNT_GROUP_SUBJECT << " . FILTER (REGEX(STR(?" << Constants::ACCOUNT_GROUP_SUBJECT
+    ss  << "?" << Constants::ACCOUNT_MODIFIER_OBJECT << " . FILTER ( REGEX(?" << Constants::ACCOUNT_MODIFIER_OBJECT
+        << ",'PUBLIC') || "
+        << "REGEX(STR(?" << Constants::ACCOUNT_OWNER_SUBJECT
         << "),'" << this->account
-        << "') && REGEX(STR(?" << Constants::ACCOUNT_OWNER_SUBJECT
-        << "),'"<< this->account << "'))";
+        << "') || REGEX(STR(?" << Constants::ACCOUNT_GROUP_SUBJECT
+        << "),'"<< this->account << "') )";
 
     std::stringstream oldValue;
-    oldValue << "?" << Constants::ACCOUNT_GROUP_SUBJECT << " .";
+    oldValue << "?" << Constants::ACCOUNT_MODIFIER_OBJECT << " .";
 
     this->sparql = keto::server_common::StringUtils(this->sparql).replaceAll(oldValue.str(), ss.str());
 
@@ -196,13 +205,18 @@ void RDFQueryParser::processPattern() {
     rasqal_world_open(world);
     //KETO_LOG_DEBUG << "new query";
     this->query=rasqal_new_query(world, keto::rdf_utils::Constants::SPARQL, NULL);
-    //KETO_LOG_DEBUG << "prepare the query";
-    rasqal_query_prepare(this->query, (const unsigned char *)this->sparql.c_str(), NULL);
+    //KETO_LOG_ERROR << "prepare the query";
+    if (rasqal_query_prepare(this->query, (const unsigned char *)this->sparql.c_str(), NULL)) {
+        std::stringstream ss;
+        ss << "Failed to process the query [" << this->sparql << "]";
+        BOOST_THROW_EXCEPTION(keto::rdf_utils::FailedToProcessQueryException(ss.str()));
+    }
 
     updatedQuery = NULL;
     querySize = 0;
     stream = raptor_new_iostream_to_string(
             rasqal_world_get_raptor(this->world),(void**)&updatedQuery,&querySize,malloc);
+    KETO_LOG_ERROR << "[processPatter] second rasqal query write [" << ss.str() << "][" << this->sparql << "]";
     if (rasqal_query_write(stream,query,NULL,NULL)) {
         BOOST_THROW_EXCEPTION(keto::rdf_utils::FailedToProcessQueryException());
     }
@@ -297,7 +311,7 @@ void RDFQueryParser::addTripplePattern(
 
     rasqal_variable* variable = rasqal_variables_table_add2(this->variablesTable,RASQAL_VARIABLE_TYPE_NORMAL,(const unsigned char *)objectUri.c_str(),objectUri.size(),NULL);
     for (rasqal_literal* subject : subjectVar) {
-        //KETO_LOG_DEBUG << "Add the extra tripple to the pattern [" << predicateUri << "][" << sourceVariableLiteral->value.variable->name << "]";
+        KETO_LOG_ERROR << "[addTripplePattern]Add the extra tripple to the pattern [" << predicateUri << "][" << objectUri << "]";
         raptor_sequence_push(patternTrippleSequence, rasqal_new_triple(rasqal_new_literal_from_literal(subject),
                 rasqal_new_uri_literal(this->world, raptor_new_uri(
                         rasqal_world_get_raptor(this->world), (const unsigned char *)predicateUri.c_str())),
