@@ -30,6 +30,7 @@ const char* Events::REMOVE_SESSION_KEY = "REMOVE_SESSION_KEY";
 // events for the router
 const char* Events::UPDATE_STATUS_ROUTE_MESSSAGE  = "UPDATE_STATUS_ROUTE_MESSSAGE";
 const char* Events::ROUTE_MESSAGE       = "ROUTE_MESSAGE";
+const char* Events::QUEUE_MESSAGE       = "QUEUE_MESSAGE";
 const char* Events::PERSIST_BLOCK_MESSAGE = "PERSIST_BLOCK_MESSAGE";
 const char* Events::REGISTER_SERVICE_MESSAGE = "REGISTER_SERVICE_MESSAGE";
 const char* Events::REGISTER_RPC_PEER_CLIENT = "REGISTER_RPC_PEER_CLIENT";

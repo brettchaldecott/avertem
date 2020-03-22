@@ -86,7 +86,7 @@ std::string HttpTransactionManager::processTransaction(
     std::vector<uint8_t> vectorHash = keto::crypto::SecureVectorUtils().copyFromSecure(hashHelper);
     if (!httpSessionManagerPtr->isValid(vectorHash)) {
         std::stringstream ss;
-        ss << "The session was not found : " << sessionHash;    
+        ss << "The session was not found : " << sessionHash;
         BOOST_THROW_EXCEPTION(keto::server_session::InvalidSessionException(ss.str()));
     }
     std::shared_ptr<HttpSession> httpSession = 
@@ -108,6 +108,11 @@ std::string HttpTransactionManager::processTransaction(
             messageWrapperProtoHelper.getTransaction()->getTransactionMessageHelper()->getTransactionWrapper()->getSignature(),
             messageWrapperProtoHelper.getTransaction()->getTransactionMessageHelper()->getTransactionWrapper()->getCurrentAccount())) {
         BOOST_THROW_EXCEPTION(keto::server_session::InvalidAccountSigner());
+    }
+
+    if ((long)messageWrapperProtoHelper.getTransaction()->getTransactionMessageHelper()->
+    getTransactionWrapper()->getSignedTransaction()->getTransaction()->getValue() <= 0) {
+        BOOST_THROW_EXCEPTION(keto::server_session::InvalidTransactionAmount());
     }
     
     //KETO_LOG_DEBUG << "Before re-encrypting the transaction";

@@ -40,6 +40,7 @@ public:
     // events for the router
     static const char* UPDATE_STATUS_ROUTE_MESSSAGE;
     static const char* ROUTE_MESSAGE;
+    static const char* QUEUE_MESSAGE;
     static const char* PERSIST_BLOCK_MESSAGE;
     static const char* REGISTER_SERVICE_MESSAGE;
     static const char* REGISTER_RPC_PEER_CLIENT;

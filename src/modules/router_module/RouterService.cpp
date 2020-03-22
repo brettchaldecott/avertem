@@ -212,6 +212,16 @@ void RouterService::processQueueEntry(const RouterService::RouteQueueEntryPtr& e
     this->routeMessage(event->getEvent(),event->getRetryCount());
 }
 
+keto::event::Event RouterService::queueMessage(const keto::event::Event& event) {
+    this->routeQueuePtr->pushEntry(RouterService::RouteQueueEntryPtr(
+            new RouterService::RouteQueueEntry(event,0)));
+    KETO_LOG_INFO << "[RouterService::queueMessage] failed to route message has been queued";
+    keto::proto::MessageWrapperResponse response;
+    response.set_success(true);
+    response.set_result("message queued");
+    return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
+}
+
 keto::event::Event RouterService::routeMessage(const keto::event::Event& event, int retryCount) {
     try {
         keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper =

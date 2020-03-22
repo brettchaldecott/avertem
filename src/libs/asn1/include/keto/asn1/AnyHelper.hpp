@@ -67,7 +67,7 @@ public:
      * The default copy constructor
      * @param orig
      */
-    AnyHelper(const AnyHelper& orig) = default;
+    AnyHelper(const AnyHelper& orig);
     
     virtual ~AnyHelper();
     

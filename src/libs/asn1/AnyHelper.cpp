@@ -15,6 +15,7 @@
 #include "keto/asn1/AnyInterface.hpp"
 #include "keto/asn1/SerializationHelper.hpp"
 #include "keto/asn1/DeserializationHelper.hpp"
+#include "keto/asn1/CloneHelper.hpp"
 #include <stdlib.h>
 
 namespace keto {
@@ -50,6 +51,13 @@ AnyHelper::AnyHelper(const std::string& value) {
     //    bytes.push_back(entry);
     //}
     this->any = keto::asn1::DeserializationHelper<ANY_t>(bytes,&asn_DEF_ANY).takePtr();
+}
+
+AnyHelper::AnyHelper(const AnyHelper& orig) {
+    if (orig.any) {
+        this->any = keto::asn1::clone<ANY_t>(orig.any,&asn_DEF_ANY);
+    }
+    this->anyInterface = orig.anyInterface;
 }
 
 AnyHelper::~AnyHelper() {

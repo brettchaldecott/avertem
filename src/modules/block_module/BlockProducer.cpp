@@ -684,7 +684,7 @@ keto::block_db::SignedBlockBuilderPtr BlockProducer::generateBlock(const BlockPr
     } catch (...) {
         KETO_LOG_ERROR << "[BlockProducer::generateBlock]Failed to create a new block: unknown cause";
     }
-
+    return keto::block_db::SignedBlockBuilderPtr();
 }
 
 

@@ -49,6 +49,9 @@ keto::event::Event EventRegistry::routeMessage(const keto::event::Event& event) 
     return RouterService::getInstance()->routeMessage(event);
 }
 
+keto::event::Event EventRegistry::queueMessage(const keto::event::Event& event) {
+    return RouterService::getInstance()->queueMessage(event);
+}
 
 keto::event::Event EventRegistry::updateStateRouteMessage(const keto::event::Event& event) {
     return RouterService::getInstance()->updateStateRouteMessage(event);
@@ -140,6 +143,9 @@ void EventRegistry::registerEventHandlers() {
             keto::server_common::Events::ROUTE_MESSAGE,
             &keto::router::EventRegistry::routeMessage);
     keto::server_common::registerEventHandler (
+            keto::server_common::Events::QUEUE_MESSAGE,
+            &keto::router::EventRegistry::queueMessage);
+    keto::server_common::registerEventHandler (
             keto::server_common::Events::UPDATE_STATUS_ROUTE_MESSSAGE,
             &keto::router::EventRegistry::updateStateRouteMessage);
     keto::server_common::registerEventHandler (
@@ -224,6 +230,8 @@ void EventRegistry::deregisterEventHandlers() {
             keto::server_common::Events::CONSENSUS_SESSION_CHECK::ROUTER);
     keto::server_common::deregisterEventHandler(keto::server_common::Events::REGISTER_SERVICE_MESSAGE);
     keto::server_common::deregisterEventHandler(keto::server_common::Events::UPDATE_STATUS_ROUTE_MESSSAGE);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::QUEUE_MESSAGE);
     keto::server_common::deregisterEventHandler(keto::server_common::Events::ROUTE_MESSAGE);
 }
 

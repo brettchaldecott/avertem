@@ -95,6 +95,10 @@ std::string WavmSessionTransactionBuilder::WavmSessionRDFModelBuilder::getType()
     return Constants::TRANSACTION_BUILDER::MODEL::RDF;
 }
 
+WavmSessionTransactionBuilder::WavmSessionRDFModelBuilder::operator keto::asn1::AnyHelper() const {
+    return this->modelHelper;
+}
+
 keto::asn1::RDFSubjectHelperPtr WavmSessionTransactionBuilder::WavmSessionRDFModelBuilder::getSubject(const std::string& subjectUrl) {
     if (!this->modelHelper.contains(subjectUrl)) {
         keto::asn1::RDFSubjectHelper subject(subjectUrl);
@@ -229,7 +233,14 @@ WavmSessionTransactionBuilder::WavmSessionModelBuilderPtr WavmSessionTransaction
     return this->wavmSessionModelBuilderPtr;
 }
 
-WavmSessionTransactionBuilder::WavmSessionActionBuilder::operator keto::chain_common::ActionBuilderPtr() {
+WavmSessionTransactionBuilder::WavmSessionActionBuilder::operator keto::chain_common::ActionBuilderPtr() const {
+    if (this->wavmSessionModelBuilderPtr->getType() == keto::wavm_common::Constants::TRANSACTION_BUILDER::MODEL::RDF) {
+        keto::asn1::AnyHelper anyHelper = *std::dynamic_pointer_cast<keto::wavm_common::WavmSessionTransactionBuilder::WavmSessionRDFModelBuilder>(this->wavmSessionModelBuilderPtr);
+        this->actionBuilderPtr->setModel(anyHelper);
+    } else {
+        KETO_LOG_ERROR << "[WavmSessionTransactionBuilder::WavmSessionActionBuilder] Unsupported model type : " << this->wavmSessionModelBuilderPtr->getType();
+    }
+
     return this->actionBuilderPtr;
 }
 
@@ -286,7 +297,6 @@ keto::asn1::HashHelper WavmSessionTransactionBuilder::getTargetAccount() {
     return this->transactionBuilderPtr->getTargetAccount();
 }
 
-
 void WavmSessionTransactionBuilder::setTransactionSignator(const keto::asn1::HashHelper& hashHelper) {
     this->transactionBuilderPtr->setTransactionSignator(hashHelper);
 }
@@ -319,9 +329,13 @@ WavmSessionTransactionBuilder::WavmSessionActionBuilderPtr WavmSessionTransactio
     return this->actions[id];
 }
 
-
 void WavmSessionTransactionBuilder::submit() {
+    return this->submitWithStatus("INIT");
+}
 
+void WavmSessionTransactionBuilder::submitWithStatus(const std::string& status) {
+
+    KETO_LOG_INFO << "[WavmSessionTransactionBuilder::submitWithStatus] submit with status : " << status;
     if (this->submitted) {
         BOOST_THROW_EXCEPTION(keto::wavm_common::TransactionAlreadySubmitted());
     }
@@ -329,12 +343,19 @@ void WavmSessionTransactionBuilder::submit() {
             keto::chain_common::SignedTransactionBuilder::createTransaction(
                     this->keyLoaderPtr);
 
+    for (WavmSessionTransactionBuilder::WavmSessionActionBuilderPtr action: this->actions) {
+        this->transactionBuilderPtr->addAction(*action);
+    }
 
     signedTransBuild->setTransaction(this->transactionBuilderPtr);
     signedTransBuild->sign();
 
     keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelperPtr(
             new keto::transaction_common::TransactionWrapperHelper(signedTransBuild));
+
+    if (status == "CREDIT") {
+        transactionWrapperHelperPtr->setStatus(Status::Status_credit);
+    }
 
     transactionWrapperHelperPtr->addTransactionTrace(
             *keto::transaction_common::TransactionTraceBuilder::createTransactionTrace(
@@ -352,15 +373,19 @@ void WavmSessionTransactionBuilder::submit() {
     keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper;
     messageWrapperProtoHelper.setTransaction(transactionProtoHelper);
 
+    KETO_LOG_INFO << "[WavmSessionTransactionBuilder::submitWithStatus] Encrypt the transaction";
     keto::proto::MessageWrapper messageWrapper = messageWrapperProtoHelper;
     messageWrapper = keto::server_common::fromEvent<keto::proto::MessageWrapper>(
             ParentForkGateway::processEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
                     keto::key_store_utils::Events::TRANSACTION::ENCRYPT_TRANSACTION,messageWrapper)));
 
+    KETO_LOG_INFO << "[WavmSessionTransactionBuilder::submitWithStatus] Queue the message";
     keto::proto::MessageWrapperResponse  messageWrapperResponse =
             keto::server_common::fromEvent<keto::proto::MessageWrapperResponse>(
                     ParentForkGateway::processEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
-                            keto::server_common::Events::ROUTE_MESSAGE,messageWrapper)));
+                            keto::server_common::Events::QUEUE_MESSAGE,messageWrapper)));
+
+    KETO_LOG_INFO << "[WavmSessionTransactionBuilder::submitWithStatus] Failed to queue message";
 
 }
 

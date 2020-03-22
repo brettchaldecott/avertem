@@ -38,6 +38,7 @@ public:
     static keto::event::Event deregisterRpcPeer(const keto::event::Event& event);
     static keto::event::Event activateRpcPeer(const keto::event::Event& event);
     static keto::event::Event routeMessage(const keto::event::Event& event);
+    static keto::event::Event queueMessage(const keto::event::Event& event);
     static keto::event::Event updateStateRouteMessage(const keto::event::Event& event);
     
     static keto::event::Event generateSoftwareHash(const keto::event::Event& event);

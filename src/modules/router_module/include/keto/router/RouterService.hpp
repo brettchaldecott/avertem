@@ -94,6 +94,7 @@ public:
     static std::shared_ptr<RouterService> getInstance();
 
     keto::event::Event routeMessage(const keto::event::Event& event, int retryCount = 0);
+    keto::event::Event queueMessage(const keto::event::Event& event);
     void processQueueEntry(const RouteQueueEntryPtr& event);
     keto::event::Event registerRpcPeerClient(const keto::event::Event& event);
     keto::event::Event registerRpcPeerServer(const keto::event::Event& event);

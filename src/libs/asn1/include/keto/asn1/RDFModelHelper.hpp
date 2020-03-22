@@ -62,7 +62,7 @@ public:
     operator RDFModel_t&();
     operator RDFModel_t*();
     operator ANY_t*();
-    operator keto::asn1::AnyHelper();
+    operator keto::asn1::AnyHelper() const;
     
 private:
     RDFModel_t* rdfModel;

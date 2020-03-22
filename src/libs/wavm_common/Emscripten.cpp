@@ -907,7 +907,7 @@ namespace keto {
                 BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidActionModelRequest());
             }
             return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),
-                                    actionBuilderPtr->getContract());
+                                    actionBuilderPtr->getContract().getHash(keto::common::StringEncoding::HEX));
         }
 
         WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_setActionContract",void,keto___transaction_setActionContract, I32 transactionId, I32 actionId, WAVM::Emscripten::emabi::Address contract)
@@ -922,7 +922,7 @@ namespace keto {
             if (actionBuilderPtr->getModelType() != keto::wavm_common::Constants::TRANSACTION_BUILDER::MODEL::RDF) {
                 BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidActionModelRequest());
             }
-            actionBuilderPtr->setContract(contractString);
+            actionBuilderPtr->setContract(keto::asn1::HashHelper(contractString,keto::common::StringEncoding::HEX));
         }
 
 
@@ -1084,6 +1084,15 @@ namespace keto {
             castToTransactionSession(
                     keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->
                     getChildTransaction(transactionId)->submit();
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_submitWithStatus",void,keto_transaction_submitWithStatus, I32 transactionId, WAVM::Emscripten::emabi::Address status)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string statusString = keto::wavm_common::WavmUtils::readCString(instance->memory,status);
+            castToTransactionSession(
+                    keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->
+                    getChildTransaction(transactionId)->submitWithStatus(statusString);
         }
 
 

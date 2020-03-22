@@ -74,7 +74,7 @@ public:
 
         virtual std::string getType();
 
-        operator keto::asn1::AnyHelper();
+        operator keto::asn1::AnyHelper() const;
     private:
         keto::asn1::RDFModelHelper modelHelper;
 
@@ -114,7 +114,7 @@ public:
         std::string getModelType();
         WavmSessionModelBuilderPtr getModel();
 
-        operator keto::chain_common::ActionBuilderPtr();
+        operator keto::chain_common::ActionBuilderPtr() const;
     private:
         int id;
         keto::chain_common::ActionBuilderPtr actionBuilderPtr;
@@ -152,6 +152,7 @@ public:
     WavmSessionActionBuilderPtr getAction(const int& id);
 
     void submit();
+    void submitWithStatus(const std::string& status = "INIT");
 
 private:
     int id;
