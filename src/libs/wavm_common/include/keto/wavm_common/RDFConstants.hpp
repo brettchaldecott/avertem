@@ -51,6 +51,7 @@ public:
         static const char* ACCOUNT_HASH;
         static const char* NAME;
         static const char* DESCRIPTION;
+        static const char* CONTRACT;
         static const char* TYPE;
         static const char* DATE_TIME;
         static const char* VALUE;

@@ -63,7 +63,7 @@ const char* AccountSystemOntologyTypes::ACCOUNT_TYPE::SLAVE         = "slave";
 
 const char* AccountSystemOntologyTypes::ACCOUNT_PERMISSIONS::OWNER      = "http://keto-coin.io/schema/rdf/1.0/keto/Account#accountOwner";
 const char* AccountSystemOntologyTypes::ACCOUNT_PERMISSIONS::GROUP      = "http://keto-coin.io/schema/rdf/1.0/keto/AccountGroup#accountGroup";
-const char* AccountSystemOntologyTypes::ACCOUNT_PERMISSIONS::MODIFIER      = "http://keto-coin.io/schema/rdf/1.0/keto/AccountModifier#accountModifer";
+const char* AccountSystemOntologyTypes::ACCOUNT_PERMISSIONS::MODIFIER      = "http://keto-coin.io/schema/rdf/1.0/keto/AccountModifier#accountModifier";
 
 const char* AccountSystemOntologyTypes::ACCOUNT_MODIFIERS::_PRIVATE     = "PRIVATE";
 const char* AccountSystemOntologyTypes::ACCOUNT_MODIFIERS::_PUBLIC      = "PUBLIC";

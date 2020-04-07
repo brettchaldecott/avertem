@@ -179,8 +179,8 @@ void RDFQueryParser::processPattern() {
     // set the filter expressly as there is no way of adding it via the RASQAL api this involves using the newly regenerated
     // sparql and then a simple search and replace and then running the sparql update. CRUDE BUT EFFECTIVE
     std::stringstream ss;
-    ss  << "?" << Constants::ACCOUNT_MODIFIER_OBJECT << " . FILTER ( REGEX(?" << Constants::ACCOUNT_MODIFIER_OBJECT
-        << ",'PUBLIC') || "
+    ss  << "?" << Constants::ACCOUNT_MODIFIER_OBJECT << " . FILTER ( REGEX(STR(?" << Constants::ACCOUNT_MODIFIER_OBJECT
+        << "),'PUBLIC') || "
         << "REGEX(STR(?" << Constants::ACCOUNT_OWNER_SUBJECT
         << "),'" << this->account
         << "') || REGEX(STR(?" << Constants::ACCOUNT_GROUP_SUBJECT

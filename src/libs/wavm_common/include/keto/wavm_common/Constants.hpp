@@ -21,6 +21,8 @@ public:
     static const char* REMOTE_SPARQL_QUERY;
     static const char* SESSION_SPARQL_QUERY;
 
+    static const char* BLOCKCHAIN_CURRENCY_NAMESPACE;
+
     class SESSION_TYPES {
     public:
         static const char* HTTP;
@@ -34,8 +36,11 @@ public:
         static const char* NESTED_TRANSACTION;
         static const char* FAUCET_TRANSACTION;
         static const char* ACCOUNT_MANAGEMENT_TRANSACTION;
+        static const char* SIDECHAIN_MANAGEMENT_TRANSACTION;
+        static const char* NAMESPACE_MANAGEMENT_TRANSACTION;
     };
     static const std::vector<const char*> SYSTEM_CONTRACTS;
+    static const std::vector<const char*> SYSTEM_NON_BALANCING_CONTRACTS;
 
     class TRANSACTION_BUILDER {
     public:

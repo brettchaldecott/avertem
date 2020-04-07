@@ -122,6 +122,54 @@ public:
     };
     typedef std::shared_ptr<WavmSessionActionBuilder> WavmSessionActionBuilderPtr;
 
+    class WavmNestedTransactionBuilder;
+    typedef std::shared_ptr<WavmNestedTransactionBuilder> WavmNestedTransactionBuilderPtr;
+    class WavmNestedTransactionBuilder {
+    public:
+        friend class WavmSessionTransactionBuilder;
+        WavmNestedTransactionBuilder(int id, bool encrypted, const keto::crypto::KeyLoaderPtr& keyLoaderPtr);
+        WavmNestedTransactionBuilder(int id, bool encrypted, const keto::asn1::HashHelper& hashHelper,
+                                      const keto::crypto::KeyLoaderPtr& keyLoaderPtr);
+        WavmNestedTransactionBuilder(const WavmNestedTransactionBuilder& orig) = delete;
+        virtual ~WavmNestedTransactionBuilder();
+
+        int getId();
+
+        void setValue(const keto::asn1::NumberHelper& numberHelper);
+        keto::asn1::NumberHelper getValue();
+
+        void setParent(const keto::asn1::HashHelper& hashHelper);
+        keto::asn1::HashHelper getParent();
+
+        void setSourceAccount(const keto::asn1::HashHelper& hashHelper);
+        keto::asn1::HashHelper getSourceAccount();
+
+        void setTargetAccount(const keto::asn1::HashHelper& hashHelper);
+        keto::asn1::HashHelper getTargetAccount();
+
+        void setTransactionSignator(const keto::asn1::HashHelper& hashHelper);
+        keto::asn1::HashHelper getTransactionSignator();
+
+        void setCreatorId(const keto::asn1::HashHelper& hashHelper);
+        keto::asn1::HashHelper getCreatorId();
+
+        WavmSessionActionBuilderPtr createAction(const std::string& modelType);
+        WavmSessionActionBuilderPtr getAction(const int& id);
+
+        WavmNestedTransactionBuilderPtr createNested(bool encrypted);
+        WavmNestedTransactionBuilderPtr createNested(bool encrypted, const keto::asn1::HashHelper& hashHelper);
+        WavmNestedTransactionBuilderPtr getNested(const int& id);
+    protected:
+        keto::transaction_common::TransactionMessageHelperPtr getTransaction();
+    private:
+        int id;
+        bool encrypted;
+        keto::chain_common::TransactionBuilderPtr transactionBuilderPtr;
+        keto::crypto::KeyLoaderPtr keyLoaderPtr;
+        std::vector<WavmSessionActionBuilderPtr> actions;
+        std::vector<WavmNestedTransactionBuilderPtr> nested;
+    };
+
     WavmSessionTransactionBuilder(int id, const keto::crypto::KeyLoaderPtr& keyLoaderPtr);
     WavmSessionTransactionBuilder(int id, const keto::asn1::HashHelper& hashHelper,
                                                                  const keto::crypto::KeyLoaderPtr& keyLoaderPtr);
@@ -151,6 +199,10 @@ public:
     WavmSessionActionBuilderPtr createAction(const std::string& modelType);
     WavmSessionActionBuilderPtr getAction(const int& id);
 
+    WavmNestedTransactionBuilderPtr createNested(bool encrypted);
+    WavmNestedTransactionBuilderPtr createNested(bool encrypted, const keto::asn1::HashHelper& hashHelper);
+    WavmNestedTransactionBuilderPtr getNested(const int& id);
+
     void submit();
     void submitWithStatus(const std::string& status = "INIT");
 
@@ -159,6 +211,7 @@ private:
     keto::chain_common::TransactionBuilderPtr transactionBuilderPtr;
     keto::crypto::KeyLoaderPtr keyLoaderPtr;
     std::vector<WavmSessionActionBuilderPtr> actions;
+    std::vector<WavmNestedTransactionBuilderPtr> nested;
     bool submitted;
 
 };

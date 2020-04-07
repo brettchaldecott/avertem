@@ -29,6 +29,8 @@
 #include "keto/wavm_common/Exception.hpp"
 #include "keto/wavm_common/EmscriptenPrivate.hpp"
 
+#include "keto/server_common/StringUtils.hpp"
+
 
 #ifndef _WIN32
 #include <sys/uio.h>
@@ -256,6 +258,9 @@ namespace keto {
     {
 
 
+
+
+
         WAVM::Emscripten::emabi::Address dynamicAlloc(Emscripten::Process* process,
                                                 Context* context,
                                                 WAVM::Emscripten::emabi::Size numBytes)
@@ -443,6 +448,26 @@ namespace keto {
                 return std::dynamic_pointer_cast<keto::wavm_common::WavmSessionTransaction>(wavmSessionPtr);
             }
             BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidWavmSessionTypeException());
+        }
+
+        // get the nested transaction
+        keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr getNestedTransaction(
+                I32 transactionId, const std::string& nestedTransactionString) {
+            keto::wavm_common::WavmSessionTransactionBuilderPtr wavmSessionTransactionBuilderPtr =
+                    castToTransactionSession(
+                            keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->
+                            getChildTransaction(transactionId);
+            keto::server_common::StringVector nestedTransactionIds = keto::server_common::StringUtils(nestedTransactionString).tokenize(",");
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr;
+            for (std::string nestedTransctionsId : nestedTransactionIds) {
+                int id = std::stoi(nestedTransctionsId);
+                if (nestedTransactionBuilderPtr) {
+                    nestedTransactionBuilderPtr = nestedTransactionBuilderPtr->getNested(id);
+                } else {
+                    nestedTransactionBuilderPtr = wavmSessionTransactionBuilderPtr->getNested(id);
+                }
+            }
+            return nestedTransactionBuilderPtr;
         }
 
         keto::wavm_common::WavmSessionHttpPtr castToTHttpSession(keto::wavm_common::WavmSessionPtr wavmSessionPtr) {
@@ -633,7 +658,7 @@ namespace keto {
             getRequestModelTransactionValue(accountModelString,transactionValueModelString);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__createDebitEntry",void,keto_createDebitEntry,WAVM::Emscripten::emabi::Address accountId, WAVM::Emscripten::emabi::Address name, WAVM::Emscripten::emabi::Address description, WAVM::Emscripten::emabi::Address accountModel,WAVM::Emscripten::emabi::Address transactionValueModel,I64 value)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__createDebitEntry",I32,keto_createDebitEntry,WAVM::Emscripten::emabi::Address accountId, WAVM::Emscripten::emabi::Address name, WAVM::Emscripten::emabi::Address description, WAVM::Emscripten::emabi::Address accountModel,WAVM::Emscripten::emabi::Address transactionValueModel,I64 value)
         {
             Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string accountIdString = keto::wavm_common::WavmUtils::readCString(instance->memory,accountId);
@@ -642,11 +667,11 @@ namespace keto {
             std::string accountModelString = keto::wavm_common::WavmUtils::readCString(instance->memory,accountModel);
             std::string transactionValueModelString = keto::wavm_common::WavmUtils::readCString(instance->memory,transactionValueModel);
 
-            castToTransactionSession(keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->createDebitEntry(
+            return castToTransactionSession(keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->createDebitEntry(
                     accountIdString, nameString, descriptionString, accountModelString,transactionValueModelString,(U64)value);
         }
 
-        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__createCreditEntry",void,keto_createCreditEntry, WAVM::Emscripten::emabi::Address accountId, WAVM::Emscripten::emabi::Address name, WAVM::Emscripten::emabi::Address description, WAVM::Emscripten::emabi::Address accountModel,WAVM::Emscripten::emabi::Address transactionValueModel,I64 value)
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__createCreditEntry",I32,keto_createCreditEntry, WAVM::Emscripten::emabi::Address accountId, WAVM::Emscripten::emabi::Address name, WAVM::Emscripten::emabi::Address description, WAVM::Emscripten::emabi::Address accountModel,WAVM::Emscripten::emabi::Address transactionValueModel,I64 value)
         {
             Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
             std::string accountIdString = keto::wavm_common::WavmUtils::readCString(instance->memory,accountId);
@@ -655,7 +680,7 @@ namespace keto {
             std::string accountModelString = keto::wavm_common::WavmUtils::readCString(instance->memory,accountModel);
             std::string transactionValueModelString = keto::wavm_common::WavmUtils::readCString(instance->memory,transactionValueModel);
 
-            castToTransactionSession(keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->createCreditEntry(
+            return castToTransactionSession(keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->createCreditEntry(
                     accountIdString, nameString, descriptionString, accountModelString,transactionValueModelString,(U64)value);
         }
 
@@ -1095,6 +1120,405 @@ namespace keto {
                     getChildTransaction(transactionId)->submitWithStatus(statusString);
         }
 
+        // nested transactions
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_createNestedTransaction",WAVM::Emscripten::emabi::Address,keto_transaction_createNestedTransaction, I32 transactionId, I32 encrypted)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+
+            keto::wavm_common::WavmSessionTransactionBuilderPtr wavmSessionTransactionBuilderPtr =
+                    castToTransactionSession(
+                            keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->
+                            getChildTransaction(transactionId);
+            std::stringstream ss;
+            ss << wavmSessionTransactionBuilderPtr->createNested(encrypted)->getId();
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),ss.str());
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_createNestedTransactionFromParent",WAVM::Emscripten::emabi::Address,keto_transaction_createNestedTransactionFromParent, I32 transactionId, I32 encrypted, WAVM::Emscripten::emabi::Address parentHash)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string parentHashString = keto::wavm_common::WavmUtils::readCString(instance->memory,parentHash);
+
+            keto::wavm_common::WavmSessionTransactionBuilderPtr wavmSessionTransactionBuilderPtr =
+                    castToTransactionSession(
+                            keto::wavm_common::WavmSessionManager::getInstance()->getWavmSession())->
+                            getChildTransaction(transactionId);
+            std::stringstream ss;
+            ss << wavmSessionTransactionBuilderPtr->createNested(encrypted, keto::asn1::HashHelper(parentHashString,keto::common::StringEncoding::HEX))->getId();
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),ss.str());
+        }
+
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_nested_getTransactionSignator",WAVM::Emscripten::emabi::Address,__transaction_nested_getTransactionSignator, I32 transactionId, WAVM::Emscripten::emabi::Address nestedTransactions)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string nestedTransactionsString = keto::wavm_common::WavmUtils::readCString(instance->memory,nestedTransactions);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr =
+                    getNestedTransaction(transactionId,nestedTransactionsString);
+
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),
+                                    nestedTransactionBuilderPtr->getTransactionSignator().getHash(keto::common::StringEncoding::HEX));
+        }
+
+            WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_nested_getCreatorId",WAVM::Emscripten::emabi::Address,keto_transaction_nested_getCreatorId, I32 transactionId, WAVM::Emscripten::emabi::Address nestedTransactions)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string nestedTransactionsString = keto::wavm_common::WavmUtils::readCString(instance->memory,nestedTransactions);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr =
+                    getNestedTransaction(transactionId,nestedTransactionsString);
+
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),
+                                    nestedTransactionBuilderPtr->getCreatorId().getHash(keto::common::StringEncoding::HEX));
+        }
+
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_nested_getSourceAccount",WAVM::Emscripten::emabi::Address,keto_transaction_nested_getSourceAccount, I32 transactionId, WAVM::Emscripten::emabi::Address nestedTransactions)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string nestedTransactionsString = keto::wavm_common::WavmUtils::readCString(instance->memory,nestedTransactions);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr =
+                    getNestedTransaction(transactionId,nestedTransactionsString);
+
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),
+                                    nestedTransactionBuilderPtr->getSourceAccount().getHash(keto::common::StringEncoding::HEX));
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_nested_setSourceAccount",void,keto_transaction_nested_setSourceAccount, I32 transactionId, WAVM::Emscripten::emabi::Address nestedTransactions, WAVM::Emscripten::emabi::Address accountHash)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string accountHashString = keto::wavm_common::WavmUtils::readCString(instance->memory,accountHash);
+            std::string nestedTransactionsString = keto::wavm_common::WavmUtils::readCString(instance->memory,nestedTransactions);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr =
+                    getNestedTransaction(transactionId,nestedTransactionsString);
+
+            keto::asn1::HashHelper hashHelper(accountHashString,keto::common::StringEncoding::HEX);
+            nestedTransactionBuilderPtr->setSourceAccount(hashHelper);
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_nested_getTargetAccount",WAVM::Emscripten::emabi::Address,keto_transaction_nested_getTargetAccount, I32 transactionId, WAVM::Emscripten::emabi::Address nestedTransactions)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string nestedTransactionsString = keto::wavm_common::WavmUtils::readCString(instance->memory,nestedTransactions);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr =
+                    getNestedTransaction(transactionId,nestedTransactionsString);
+
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),
+                                    nestedTransactionBuilderPtr->getTargetAccount().getHash(keto::common::StringEncoding::HEX));
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_nested_setTargetAccount",void,keto_transaction_nested_setTargetAccount, I32 transactionId, WAVM::Emscripten::emabi::Address nestedTransactions, WAVM::Emscripten::emabi::Address accountHash)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string accountHashString = keto::wavm_common::WavmUtils::readCString(instance->memory,accountHash);
+            std::string nestedTransactionsString = keto::wavm_common::WavmUtils::readCString(instance->memory,nestedTransactions);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr =
+                    getNestedTransaction(transactionId,nestedTransactionsString);
+
+            keto::asn1::HashHelper hashHelper(accountHashString,keto::common::StringEncoding::HEX);
+            nestedTransactionBuilderPtr->setTargetAccount(hashHelper);
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_nested_getParent",WAVM::Emscripten::emabi::Address,keto_transaction_nested_getParent, I32 transactionId, WAVM::Emscripten::emabi::Address nestedTransactions, I32 actionId)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string nestedTransactionsString = keto::wavm_common::WavmUtils::readCString(instance->memory,nestedTransactions);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr =
+                    getNestedTransaction(transactionId,nestedTransactionsString);
+
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),
+                                    nestedTransactionBuilderPtr->getParent().getHash(keto::common::StringEncoding::HEX));
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_nested_createTransactionAction",I32,keto_transaction_nested_createTransactionAction, I32 transactionId, WAVM::Emscripten::emabi::Address nestedTransactions, WAVM::Emscripten::emabi::Address modelType)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string modelTypeString = keto::wavm_common::WavmUtils::readCString(instance->memory,modelType);
+            std::string nestedTransactionsString = keto::wavm_common::WavmUtils::readCString(instance->memory,nestedTransactions);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr =
+                    getNestedTransaction(transactionId,nestedTransactionsString);
+
+            return nestedTransactionBuilderPtr->createAction(modelTypeString)->getId();
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_nested_getActionContractName",WAVM::Emscripten::emabi::Address,keto_nested_transaction_getActionContractName, I32 transactionId, WAVM::Emscripten::emabi::Address nestedTransactions, I32 actionId)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string nestedTransactionsString = keto::wavm_common::WavmUtils::readCString(instance->memory,nestedTransactions);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr =
+                    getNestedTransaction(transactionId,nestedTransactionsString);
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmSessionActionBuilderPtr actionBuilderPtr =
+                    nestedTransactionBuilderPtr->getAction(actionId);
+
+            if (actionBuilderPtr->getModelType() != keto::wavm_common::Constants::TRANSACTION_BUILDER::MODEL::RDF) {
+                BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidActionModelRequest());
+            }
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),
+                                    actionBuilderPtr->getContractName());
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_nested_setActionContractName",void,keto_transaction_nested_setActionContractName, I32 transactionId, WAVM::Emscripten::emabi::Address nestedTransactions, I32 actionId, WAVM::Emscripten::emabi::Address name)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string nameString = keto::wavm_common::WavmUtils::readCString(instance->memory,name);
+            std::string nestedTransactionsString = keto::wavm_common::WavmUtils::readCString(instance->memory,nestedTransactions);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr =
+                    getNestedTransaction(transactionId,nestedTransactionsString);
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmSessionActionBuilderPtr actionBuilderPtr =
+                    nestedTransactionBuilderPtr->getAction(actionId);
+            if (actionBuilderPtr->getModelType() != keto::wavm_common::Constants::TRANSACTION_BUILDER::MODEL::RDF) {
+                BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidActionModelRequest());
+            }
+            actionBuilderPtr->setContractName(nameString);
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_nested_getActionContract",WAVM::Emscripten::emabi::Address,keto_transaction_nested_getActionContract, I32 transactionId, WAVM::Emscripten::emabi::Address nestedTransactions, I32 actionId)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string nestedTransactionsString = keto::wavm_common::WavmUtils::readCString(instance->memory,nestedTransactions);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr =
+                    getNestedTransaction(transactionId,nestedTransactionsString);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmSessionActionBuilderPtr actionBuilderPtr =
+                    nestedTransactionBuilderPtr->getAction(actionId);
+
+            if (actionBuilderPtr->getModelType() != keto::wavm_common::Constants::TRANSACTION_BUILDER::MODEL::RDF) {
+                BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidActionModelRequest());
+            }
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),
+                                    actionBuilderPtr->getContract().getHash(keto::common::StringEncoding::HEX));
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_nested_setActionContract",void,keto_transaction_nested_setActionContract, I32 transactionId, WAVM::Emscripten::emabi::Address nestedTransactions, I32 actionId, WAVM::Emscripten::emabi::Address contract)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string contractString = keto::wavm_common::WavmUtils::readCString(instance->memory,contract);
+            std::string nestedTransactionsString = keto::wavm_common::WavmUtils::readCString(instance->memory,nestedTransactions);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr =
+                    getNestedTransaction(transactionId,nestedTransactionsString);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmSessionActionBuilderPtr actionBuilderPtr =
+                    nestedTransactionBuilderPtr->getAction(actionId);
+            if (actionBuilderPtr->getModelType() != keto::wavm_common::Constants::TRANSACTION_BUILDER::MODEL::RDF) {
+                BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidActionModelRequest());
+            }
+            actionBuilderPtr->setContract(keto::asn1::HashHelper(contractString,keto::common::StringEncoding::HEX));
+        }
+
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_nested_getRequestStringValue",WAVM::Emscripten::emabi::Address,keto_transaction_nested_getRequestStringValue, I32 transactionId, WAVM::Emscripten::emabi::Address nestedTransactions, I32 actionId, WAVM::Emscripten::emabi::Address subject,WAVM::Emscripten::emabi::Address predicate)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string subjectString = keto::wavm_common::WavmUtils::readCString(instance->memory,subject);
+            std::string predicateString = keto::wavm_common::WavmUtils::readCString(instance->memory,predicate);
+            std::string nestedTransactionsString = keto::wavm_common::WavmUtils::readCString(instance->memory,nestedTransactions);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr =
+                    getNestedTransaction(transactionId,nestedTransactionsString);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmSessionActionBuilderPtr actionBuilderPtr =
+                    nestedTransactionBuilderPtr->getAction(actionId);
+
+            if (actionBuilderPtr->getModelType() != keto::wavm_common::Constants::TRANSACTION_BUILDER::MODEL::RDF) {
+                BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidActionModelRequest());
+            }
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),
+                                    std::dynamic_pointer_cast<keto::wavm_common::WavmSessionTransactionBuilder::WavmSessionRDFModelBuilder>(actionBuilderPtr->getModel())->getRequestStringValue(subjectString,predicateString));
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_nested_setRequestStringValue",void,keto_transaction_nested_setRequestStringValue, I32 transactionId, WAVM::Emscripten::emabi::Address nestedTransactions, I32 actionId, WAVM::Emscripten::emabi::Address subject,WAVM::Emscripten::emabi::Address predicate, WAVM::Emscripten::emabi::Address value)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string subjectString = keto::wavm_common::WavmUtils::readCString(instance->memory,subject);
+            std::string predicateString = keto::wavm_common::WavmUtils::readCString(instance->memory,predicate);
+            std::string valueString = keto::wavm_common::WavmUtils::readCString(instance->memory,value);
+            std::string nestedTransactionsString = keto::wavm_common::WavmUtils::readCString(instance->memory,nestedTransactions);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr =
+                    getNestedTransaction(transactionId,nestedTransactionsString);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmSessionActionBuilderPtr actionBuilderPtr =
+                    nestedTransactionBuilderPtr->getAction(actionId);
+            if (actionBuilderPtr->getModelType() != keto::wavm_common::Constants::TRANSACTION_BUILDER::MODEL::RDF) {
+                BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidActionModelRequest());
+            }
+            std::dynamic_pointer_cast<keto::wavm_common::WavmSessionTransactionBuilder::WavmSessionRDFModelBuilder>(actionBuilderPtr->getModel())->setRequestStringValue(subjectString,predicateString,valueString);
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_nested_getRequestLongValue",I64,keto_transaction_nested_getRequestLongValue, I32 transactionId, WAVM::Emscripten::emabi::Address nestedTransactions, I32 actionId, WAVM::Emscripten::emabi::Address subject,WAVM::Emscripten::emabi::Address predicate)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string subjectString = keto::wavm_common::WavmUtils::readCString(instance->memory,subject);
+            std::string predicateString = keto::wavm_common::WavmUtils::readCString(instance->memory,predicate);
+            std::string nestedTransactionsString = keto::wavm_common::WavmUtils::readCString(instance->memory,nestedTransactions);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr =
+                    getNestedTransaction(transactionId,nestedTransactionsString);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmSessionActionBuilderPtr actionBuilderPtr =
+                    nestedTransactionBuilderPtr->getAction(actionId);
+
+            if (actionBuilderPtr->getModelType() != keto::wavm_common::Constants::TRANSACTION_BUILDER::MODEL::RDF) {
+                BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidActionModelRequest());
+            }
+            return std::dynamic_pointer_cast<keto::wavm_common::WavmSessionTransactionBuilder::WavmSessionRDFModelBuilder>(actionBuilderPtr->getModel())->getRequestLongValue(subjectString,predicateString);
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_nested_setRequestLongValue",void,keto_transaction_nested_setRequestLongValue, I32 transactionId, WAVM::Emscripten::emabi::Address nestedTransactions, I32 actionId, WAVM::Emscripten::emabi::Address subject,WAVM::Emscripten::emabi::Address predicate, I64 value)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string subjectString = keto::wavm_common::WavmUtils::readCString(instance->memory,subject);
+            std::string predicateString = keto::wavm_common::WavmUtils::readCString(instance->memory,predicate);
+            std::string nestedTransactionsString = keto::wavm_common::WavmUtils::readCString(instance->memory,nestedTransactions);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr =
+                    getNestedTransaction(transactionId,nestedTransactionsString);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmSessionActionBuilderPtr actionBuilderPtr =
+                    nestedTransactionBuilderPtr->getAction(actionId);
+
+            if (actionBuilderPtr->getModelType() != keto::wavm_common::Constants::TRANSACTION_BUILDER::MODEL::RDF) {
+                BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidActionModelRequest());
+            }
+            std::dynamic_pointer_cast<keto::wavm_common::WavmSessionTransactionBuilder::WavmSessionRDFModelBuilder>(actionBuilderPtr->getModel())->setRequestLongValue(subjectString,predicateString,value);
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_nested_getRequestFloatValue",I32,keto_transaction_nested_getRequestFloatValue, I32 transactionId, WAVM::Emscripten::emabi::Address nestedTransactions, I32 actionId, WAVM::Emscripten::emabi::Address subject,WAVM::Emscripten::emabi::Address predicate)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string subjectString = keto::wavm_common::WavmUtils::readCString(instance->memory,subject);
+            std::string predicateString = keto::wavm_common::WavmUtils::readCString(instance->memory,predicate);
+            std::string nestedTransactionsString = keto::wavm_common::WavmUtils::readCString(instance->memory,nestedTransactions);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr =
+                    getNestedTransaction(transactionId,nestedTransactionsString);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmSessionActionBuilderPtr actionBuilderPtr =
+                    nestedTransactionBuilderPtr->getAction(actionId);
+
+            if (actionBuilderPtr->getModelType() != keto::wavm_common::Constants::TRANSACTION_BUILDER::MODEL::RDF) {
+                BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidActionModelRequest());
+            }
+            return std::dynamic_pointer_cast<keto::wavm_common::WavmSessionTransactionBuilder::WavmSessionRDFModelBuilder>(actionBuilderPtr->getModel())->getRequestFloatValue(subjectString,predicateString);
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_nested_setRequestFloatValue",void,keto_transaction_nested_setRequestFloatValue, I32 transactionId, WAVM::Emscripten::emabi::Address nestedTransactions, I32 actionId, WAVM::Emscripten::emabi::Address subject,WAVM::Emscripten::emabi::Address predicate, I32 value)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string subjectString = keto::wavm_common::WavmUtils::readCString(instance->memory,subject);
+            std::string predicateString = keto::wavm_common::WavmUtils::readCString(instance->memory,predicate);
+            std::string nestedTransactionsString = keto::wavm_common::WavmUtils::readCString(instance->memory,nestedTransactions);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr =
+                    getNestedTransaction(transactionId,nestedTransactionsString);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmSessionActionBuilderPtr actionBuilderPtr =
+                    nestedTransactionBuilderPtr->getAction(actionId);
+            if (actionBuilderPtr->getModelType() != keto::wavm_common::Constants::TRANSACTION_BUILDER::MODEL::RDF) {
+                BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidActionModelRequest());
+            }
+            std::dynamic_pointer_cast<keto::wavm_common::WavmSessionTransactionBuilder::WavmSessionRDFModelBuilder>(actionBuilderPtr->getModel())->setRequestFloatValue(subjectString,predicateString,value);
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_nested_getRequestBooleanValue",I32,keto_transaction_nested_getRequestBooleanValue, I32 transactionId, WAVM::Emscripten::emabi::Address nestedTransactions, I32 actionId, WAVM::Emscripten::emabi::Address subject,WAVM::Emscripten::emabi::Address predicate)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string subjectString = keto::wavm_common::WavmUtils::readCString(instance->memory,subject);
+            std::string predicateString = keto::wavm_common::WavmUtils::readCString(instance->memory,predicate);
+            std::string nestedTransactionsString = keto::wavm_common::WavmUtils::readCString(instance->memory,nestedTransactions);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr =
+                    getNestedTransaction(transactionId,nestedTransactionsString);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmSessionActionBuilderPtr actionBuilderPtr =
+                    nestedTransactionBuilderPtr->getAction(actionId);
+
+            if (actionBuilderPtr->getModelType() != keto::wavm_common::Constants::TRANSACTION_BUILDER::MODEL::RDF) {
+                BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidActionModelRequest());
+            }
+            return std::dynamic_pointer_cast<keto::wavm_common::WavmSessionTransactionBuilder::WavmSessionRDFModelBuilder>(actionBuilderPtr->getModel())->getRequestBooleanValue(subjectString,predicateString);
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_nested_setRequestBooleanValue",void,keto_transaction_nested_setRequestBooleanValue, I32 transactionId, WAVM::Emscripten::emabi::Address nestedTransactions, I32 actionId, WAVM::Emscripten::emabi::Address subject,WAVM::Emscripten::emabi::Address predicate, I32 value)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string subjectString = keto::wavm_common::WavmUtils::readCString(instance->memory,subject);
+            std::string predicateString = keto::wavm_common::WavmUtils::readCString(instance->memory,predicate);
+            std::string nestedTransactionsString = keto::wavm_common::WavmUtils::readCString(instance->memory,nestedTransactions);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr =
+                    getNestedTransaction(transactionId,nestedTransactionsString);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmSessionActionBuilderPtr actionBuilderPtr =
+                    nestedTransactionBuilderPtr->getAction(actionId);
+
+            if (actionBuilderPtr->getModelType() != keto::wavm_common::Constants::TRANSACTION_BUILDER::MODEL::RDF) {
+                BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidActionModelRequest());
+            }
+            std::dynamic_pointer_cast<keto::wavm_common::WavmSessionTransactionBuilder::WavmSessionRDFModelBuilder>(actionBuilderPtr->getModel())->setRequestBooleanValue(subjectString,predicateString,value);
+        }
+
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_nested_getTransactionValue",I64,keto_transaction_nested_getTransactionValue, I32 transactionId, WAVM::Emscripten::emabi::Address nestedTransactions)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string nestedTransactionsString = keto::wavm_common::WavmUtils::readCString(instance->memory,nestedTransactions);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr =
+                    getNestedTransaction(transactionId,nestedTransactionsString);
+
+            return nestedTransactionBuilderPtr->getValue();
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_nested_setTransactionValue",void,keto_transaction_nested_setTransactionValue, I32 transactionId, WAVM::Emscripten::emabi::Address nestedTransactions, I64 value)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string nestedTransactionsString = keto::wavm_common::WavmUtils::readCString(instance->memory,nestedTransactions);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr =
+                    getNestedTransaction(transactionId,nestedTransactionsString);
+
+            nestedTransactionBuilderPtr->setValue(value);
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_nested_createNestedTransaction",WAVM::Emscripten::emabi::Address,keto_transaction_nested_createNestedTransaction, I32 transactionId, WAVM::Emscripten::emabi::Address nestedTransactions, I32 encrypted)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string nestedTransactionsString = keto::wavm_common::WavmUtils::readCString(instance->memory,nestedTransactions);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr =
+                    getNestedTransaction(transactionId,nestedTransactionsString);
+
+            std::stringstream ss;
+            ss << nestedTransactionsString << "," << nestedTransactionBuilderPtr->createNested(encrypted)->getId();
+
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),ss.str());
+        }
+
+        WAVM_DEFINE_INTRINSIC_FUNCTION(keto,"__transaction_nested_createNestedTransactionFromParent",WAVM::Emscripten::emabi::Address,keto_transaction_nested_createNestedTransactionFromParent, I32 transactionId, WAVM::Emscripten::emabi::Address nestedTransactions, I32 encrypted, WAVM::Emscripten::emabi::Address parentHash)
+        {
+            Emscripten::Process* instance = getEmscriptenInstance(contextRuntimeData);
+            std::string parentHashString = keto::wavm_common::WavmUtils::readCString(instance->memory,parentHash);
+            std::string nestedTransactionsString = keto::wavm_common::WavmUtils::readCString(instance->memory,nestedTransactions);
+
+            keto::wavm_common::WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransactionBuilderPtr =
+                    getNestedTransaction(transactionId,nestedTransactionsString);
+
+            std::stringstream ss;
+            ss << nestedTransactionsString << "," << nestedTransactionBuilderPtr->createNested(encrypted, keto::asn1::HashHelper(parentHashString,keto::common::StringEncoding::HEX))->getId();
+            return createCstringBuf(instance,getContextFromRuntimeData(contextRuntimeData),ss.str());
+        }
 
         //
         // http session wrapping

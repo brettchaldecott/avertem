@@ -35,6 +35,7 @@ const char* RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::ID = "id";
 const char* RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::ACCOUNT_HASH = "accountHash";
 const char* RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::NAME = "name";
 const char* RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::DESCRIPTION = "description";
+const char* RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::CONTRACT = "contract";
 const char* RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::TYPE = "type";
 const char* RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::DATE_TIME = "dateTime";
 const char* RDFConstants::ACCOUNT_TRANSACTION_PREDICATES::VALUE = "value";

@@ -256,6 +256,7 @@ ResultVectorMap AccountGraphSession::executeQueryInternal(const std::string& que
     ResultVectorMap resultVectorMap;
     if (!results) {
         librdf_free_query(query);
+        KETO_LOG_INFO << "[AccountGraphSession::executeQueryInternal] no results found";
         return resultVectorMap;
     }
     KETO_LOG_DEBUG << "[AccountGraphSession::executeQueryInternal]loop through the results";

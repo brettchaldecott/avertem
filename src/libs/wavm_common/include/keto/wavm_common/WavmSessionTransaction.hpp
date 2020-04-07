@@ -32,6 +32,7 @@
 #include "keto/transaction_common/TransactionProtoHelper.hpp"
 
 #include "keto/wavm_common/WavmSessionTransactionBuilder.hpp"
+#include "keto/wavm_common/Constants.hpp"
 
 #include "keto/crypto/KeyLoader.hpp"
 
@@ -86,9 +87,9 @@ public:
 
 
     // the common methods used on the session
-    void createDebitEntry(const std::string& accountId, const std::string& name, const std::string& description, const std::string& accountModel, const std::string& transactionValueModel,
+    bool createDebitEntry(const std::string& accountId, const std::string& name, const std::string& description, const std::string& accountModel, const std::string& transactionValueModel,
             const keto::asn1::NumberHelper& value);
-    void createCreditEntry(const std::string& accountId, const std::string& name, const std::string& description, const std::string& accountModel, const std::string& transactionValueModel,
+    bool createCreditEntry(const std::string& accountId, const std::string& name, const std::string& description, const std::string& accountModel, const std::string& transactionValueModel,
             const keto::asn1::NumberHelper& value);
     void setResponseStringValue(const std::string& subject, const std::string& predicate,
             const std::string& value);
@@ -141,6 +142,11 @@ private:
 
     std::vector<std::string> getKeys(ResultVectorMap& resultVectorMap);
 
+    long getBalance(const std::string& transactionValueModel);
+
+    bool isSystemContract(const std::vector<const char*>& contracts = Constants::SYSTEM_CONTRACTS);
+
+    int generateRandomNumber();
 
 };
 

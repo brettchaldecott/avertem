@@ -208,14 +208,41 @@ keto::transaction_common::TransactionProtoHelper TransactionProcessor::processTr
         for (keto::transaction_common::ActionHelperPtr action : actions) {
             KETO_LOG_INFO << "The action is contract [" << action->getContract().getHash(keto::common::HEX) << "]["
                 << action->getContractName() << "]";
-            keto::asn1::AnyHelper anyHelper(*transactionMessageHelperPtr);
-            if (!action->getContract().empty()) {
-                transactionProtoHelper.setTransaction(executeContract(
-                        getContractByHash(currentAccount,action->getContract()),transactionProtoHelper,action->getModel(),transactionTracker)
-                        .transaction());
-            } else {
-                transactionProtoHelper.setTransaction(executeContract(getContractByName(currentAccount,
-                        action->getContractName()),transactionProtoHelper,action->getModel(),transactionTracker).transaction());
+            try {
+                keto::asn1::AnyHelper anyHelper(*transactionMessageHelperPtr);
+                if (!action->getContract().empty()) {
+                    transactionProtoHelper.setTransaction(executeContract(
+                            getContractByHash(currentAccount, action->getContract()), transactionProtoHelper,
+                            action->getModel(), transactionTracker)
+                                                                  .transaction());
+                } else {
+                    transactionProtoHelper.setTransaction(executeContract(getContractByName(currentAccount,
+                                                                                            action->getContractName()),
+                                                                          transactionProtoHelper, action->getModel(),
+                                                                          transactionTracker).transaction());
+                }
+                KETO_LOG_INFO << "[TransactionProcessor::processTransaction] after executing transaction ["
+                        << action->getContract().getHash(keto::common::HEX) << "]["
+                        << action->getContractName() << "]";
+            } catch (keto::common::Exception &ex) {
+                KETO_LOG_ERROR << "[TransactionProcessor::processTransaction] Failed to process the contract ["
+                        << action->getContract().getHash(keto::common::HEX) << "]["
+                        << action->getContractName() << "]: "
+                        << boost::diagnostic_information(ex, true) << std::endl
+                        << boost::diagnostic_information_what(ex, true);
+            } catch (boost::exception &ex) {
+                KETO_LOG_ERROR << "[TransactionProcessor::processTransaction] Failed to process the contract ["
+                        << action->getContract().getHash(keto::common::HEX) << "]["
+                        << action->getContractName() << "]: "
+                        << boost::diagnostic_information_what(ex, true);
+            } catch (std::exception &ex) {
+                KETO_LOG_ERROR << "[TransactionProcessor::processTransaction] Failed to process the contract ["
+                               << action->getContract().getHash(keto::common::HEX) << "]["
+                               << action->getContractName() << "]: " << ex.what();
+            } catch (...) {
+                KETO_LOG_ERROR "[TransactionProcessor::processTransaction] Failed to process the contract ["
+                            << action->getContract().getHash(keto::common::HEX) << "]["
+                            << action->getContractName() << "]";
             }
         }
 

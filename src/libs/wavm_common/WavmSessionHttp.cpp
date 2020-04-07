@@ -72,7 +72,7 @@ std::string WavmSessionHttp::getContractName() {
 }
 
 std::string WavmSessionHttp::getContractHash() {
-    return keto::asn1::HashHelper(this->httpRequestMessage.contract_name()).getHash(keto::common::StringEncoding::HEX);
+    return keto::asn1::HashHelper(this->httpRequestMessage.contract_hash()).getHash(keto::common::StringEncoding::HEX);
 }
 
 std::string WavmSessionHttp::getContractOwner() {

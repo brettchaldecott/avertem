@@ -244,17 +244,159 @@ WavmSessionTransactionBuilder::WavmSessionActionBuilder::operator keto::chain_co
     return this->actionBuilderPtr;
 }
 
+
+
+WavmSessionTransactionBuilder::WavmNestedTransactionBuilder::WavmNestedTransactionBuilder(int id, bool encrypted, const keto::crypto::KeyLoaderPtr& keyLoaderPtr)
+: id(id), encrypted(encrypted), keyLoaderPtr(keyLoaderPtr) {
+    this->transactionBuilderPtr = keto::chain_common::TransactionBuilder::createTransaction();
+}
+
+WavmSessionTransactionBuilder::WavmNestedTransactionBuilder::WavmNestedTransactionBuilder(int id, bool encrypted, const keto::asn1::HashHelper& hashHelper,
+                             const keto::crypto::KeyLoaderPtr& keyLoaderPtr)
+: id(id), encrypted(encrypted), keyLoaderPtr(keyLoaderPtr) {
+    this->transactionBuilderPtr = keto::chain_common::TransactionBuilder::createTransaction();
+    this->transactionBuilderPtr->setParent(hashHelper);
+}
+
+WavmSessionTransactionBuilder::WavmNestedTransactionBuilder::~WavmNestedTransactionBuilder() {
+
+}
+
+int WavmSessionTransactionBuilder::WavmNestedTransactionBuilder::getId() {
+    return id;
+}
+
+void WavmSessionTransactionBuilder::WavmNestedTransactionBuilder::setValue(const keto::asn1::NumberHelper& numberHelper) {
+    this->transactionBuilderPtr->setValue(numberHelper);
+}
+
+keto::asn1::NumberHelper WavmSessionTransactionBuilder::WavmNestedTransactionBuilder::getValue() {
+    return this->transactionBuilderPtr->getValue();
+}
+
+void WavmSessionTransactionBuilder::WavmNestedTransactionBuilder::setParent(const keto::asn1::HashHelper& hashHelper) {
+    this->transactionBuilderPtr->setParent(hashHelper);
+}
+
+keto::asn1::HashHelper WavmSessionTransactionBuilder::WavmNestedTransactionBuilder::getParent() {
+    return this->transactionBuilderPtr->getParent();
+}
+
+void WavmSessionTransactionBuilder::WavmNestedTransactionBuilder::setSourceAccount(const keto::asn1::HashHelper& hashHelper) {
+    this->transactionBuilderPtr->setSourceAccount(hashHelper);
+}
+
+keto::asn1::HashHelper WavmSessionTransactionBuilder::WavmNestedTransactionBuilder::getSourceAccount() {
+    return this->transactionBuilderPtr->getSourceAccount();
+}
+
+void WavmSessionTransactionBuilder::WavmNestedTransactionBuilder::setTargetAccount(const keto::asn1::HashHelper& hashHelper) {
+    this->transactionBuilderPtr->setTargetAccount(hashHelper);
+}
+
+keto::asn1::HashHelper WavmSessionTransactionBuilder::WavmNestedTransactionBuilder::getTargetAccount() {
+    return this->transactionBuilderPtr->getTargetAccount();
+}
+
+void WavmSessionTransactionBuilder::WavmNestedTransactionBuilder::setTransactionSignator(const keto::asn1::HashHelper& hashHelper) {
+    this->transactionBuilderPtr->setTransactionSignator(hashHelper);
+}
+
+keto::asn1::HashHelper WavmSessionTransactionBuilder::WavmNestedTransactionBuilder::getTransactionSignator() {
+    return this->transactionBuilderPtr->getTransactionSignator();
+}
+
+void WavmSessionTransactionBuilder::WavmNestedTransactionBuilder::setCreatorId(const keto::asn1::HashHelper& hashHelper) {
+    this->transactionBuilderPtr->setCreatorId(hashHelper);
+}
+
+keto::asn1::HashHelper WavmSessionTransactionBuilder::WavmNestedTransactionBuilder::getCreatorId() {
+    return this->transactionBuilderPtr->getCreatorId();
+}
+
+WavmSessionTransactionBuilder::WavmSessionActionBuilderPtr WavmSessionTransactionBuilder::WavmNestedTransactionBuilder::createAction(const std::string& modelType) {
+    int id = this->actions.size();
+    WavmSessionTransactionBuilder::WavmSessionActionBuilderPtr
+            wavmSessionActionBuilderPtr(new WavmSessionTransactionBuilder::WavmSessionActionBuilder(id,modelType));
+    this->actions.push_back(wavmSessionActionBuilderPtr);
+    return wavmSessionActionBuilderPtr;
+}
+
+WavmSessionTransactionBuilder::WavmSessionActionBuilderPtr WavmSessionTransactionBuilder::WavmNestedTransactionBuilder::getAction(const int& id) {
+    if (id >= this->actions.size()) {
+        BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidActionIdForThisSession());
+    }
+    return this->actions[id];
+}
+
+
+WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr WavmSessionTransactionBuilder::WavmNestedTransactionBuilder::createNested(bool encrypted) {
+    int id = this->nested.size();
+    WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr
+            wavmNestedTransactionBuilderPtr(new WavmSessionTransactionBuilder::WavmNestedTransactionBuilder(id,encrypted,this->keyLoaderPtr));
+    this->nested.push_back(wavmNestedTransactionBuilderPtr);
+    return wavmNestedTransactionBuilderPtr;
+}
+
+WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr WavmSessionTransactionBuilder::WavmNestedTransactionBuilder::createNested(bool encrypted, const keto::asn1::HashHelper& hashHelper) {
+    int id = this->nested.size();
+    WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr
+            wavmNestedTransactionBuilderPtr(new WavmSessionTransactionBuilder::WavmNestedTransactionBuilder(id,encrypted, hashHelper,this->keyLoaderPtr));
+    this->nested.push_back(wavmNestedTransactionBuilderPtr);
+    return wavmNestedTransactionBuilderPtr;
+}
+
+WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr WavmSessionTransactionBuilder::WavmNestedTransactionBuilder::getNested(const int& id) {
+    if (id >= this->actions.size()) {
+        BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidNestedTransactionIdForThisSession());
+    }
+    return this->nested[id];
+}
+
+keto::transaction_common::TransactionMessageHelperPtr WavmSessionTransactionBuilder::WavmNestedTransactionBuilder::getTransaction() {
+    this->transactionBuilderPtr->setEncrypted(this->encrypted);
+    std::shared_ptr<keto::chain_common::SignedTransactionBuilder> signedTransBuild =
+            keto::chain_common::SignedTransactionBuilder::createTransaction(
+                    this->keyLoaderPtr);
+
+    for (WavmSessionTransactionBuilder::WavmSessionActionBuilderPtr action: this->actions) {
+        this->transactionBuilderPtr->addAction(*action);
+    }
+
+    signedTransBuild->setTransaction(this->transactionBuilderPtr);
+    signedTransBuild->sign();
+
+    keto::transaction_common::TransactionWrapperHelperPtr transactionWrapperHelperPtr(
+            new keto::transaction_common::TransactionWrapperHelper(signedTransBuild));
+
+    transactionWrapperHelperPtr->addTransactionTrace(
+            *keto::transaction_common::TransactionTraceBuilder::createTransactionTrace(
+                    keto::server_common::ServerInfo::getInstance()->getAccountHash(), this->keyLoaderPtr));
+
+    keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr =
+            keto::transaction_common::TransactionMessageHelperPtr(
+                    new keto::transaction_common::TransactionMessageHelper(
+                            transactionWrapperHelperPtr));
+
+    for (WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransacction: this->nested) {
+        transactionMessageHelperPtr->addNestedTransaction(nestedTransacction->getTransaction());
+    }
+    return transactionMessageHelperPtr;
+}
+
+
 WavmSessionTransactionBuilder::WavmSessionTransactionBuilder(int id, const keto::crypto::KeyLoaderPtr& keyLoaderPtr)
-    : id(id), keyLoaderPtr(keyLoaderPtr), submitted(false) {
+        : id(id), keyLoaderPtr(keyLoaderPtr), submitted(false) {
     this->transactionBuilderPtr = keto::chain_common::TransactionBuilder::createTransaction();
 }
 
 WavmSessionTransactionBuilder::WavmSessionTransactionBuilder(int id, const keto::asn1::HashHelper& hashHelper,
-        const keto::crypto::KeyLoaderPtr& keyLoaderPtr)
+                                                             const keto::crypto::KeyLoaderPtr& keyLoaderPtr)
         : id(id), keyLoaderPtr(keyLoaderPtr), submitted(false) {
     this->transactionBuilderPtr = keto::chain_common::TransactionBuilder::createTransaction();
     this->transactionBuilderPtr->setParent(hashHelper);
 }
+
 
 WavmSessionTransactionBuilder::~WavmSessionTransactionBuilder() {
 
@@ -329,6 +471,30 @@ WavmSessionTransactionBuilder::WavmSessionActionBuilderPtr WavmSessionTransactio
     return this->actions[id];
 }
 
+WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr WavmSessionTransactionBuilder::createNested(bool encrypted) {
+    int id = this->nested.size();
+    WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr
+            wavmNestedTransactionBuilderPtr(new WavmSessionTransactionBuilder::WavmNestedTransactionBuilder(id,encrypted,this->keyLoaderPtr));
+    this->nested.push_back(wavmNestedTransactionBuilderPtr);
+    return wavmNestedTransactionBuilderPtr;
+}
+
+WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr WavmSessionTransactionBuilder::createNested(bool encrypted, const keto::asn1::HashHelper& hashHelper) {
+    int id = this->nested.size();
+    WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr
+            wavmNestedTransactionBuilderPtr(new WavmSessionTransactionBuilder::WavmNestedTransactionBuilder(id,encrypted, hashHelper,this->keyLoaderPtr));
+    this->nested.push_back(wavmNestedTransactionBuilderPtr);
+    return wavmNestedTransactionBuilderPtr;
+}
+
+WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr WavmSessionTransactionBuilder::getNested(const int& id) {
+    if (id >= this->actions.size()) {
+        BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidNestedTransactionIdForThisSession());
+    }
+    return this->nested[id];
+}
+
+
 void WavmSessionTransactionBuilder::submit() {
     return this->submitWithStatus("INIT");
 }
@@ -365,6 +531,10 @@ void WavmSessionTransactionBuilder::submitWithStatus(const std::string& status) 
             keto::transaction_common::TransactionMessageHelperPtr(
             new keto::transaction_common::TransactionMessageHelper(
                     transactionWrapperHelperPtr));
+
+    for (WavmSessionTransactionBuilder::WavmNestedTransactionBuilderPtr nestedTransacction: this->nested) {
+        transactionMessageHelperPtr->addNestedTransaction(nestedTransacction->getTransaction());
+    }
 
     keto::transaction_common::TransactionProtoHelper
             transactionProtoHelper(transactionMessageHelperPtr);
