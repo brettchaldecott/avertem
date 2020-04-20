@@ -24,7 +24,7 @@ add_library( 0002_keto_test_module
              ${HEADERS}
            )
 
-add_dependencies(0002_keto_test_module keto_tools)
+add_dependencies(0002_keto_test_module avertem_tools)
 
 
 KetoModuleDepencencies( 0002_keto_test_module 

@@ -1,10 +1,13 @@
 #!/bin/bash
 # 
-# File:   ketod.sh
+# File:   avertemd.sh
 # Author: brett chaldecott
 #
 # Created on Jan 12, 2018, 5:44:49 PM
 #
+
+#ulimit -c unlimited
+#ulimit -a
 
 # Get the current source directory
 SOURCE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -13,12 +16,8 @@ SOURCE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 KETO_HOME=${SOURCE_DIR%%/bin}
 export KETO_HOME
 
-# execute ketod
-os=$(uname -s)
-if [ ${os} == "Linux" ] ;
-then
-    ${KETO_HOME}/bin/keto_tools $@
-fi
+# execute avertemd
+${KETO_HOME}/bin/avertem_rdf_tools "$@"
 
 
 

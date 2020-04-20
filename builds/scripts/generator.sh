@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ##########################################################################
-# This is KETO bootstrapper script for Linux and OS X.
+# This is Avertem bootstrapper script for Linux and OS X.
 ##########################################################################
 
 copyDependency() {
@@ -12,7 +12,7 @@ copyDependency() {
     then
         targetDir="/opt/dependencies/"
     fi
-    docker_execute_command "/opt/keto/scripts/tools/FindTar.sh $sourceDir $targetDir"
+    docker_execute_command "/opt/avertem/scripts/tools/FindTar.sh $sourceDir $targetDir"
 
 }
 

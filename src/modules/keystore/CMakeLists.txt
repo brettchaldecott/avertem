@@ -43,7 +43,7 @@ add_library( 0010_keto_keystore_module
 
              ${HEADERS} )
 
-add_dependencies(0010_keto_keystore_module keto_tools)
+add_dependencies(0010_keto_keystore_module avertem_tools)
 
 KetoModuleDepencencies( 0010_keto_keystore_module 
                             PRIVATE keto_memory_vault_session keto_software_consensus keto_key_store_db keto_memory_vault

@@ -32,7 +32,7 @@ add_library( 0020_keto_block_module
              ${HEADERS}
            )
 
-add_dependencies(0020_keto_block_module keto_tools)
+add_dependencies(0020_keto_block_module avertem_tools)
 
 KetoModuleDepencencies( 0020_keto_block_module
                             PRIVATE keto_software_consensus

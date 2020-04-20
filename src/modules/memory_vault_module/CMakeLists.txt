@@ -22,7 +22,7 @@ add_library( 0009_keto_memory_vault_module
 
              ${HEADERS} )
 
-add_dependencies(0009_keto_memory_vault_module keto_tools)
+add_dependencies(0009_keto_memory_vault_module avertem_tools)
 
 KetoModuleDepencencies( 0009_keto_memory_vault_module
                             PRIVATE keto_software_consensus keto_memory_vault

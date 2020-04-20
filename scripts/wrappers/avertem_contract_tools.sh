@@ -13,8 +13,8 @@ SOURCE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 KETO_HOME=${SOURCE_DIR%%/bin}
 export KETO_HOME
 
-# execute ketod
-${KETO_HOME}/bin/keto_contract_tools $@
+# execute avertemd
+${KETO_HOME}/bin/avertem_contract_tools $@
 
 
 

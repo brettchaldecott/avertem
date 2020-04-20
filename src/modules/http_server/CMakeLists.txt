@@ -23,7 +23,7 @@ add_library( 0050_keto_httpd_module
              ${HEADERS}
            )
 
-add_dependencies(0050_keto_httpd_module keto_tools)
+add_dependencies(0050_keto_httpd_module avertem_tools)
 
 KetoModuleDepencencies( 0050_keto_httpd_module 
                             PRIVATE keto_http_server_session keto_chain_query_common

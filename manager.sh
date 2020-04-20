@@ -11,6 +11,7 @@ then
     echo "   ide - configure the source code base for your ide"
     echo "   genesis - rebuild the contracts used by the genesis block"
     echo "   cluster - start the cluster"
+    echo "   debian - build the debian cluster"
     exit -1
 fi
 
@@ -80,6 +81,14 @@ then
         [ "$var" != 'cluster' ] && ARGS+=("$var")
     done
     ./docker/scripts/dev_cluster.sh "${ARGS[@]}"
+elif [ "${ACTION}" == "debian" ] ;
+then
+    ARGS=()
+    for var in "$@"; do
+        # Ignore known bad arguments
+        [ "$var" != 'debian' ] && ARGS+=("$var")
+    done
+    ./docker/scripts/debian_image.sh "${ARGS[@]}"
 elif [ "${ACTION}" == "image" ] ;
 then
     ARGS=()

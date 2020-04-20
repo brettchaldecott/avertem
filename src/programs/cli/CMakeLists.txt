@@ -1,4 +1,4 @@
-add_executable( keto_cli
+add_executable( avertem_cli
         main.cpp
         TransactionReader.cpp
         TransactionLoader.cpp
@@ -9,7 +9,7 @@ endif()
 
 find_package( Gperftools QUIET )
 if( GPERFTOOLS_FOUND )
-    message( STATUS "Found gperftools; compiling keto_cli with TCMalloc")
+    message( STATUS "Found gperftools; compiling avertem_cli with TCMalloc")
     list( APPEND PLATFORM_SPECIFIC_LIBS tcmalloc )
 endif()
 
@@ -32,7 +32,7 @@ endif()
 
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
-target_include_directories(keto_cli
+target_include_directories(avertem_cli
         PUBLIC ${CMAKE_CURRENT_BINARY_DIR}
         PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
         PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/ssl/include"
@@ -49,7 +49,7 @@ target_include_directories(keto_cli
         ${Boost_INCLUDE_DIRS}
         ${JSON_INCLUDE_DIR})
 
-target_link_libraries( keto_cli 
+target_link_libraries( avertem_cli
         PRIVATE keto_http_client_session keto_crypto  keto_account_utils
         PRIVATE keto_transaction_common keto_server_common keto_environment 
         PRIVATE keto_common keto_chain_common
@@ -62,7 +62,7 @@ target_link_libraries( keto_cli
         )
 
 install( TARGETS
-   keto_cli
+   avertem_cli
 
    RUNTIME DESTINATION bin
    LIBRARY DESTINATION lib

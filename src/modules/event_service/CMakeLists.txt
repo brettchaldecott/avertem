@@ -21,7 +21,7 @@ add_library( 0001_keto_event_service_module
              ${HEADERS}
            )
 
-add_dependencies(0001_keto_event_service_module keto_tools)
+add_dependencies(0001_keto_event_service_module avertem_tools)
 
 KetoModuleDepencencies( 0001_keto_event_service_module 
                             PRIVATE keto_software_consensus

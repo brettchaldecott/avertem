@@ -19,6 +19,6 @@ then
     COPY_DEPENDENCIES=$3
     docker_start_build_container
 
-    echo "Generate Keto IDE - $IDE"
-    docker_execute_command "/opt/keto/builds/scripts/generator_in_docker.sh ubuntu \"$IDE\" \"$COPY_DEPENDENCIES\""
+    echo "Generate Avertem IDE - $IDE"
+    docker_execute_command "/opt/avertem/builds/scripts/generator_in_docker.sh ubuntu \"$IDE\" \"$COPY_DEPENDENCIES\""
 fi

@@ -6,13 +6,13 @@ outputDir=$2
 sourceKeys=(`find $sourceDir -name "*.json"`)
 SOURCE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-if [ ! -f "${SOURCE_DIR}/../../deps_build/build/install/bin/keto_tools.sh" ] ; then
+if [ ! -f "${SOURCE_DIR}/../../deps_build/build/install/bin/avertem_tools.sh" ] ; then
         exit 0
 fi
 
 for sourceKey in "${sourceKeys[@]}";
 do
     filename=${sourceKey##*/}
-    echo "${SOURCE_DIR}/../../deps_build/build/install/bin/keto_tools.sh -G -k ${sourceKey} > \"${outputDir}/${filename}\""
-    ${SOURCE_DIR}/../../deps_build/build/install/bin/keto_tools.sh -G -k ${sourceKey} > "${outputDir}/${filename}"
+    echo "${SOURCE_DIR}/../../deps_build/build/install/bin/avertem_tools.sh -G -k ${sourceKey} > \"${outputDir}/${filename}\""
+    ${SOURCE_DIR}/../../deps_build/build/install/bin/avertem_tools.sh -G -k ${sourceKey} > "${outputDir}/${filename}"
 done

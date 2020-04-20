@@ -26,7 +26,7 @@ add_library( 0025_keto_balancer_module
              ${HEADERS}
            )
 
-add_dependencies(0025_keto_balancer_module keto_tools)
+add_dependencies(0025_keto_balancer_module avertem_tools)
 
 KetoModuleDepencencies( 0025_keto_balancer_module 
                             PRIVATE keto_software_consensus

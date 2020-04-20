@@ -28,7 +28,7 @@ add_library( 0030_keto_rpc_server_module
              ${HEADERS}
            )
 
-add_dependencies(0030_keto_rpc_server_module keto_tools)
+add_dependencies(0030_keto_rpc_server_module avertem_tools)
 
 KetoModuleDepencencies( 0030_keto_rpc_server_module 
                             PRIVATE keto_election_common keto_software_consensus

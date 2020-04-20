@@ -23,15 +23,15 @@ if [ "$COMMAND" == "build" ]
 then
     docker_start_build_container
 
-    echo "Build Keto"
-    docker_execute_command "/opt/keto/build.sh ubuntu build"
+    echo "Build Avertem"
+    docker_execute_command "/opt/avertem/build.sh ubuntu build"
 
 elif [ "$COMMAND" == "genesis" ]
 then
     docker_start_build_container
 
     echo "Build Genesis"
-    docker_execute_command "/opt/keto/builds/scripts/update_genisis.sh"
+    docker_execute_command "/opt/avertem/builds/scripts/update_genisis.sh"
 
 elif [ "$COMMAND" == "start" ]
 then 

@@ -24,7 +24,7 @@ add_library( 0003_keto_transaction_module
              ${HEADERS}
            )
 
-add_dependencies(0003_keto_transaction_module keto_tools)
+add_dependencies(0003_keto_transaction_module avertem_tools)
 
 KetoModuleDepencencies( 0003_keto_transaction_module 
                             PRIVATE keto_software_consensus

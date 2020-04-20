@@ -12,7 +12,6 @@
  */
 
 #include "ANY.h"
-#include "RDFDataFormat.h"
 #include "keto/asn1/RDFModelHelper.hpp"
 #include "keto/asn1/RDFSubjectHelper.hpp"
 #include "keto/asn1/Exception.hpp"

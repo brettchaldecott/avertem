@@ -23,7 +23,7 @@ add_library( 0100_keto_consensus_module
              ${HEADERS}
            )
 
-add_dependencies(0100_keto_consensus_module keto_tools)
+add_dependencies(0100_keto_consensus_module avertem_tools)
 
 KetoModuleDepencencies( 0100_keto_consensus_module 
                             PRIVATE keto_software_consensus

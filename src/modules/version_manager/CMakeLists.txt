@@ -25,7 +25,7 @@ add_library( 0070_keto_version_manager_module
              ${HEADERS}
            )
 
-add_dependencies(0070_keto_version_manager_module keto_tools)
+add_dependencies(0070_keto_version_manager_module avertem_tools)
 
 
 KetoModuleDepencencies( 0070_keto_version_manager_module 

@@ -27,7 +27,7 @@ add_library( 0015_keto_router_module
              ${HEADERS}
            )
 
-add_dependencies(0015_keto_router_module keto_tools)
+add_dependencies(0015_keto_router_module avertem_tools)
 
 KetoModuleDepencencies( 0015_keto_router_module 
                             PRIVATE keto_election_common keto_chain_query_common  keto_software_consensus

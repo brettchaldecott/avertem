@@ -1,3 +1,3 @@
-install(FILES ketod.sh keto_cli.sh keto_contract_tools.sh keto_tools.sh keto_rdf_tools.sh
+install(FILES avertemd.sh avertem_cli.sh avertem_contract_tools.sh avertem_tools.sh avertem_rdf_tools.sh
      DESTINATION bin
      PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ)

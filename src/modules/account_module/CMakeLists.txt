@@ -26,7 +26,7 @@ add_library( 0015_account_module
              ${HEADERS}
            )
 
-add_dependencies(0015_account_module keto_tools)
+add_dependencies(0015_account_module avertem_tools)
 
 
 KetoModuleDepencencies( 0015_account_module 

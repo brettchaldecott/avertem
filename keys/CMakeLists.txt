@@ -1,2 +1,2 @@
 install(DIRECTORY cli/ DESTINATION keys/cli )
-install(DIRECTORY ketod/ DESTINATION keys/ketod )
+install(DIRECTORY avertemd/ DESTINATION keys/avertemd )

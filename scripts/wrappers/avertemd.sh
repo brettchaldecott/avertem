@@ -1,6 +1,6 @@
 #!/bin/bash
 # 
-# File:   ketod.sh
+# File:   avertemd.sh
 # Author: brett chaldecott
 #
 # Created on Jan 12, 2018, 5:44:49 PM
@@ -29,7 +29,7 @@ if [ "${AUTO_UPGRADE}" == "1" ] ; then
     ${KETO_HOME}/upgrade/ubuntu.sh
 fi
 
-# execute ketod
-${KETO_HOME}/bin/ketod $@
+# execute avertemd
+${KETO_HOME}/bin/avertemd $@
 
 

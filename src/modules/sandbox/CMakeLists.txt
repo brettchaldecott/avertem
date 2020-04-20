@@ -23,7 +23,7 @@ add_library( 0020_keto_sandbox_module
              ${HEADERS}
            )
 
-add_dependencies(0020_keto_sandbox_module keto_tools)
+add_dependencies(0020_keto_sandbox_module avertem_tools)
 
 KetoModuleDepencencies( 0020_keto_sandbox_module 
                             PRIVATE keto_software_consensus
