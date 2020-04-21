@@ -25,7 +25,7 @@ NESTED_HEX_ID=$(cat ${WORK_DIR}/src/contracts/keto_standard_typscript_contracts/
 ${WORK_DIR}/build/install/bin/avertem_contract_tools.sh -e -s ${WORK_DIR}/src/contracts/avertem_standard_typscript_contracts/build/faucet_optimized.wasm -t ${WORK_DIR}/src/contracts/avertem_standard_typscript_contracts/build/faucet_optimized.hex
 FAUCET_HEX_ID=$(cat ${WORK_DIR}/src/contracts/keto_standard_typscript_contracts/build/faucet_optimized.hex)
 ${WORK_DIR}/build/install/bin/avertem_contract_tools.sh -e -s ${WORK_DIR}/src/contracts/avertem_standard_typscript_contracts/build/account_optimized.wasm -t ${WORK_DIR}/src/contracts/avertem_standard_typscript_contracts/build/account_optimized.hex
-ACCOUNT_HEX_ID=$(cat ${WORK_DIR}/src/contracts/avertem_standard_typscript_contracts/build/account_optimized.hex)
+ACCOUNT_HEX_ID=$(cat ${WORK_DIR}/src/contracts/keto_standard_typscript_contracts/build/account_optimized.hex)
 ${WORK_DIR}/build/install/bin/avertem_contract_tools.sh -e -s ${WORK_DIR}/src/contracts/avertem_standard_typscript_contracts/build/contract_optimized.wasm -t ${WORK_DIR}/src/contracts/avertem_standard_typscript_contracts/build/contract_optimized.hex
 CONTRACT_HEX_ID=$(cat ${WORK_DIR}/src/contracts/keto_standard_typscript_contracts/build/contract_optimized.hex)
 ${WORK_DIR}/build/install/bin/avertem_contract_tools.sh -e -s ${WORK_DIR}/src/contracts/avertem_standard_typscript_contracts/build/namespace_optimized.wasm -t ${WORK_DIR}/src/contracts/avertem_standard_typscript_contracts/build/namespace_optimized.hex

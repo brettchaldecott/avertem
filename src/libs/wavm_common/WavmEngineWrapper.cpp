@@ -111,6 +111,10 @@ bool loadTextModule(const std::string& wastString, const WAVM::IR::FeatureSpec& 
 {
     WAVM::IR::Module irModule(featureSpec);
     std::vector<WAVM::WAST::Error> parseErrors;
+    if (!wastString.size()) {
+        KETO_LOG_ERROR << "No contract has been supplied and cannot be parsed";
+        return false;
+    }
     if (!WAVM::WAST::parseModule(wastString.c_str(),wastString.size(),irModule,parseErrors)) {
         KETO_LOG_ERROR <<  "[WavmEngineWrapper][loadBinaryModule]Error deserializing WebAssembly binary file:";
         for (WAVM::WAST::Error error : parseErrors) {

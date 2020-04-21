@@ -285,7 +285,8 @@ keto::event::Event SandboxFork::Parent::execute() {
             ss << "[SandboxFork::Parent::execute]Failed to process the event : " << ex.what() << std::endl;
             ss << "Cause: " << boost::diagnostic_information(ex, true) << std::endl;
             KETO_LOG_ERROR << ss.str();
-            throw;
+            KETO_LOG_ERROR << "Ignore these exceptions as they indicate an invalid contract";
+            //throw;
         } catch (boost::exception &ex) {
             std::stringstream ss;
             ss << "[SandboxFork::Parent::execute]Failed to process the event : "
