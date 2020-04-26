@@ -97,6 +97,14 @@ then
         [ "$var" != 'image' ] && ARGS+=("$var")
     done
     ./docker/scripts/dev_image.sh "${ARGS[@]}"
+elif [ "${ACTION}" == "node" ] ;
+then
+    ARGS=()
+    for var in "$@"; do
+        # Ignore known bad arguments
+        [ "$var" != 'node' ] && ARGS+=("$var")
+    done
+    ./docker/scripts/node_cluster.sh "${ARGS[@]}"
 fi
 
 
