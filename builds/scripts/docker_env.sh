@@ -30,7 +30,7 @@ docker_execute_command() {
         echo "Docker command not provided"
         exit -1
     fi
-    docker exec -it compose-build_build-container_1 bash -c "$COMMAND"
+    docker exec compose-build_build-container_1 bash -c "$COMMAND"
 }
 
 
