@@ -8,7 +8,7 @@ if [[ -z "${overlap}" ]]; then
     overlap=0
 fi
 
-sourceKeys=$(find $sourceDir -name "*.json")
+sourceKeys=$(find $sourceDir -name "*.json" -print0 | sort -z)
 number=$(find $sourceDir -name "*.json" | wc -l)
 SOURCE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
