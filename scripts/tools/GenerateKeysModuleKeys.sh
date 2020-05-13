@@ -31,7 +31,7 @@ fi
 count=1;
 for sourceKey in "${sourceKeys[@]}";
 do
-    if [[ ${count} >= ${overlap} ]]; then
+    if (( ${count} >= ${overlap} )); then
         filename=${sourceKey##*/}
         echo "${SOURCE_DIR}/../../deps_build/build/install/bin/avertem_tools.sh -G -k ${sourceKey} > \"${outputDir}/${filename}\""
         ${SOURCE_DIR}/../../deps_build/build/install/bin/avertem_tools.sh -G -k ${sourceKey} > "${outputDir}/${filename}"
