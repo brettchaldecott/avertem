@@ -8,7 +8,7 @@ if [[ -z "${overlap}" ]]; then
     overlap=0
 fi
 
-sourceKeys=(`find $sourceDir -name "*.json" -print0 | sort -z`)
+#sourceKeys=(`find $sourceDir -name "*.json" | sort -z`)
 number=(`find $sourceDir -name "*.json" | wc -l`)
 SOURCE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -28,14 +28,9 @@ if [[ "${overlap}" -ne "${zero}" ]]; then
     done
 fi
 
-count=1;
-for sourceKey in "${sourceKeys[@]}";
+for (( count=${overlap}+1; count<= ${number}; count++ ))
 do
-    if (( ${count} >= ${overlap} )); then
-        filename=${sourceKey##*/}
-        echo "${SOURCE_DIR}/../../deps_build/build/install/bin/avertem_tools.sh -G -k ${sourceKey} > \"${outputDir}/${filename}\""
-        ${SOURCE_DIR}/../../deps_build/build/install/bin/avertem_tools.sh -G -k ${sourceKey} > "${outputDir}/${filename}"
-    fi
-    count=$(( ${count} + 1 ))
+    echo "${SOURCE_DIR}/../../deps_build/build/install/bin/avertem_tools.sh -G -k \"${sourceDir}/key_${count}.json\" > \"${outputDir}/key_${count}.json\""
+    ${SOURCE_DIR}/../../deps_build/build/install/bin/avertem_tools.sh -G -k "${sourceDir}/key_${count}.json" > "${outputDir}/key_${count}.json"
     echo "Processed entry ${count}"
 done
