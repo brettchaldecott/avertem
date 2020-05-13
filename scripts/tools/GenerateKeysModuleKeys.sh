@@ -21,10 +21,8 @@ if [[ "${overlap}" -ne "${zero}" ]]; then
     startPoint=$(( ${number} - ${overlap} ))
     for (( count=1; count<= ${overlap}; count++ ))
     do
-        if [ ! -f "${outputDir}/key_$((${startPoint}+${count})).json" ] ; then
-            echo "mv -f ${outputDir}/key_$((${startPoint}+${count})).json ${outputDir}/key_${count}.json"
-            mv -f "${outputDir}/key_$((${startPoint}+${count})).json" "${outputDir}/key_${count}.json"
-        fi
+        echo "mv -f ${outputDir}/key_$((${startPoint}+${count})).json ${outputDir}/key_${count}.json"
+        mv -f "${outputDir}/key_$((${startPoint}+${count})).json" "${outputDir}/key_${count}.json"
     done
 fi
 
