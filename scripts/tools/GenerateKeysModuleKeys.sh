@@ -18,11 +18,11 @@ fi
 
 zero=0
 if [[ "${overlap}" -ne "${zero}" ]]; then
-    startPoint=${number-overlap}
+    startPoint=$(( ${number} - ${overlap} ))
     for (( count=1; count<= ${overlap}; count++ ))
     do
-        echo "mv -f ${outputDir}/key_${startPoint+count}.json ${outputDir}/key_${count}.json"
-        mv -f "${outputDir}/key_${startPoint+count}.json" "${outputDir}/key_${count}.json"
+        echo "mv -f ${outputDir}/key_$((${startPoint}+${count})).json ${outputDir}/key_${count}.json"
+        mv -f "${outputDir}/key_$((${startPoint}+${count})).json" "${outputDir}/key_${count}.json"
     done
 fi
 
@@ -34,5 +34,5 @@ do
         echo "${SOURCE_DIR}/../../deps_build/build/install/bin/avertem_tools.sh -G -k ${sourceKey} > \"${outputDir}/${filename}\""
         ${SOURCE_DIR}/../../deps_build/build/install/bin/avertem_tools.sh -G -k ${sourceKey} > "${outputDir}/${filename}"
     fi
-    count++
+    $(( count++ ))
 done

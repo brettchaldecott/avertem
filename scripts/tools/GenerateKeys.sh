@@ -16,7 +16,7 @@ fi
 
 zero=0
 if [[ "${overlap}" -ne "${zero}" ]]; then
-    startPoint=${number-overlap}
+    startPoint=$(( ${number} - ${overlap} ))
     for (( count=1; count<= ${overlap}; count++ ))
     do
         echo "mv -f ${outputDir}/key_${startPoint+count}.json ${outputDir}/key_${count}.json"
