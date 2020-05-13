@@ -21,18 +21,21 @@ if [[ "${overlap}" -ne "${zero}" ]]; then
     startPoint=$(( ${number} - ${overlap} ))
     for (( count=1; count<= ${overlap}; count++ ))
     do
-        echo "mv -f ${outputDir}/key_$((${startPoint}+${count})).json ${outputDir}/key_${count}.json"
-        mv -f "${outputDir}/key_$((${startPoint}+${count})).json" "${outputDir}/key_${count}.json"
+        if [ ! -f "${outputDir}/key_$((${startPoint}+${count})).json" ] ; then
+            echo "mv -f ${outputDir}/key_$((${startPoint}+${count})).json ${outputDir}/key_${count}.json"
+            mv -f "${outputDir}/key_$((${startPoint}+${count})).json" "${outputDir}/key_${count}.json"
+        fi
     done
 fi
 
 count=1;
 for sourceKey in "${sourceKeys[@]}";
 do
-    if [[ "${count}" -ge "${overlap}" ]]; then
+    if [[ ${count} >= ${overlap} ]]; then
         filename=${sourceKey##*/}
         echo "${SOURCE_DIR}/../../deps_build/build/install/bin/avertem_tools.sh -G -k ${sourceKey} > \"${outputDir}/${filename}\""
         ${SOURCE_DIR}/../../deps_build/build/install/bin/avertem_tools.sh -G -k ${sourceKey} > "${outputDir}/${filename}"
     fi
     count=$(( ${count} + 1 ))
+    echo "Processed entry ${count}"
 done
