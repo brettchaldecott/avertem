@@ -13,7 +13,6 @@
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
 
-
 namespace keto {
 namespace memory_vault_session {
 
@@ -21,12 +20,12 @@ std::string MemoryVaultSessionEntry::getSourceVersion() {
     return OBFUSCATED("$Id:");
 }
 
-MemoryVaultSessionEntry::MemoryVaultSessionEntry(MemoryVaultSession* memoryVaultSession, const keto::crypto::SecureVector& entryId) :
-                        valueIsSet(false), memoryVaultSession(memoryVaultSession), entryId(entryId) {
+MemoryVaultSessionEntry::MemoryVaultSessionEntry(MemoryVaultSession* memoryVaultSession, const keto::crypto::SecureVector& entryId, const keto::memory_vault_session::PasswordCachePtr& passwordCachePtr) :
+                        valueIsSet(false), memoryVaultSession(memoryVaultSession), entryId(entryId), passwordCachePtr(passwordCachePtr)  {
 }
 
-MemoryVaultSessionEntry::MemoryVaultSessionEntry(MemoryVaultSession* memoryVaultSession, const keto::crypto::SecureVector& entryId, const keto::crypto::SecureVector& value) :
-        valueIsSet(false), memoryVaultSession(memoryVaultSession), entryId(entryId)   {
+MemoryVaultSessionEntry::MemoryVaultSessionEntry(MemoryVaultSession* memoryVaultSession, const keto::crypto::SecureVector& entryId, const keto::crypto::SecureVector& value, const keto::memory_vault_session::PasswordCachePtr& passwordCachePtr) :
+        valueIsSet(false), memoryVaultSession(memoryVaultSession), entryId(entryId), passwordCachePtr(passwordCachePtr)   {
     setValue(value);
 }
 
@@ -35,7 +34,7 @@ MemoryVaultSessionEntry::~MemoryVaultSessionEntry() {
         if (valueIsSet) {
             keto::proto::MemoryVaultRemoveEntryRequest request;
             request.set_vault(memoryVaultSession->getVaultName());
-            request.set_password(keto::crypto::SecureVectorUtils().copySecureToString(memoryVaultSession->generatePassword()));
+            request.set_password(keto::crypto::SecureVectorUtils().copySecureToString(memoryVaultSession->processPassword(passwordCachePtr)));
             request.set_entry_id(keto::crypto::SecureVectorUtils().copySecureToString(this->entryId));
             request.set_slot_id(this->memoryVaultSession->getSlot());
 
@@ -66,7 +65,7 @@ keto::crypto::SecureVector MemoryVaultSessionEntry::getValue() {
     keto::proto::MemoryVaultGetEntryRequest request;
     request.set_vault(this->memoryVaultSession->getVaultName());
     request.set_password(keto::crypto::SecureVectorUtils().copySecureToString(
-            this->memoryVaultSession->generatePassword()));
+            this->memoryVaultSession->processPassword(passwordCachePtr)));
     request.set_entry_id(keto::crypto::SecureVectorUtils().copySecureToString(this->entryId));
     request.set_slot_id(this->memoryVaultSession->getSlot());
 
@@ -87,7 +86,7 @@ void MemoryVaultSessionEntry::setValue(const keto::crypto::SecureVector& value) 
 
     keto::proto::MemoryVaultSetEntryRequest request;
     request.set_vault(this->memoryVaultSession->getVaultName());
-    request.set_password(keto::crypto::SecureVectorUtils().copySecureToString(this->memoryVaultSession->generatePassword()));
+    request.set_password(keto::crypto::SecureVectorUtils().copySecureToString(memoryVaultSession->processPassword(passwordCachePtr)));
     request.set_entry_id(keto::crypto::SecureVectorUtils().copySecureToString(this->entryId));
     request.set_value(keto::crypto::SecureVectorUtils().copySecureToString(value));
     request.set_slot_id(this->memoryVaultSession->getSlot());

@@ -5,6 +5,8 @@ SET(TRANSACTION_MODULE_SIGNATURE_METHOD "getTransactionModuleSignature")
 SET(TRANSACTION_MODULE_SIGNATURE "this is a signature")
 SET(TRANSACTION_MODULE_KEY_METHOD "getTransactionModuleKey")
 SET(TRANSACTION_MODULE_SIGNATURE "this is a key")
+SET(TRANSACTION_MODULE_OVERLAP_SIGNATURE_1 "this is a key")
+SET(TRANSACTION_MODULE_OVERLAP_SIGNATURE_2 "this is a key")
 SET(TRANSACTION_MODULE_SOURCE_VERSION_METHOD_MAP "getClientSourceVersionMap")
 SET(TRANSACTION_MODULE_CONSENSUS_HASH_SCRIPT_METHOD "getConsensusHashScriptConfig")
 
@@ -34,7 +36,6 @@ KetoModuleDepencencies( 0003_keto_transaction_module
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES}
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
-KetoModuleConsensus( 0003_keto_transaction_module ${NUMBER_OF_KEYS} "transaction" )
 
 KetoModuleConsensusScriptsCalls( 0003_keto_transaction_module ${NUMBER_OF_KEYS} "4"
         PRIVATE keto_software_consensus
@@ -43,9 +44,6 @@ KetoModuleConsensusScriptsCalls( 0003_keto_transaction_module ${NUMBER_OF_KEYS} 
         PRIVATE keto_asn1_common keto_asn1_protocol
         PRIVATE keto_crypto ${BOTAN_LIBRARIES}
         PRIVATE ${OPENSSL_LIBRARIES} )
-
-
-configure_file(include/keto/transaction/TransactionServiceModuleManagerMisc.hpp.in include/keto/transaction/TransactionServiceModuleManagerMisc.hpp)
 configure_file(consensus/consensus_1.chai.in consensus/consensus_1.chai)
 configure_file(consensus/consensus_2.chai.in consensus/consensus_2.chai)
 configure_file(consensus/consensus_3.chai.in consensus/consensus_3.chai)
@@ -70,6 +68,9 @@ configure_file(consensus/consensus_21.chai.in consensus/consensus_21.chai)
 configure_file(consensus/consensus_22.chai.in consensus/consensus_22.chai)
 configure_file(consensus/consensus_23.chai.in consensus/consensus_23.chai)
 configure_file(consensus/consensus_24.chai.in consensus/consensus_24.chai)
+
+KetoModuleConsensus( 0003_keto_transaction_module ${NUMBER_OF_KEYS} "transaction" )
+configure_file(include/keto/transaction/TransactionServiceModuleManagerMisc.hpp.in include/keto/transaction/TransactionServiceModuleManagerMisc.hpp)
 
 target_include_directories( 0003_keto_transaction_module
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"

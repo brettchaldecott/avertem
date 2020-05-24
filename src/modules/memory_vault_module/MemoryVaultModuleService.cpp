@@ -135,12 +135,13 @@ keto::event::Event MemoryVaultModuleService::removeEntry(const keto::event::Even
     keto::proto::MemoryVaultRemoveEntryRequest memoryVaultRemoveEntryRequest =
             keto::server_common::fromEvent<keto::proto::MemoryVaultRemoveEntryRequest>(event);
 
+    // retrieve the entry to remove without the password. This will not get you access to the value as the password
+    // is required to decrypt it.
     keto::memory_vault::MemoryVaultPtr memoryVaultPtr =
             keto::memory_vault::MemoryVaultManager::getInstance()->getVault(
                     memoryVaultRemoveEntryRequest.slot_id(),
                     memoryVaultRemoveEntryRequest.vault(),
                     keto::crypto::SecureVectorUtils().copyStringToSecure(memoryVaultRemoveEntryRequest.password()));
-
 
     keto::proto::MemoryVaultRemoveEntryResponse memoryVaultRemoveEntryResponse;
     memoryVaultRemoveEntryResponse.set_entry_id(memoryVaultRemoveEntryRequest.entry_id());

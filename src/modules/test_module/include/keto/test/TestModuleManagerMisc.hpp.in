@@ -27,14 +27,14 @@ extern unsigned char* __etext;
 
 keto::crypto::SecureVector ${TEST_CONSENSUS_DETECT_BREAK_METHOD}(const keto::crypto::SecureVector& input) {
     keto::crypto::SecureVector result = keto::crypto::HashGenerator().generateHash(input);
-    char* start = (char*)&_start;
-    char* end = (char*)&__etext;
-    while(start != end) {
-        if(((*(volatile unsigned*)start) & 0xFF) == 0xCC) {
-            result = keto::crypto::HashGenerator().generateHash(result);
-        }
-        ++start;
-    }
+    //char* start = (char*)&_start;
+    //char* end = (char*)&__etext;
+    //while(start != end) {
+    //    if(((*(volatile unsigned*)start) & 0xFF) == 0xCC) {
+    //        result = keto::crypto::HashGenerator().generateHash(result);
+    //    }
+    //    ++start;
+    //}
     return result;
 }
 

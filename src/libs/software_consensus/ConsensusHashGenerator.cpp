@@ -126,53 +126,69 @@ typedef std::shared_ptr<ChaiScriptSession> ChaiScriptSessionPtr;
 thread_local ChaiScriptSessionPtr chaiScriptSessionPtr; 
 
 
-keto::crypto::SecureVector chai_getModuleSignature() {
-    return (chaiScriptSessionPtr->getModuleSignatureRef())();
+std::string chai_getModuleSignature() {
+    return keto::crypto::SecureVectorUtils().copySecureToString((chaiScriptSessionPtr->getModuleSignatureRef())());
 }
 
-keto::crypto::SecureVector chai_getModuleKeyRef() {
-    return (chaiScriptSessionPtr->getModuleKeyRef())();
+std::string chai_getModuleKeyRef() {
+    return keto::crypto::SecureVectorUtils().copySecureToString((chaiScriptSessionPtr->getModuleKeyRef())());
 }
 
-keto::crypto::SecureVector chai_getSourceVersion(const std::string &name) {
-    return keto::crypto::SecureVectorUtils().copyStringToSecure(
-            chaiScriptSessionPtr->getSourceVersionMap()[name]());
+std::string chai_getSourceVersion(const std::string& name) {
+    return chaiScriptSessionPtr->getSourceVersionMap()[name]();
 }
 
-keto::crypto::SecureVector chai_generateHash(const keto::crypto::SecureVector &value) {
-    return keto::crypto::HashGenerator().generateHash(value);
+std::string chai_generateHash(const std::string& value) {
+    return keto::crypto::SecureVectorUtils().copySecureToString(keto::crypto::HashGenerator().generateHash(value));
 }
 
-keto::crypto::SecureVector chai_signBytes(const keto::crypto::SecureVector &value) {
-    return keto::key_tools::ContentSigner(chaiScriptSessionPtr->getSessionKey(),
-            chaiScriptSessionPtr->getEncodedKey(),value).getSignature();
+std::string chai_signBytes(const std::string& value) {
+    return keto::crypto::SecureVectorUtils().copySecureToString(
+            keto::key_tools::ContentSigner(chaiScriptSessionPtr->getSessionKey(),
+            chaiScriptSessionPtr->getEncodedKey(),
+            keto::crypto::SecureVectorUtils().copyStringToSecure(value)).getSignature());
 }
 
-keto::crypto::SecureVector chai_encryptBytes(const keto::crypto::SecureVector &value) {
+std::string chai_encryptBytes(const std::string& value) {
     
-    return keto::key_tools::ContentEncryptor(chaiScriptSessionPtr->getSessionKey(),
-            chaiScriptSessionPtr->getEncodedKey(),value).getEncryptedContent_locked();
+    return keto::server_common::VectorUtils().copyVectorToString(
+            keto::key_tools::ContentEncryptor(chaiScriptSessionPtr->getSessionKey(),
+            chaiScriptSessionPtr->getEncodedKey(),
+            keto::crypto::SecureVectorUtils().copyStringToSecure(value)).getEncryptedContent());
 }
 
-keto::crypto::SecureVector chai_decryptBytes(const keto::crypto::SecureVector &value) {
-    return keto::key_tools::ContentDecryptor(chaiScriptSessionPtr->getSessionKey(),
-            chaiScriptSessionPtr->getEncodedKey(),value).getContent();
+std::string chai_decryptBytes(const std::string& value) {
+    return keto::crypto::SecureVectorUtils().copySecureToString(
+            keto::key_tools::ContentDecryptor(chaiScriptSessionPtr->getSessionKey(),
+            chaiScriptSessionPtr->getEncodedKey(),
+            keto::crypto::SecureVectorUtils().copyStringToSecure(value)).getContent());
 }
 
-keto::crypto::SecureVector chai_getSeed() {
-    return chaiScriptSessionPtr->getSeed();
+std::string chai_getSeed() {
+    return keto::crypto::SecureVectorUtils().copySecureToString(chaiScriptSessionPtr->getSeed());
 }
 
-keto::crypto::SecureVector chai_getPreviousHash() {
-    return chaiScriptSessionPtr->getPreviousHash();
+std::string chai_getPreviousHash() {
+    return keto::crypto::SecureVectorUtils().copySecureToString(chaiScriptSessionPtr->getPreviousHash());
 }
 
-keto::crypto::SecureVector chai_executeCallBacks(const keto::crypto::SecureVector &value) {
-    keto::crypto::SecureVector result = value;
+std::string chai_executeCallBacks(const std::string& value) {
+    keto::crypto::SecureVector result = keto::crypto::SecureVectorUtils().copyStringToSecure(value);
     for (testCallBack callBack: chaiScriptSessionPtr->getCallBacks()) {
         result = callBack(result);
     }
-    return result;
+    return keto::crypto::SecureVectorUtils().copySecureToString(result);
+}
+
+std::string chai_concat(const std::string& lhs,const std::string& rhs) {
+    keto::crypto::SecureVector result = keto::crypto::SecureVectorUtils().copyStringToSecure(lhs);
+    result.insert(result.end(),rhs.begin(),rhs.end());
+    return keto::crypto::SecureVectorUtils().copySecureToString(result);
+}
+
+
+bool chai_vectorEqual(const std::string &lhs,const std::string &rhs) {
+    return lhs == rhs;
 }
 
 ChaiScriptPtr initChaiScript(getModuleSignature moduleSignatureRef,
@@ -196,7 +212,10 @@ ChaiScriptPtr initChaiScript(getModuleSignature moduleSignatureRef,
     chaiScriptPtr->add(chaiscript::fun(&chai_encryptBytes), "encryptBytes");
     chaiScriptPtr->add(chaiscript::fun(&chai_decryptBytes), "decryptBytes");
     chaiScriptPtr->add(chaiscript::fun(&chai_getPreviousHash), "getPreviousHash");
+    chaiScriptPtr->add(chaiscript::fun(&chai_getPreviousHash), "getSeed");
     chaiScriptPtr->add(chaiscript::fun(&chai_executeCallBacks), "executeCallBacks");
+    chaiScriptPtr->add(chaiscript::fun(&chai_concat), "avertemConcat");
+    chaiScriptPtr->add(chaiscript::fun(&chai_vectorEqual), "vectorEqual");
     
     return chaiScriptPtr;
 }
@@ -223,6 +242,8 @@ ChaiScriptPtr initChaiScript(getModuleSignature moduleSignatureRef,
     chaiScriptPtr->add(chaiscript::fun(&chai_decryptBytes), "decryptBytes");
     chaiScriptPtr->add(chaiscript::fun(&chai_getSeed), "getSeed");
     chaiScriptPtr->add(chaiscript::fun(&chai_executeCallBacks), "executeCallBacks");
+    chaiScriptPtr->add(chaiscript::fun(&chai_concat), "avertemConcat");
+    chaiScriptPtr->add(chaiscript::fun(&chai_vectorEqual), "vectorEqual");
     
     return chaiScriptPtr;
 }
@@ -301,33 +322,41 @@ void ConsensusHashGenerator::registerCallBacks(const CallBacks& callBacks) {
 }
 
 // method to set the session key
-void ConsensusHashGenerator::setSession(
+bool ConsensusHashGenerator::setSession(
         const keto::crypto::SecureVector& sessionKey) {
-    this->sessionKey = sessionKey;
-    this->currentSoftwareHash.clear();
-    bool validSession = false;
-    for (ConsensusHashScriptInfoPtr consensusScript : this->consensusVector) {
-        
-        try {
-            keto::key_tools::ContentDecryptor contentDecryptor(sessionKey,
-                consensusScript->getEncodedKey(),consensusScript->getCode());
+    if (this->sessionKey == sessionKey) {
+        return false;
+    } else {
+        KETO_LOG_ERROR << "[setSession] Setup a new session [" <<  Botan::hex_encode(sessionKey) << "]["
+        << Botan::hex_encode(this->sessionKey) << "]";
+        this->sessionKey = sessionKey;
+        this->currentSoftwareHash.clear();
+        bool validSession = false;
+        for (ConsensusHashScriptInfoPtr consensusScript : this->consensusVector) {
 
-            if (keto::crypto::HashGenerator().generateHash(
-                    contentDecryptor.getContent()) == consensusScript->getHash()) {
-                this->sessionScript = consensusScript->getCode();
-                this->encodedKey = consensusScript->getEncodedKey();
-                this->sessionShortScript = consensusScript->getShortCode();
-                validSession = true;
-                break;
+            try {
+                keto::key_tools::ContentDecryptor contentDecryptor(sessionKey,
+                                                                   consensusScript->getEncodedKey(),
+                                                                   consensusScript->getCode());
+
+                if (keto::crypto::HashGenerator().generateHash(
+                        contentDecryptor.getContent()) == consensusScript->getHash()) {
+                    this->sessionScript = consensusScript->getCode();
+                    this->encodedKey = consensusScript->getEncodedKey();
+                    this->sessionShortScript = consensusScript->getShortCode();
+                    validSession = true;
+                    break;
+                }
+            } catch (...) {
+                // the key is invalid as a result we ignore and move on.
             }
-        } catch (...) {
-            // the key is invalid as a result we ignore and move on.
         }
-    }
-    if (!validSession) {
-        std::stringstream ss;
-        ss << "The session key is invalid [" << Botan::hex_encode(sessionKey,true) << "]";
-        BOOST_THROW_EXCEPTION(keto::software_consensus::InvalidSessionException(ss.str()));
+        if (!validSession) {
+            std::stringstream ss;
+            ss << "The session key is invalid [" << Botan::hex_encode(sessionKey, true) << "]";
+            BOOST_THROW_EXCEPTION(keto::software_consensus::InvalidSessionException(ss.str()));
+        }
+        return true;
     }
 }
 
@@ -340,7 +369,7 @@ keto::crypto::SecureVector ConsensusHashGenerator::generateSeed(const keto::asn1
     ChaiScriptPtr chaiScriptPtr = scope.getChaiScriptPtr();
     
     std::string code(secureVector.begin(),secureVector.end());
-    return chaiScriptPtr->eval<keto::crypto::SecureVector>(code);
+    return keto::crypto::SecureVectorUtils().copyStringToSecure(chaiScriptPtr->eval<std::string>(code));
 }
 
 
@@ -354,9 +383,10 @@ keto::crypto::SecureVector ConsensusHashGenerator::generateHash(const keto::cryp
     
     std::string code(secureVector.begin(),secureVector.end());
     if (currentSoftwareHash.size()) {
-        return chaiScriptPtr->eval<keto::crypto::SecureVector>(code);
+        return keto::crypto::SecureVectorUtils().copyStringToSecure(chaiScriptPtr->eval<std::string>(code));
     } else {
-        return this->currentSoftwareHash = chaiScriptPtr->eval<keto::crypto::SecureVector>(code);
+        return this->currentSoftwareHash = keto::crypto::SecureVectorUtils().copyStringToSecure(
+                chaiScriptPtr->eval<std::string>(code));
     }
 }
 
@@ -374,7 +404,7 @@ keto::crypto::SecureVector ConsensusHashGenerator::generateSessionHash(const ket
     ChaiScriptPtr chaiScriptPtr = scope.getChaiScriptPtr();
 
     std::string code(secureVector.begin(),secureVector.end());
-    return chaiScriptPtr->eval<keto::crypto::SecureVector>(code);
+    return keto::crypto::SecureVectorUtils().copyStringToSecure(chaiScriptPtr->eval<std::string>(code));
 }
 
 std::vector<uint8_t> ConsensusHashGenerator::encrypt(const keto::crypto::SecureVector& value) {

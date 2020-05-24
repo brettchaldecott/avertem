@@ -13,6 +13,7 @@
 #include "keto/crypto/Containers.hpp"
 #include "keto/crypto/PasswordPipeLine.hpp"
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
+#include "keto/memory_vault_session/PasswordCache.hpp"
 
 
 namespace keto {
@@ -30,8 +31,8 @@ public:
     };
     static std::string getSourceVersion();
 
-    MemoryVaultSessionEntry(MemoryVaultSession* memoryVaultSession, const keto::crypto::SecureVector& entryId);
-    MemoryVaultSessionEntry(MemoryVaultSession* memoryVaultSession, const keto::crypto::SecureVector& entryId, const keto::crypto::SecureVector& value);
+    MemoryVaultSessionEntry(MemoryVaultSession* memoryVaultSession, const keto::crypto::SecureVector& entryId, const keto::memory_vault_session::PasswordCachePtr& passwordCachePtr);
+    MemoryVaultSessionEntry(MemoryVaultSession* memoryVaultSession, const keto::crypto::SecureVector& entryId, const keto::crypto::SecureVector& value, const keto::memory_vault_session::PasswordCachePtr& passwordCachePtr);
     MemoryVaultSessionEntry(const MemoryVaultSessionEntry& orig) = delete;
     virtual ~MemoryVaultSessionEntry();
 
@@ -44,7 +45,7 @@ private:
     bool valueIsSet;
     MemoryVaultSession* memoryVaultSession;
     keto::crypto::SecureVector entryId;
-
+    keto::memory_vault_session::PasswordCachePtr passwordCachePtr;
 
 
 };

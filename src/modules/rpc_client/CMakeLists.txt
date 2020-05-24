@@ -40,8 +40,6 @@ KetoModuleDepencencies( 0060_keto_rpc_client_module
                             PRIVATE ${ROCKSDB_LIBRARIES}
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
-KetoModuleConsensus( 0060_keto_rpc_client_module ${NUMBER_OF_KEYS} rpc_client )
-
 KetoModuleConsensusScriptsCalls( 0060_keto_rpc_client_module ${NUMBER_OF_KEYS} "4"
         PRIVATE keto_election_common keto_software_consensus
         PRIVATE keto_transaction_common keto_server_common keto_router_utils keto_rocks_db keto_rpc_protocol
@@ -50,8 +48,6 @@ KetoModuleConsensusScriptsCalls( 0060_keto_rpc_client_module ${NUMBER_OF_KEYS} "
         PRIVATE keto_crypto ${BOTAN_LIBRARIES}
         PRIVATE ${ROCKSDB_LIBRARIES}
         PRIVATE ${OPENSSL_LIBRARIES} )
-
-configure_file(include/keto/rpc_client/RpcClientModuleManagerMisc.hpp.in include/keto/rpc_client/RpcClientModuleManagerMisc.hpp)
 configure_file(consensus/consensus_1.chai.in consensus/consensus_1.chai)
 configure_file(consensus/consensus_2.chai.in consensus/consensus_2.chai)
 configure_file(consensus/consensus_3.chai.in consensus/consensus_3.chai)
@@ -76,6 +72,10 @@ configure_file(consensus/consensus_21.chai.in consensus/consensus_21.chai)
 configure_file(consensus/consensus_22.chai.in consensus/consensus_22.chai)
 configure_file(consensus/consensus_23.chai.in consensus/consensus_23.chai)
 configure_file(consensus/consensus_24.chai.in consensus/consensus_24.chai)
+
+KetoModuleConsensus( 0060_keto_rpc_client_module ${NUMBER_OF_KEYS} rpc_client )
+configure_file(include/keto/rpc_client/RpcClientModuleManagerMisc.hpp.in include/keto/rpc_client/RpcClientModuleManagerMisc.hpp)
+
 
 target_include_directories( 0060_keto_rpc_client_module
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"

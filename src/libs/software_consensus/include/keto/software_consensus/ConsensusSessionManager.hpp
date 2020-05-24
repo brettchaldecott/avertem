@@ -55,6 +55,7 @@ public:
     void notifyProtocolCheck(bool master = false);
     void initNetworkHeartbeat(int networkSlot, int electionSlot, int electionPublishSlot, int confirmationSlot);
     void initNetworkHeartbeat(const keto::proto::ProtocolHeartbeatMessage& msg);
+    int getActiveSessionCount();
 
 private:
     std::mutex classMutex;
@@ -64,6 +65,7 @@ private:
     bool accepted;
     int netwokProtocolDelay;
     int networkProtocolCount;
+    int activeSessionCount;
     ProtocolHeartbeatMessageHelper protocolHeartbeatMessageHelper;
 
 

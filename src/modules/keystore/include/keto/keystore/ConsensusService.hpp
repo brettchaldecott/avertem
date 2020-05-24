@@ -53,7 +53,8 @@ public:
     keto::event::Event consensusSessionAccepted(const keto::event::Event& event);
 
 private:
-    
+    bool activeService;
+
     keto::software_consensus::ConsensusHashGeneratorPtr consensusHashGenerator;
 
 };

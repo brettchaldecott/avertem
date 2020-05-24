@@ -45,8 +45,6 @@ KetoModuleDepencencies( 0020_keto_block_module
                             PRIVATE ${ROCKSDB_LIBRARIES}
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
-KetoModuleConsensus( 0020_keto_block_module ${NUMBER_OF_KEYS} block )
-
 KetoModuleConsensusScriptsCalls( 0020_keto_block_module ${NUMBER_OF_KEYS} "4"
         PRIVATE keto_software_consensus
         PRIVATE keto_block_db keto_chain_query_common keto_chain_common keto_router_utils
@@ -57,8 +55,6 @@ KetoModuleConsensusScriptsCalls( 0020_keto_block_module ${NUMBER_OF_KEYS} "4"
         PRIVATE keto_crypto ${BOTAN_LIBRARIES}
         PRIVATE ${ROCKSDB_LIBRARIES}
         PRIVATE ${OPENSSL_LIBRARIES} )
-
-configure_file(include/keto/block/BlockModuleManagerMisc.hpp.in include/keto/block/BlockModuleManagerMisc.hpp)
 configure_file(consensus/consensus_1.chai.in consensus/consensus_1.chai)
 configure_file(consensus/consensus_2.chai.in consensus/consensus_2.chai)
 configure_file(consensus/consensus_3.chai.in consensus/consensus_3.chai)
@@ -83,6 +79,11 @@ configure_file(consensus/consensus_21.chai.in consensus/consensus_21.chai)
 configure_file(consensus/consensus_22.chai.in consensus/consensus_22.chai)
 configure_file(consensus/consensus_23.chai.in consensus/consensus_23.chai)
 configure_file(consensus/consensus_24.chai.in consensus/consensus_24.chai)
+
+
+KetoModuleConsensus( 0020_keto_block_module ${NUMBER_OF_KEYS} block )
+configure_file(include/keto/block/BlockModuleManagerMisc.hpp.in include/keto/block/BlockModuleManagerMisc.hpp)
+
 
 target_include_directories( 0020_keto_block_module
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"

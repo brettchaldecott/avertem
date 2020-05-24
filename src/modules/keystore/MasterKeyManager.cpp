@@ -17,6 +17,7 @@
 #include "keto/keystore/KeyStoreWrapIndexManager.hpp"
 #include "keto/rpc_protocol/NetworkKeysWrapperHelper.hpp"
 #include "keto/rpc_protocol/NetworkKeysHelper.hpp"
+#include "keto/software_consensus/ConsensusSessionManager.hpp"
 
 
 namespace keto {
@@ -168,7 +169,7 @@ keto::event::Event MasterKeyManager::MasterSession::setMasterKey(const keto::eve
     onionKeys.push_back(this->masterKeyLock->getPrivateKey());
     keto::rpc_protocol::NetworkKeysHelper networkKeysHelper;
     //KETO_LOG_DEBUG << "load the keys";
-    this->loadKeys(this->masterKeyList,networkKeysHelper,onionKeys);
+    this->loadKeys(this->masterKeyList, networkKeysHelper, onionKeys);
     //KETO_LOG_DEBUG << "Set the keys";
     KeyStoreWrapIndexManager::getInstance()->setMasterKey(networkKeysHelper);
     //KETO_LOG_DEBUG << "Return the keys";
@@ -193,7 +194,7 @@ keto::event::Event MasterKeyManager::MasterSession::setWrappingKeys(const keto::
     onionKeys.push_back(KeyStoreStorageManager::getInstance()->getKeyLoader()->getPrivateKey());
     onionKeys.push_back(this->masterKeyLock->getPrivateKey());
     keto::rpc_protocol::NetworkKeysHelper networkKeysHelper;
-    this->loadKeys(this->masterWrapperKeyList,networkKeysHelper,onionKeys);
+    this->loadKeys(this->masterWrapperKeyList, networkKeysHelper, onionKeys);
     //KETO_LOG_DEBUG << "Set the wrapping keys";
     KeyStoreWrapIndexManager::getInstance()->setWrappingKeys(networkKeysHelper);
     //KETO_LOG_DEBUG << "After setting the wrapping keys";
@@ -329,15 +330,18 @@ keto::event::Event MasterKeyManager::SlaveSession::setMasterKey(const keto::even
     if (this->slaveMaster) {
         return event;
     }
-    keto::proto::NetworkKeysWrapper networkKeysWrapper =
-            keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(event);
-    keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(networkKeysWrapper);
-    keto::crypto::SecureVector bytes =
-            NetworkSessionKeyManager::getInstance()->getDecryptor()->decrypt(networkKeysWrapperHelper);
-    keto::rpc_protocol::NetworkKeysHelper networkKeysHelper(keto::crypto::SecureVectorUtils().copySecureToString(bytes));
-    KeyStoreWrapIndexManager::getInstance()->setMasterKey(networkKeysHelper);
-    this->slaveMasterKeys = networkKeysWrapper;
-    this->slaveMaster = true;
+    if (!this->slaveMaster) {
+        keto::proto::NetworkKeysWrapper networkKeysWrapper =
+                keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(event);
+        keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(networkKeysWrapper);
+        keto::crypto::SecureVector bytes =
+                NetworkSessionKeyManager::getInstance()->getDecryptor()->decrypt(networkKeysWrapperHelper);
+        keto::rpc_protocol::NetworkKeysHelper networkKeysHelper(
+                keto::crypto::SecureVectorUtils().copySecureToString(bytes));
+        KeyStoreWrapIndexManager::getInstance()->setMasterKey(networkKeysHelper);
+        this->slaveMasterKeys = networkKeysWrapper;
+        this->slaveMaster = true;
+    }
     return event;
 }
 
@@ -359,16 +363,18 @@ keto::event::Event MasterKeyManager::SlaveSession::setWrappingKeys(const keto::e
     if (this->slaveWrapper) {
         return event;
     }
-    keto::proto::NetworkKeysWrapper networkKeysWrapper =
-            keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(event);
-    keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(networkKeysWrapper);
-    keto::crypto::SecureVector bytes =
-            NetworkSessionKeyManager::getInstance()->getDecryptor()->decrypt(networkKeysWrapperHelper);
-    keto::rpc_protocol::NetworkKeysHelper networkKeysHelper(
-            keto::crypto::SecureVectorUtils().copySecureToString(bytes));
-    KeyStoreWrapIndexManager::getInstance()->setWrappingKeys(networkKeysHelper);
-    this->slaveWrapperKeys = networkKeysWrapper;
-    this->slaveWrapper = true;
+    if (!this->slaveMaster) {
+        keto::proto::NetworkKeysWrapper networkKeysWrapper =
+                keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(event);
+        keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(networkKeysWrapper);
+        keto::crypto::SecureVector bytes =
+                NetworkSessionKeyManager::getInstance()->getDecryptor()->decrypt(networkKeysWrapperHelper);
+        keto::rpc_protocol::NetworkKeysHelper networkKeysHelper(
+                keto::crypto::SecureVectorUtils().copySecureToString(bytes));
+        KeyStoreWrapIndexManager::getInstance()->setWrappingKeys(networkKeysHelper);
+        this->slaveWrapperKeys = networkKeysWrapper;
+        this->slaveWrapper = true;
+    }
     return event;
 }
 

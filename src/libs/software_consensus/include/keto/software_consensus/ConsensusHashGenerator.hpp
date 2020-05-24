@@ -60,7 +60,7 @@ public:
     void registerCallBacks(const CallBacks& callBacks);
     
     // method to set the session key
-    void setSession(
+    bool setSession(
         const keto::crypto::SecureVector& sessionKey);
     keto::crypto::SecureVector generateSeed(const keto::asn1::HashHelper& previousHash);
     keto::crypto::SecureVector generateHash(const keto::crypto::SecureVector& seed);

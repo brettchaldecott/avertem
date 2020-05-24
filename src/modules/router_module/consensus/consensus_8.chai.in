@@ -1,8 +1,8 @@
-var hash = getSeed()
+var version;var hash = getSeed()
 
 ${0015_keto_router_module_8_sourceCallList}
 ${0015_keto_router_module_8_headerCallList}
 
 hash = executeCallBacks(hash)
 
-return generateHash(concat(getModuleSignature().range(),hash.range()));
+return generateHash(avertemConcat(getModuleSignature(),hash));

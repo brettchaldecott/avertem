@@ -12,16 +12,12 @@
 
 #include "keto/memory_vault_session/MemoryVaultSession.hpp"
 #include "keto/memory_vault_session/Exception.hpp"
-#include "keto/memory_vault_session/PasswordCache.hpp"
 #include "keto/crypto/HashGenerator.hpp"
 
 namespace keto {
 namespace memory_vault_session {
 
 static MemoryVaultSessionPtr singleton;
-
-
-PasswordCachePtr passwordCachePtr;
 
 
 std::string MemoryVaultSession::getSourceVersion() {
@@ -33,6 +29,7 @@ MemoryVaultSession::MemoryVaultSession(
         const std::string& vaultName) :
         consensusHashGenerator(consensusHashGenerator), vaultName(vaultName) {
     passwordPipeLinePtr = keto::crypto::PasswordPipeLinePtr(new keto::crypto::PasswordPipeLine());
+
 }
 
 MemoryVaultSession::~MemoryVaultSession() {
@@ -54,11 +51,15 @@ MemoryVaultSessionPtr MemoryVaultSession::getInstance() {
 }
 
 void MemoryVaultSession::initSession() {
+    // setup a new password for this session
+    this->passwordCachePtr = generatePassword();
+
+    // setup the vault information
     keto::proto::MemoryVaultCreate request;
     request.set_vault(this->vaultName);
     request.set_session(keto::crypto::SecureVectorUtils().copySecureToString(
             this->consensusHashGenerator->getCurrentSoftwareHash()));
-    request.set_password(keto::crypto::SecureVectorUtils().copySecureToString(generatePassword()));
+    request.set_password(keto::crypto::SecureVectorUtils().copySecureToString(processPassword()));
 
     keto::proto::MemoryVaultCreate response =
             keto::server_common::fromEvent<keto::proto::MemoryVaultCreate>(
@@ -71,6 +72,7 @@ void MemoryVaultSession::initSession() {
 
 void MemoryVaultSession::clearSession() {
     this->sessionEntries.clear();
+    this->passwordCachePtr.reset();
 }
 
 // entry management methods
@@ -82,7 +84,7 @@ MemoryVaultSessionEntryPtr MemoryVaultSession::createEntry(const std::string& na
     }
 
     MemoryVaultSessionEntryPtr memoryVaultSessionEntryPtr(new MemoryVaultSessionEntry(
-            this, keto::crypto::HashGenerator().generateHash(name)));
+            this, keto::crypto::HashGenerator().generateHash(name),passwordCachePtr));
     this->sessionEntries[name] = memoryVaultSessionEntryPtr;
     return memoryVaultSessionEntryPtr;
 }
@@ -95,7 +97,7 @@ MemoryVaultSessionEntryPtr MemoryVaultSession::createEntry(const std::string& na
     }
 
     MemoryVaultSessionEntryPtr memoryVaultSessionEntryPtr(new MemoryVaultSessionEntry(this,
-            keto::crypto::HashGenerator().generateHash(name), value));
+            keto::crypto::HashGenerator().generateHash(name), value,passwordCachePtr));
     this->sessionEntries[name] = memoryVaultSessionEntryPtr;
     return memoryVaultSessionEntryPtr;
 }
@@ -116,13 +118,19 @@ void MemoryVaultSession::removeEntry(const std::string& name) {
     this->sessionEntries.erase(name);
 }
 
-keto::crypto::SecureVector MemoryVaultSession::generatePassword() {
-    if (!passwordCachePtr || passwordCachePtr->isExpired()) {
-        keto::crypto::SecureVector seed = keto::crypto::SecureVectorUtils().copyStringToSecure(this->vaultName);
-        keto::crypto::SecureVector key = this->consensusHashGenerator->getCurrentSoftwareHash();
-        seed.insert(seed.begin(), key.begin(), key.begin());
-        passwordCachePtr = PasswordCachePtr(new PasswordCache(this->consensusHashGenerator->generateSessionHash(seed)));
-    }
+
+keto::memory_vault_session::PasswordCachePtr MemoryVaultSession::generatePassword() {
+    keto::crypto::SecureVector seed = keto::crypto::SecureVectorUtils().copyStringToSecure(this->vaultName);
+    keto::crypto::SecureVector key = this->consensusHashGenerator->getCurrentSoftwareHash();
+    seed.insert(seed.begin(), key.begin(), key.begin());
+    return keto::memory_vault_session::PasswordCachePtr(new keto::memory_vault_session::PasswordCache(this->consensusHashGenerator->generateSessionHash(seed)));
+}
+
+keto::crypto::SecureVector MemoryVaultSession::processPassword() {
+    return this->passwordPipeLinePtr->generatePassword(passwordCachePtr->getSeedHash());
+}
+
+keto::crypto::SecureVector MemoryVaultSession::processPassword(const keto::memory_vault_session::PasswordCachePtr& passwordCachePtr) {
     return this->passwordPipeLinePtr->generatePassword(passwordCachePtr->getSeedHash());
 }
 

@@ -25,7 +25,7 @@ MemoryVaultManager::MemoryVaultWrapper::MemoryVaultWrapper(const keto::crypto::S
 }
 
 MemoryVaultManager::MemoryVaultWrapper::~MemoryVaultWrapper() {
-
+    KETO_LOG_ERROR << "The vault is being removed from memory : " << Botan::hex_encode(sessionId);
 }
 
 keto::crypto::SecureVector MemoryVaultManager::MemoryVaultWrapper::getSessionId() {
@@ -35,6 +35,7 @@ keto::crypto::SecureVector MemoryVaultManager::MemoryVaultWrapper::getSessionId(
 MemoryVaultPtr MemoryVaultManager::MemoryVaultWrapper::getMemoryVault(const keto::crypto::SecureVector& password) {
     std::lock_guard<std::mutex> guard(classMutex);
     if (!(this->hash == this->passwordPipeLinePtr->generatePassword(password))) {
+
         BOOST_THROW_EXCEPTION(InvalidPasswordException());
     }
     return memoryVaultPtr;
@@ -174,6 +175,7 @@ MemoryVaultPtr MemoryVaultManager::getVault(const uint8_t& slot, const std::stri
     ss << "Unknown vault [" << slot << "][" << name << "] cannot retrieve it.";
     BOOST_THROW_EXCEPTION(UnknownVaultException(ss.str()));
 }
+
 
 uint8_t MemoryVaultManager::nextSlot() {
     ++currentSlot;

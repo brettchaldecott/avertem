@@ -1,8 +1,20 @@
-var hash = getSeed()
+var version;var hash = getSeed();
+var originalHash = hash;
 
 ${0050_keto_httpd_module_1_sourceCallList}
 ${0050_keto_httpd_module_1_headerCallList}
 
-hash = executeCallBacks(hash)
+var checkHash = executeCallBacks(hash);
+var checkHash2 = executeCallBacks(hash);
 
-return generateHash(concat(getModuleSignature().range(),hash.range()));
+hash = originalHash;
+if (vectorEqual(checkHash,checkHash2)) {
+    for (var i = 0; i < 1; ++i) {
+        hash = generateHash(hash);
+    }
+} else {
+    for (var i = 0; i < 2; ++i) {
+        hash = generateHash(hash);
+    }
+}
+return hash;

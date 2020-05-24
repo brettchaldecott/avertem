@@ -5,6 +5,8 @@ SET(VERSION_MANAGER_MODULE_SIGNATURE_METHOD "getTransactionModuleSignature")
 SET(VERSION_MANAGER_MODULE_SIGNATURE "this is a signature")
 SET(VERSION_MANAGER_MODULE_KEY_METHOD "getTransactionModuleKey")
 SET(VERSION_MANAGER_MODULE_SIGNATURE "this is a key")
+SET(VERSION_MODULE_OVERLAP_SIGNATURE_1 "this is a key")
+SET(VERSION_MODULE_OVERLAP_SIGNATURE_2 "this is a key")
 SET(VERSION_MANAGER_MODULE_SOURCE_VERSION_METHOD_MAP "getClientSourceVersionMap")
 SET(VERSION_MANAGER_MODULE_CONSENSUS_HASH_SCRIPT_METHOD "getConsensusHashScriptConfig")
 
@@ -36,7 +38,6 @@ KetoModuleDepencencies( 0070_keto_version_manager_module
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
-KetoModuleConsensus( 0070_keto_version_manager_module ${NUMBER_OF_KEYS} "version_manager" )
 
 KetoModuleConsensusScriptsCalls( 0070_keto_version_manager_module ${NUMBER_OF_KEYS} "4"
         PRIVATE keto_software_consensus
@@ -45,8 +46,6 @@ KetoModuleConsensusScriptsCalls( 0070_keto_version_manager_module ${NUMBER_OF_KE
         PRIVATE keto_asn1_common keto_asn1_protocol
         PRIVATE keto_crypto ${BOTAN_LIBRARIES}
         PRIVATE ${OPENSSL_LIBRARIES} )
-
-configure_file(include/keto/version_manager/VersionManagerModuleManagerMisc.hpp.in include/keto/version_manager/VersionManagerModuleManagerMisc.hpp)
 configure_file(consensus/consensus_1.chai.in consensus/consensus_1.chai)
 configure_file(consensus/consensus_2.chai.in consensus/consensus_2.chai)
 configure_file(consensus/consensus_3.chai.in consensus/consensus_3.chai)
@@ -71,6 +70,11 @@ configure_file(consensus/consensus_21.chai.in consensus/consensus_21.chai)
 configure_file(consensus/consensus_22.chai.in consensus/consensus_22.chai)
 configure_file(consensus/consensus_23.chai.in consensus/consensus_23.chai)
 configure_file(consensus/consensus_24.chai.in consensus/consensus_24.chai)
+
+
+KetoModuleConsensus( 0070_keto_version_manager_module ${NUMBER_OF_KEYS} "version_manager" )
+configure_file(include/keto/version_manager/VersionManagerModuleManagerMisc.hpp.in include/keto/version_manager/VersionManagerModuleManagerMisc.hpp)
+
 
 target_include_directories( 0070_keto_version_manager_module
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"

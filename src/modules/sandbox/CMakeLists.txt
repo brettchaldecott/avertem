@@ -4,6 +4,8 @@ SET(SANDBOX_MODULE_SIGNATURE_METHOD "getSandboxModuleSignature")
 SET(SANDBOX_MODULE_SIGNATURE "this is a signature")
 SET(SANDBOX_MODULE_KEY_METHOD "getSandboxModuleKey")
 SET(SANDBOX_MODULE_SIGNATURE "this is a key")
+SET(SANDBOX_MODULE_OVERLAP_SIGNATURE_1 "this is a key")
+SET(SANDBOX_MODULE_OVERLAP_SIGNATURE_2 "this is a key")
 SET(SANDBOX_SOURCE_VERSION_METHOD_MAP "getClientSourceVersionMap")
 SET(SANDBOX_CONSENSUS_HASH_SCRIPT_METHOD "getConsensusHashScriptConfig")
 
@@ -38,8 +40,6 @@ KetoModuleDepencencies( 0020_keto_sandbox_module
                             PRIVATE ${LIBRDF_GMP_EXTRA_LIBRARY}
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
-KetoModuleConsensus( 0020_keto_sandbox_module ${NUMBER_OF_KEYS} sandbox )
-
 KetoModuleConsensusScriptsCalls( 0020_keto_sandbox_module ${NUMBER_OF_KEYS} "4"
         PRIVATE keto_software_consensus
         PRIVATE keto_wavm_common keto_chain_common keto_account_query keto_server_common keto_transaction_common
@@ -52,8 +52,6 @@ KetoModuleConsensusScriptsCalls( 0020_keto_sandbox_module ${NUMBER_OF_KEYS} "4"
         PRIVATE ${LIBRDF_PCRE_EXTRA_LIBRARY} ${LIBRDF_LTDL_EXTRA_LIBRARY}
         PRIVATE ${LIBRDF_GMP_EXTRA_LIBRARY}
         PRIVATE ${OPENSSL_LIBRARIES} )
-
-configure_file(include/keto/sandbox/SandboxModuleManagerMisc.hpp.in include/keto/sandbox/SandboxModuleManagerMisc.hpp)
 configure_file(consensus/consensus_1.chai.in consensus/consensus_1.chai)
 configure_file(consensus/consensus_2.chai.in consensus/consensus_2.chai)
 configure_file(consensus/consensus_3.chai.in consensus/consensus_3.chai)
@@ -78,6 +76,10 @@ configure_file(consensus/consensus_21.chai.in consensus/consensus_21.chai)
 configure_file(consensus/consensus_22.chai.in consensus/consensus_22.chai)
 configure_file(consensus/consensus_23.chai.in consensus/consensus_23.chai)
 configure_file(consensus/consensus_24.chai.in consensus/consensus_24.chai)
+
+KetoModuleConsensus( 0020_keto_sandbox_module ${NUMBER_OF_KEYS} sandbox )
+configure_file(include/keto/sandbox/SandboxModuleManagerMisc.hpp.in include/keto/sandbox/SandboxModuleManagerMisc.hpp)
+
 
 target_include_directories( 0020_keto_sandbox_module
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"

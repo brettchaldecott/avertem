@@ -42,7 +42,7 @@ then
     do
        HEADER_MODULAS=$((${COUNT_HEADERS} % ${MODULAS}))
        if [ ${HEADER_MODULAS} -eq 0 ] ; then
-            echo "hash = generateHash(concat(hash.range(),getSourceVersion(\"$classEntry::getHeaderVersion\").range()))"
+            echo "hash = generateHash(avertemConcat(hash,getSourceVersion(\"$classEntry::getHeaderVersion\")));"
        fi
        COUNT_HEADERS=$((COUNT_HEADERS+1))
     done
@@ -55,7 +55,7 @@ then
     do
        SOURCE_MODULAS=$((${COUNT_SOURCE} % ${MODULAS}))
        if [ ${SOURCE_MODULAS} -ne 0 ] ; then
-            echo "hash = generateHash(concat(hash.range(),getSourceVersion(\"$classEntry::getSourceVersion\").range()))"
+            echo "hash = generateHash(avertemConcat(hash,getSourceVersion(\"$classEntry::getHeaderVersion\")));"
        fi
        COUNT_SOURCE=$((COUNT_SOURCE+1))
     done

@@ -31,7 +31,7 @@ endmacro(KetoModuleDepencencies)
 
 macro(KetoModuleConsensus MODULE_NAME NUMBER_OF_KEYS MODULE_NAMESPACE)
     #message("${CMAKE_BINARY_DIR}/../scripts/tools/GenerateConsensusScriptInfo.sh" "${NUMBER_OF_KEYS}" "${CMAKE_CURRENT_SOURCE_DIR}/keys/" "${CMAKE_CURRENT_SOURCE_DIR}/consensus/")
-    execute_process(COMMAND "${CMAKE_BINARY_DIR}/../scripts/tools/GenerateConsensusScriptInfo.sh" "${NUMBER_OF_KEYS}" "${CMAKE_CURRENT_SOURCE_DIR}/keys/" "${CMAKE_CURRENT_SOURCE_DIR}/consensus/" OUTPUT_VARIABLE consensusSource)
+    execute_process(COMMAND "${CMAKE_BINARY_DIR}/../scripts/tools/GenerateConsensusScriptInfo.sh" "${NUMBER_OF_KEYS}" "${CMAKE_CURRENT_SOURCE_DIR}/keys/" "${CMAKE_CURRENT_BINARY_DIR}/consensus/" OUTPUT_VARIABLE consensusSource)
     execute_process(COMMAND "${CMAKE_BINARY_DIR}/../scripts/tools/GenerateConsensusScriptMapping.sh" "${NUMBER_OF_KEYS}"  "${MODULE_NAMESPACE}" OUTPUT_VARIABLE consensusMapping)
     
     set ("${MODULE_NAME}_consensus_scripts" "${consensusSource}")

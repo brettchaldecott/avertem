@@ -35,16 +35,12 @@ KetoModuleDepencencies( 0025_keto_balancer_module
                             PRIVATE keto_crypto ${BOTAN_LIBRARIES} 
                             PRIVATE ${OPENSSL_LIBRARIES} )
 
-KetoModuleConsensus( 0025_keto_balancer_module ${NUMBER_OF_KEYS} balancer )
-
 KetoModuleConsensusScriptsCalls( 0025_keto_balancer_module ${NUMBER_OF_KEYS} "4"
         PRIVATE keto_software_consensus
         PRIVATE keto_server_common keto_asn1_common keto_asn1_protocol
         PRIVATE keto_key_tools keto_proto_environment ${PROTOBUF_LIBRARIES}
         PRIVATE keto_crypto ${BOTAN_LIBRARIES}
         PRIVATE ${OPENSSL_LIBRARIES} )
-
-configure_file(include/keto/balancer/BalancerModuleManagerMisc.hpp.in include/keto/balancer/BalancerModuleManagerMisc.hpp)
 configure_file(consensus/consensus_1.chai.in consensus/consensus_1.chai)
 configure_file(consensus/consensus_2.chai.in consensus/consensus_2.chai)
 configure_file(consensus/consensus_3.chai.in consensus/consensus_3.chai)
@@ -69,6 +65,10 @@ configure_file(consensus/consensus_21.chai.in consensus/consensus_21.chai)
 configure_file(consensus/consensus_22.chai.in consensus/consensus_22.chai)
 configure_file(consensus/consensus_23.chai.in consensus/consensus_23.chai)
 configure_file(consensus/consensus_24.chai.in consensus/consensus_24.chai)
+
+KetoModuleConsensus( 0025_keto_balancer_module ${NUMBER_OF_KEYS} balancer )
+configure_file(include/keto/balancer/BalancerModuleManagerMisc.hpp.in include/keto/balancer/BalancerModuleManagerMisc.hpp)
+
 
 target_include_directories( 0025_keto_balancer_module
                             PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include"

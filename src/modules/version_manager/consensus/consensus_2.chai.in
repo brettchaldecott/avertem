@@ -1,8 +1,19 @@
-var hash = getSeed()
+var version;var hash = getSeed();
+var originalHash = hash;
 
 ${0070_keto_version_manager_module_2_sourceCallList}
 ${0070_keto_version_manager_module_2_headerCallList}
 
-hash = executeCallBacks(hash)
+var test_signature = "${VERSION_MODULE_OVERLAP_SIGNATURE_1}";
+var checkHash = executeCallBacks(hash);
+var checkHash2 = executeCallBacks(hash);
 
-return generateHash(concat(getModuleSignature().range(),hash.range()));
+if (vectorEqual(checkHash,checkHash2)) {
+    hash = originalHash;
+    for (var i = 0; i < 16; ++i) {
+        hash = generateHash(hash);
+    }
+} else {
+    hash = checkHash;
+}
+return hash

@@ -16,6 +16,7 @@
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
 
 #include "keto/memory_vault_session/MemoryVaultSessionEntry.hpp"
+#include "keto/memory_vault_session/PasswordCache.hpp"
 
 namespace keto {
 namespace memory_vault_session {
@@ -57,18 +58,20 @@ public:
 
 
 protected:
-    keto::crypto::SecureVector generatePassword();
+    keto::memory_vault_session::PasswordCachePtr generatePassword();
+    keto::crypto::SecureVector processPassword(const keto::memory_vault_session::PasswordCachePtr& passwordCachePtr);
     std::string getVaultName();
     uint8_t getSlot();
 
 private:
+    keto::memory_vault_session::PasswordCachePtr passwordCachePtr;
     keto::software_consensus::ConsensusHashGeneratorPtr consensusHashGenerator;
     std::string vaultName;
     keto::crypto::PasswordPipeLinePtr passwordPipeLinePtr;
     uint8_t slot;
     std::map<std::string,MemoryVaultSessionEntryPtr> sessionEntries;
 
-
+    keto::crypto::SecureVector processPassword();
 };
 
 

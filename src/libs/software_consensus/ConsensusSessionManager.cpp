@@ -47,7 +47,7 @@ std::string ConsensusSessionManager::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
     
-ConsensusSessionManager::ConsensusSessionManager() : activeSession(false), accepted(false),
+ConsensusSessionManager::ConsensusSessionManager() : activeSession(false), accepted(false), activeSessionCount(0),
     netwokProtocolDelay(Constants::NETWORK_PROTOCOL_DELAY_DEFAULT), networkProtocolCount(Constants::NETWORK_PROTOCOL_COUNT_DEFAULT),
     protolCount(-1){
     this->protocolPoint = std::chrono::system_clock::now();
@@ -93,8 +93,10 @@ void ConsensusSessionManager::updateSessionKey(const keto::crypto::SecureVector&
     if (sessionHash == this->sessionHash) {
         // ignore at this point the session matches and we dont need to update it.
         KETO_LOG_DEBUG << "[updateSessionKey] Ignore the session key : " << Botan::hex_encode((uint8_t*)sessionHash.data(),sessionHash.size(),true);
+        activeSessionCount++;
         return;
     } else {
+        activeSessionCount=1;
         KETO_LOG_DEBUG << "[updateSessionKey] Start a new session as the session hashes dont match : " << Botan::hex_encode((uint8_t*)sessionHash.data(),sessionHash.size(),true);
     }
     this->sessionHash = sessionHash;
@@ -267,6 +269,11 @@ void ConsensusSessionManager::initNetworkHeartbeat(const keto::proto::ProtocolHe
             KETO_LOG_ERROR << "[initNetworkHeartbeat]Failed to process the event [" << event << "]";
         }
     }
+}
+
+
+int  ConsensusSessionManager::getActiveSessionCount() {
+    return this->activeSessionCount;
 }
 
 

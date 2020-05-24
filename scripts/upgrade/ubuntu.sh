@@ -9,6 +9,7 @@ if [ "$VERSION" == "$SERVER_VERSION" ] ; then
     exit 0
 fi
 
+
 echo "Download the version $SERVER_VERSION"
 wget https://s3-eu-west-1.amazonaws.com/avertem/linux/ubuntu/18.04/$SERVER_VERSION/avertem_shared_$SERVER_VERSION.tar.gz -O $KETO_HOME/tmp/avertem_shared_$SERVER_VERSION.tar.gz
 
