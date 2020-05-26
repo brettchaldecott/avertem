@@ -120,7 +120,7 @@ bool VersionProcessor::isAutoUpdateEnabled() {
 
 bool VersionProcessor::checkTerminated() {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
-    this->stateCondition.wait_for(uniqueLock,std::chrono::milliseconds(20 * 1000));
+    this->stateCondition.wait_for(uniqueLock,std::chrono::milliseconds(90 * 60 * 1000));
     return this->terminated;
 }
 
