@@ -25,7 +25,8 @@ if [[ "${overlap}" -ne "${zero}" ]]; then
 fi
 
 
-for (( count=${overlap+1}; count<=${number}; count++ ))
+
+for (( count=${overlap}+1; count <= ${number}; count++ ))
 do
    echo "${SOURCE_DIR}/../../deps_build/build/install/bin/avertem_tools.sh -G > \"${outputDir}/key_${count}.json\""
    ${SOURCE_DIR}/../../deps_build/build/install/bin/avertem_tools.sh -G > "${outputDir}/key_${count}.json"

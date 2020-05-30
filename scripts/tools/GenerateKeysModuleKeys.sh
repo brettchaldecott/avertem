@@ -1,4 +1,4 @@
-#!/bin/bash
+    #!/bin/bash
 
 sourceDir=$1
 outputDir=$2
