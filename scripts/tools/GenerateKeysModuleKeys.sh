@@ -1,4 +1,4 @@
-    #!/bin/bash
+#!/bin/bash
 
 sourceDir=$1
 outputDir=$2
@@ -26,7 +26,7 @@ if [[ "${overlap}" -ne "${zero}" ]]; then
     done
 fi
 
-for (( count=${overlap}+1; count<= ${number}; count++ ))
+for (( count=${overlap}+1; count <= ${number}; count++ ))
 do
     echo "${SOURCE_DIR}/../../deps_build/build/install/bin/avertem_tools.sh -G -k \"${sourceDir}/key_${count}.json\" > \"${outputDir}/key_${count}.json\""
     ${SOURCE_DIR}/../../deps_build/build/install/bin/avertem_tools.sh -G -k "${sourceDir}/key_${count}.json" > "${outputDir}/key_${count}.json"
