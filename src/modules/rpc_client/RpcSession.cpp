@@ -549,6 +549,7 @@ void RpcSession::processQueueEntry(const ReadQueueEntryPtr& readQueueEntryPtr) {
 
 void
 RpcSession::do_close() {
+
     // Close the WebSocket connection
     ws_.async_close(websocket::close_code::normal,
                     beast::bind_front_handler(
@@ -559,13 +560,19 @@ RpcSession::do_close() {
 void
 RpcSession::on_close(boost::system::error_code ec)
 {
-    if (this->rpcPeer.getPeered()) {
+    if (this->rpcPeer.getPeered() && !RpcSessionManager::getInstance()->isTerminated()) {
+        KETO_LOG_ERROR << this->sessionNumber << ": forcing reconnect";
+        RpcSessionManager::getInstance()->reconnect(rpcPeer);
+        this->setClosed(true);
+        return;
+    } else if (this->rpcPeer.getPeered()) {
         keto::router_utils::RpcPeerHelper rpcPeerHelper;
         rpcPeerHelper.setAccountHash(this->accountHash);
         keto::server_common::triggerEvent(
                 keto::server_common::toEvent<keto::proto::RpcPeer>(
                         keto::server_common::Events::DEREGISTER_RPC_PEER,rpcPeerHelper));
     }
+    KETO_LOG_ERROR << this->sessionNumber << ": closing the connection";
 
     // If we get here then the connection is closed gracefully
     if (this->rpcPeer.getPeered() && !this->accountHash.empty()) {

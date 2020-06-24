@@ -93,6 +93,7 @@ protected:
     void setAccountSessionMapping(const std::string& account,
             const RpcSessionPtr& rpcSessionPtr);
     void removeAccountSessionMapping(const std::string& account);
+    bool isTerminated();
 private:
     std::recursive_mutex classMutex;
     std::map<std::string,RpcSessionPtr> sessionMap;
@@ -107,6 +108,7 @@ private:
     std::vector<std::thread> threadsVector;
     bool peered;
     bool activated;
+    bool terminated;
 
 
     bool hasAccountSessionMapping(const std::string& account);

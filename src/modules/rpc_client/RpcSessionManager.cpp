@@ -59,7 +59,7 @@ std::string RpcSessionManager::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
-RpcSessionManager::RpcSessionManager() : peered(true), activated(false) {
+RpcSessionManager::RpcSessionManager() : peered(true), activated(false), terminated(false) {
     
     this->ioc = std::make_shared<net::io_context>();
     
@@ -163,6 +163,11 @@ void RpcSessionManager::removeAccountSessionMapping(const std::string& account) 
     this->sessionMap.erase(rpcSessionPtr->getPeer().getPeer());
 }
 
+bool RpcSessionManager::isTerminated() {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+    return this->terminated;
+}
+
 bool RpcSessionManager::hasAccountSessionMapping(const std::string& account) {
     std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (this->accountSessionMap.count(account)) {
@@ -253,6 +258,10 @@ void RpcSessionManager::postStart() {
 }
 
 void RpcSessionManager::stop() {
+    {
+        std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+        this->terminated = true;
+    }
     if (this->ioc) {
         this->ioc->stop();
     }
