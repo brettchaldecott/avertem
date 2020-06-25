@@ -108,6 +108,7 @@ protected:
 private:
     boost::asio::ip::address serverIp;
     boost::asio::ip::address externalIp;
+    std::string externalHostname;
     unsigned short serverPort;
     int threads;
     std::shared_ptr<sslBeast::context> contextPtr;

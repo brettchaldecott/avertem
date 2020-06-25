@@ -33,6 +33,7 @@
 #include <botan/hex.h>
 #include <botan/base64.h>
 #include <google/protobuf/message_lite.h>
+#include <boost/asio/io_service.hpp>
 
 #include "keto/common/Log.hpp"
 #include "keto/server_common/ServerInfo.hpp"
@@ -340,6 +341,7 @@ private:
 
     boost::asio::ip::address localAddress;
     std::string remoteAddress;
+    std::string remoteHostname;
 
     //boost::beast::flat_buffer buffer_;
     boost::beast::flat_buffer sessionBuffer;
@@ -441,6 +443,14 @@ public:
         try {
             this->localAddress = beast::get_lowest_layer(ws_).socket().local_endpoint().address();
             this->remoteAddress = beast::get_lowest_layer(ws_).socket().remote_endpoint().address().to_string();
+
+            // reverse lookup the hostname
+            boost::asio::io_service io_service;
+            boost::asio::ip::tcp::resolver resolver(io_service);
+            boost::asio::ip::tcp::resolver::query query(this->remoteAddress);
+            boost::asio::ip::tcp::resolver::iterator iter = resolver.resolve(query);
+            this->remoteHostname = iter->host_name();
+
         } catch (keto::common::Exception& ex) {
             KETO_LOG_ERROR << "[RpcServer][on_accept] Failed to handle the request [keto::common::Exception]: " << boost::diagnostic_information(ex,true);
         } catch (boost::exception& ex) {
@@ -931,7 +941,11 @@ public:
 
         // get the list of peers but ignore the current account
         std::stringstream str;
-        str << this->remoteAddress << ":" << Constants::DEFAULT_PORT_NUMBER;
+        if (!this->remoteHostname.empty()) {
+            str << this->remoteHostname << ":" << Constants::DEFAULT_PORT_NUMBER;
+        } else {
+            str << this->remoteAddress << ":" << Constants::DEFAULT_PORT_NUMBER;
+        }
         std::vector<std::string> peers = RpcServerSession::getInstance()->handlePeers(this->serverHelloProtoHelperPtr->getAccountHash(),str.str());
         if (peers.size() < Constants::MIN_PEERS) {
             peers.push_back(this->rpcServer->getExternalPeerInfo());
@@ -1378,7 +1392,7 @@ std::string RpcServer::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
-RpcServer::RpcServer() : serverActive(false) {
+RpcServer::RpcServer() : serverActive(false), externalHostname("") {
     // retrieve the configuration
     std::shared_ptr<ketoEnv::Config> config = ketoEnv::EnvironmentManager::getInstance()->getConfig();
     
@@ -1746,7 +1760,31 @@ bool RpcServer::isServerActive() {
 
 std::string RpcServer::getExternalPeerInfo() {
     std::stringstream sstream;
-    sstream << this->externalIp.to_string() << ":" << this->serverPort;
+    std::string hostname = this->externalIp.to_string();
+    if (externalHostname.empty()) {
+        try {
+            // convert the ip address to a host name
+            boost::asio::io_service io_service;
+            boost::asio::ip::tcp::resolver resolver(io_service);
+            boost::asio::ip::tcp::resolver::query query(this->externalIp.to_string());
+            boost::asio::ip::tcp::resolver::iterator iter = resolver.resolve(query);
+            externalHostname = hostname = iter->host_name();
+        } catch (keto::common::Exception& ex) {
+            KETO_LOG_ERROR << "[RpcServer::getExternalPeerInfo]Failed to get the exernal hostname : " << ex.what();
+            KETO_LOG_ERROR << "[RpcServer::getExternalPeerInfo]Failed to get the exernal hostname : " << boost::diagnostic_information(ex,true);
+        } catch (boost::exception& ex) {
+            KETO_LOG_ERROR << "[RpcServer::getExternalPeerInfo]Failed to get the exernal hostname : " << boost::diagnostic_information(ex,true);
+        } catch (std::exception& ex) {
+            KETO_LOG_ERROR << "[RpcServer::getExternalPeerInfo]Failed to get the exernal hostname : " << ex.what();
+        } catch (...) {
+            KETO_LOG_ERROR << "[RpcServer::getExternalPeerInfo]Failed to get the exernal hostname : unknown cause";
+        }
+    } else {
+        hostname = externalHostname;
+    }
+
+
+    sstream << hostname << ":" << this->serverPort;
     return sstream.str();
 }
 
