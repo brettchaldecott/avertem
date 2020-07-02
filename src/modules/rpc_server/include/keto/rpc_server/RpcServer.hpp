@@ -103,7 +103,8 @@ protected:
     keto::crypto::SecureVector getSecret();
     void setExternalIp(
             const boost::asio::ip::address& ipAddress);
-
+    void setExternalHostname(
+            const std::string& externalHostname);
     
 private:
     boost::asio::ip::address serverIp;

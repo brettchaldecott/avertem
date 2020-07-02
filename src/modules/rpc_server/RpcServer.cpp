@@ -340,6 +340,7 @@ private:
             beast::ssl_stream<beast::tcp_stream>> ws_;
 
     boost::asio::ip::address localAddress;
+    std::string localHostname;
     std::string remoteAddress;
     std::string remoteHostname;
 
@@ -441,15 +442,19 @@ public:
         this->readQueuePtr->activate();
 
         try {
-            this->localAddress = beast::get_lowest_layer(ws_).socket().local_endpoint().address();
-            this->remoteAddress = beast::get_lowest_layer(ws_).socket().remote_endpoint().address().to_string();
-
-            // reverse lookup the hostname
             boost::asio::io_service io_service;
             boost::asio::ip::tcp::resolver resolver(io_service);
-            boost::asio::ip::tcp::resolver::query query(this->remoteAddress);
-            boost::asio::ip::tcp::resolver::iterator iter = resolver.resolve(query);
-            this->remoteHostname = iter->host_name();
+
+            // local address
+            this->localAddress = beast::get_lowest_layer(ws_).socket().local_endpoint().address();
+            boost::asio::ip::tcp::resolver::iterator localIter = resolver.resolve(beast::get_lowest_layer(ws_).socket().local_endpoint());
+            this->localHostname = localIter->host_name();
+
+
+            // reverse lookup the hostname
+            this->remoteAddress = beast::get_lowest_layer(ws_).socket().remote_endpoint().address().to_string();
+            boost::asio::ip::tcp::resolver::iterator remoteIter = resolver.resolve(beast::get_lowest_layer(ws_).socket().remote_endpoint());
+            this->remoteHostname = remoteIter->host_name();
 
         } catch (keto::common::Exception& ex) {
             KETO_LOG_ERROR << "[RpcServer][on_accept] Failed to handle the request [keto::common::Exception]: " << boost::diagnostic_information(ex,true);
@@ -461,7 +466,8 @@ public:
             KETO_LOG_ERROR << "[RpcServer][on_accept] Failed to handle the request on the server [...]: unknown";
         }
 
-
+        KETO_LOG_INFO << "[RpcServer][on_accept] Remote host information [" << this->remoteHostname << "]";
+        KETO_LOG_INFO << "[RpcServer][on_accept] Local host information [" << this->localHostname << "]";
         // Read a message
         do_read();
     }
@@ -936,6 +942,7 @@ public:
         // first check if the external ip address has been added
         KETO_LOG_DEBUG << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " get the peers for a client";
         this->rpcServer->setExternalIp(this->localAddress);
+        this->rpcServer->setExternalHostname(this->localHostname);
         std::vector<std::string> urls;
         keto::rpc_protocol::PeerResponseHelper peerResponseHelper;
 
@@ -1505,6 +1512,13 @@ void RpcServer::setExternalIp(
 }
 
 
+void RpcServer::setExternalHostname(
+        const std::string& externalHostname) {
+    if (this->externalHostname.empty()) {
+        this->externalHostname = externalHostname;
+    }
+}
+
 keto::crypto::SecureVector RpcServer::getSecret() {
     return this->secret;
 }
@@ -1761,28 +1775,9 @@ bool RpcServer::isServerActive() {
 std::string RpcServer::getExternalPeerInfo() {
     std::stringstream sstream;
     std::string hostname = this->externalIp.to_string();
-    if (externalHostname.empty()) {
-        try {
-            // convert the ip address to a host name
-            boost::asio::io_service io_service;
-            boost::asio::ip::tcp::resolver resolver(io_service);
-            boost::asio::ip::tcp::resolver::query query(this->externalIp.to_string());
-            boost::asio::ip::tcp::resolver::iterator iter = resolver.resolve(query);
-            externalHostname = hostname = iter->host_name();
-        } catch (keto::common::Exception& ex) {
-            KETO_LOG_ERROR << "[RpcServer::getExternalPeerInfo]Failed to get the exernal hostname : " << ex.what();
-            KETO_LOG_ERROR << "[RpcServer::getExternalPeerInfo]Failed to get the exernal hostname : " << boost::diagnostic_information(ex,true);
-        } catch (boost::exception& ex) {
-            KETO_LOG_ERROR << "[RpcServer::getExternalPeerInfo]Failed to get the exernal hostname : " << boost::diagnostic_information(ex,true);
-        } catch (std::exception& ex) {
-            KETO_LOG_ERROR << "[RpcServer::getExternalPeerInfo]Failed to get the exernal hostname : " << ex.what();
-        } catch (...) {
-            KETO_LOG_ERROR << "[RpcServer::getExternalPeerInfo]Failed to get the exernal hostname : unknown cause";
-        }
-    } else {
+    if (!externalHostname.empty()) {
         hostname = externalHostname;
     }
-
 
     sstream << hostname << ":" << this->serverPort;
     return sstream.str();

@@ -55,6 +55,7 @@ std::vector<std::string> RpcServerSession::handlePeers(const std::vector<uint8_t
 void RpcServerSession::addPeer(const std::vector<uint8_t>& account,
         const std::string& host) {
     std::lock_guard<std::recursive_mutex> guard(classMutex);
+    KETO_LOG_INFO << "[RpcServerSession::addPeer] add the host [" << host << "]";
     if (!this->accountPeerCache.count(account)) {
         if (this->accountPeerList.size() >= Constants::MAX_PEERS) {
             this->accountPeerList.erase(this->accountPeerList.begin());
