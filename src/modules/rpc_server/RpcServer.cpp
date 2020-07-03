@@ -34,6 +34,7 @@
 #include <botan/base64.h>
 #include <google/protobuf/message_lite.h>
 #include <boost/asio/io_service.hpp>
+#include <boost/asio/ip/host_name.hpp>
 
 #include "keto/common/Log.hpp"
 #include "keto/server_common/ServerInfo.hpp"
@@ -939,7 +940,16 @@ public:
     }
     
     std::string handlePeer(const std::string& command, const std::string& payload) {
-        // first check if the external ip address has been added
+        // retrieve the peer information
+        keto::proto::PeerRequest peerRequest;
+        std::string binString = keto::server_common::VectorUtils().copyVectorToString(
+                Botan::hex_decode(payload,true));
+        peerRequest.ParseFromString(binString);
+        keto::rpc_protocol::PeerRequestHelper peerRequestHelper(peerRequest);
+        if (!peerRequestHelper.getHostname().empty()) {
+            this->remoteHostname = peerRequestHelper.getHostname();
+        }
+
         KETO_LOG_DEBUG << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " get the peers for a client";
         this->rpcServer->setExternalIp(this->localAddress);
         this->rpcServer->setExternalHostname(this->localHostname);
@@ -1420,6 +1430,15 @@ RpcServer::RpcServer() : serverActive(false), externalHostname("") {
     threads = Constants::DEFAULT_HTTP_THREADS;
     if (config->getVariablesMap().count(Constants::HTTP_THREADS)) {
         threads = std::max<int>(1,atoi(config->getVariablesMap()[Constants::HTTP_THREADS].as<std::string>().c_str()));
+    }
+
+
+    // setup the external hostname information
+    if (config->getVariablesMap().count(Constants::EXTERNAL_HOSTNAME)) {
+        this->externalHostname =
+                config->getVariablesMap()[Constants::EXTERNAL_HOSTNAME].as<std::string>();
+    } else {
+        this->externalHostname = boost::asio::ip::host_name();
     }
     
 }

@@ -40,10 +40,14 @@ public:
     PeerRequestHelper(const keto::proto::PeerRequest& request);
     PeerRequestHelper(const PeerRequestHelper& orig) = default;
     virtual ~PeerRequestHelper();
-    
-    
+
+
+    PeerRequestHelper& addAccountHash(const std::string& accountHash);
     PeerRequestHelper& addAccountHash(const std::vector<uint8_t> accountHash);
     std::vector<std::vector<uint8_t>> getAccountHashes();
+
+    PeerRequestHelper& setHostname(const std::string& hostname);
+    std::string getHostname();
     
     operator keto::proto::PeerRequest();
     

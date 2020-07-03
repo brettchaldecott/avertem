@@ -236,6 +236,7 @@ private:
     RpcPeer rpcPeer;
     std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr;
     std::string accountHash;
+    std::string externalHostname;
     int sessionNumber;
     keto::election_common::ElectionResultCache electionResultCache;
 
@@ -253,6 +254,7 @@ private:
     std::string consensusResponse(const std::string& command, const std::string& message);
     std::string serverRequest(const std::string& command, const std::vector<uint8_t>& message);
     std::string serverRequest(const std::string& command, const std::string& message);
+    std::string handlePeerRequest(const std::string& command, const std::string& message);
     void handlePeerResponse(const std::string& command, const std::string& message);
 
     // protocol methods

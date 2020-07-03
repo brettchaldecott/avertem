@@ -44,6 +44,9 @@ public:
     static constexpr const char* PRIVATE_KEY    = "server-private-key";
     static constexpr const char* PUBLIC_KEY     = "server-public-key";
 
+    // server host information
+    static constexpr const char* EXTERNAL_HOSTNAME  = "external-hostname";
+
     class SESSION {
     public:
         static constexpr const char* RESOLVE    = "resolve";

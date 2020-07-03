@@ -24,6 +24,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <keto/rpc_protocol/NetworkKeysWrapperHelper.hpp>
+#include <boost/asio/ip/host_name.hpp>
 
 #include "Route.pb.h"
 #include "SoftwareConsensus.pb.h"
@@ -53,6 +54,7 @@
 
 #include "keto/rpc_protocol/ServerHelloProtoHelper.hpp"
 #include "keto/rpc_protocol/PeerResponseHelper.hpp"
+#include "keto/rpc_protocol/PeerRequestHelper.hpp"
 #include "keto/rpc_protocol/NetworkKeysWrapperHelper.hpp"
 
 #include "keto/transaction_common/FeeInfoMsgProtoHelper.hpp"
@@ -243,7 +245,18 @@ RpcSession::RpcSession(
     std::string publicKeyPath = 
             config->getVariablesMap()[Constants::PUBLIC_KEY].as<std::string>();
     keyLoaderPtr = std::make_shared<keto::crypto::KeyLoader>(privateKeyPath,
-            publicKeyPath);
+                                                             publicKeyPath);
+
+
+    // setup the external hostname information
+    if (config->getVariablesMap().count(Constants::EXTERNAL_HOSTNAME)) {
+        this->externalHostname =
+            config->getVariablesMap()[Constants::EXTERNAL_HOSTNAME].as<std::string>();
+    } else {
+        this->externalHostname = boost::asio::ip::host_name();
+    }
+
+
 }
 
 RpcSession::~RpcSession() {
@@ -450,8 +463,8 @@ void RpcSession::processQueueEntry(const ReadQueueEntryPtr& readQueueEntryPtr) {
         }
         if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ACCEPTED) == 0) {
             if (!this->rpcPeer.getPeered()) {
-                message = serverRequest(keto::server_common::Constants::RPC_COMMANDS::PEERS,
-                                        keto::server_common::Constants::RPC_COMMANDS::PEERS);
+
+                message = handlePeerRequest(command, message);
             } else if (this->isRegistered()) {
                 message = handleRequestNetworkSessionKeys(command, stringVector[1]);
             } else {
@@ -657,6 +670,19 @@ std::string RpcSession::serverRequest(const std::string& command, const std::str
     ss << buildMessage(command,message);
     KETO_LOG_DEBUG << this->sessionNumber << ": Sent the server request : " << command;
     return ss.str();
+}
+
+std::string RpcSession::handlePeerRequest(const std::string& command, const std::string& message) {
+    keto::rpc_protocol::PeerRequestHelper peerRequestHelper;
+
+    peerRequestHelper.addAccountHash(this->accountHash);
+    peerRequestHelper.setHostname(this->externalHostname);
+
+    keto::proto::PeerRequest peerRequest = peerRequestHelper;
+    std::string peerRequestValue;
+    peerRequest.SerializePartialToString(&peerRequestValue);
+
+    return serverRequest(keto::server_common::Constants::RPC_COMMANDS::PEERS, Botan::hex_encode((uint8_t*)peerRequestValue.data(),peerRequestValue.size(),true));
 }
 
 void RpcSession::handlePeerResponse(const std::string& command, const std::string& message) {

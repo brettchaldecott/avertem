@@ -65,6 +65,8 @@ message PeerRequest {
     uint32 version = 1;
     // the list of accounts
     repeated bytes account_hash = 2;
+    // the host name
+    string hostname = 3;
 }
 
 

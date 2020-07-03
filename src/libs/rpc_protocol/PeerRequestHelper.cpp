@@ -36,6 +36,11 @@ PeerRequestHelper::PeerRequestHelper(const keto::proto::PeerRequest& request) : 
 PeerRequestHelper::~PeerRequestHelper() {
 }
 
+PeerRequestHelper& PeerRequestHelper::addAccountHash(const std::string& accountHash) {
+    request.add_account_hash(accountHash);
+    return *this;
+}
+
 PeerRequestHelper& PeerRequestHelper::addAccountHash(
        const std::vector<uint8_t> accountHash) {
     request.add_account_hash(keto::server_common::VectorUtils().copyVectorToString(accountHash));
@@ -49,6 +54,17 @@ std::vector<std::vector<uint8_t>> PeerRequestHelper::getAccountHashes() {
                 request.account_hash(index)));
     }
     return result;
+}
+
+
+PeerRequestHelper& PeerRequestHelper::setHostname(const std::string& hostname) {
+    request.set_hostname(hostname);
+    return *this;
+}
+
+
+std::string PeerRequestHelper::getHostname() {
+    return request.hostname();
 }
 
 PeerRequestHelper::operator keto::proto::PeerRequest() {
