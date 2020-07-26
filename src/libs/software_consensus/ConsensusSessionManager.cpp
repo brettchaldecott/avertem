@@ -47,9 +47,10 @@ std::string ConsensusSessionManager::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
     
-ConsensusSessionManager::ConsensusSessionManager() : activeSession(false), accepted(false), activeSessionCount(0),
-    netwokProtocolDelay(Constants::NETWORK_PROTOCOL_DELAY_DEFAULT), networkProtocolCount(Constants::NETWORK_PROTOCOL_COUNT_DEFAULT),
-    protolCount(-1){
+ConsensusSessionManager::ConsensusSessionManager() : activeSession(false), accepted(false),
+    netwokProtocolDelay(Constants::NETWORK_PROTOCOL_DELAY_DEFAULT), activeSessionCount(0),
+    networkProtocolCount(Constants::NETWORK_PROTOCOL_COUNT_DEFAULT),
+    protolCount(-1) {
     this->protocolPoint = std::chrono::system_clock::now();
 
     // retrieve the configuration

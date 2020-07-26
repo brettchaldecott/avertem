@@ -49,6 +49,7 @@ public:
 
     static keto::event::Event routeTransaction(const keto::event::Event& event);
     static keto::event::Event activatePeer(const keto::event::Event& event);
+    static keto::event::Event requestNetworkState(const keto::event::Event& event);
     static keto::event::Event requestBlockSync(const keto::event::Event& event);
     static keto::event::Event pushBlock(const keto::event::Event& event);
     

@@ -75,6 +75,8 @@
 #include "keto/election_common/Constants.hpp"
 
 
+#include "keto/rpc_protocol/NetworkStatusHelper.hpp"
+
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
 namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
@@ -616,6 +618,8 @@ public:
                 handleElectionPublish(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_PUBLISH, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION) == 0) {
                 handleElectionConfirmation(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION, payload);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_STATUS) == 0) {
+                handleResponseNetworkStatus(command,payload);
             }
             KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] processed the command : " << command;
             transactionPtr->commit();
@@ -941,9 +945,9 @@ public:
     
     std::string handlePeer(const std::string& command, const std::string& payload) {
         // retrieve the peer information
-        keto::proto::PeerRequest peerRequest;
         std::string binString = keto::server_common::VectorUtils().copyVectorToString(
                 Botan::hex_decode(payload,true));
+        keto::proto::PeerRequest peerRequest;
         peerRequest.ParseFromString(binString);
         keto::rpc_protocol::PeerRequestHelper peerRequestHelper(peerRequest);
         if (!peerRequestHelper.getHostname().empty()) {
@@ -980,17 +984,40 @@ public:
     }
     
     std::string handleRegister(const std::string& command, const std::string& payload) {
-        
+
         // add this session for call backs
         AccountSessionCache::getInstance()->addAccount(
             keto::server_common::VectorUtils().copyVectorToString(    
             serverHelloProtoHelperPtr->getAccountHash()),
                 shared_from_this());
-        
-        std::string rpcVector = keto::server_common::VectorUtils().copyVectorToString(
-                Botan::hex_decode(payload));
-        keto::router_utils::RpcPeerHelper rpcPeerHelper(rpcVector);
-        
+
+        // split and extract the peer information to be added
+        keto::server_common::StringVector parts = keto::server_common::StringUtils(payload).tokenize("#");
+
+        // add the peered host assuming this method has been called to reregister
+        std::string binString = keto::server_common::VectorUtils().copyVectorToString(
+                Botan::hex_decode(parts[0],true));
+        keto::proto::PeerRequest peerRequest;
+        peerRequest.ParseFromString(binString);
+        keto::rpc_protocol::PeerRequestHelper peerRequestHelper(peerRequest);
+        if (!peerRequestHelper.getHostname().empty()) {
+            this->remoteHostname = peerRequestHelper.getHostname();
+        }
+        KETO_LOG_DEBUG << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " get the peers for a client";
+        this->rpcServer->setExternalIp(this->localAddress);
+        this->rpcServer->setExternalHostname(this->localHostname);
+        std::stringstream str;
+        if (!this->remoteHostname.empty()) {
+            str << this->remoteHostname << ":" << Constants::DEFAULT_PORT_NUMBER;
+        } else {
+            str << this->remoteAddress << ":" << Constants::DEFAULT_PORT_NUMBER;
+        }
+        RpcServerSession::getInstance()->addPeer(this->serverHelloProtoHelperPtr->getAccountHash(),str.str());
+
+        // register the client peer with the account
+        std::string rpcPeerBytes = keto::server_common::VectorUtils().copyVectorToString(
+                Botan::hex_decode(parts[1]));
+        keto::router_utils::RpcPeerHelper rpcPeerHelper(rpcPeerBytes);
         keto::proto::RpcPeer rpcPeer = (keto::proto::RpcPeer)rpcPeerHelper;
         
         rpcPeer = keto::server_common::fromEvent<keto::proto::RpcPeer>(
@@ -1155,6 +1182,12 @@ public:
     std::string handleClientNetworkComplete(const std::string& command, const std::string& payload) {
         KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleClientNetworkComplete] The client has completed networking";
         std::stringstream ss;
+
+        // At present the network status is not required
+        //if (!RpcServer::getInstance()->hasNetworkState()) {
+        //    ss << keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_STATUS
+        //       << " " << keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_STATUS;
+        //}
         // at present there is no requirement to activate as this is handled in the registration response.
         //if (RpcServer::getInstance()->isServerActive()) {
         //    keto::router_utils::RpcPeerHelper rpcPeerHelper;
@@ -1166,6 +1199,18 @@ public:
         //}
         KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleClientNetworkComplete] Finished post network configuration";
         return ss.str();
+    }
+
+    std::string handleResponseNetworkStatus(const std::string& command, const std::string& payload) {
+        keto::rpc_protocol::NetworkStatusHelper networkStatusHelper(
+                keto::server_common::VectorUtils().copyVectorToString(
+                        Botan::hex_decode(payload)));
+
+        keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::NetworkStatus>(
+                keto::server_common::Events::UPDATE_NETWORK_STATE,networkStatusHelper));
+        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleBlockPush] pushed the block";
+
+        return std::string();
     }
 
     void handleBlockPush(const std::string& command, const std::string& payload) {
@@ -1409,7 +1454,7 @@ std::string RpcServer::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
-RpcServer::RpcServer() : serverActive(false), externalHostname("") {
+RpcServer::RpcServer() : serverActive(false), externalHostname(""), networkState(true) {
     // retrieve the configuration
     std::shared_ptr<ketoEnv::Config> config = ketoEnv::EnvironmentManager::getInstance()->getConfig();
     
@@ -1536,6 +1581,10 @@ void RpcServer::setExternalHostname(
     if (this->externalHostname.empty()) {
         this->externalHostname = externalHostname;
     }
+}
+
+bool RpcServer::hasNetworkState() {
+    return this->networkState;
 }
 
 keto::crypto::SecureVector RpcServer::getSecret() {
@@ -1735,6 +1784,7 @@ keto::event::Event RpcServer::electBlockProducer(const keto::event::Event& event
     return keto::server_common::toEvent<keto::proto::ElectionMessage>(electionMessageProtoHelper);
 }
 
+
 keto::event::Event RpcServer::activatePeers(const keto::event::Event& event) {
     keto::router_utils::RpcPeerHelper rpcPeerHelper(
             keto::server_common::fromEvent<keto::proto::RpcPeer>(event));
@@ -1762,6 +1812,11 @@ keto::event::Event RpcServer::activatePeers(const keto::event::Event& event) {
     return event;
 }
 
+keto::event::Event RpcServer::requestNetworkState(const keto::event::Event& event) {
+    KETO_LOG_INFO << "Request network state from client";
+    this->networkState = false;
+    return event;
+}
 
 keto::event::Event RpcServer::requestBlockSync(const keto::event::Event& event) {
     keto::proto::SignedBlockBatchRequest request = keto::server_common::fromEvent<keto::proto::SignedBlockBatchRequest>(event);

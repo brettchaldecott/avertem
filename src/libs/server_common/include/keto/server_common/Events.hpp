@@ -72,7 +72,12 @@ public:
     static const char* RPC_SERVER_TRANSACTION;
     static const char* RPC_SERVER_BLOCK;
     static const char* RPC_CLIENT_BLOCK;
-    
+
+    // network state information
+    static const char* REQUEST_NETWORK_STATE_CLIENT;
+    static const char* REQUEST_NETWORK_STATE_SERVER;
+    static const char* UPDATE_NETWORK_STATE;
+
     // balancer
     static const char* BALANCER_MESSAGE;
     

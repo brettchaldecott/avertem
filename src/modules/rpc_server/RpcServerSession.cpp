@@ -61,7 +61,18 @@ void RpcServerSession::addPeer(const std::vector<uint8_t>& account,
             this->accountPeerList.erase(this->accountPeerList.begin());
         }
         this->accountPeerList.push_back(host);
+    } else {
+        // update the current host
+        std::string currentHost = this->accountPeerCache[account];
+        for (int index = 0; index < this->accountPeerList.size(); index++) {
+            std::string listHost = this->accountPeerList[index];
+            if (listHost == currentHost) {
+                this->accountPeerList[index] = host;
+                break;
+            }
+        }
     }
+    // set the account peer cache
     this->accountPeerCache[account] = host;
 }
 

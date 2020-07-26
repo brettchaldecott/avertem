@@ -77,9 +77,16 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::RPC_SERVER_ACTIVATE_RPC_PEER,
             &keto::rpc_server::EventRegistry::activatePeers);
+
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::REQUEST_NETWORK_STATE_SERVER,
+            &keto::rpc_server::EventRegistry::requestNetworkState);
 }
 
 void EventRegistry::deregisterEventHandlers() {
+
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::REQUEST_NETWORK_STATE_SERVER);
 
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_PUBLISH_SERVER);
@@ -166,6 +173,11 @@ keto::event::Event EventRegistry::electRpcConfirmationServer(const keto::event::
 keto::event::Event EventRegistry::activatePeers(const keto::event::Event& event) {
     KETO_LOG_DEBUG << "[EventRegistry::activatePeers] the node has been accepted";
     return RpcServer::getInstance()->activatePeers(event);
+}
+
+keto::event::Event EventRegistry::requestNetworkState(const keto::event::Event& event) {
+    KETO_LOG_DEBUG << "[EventRegistry::requestNetworkState] request network state";
+    return RpcServer::getInstance()->requestNetworkState(event);
 }
 
 keto::event::Event EventRegistry::requestBlockSync(const keto::event::Event& event) {

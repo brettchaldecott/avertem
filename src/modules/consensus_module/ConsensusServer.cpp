@@ -224,6 +224,8 @@ void ConsensusServer::internalConsensusInit(const keto::crypto::SecureVector& in
     keto::software_consensus::ConsensusSessionManager::getInstance()->notifyAccepted();
     transactionPtr->commit();
 
+
+
 }
 
 

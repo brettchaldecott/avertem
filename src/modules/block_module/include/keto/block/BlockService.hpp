@@ -58,7 +58,7 @@ public:
     static void fin();
     static std::shared_ptr<BlockService> getInstance();
     
-    void genesis();
+    bool genesis();
     void sync();
 
     keto::event::Event persistBlockMessage(const keto::event::Event& event);

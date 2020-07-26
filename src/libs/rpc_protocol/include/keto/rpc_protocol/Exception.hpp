@@ -23,6 +23,7 @@ KETO_DECLARE_EXCEPTION( RpcProtocolException, "General protocol exceptions." );
 // the keto module derived exception
 KETO_DECLARE_DERIVED_EXCEPTION (RpcProtocolException, NetworkKeysWrapperDeserializationErrorException , "Failed to deserialize the network key.");
 KETO_DECLARE_DERIVED_EXCEPTION (RpcProtocolException, NetworkKeysDeserializationErrorException , "Failed to deserialize the network key.");
+KETO_DECLARE_DERIVED_EXCEPTION (RpcProtocolException, NetworkStatusDeserializationErrorException , "Failed to deserialize the network status.");
 
 
 }

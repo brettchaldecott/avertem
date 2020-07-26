@@ -12,6 +12,11 @@
 
 #include "KeyStore.pb.h"
 
+#include "keto/rpc_protocol/NetworkKeysWrapperHelper.hpp"
+#include "keto/rpc_protocol/NetworkKeysHelper.hpp"
+#include "keto/rpc_protocol/NetworkKeyHelper.hpp"
+
+
 #include "keto/memory_vault_session/MemoryVaultSessionKeyWrapper.hpp"
 
 #include "keto/event/Event.hpp"
@@ -38,6 +43,7 @@ public:
 
         keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr getKey(int index);
         uint8_t getSlot();
+        bool checkHashIndex(const std::vector<keto::rpc_protocol::NetworkKeyHelper>& networkKeyHelpers);
     private:
         uint8_t slot;
         SessionMap sessionKeys;

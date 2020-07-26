@@ -119,13 +119,13 @@ std::shared_ptr<BlockService> BlockService::getInstance() {
     return singleton;
 }
 
-void BlockService::genesis() {
+bool BlockService::genesis() {
     if (keto::block_db::BlockChainStore::getInstance()->requireGenesis()) {
         std::shared_ptr<keto::environment::Config> config = 
             keto::environment::EnvironmentManager::getInstance()->getConfig();
     
         if (!config->getVariablesMap().count(Constants::GENESIS_CONFIG)) {
-            return;
+            return false;
         }
         // genesis configuration
         boost::filesystem::path genesisConfig =  
@@ -133,11 +133,14 @@ void BlockService::genesis() {
                 config->getVariablesMap()[Constants::GENESIS_CONFIG].as<std::string>();
         
         if (!boost::filesystem::exists(genesisConfig)) {
-            return;
+            return false;
         }
         GenesisReader reader(genesisConfig);
         GenesisLoader loader(reader);
         loader.load();
+        return true;
+    } else {
+        return false;
     }
 }
 

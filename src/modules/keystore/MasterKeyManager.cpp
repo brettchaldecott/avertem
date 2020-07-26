@@ -327,11 +327,19 @@ keto::event::Event MasterKeyManager::SlaveSession::getMasterKey(const keto::even
 keto::event::Event MasterKeyManager::SlaveSession::setMasterKey(const keto::event::Event& event) {
     std::lock_guard<std::mutex> uniqueLock(this->classMutex);
     KETO_LOG_DEBUG << "[MasterKeyManager][SlaveSession][setMasterKey] set up the slave master key";
-    if (this->slaveMaster) {
-        return event;
-    }
+    //if (this->slaveMaster) {
+    //    return event;
+    //}
     keto::proto::NetworkKeysWrapper networkKeysWrapper =
             keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(event);
+    if (this->slaveMaster) {
+        std::string newValue = networkKeysWrapper.SerializeAsString();
+        std::string currentValue = this->slaveMasterKeys.SerializeAsString();
+        if (newValue == currentValue) {
+            // no resert of values required
+            return event;
+        }
+    }
     keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(networkKeysWrapper);
     keto::crypto::SecureVector bytes =
             NetworkSessionKeyManager::getInstance()->getDecryptor()->decrypt(networkKeysWrapperHelper);

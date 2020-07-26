@@ -51,6 +51,10 @@ keto::event::Event EventRegistry::activatePeer(const keto::event::Event& event) 
     return RpcSessionManager::getInstance()->activatePeer(event);
 }
 
+keto::event::Event EventRegistry::requestNetworkState(const keto::event::Event& event) {
+    return RpcSessionManager::getInstance()->requestNetworkState(event);
+}
+
 keto::event::Event EventRegistry::requestBlockSync(const keto::event::Event& event) {
     return RpcSessionManager::getInstance()->requestBlockSync(event);
 }
@@ -133,6 +137,11 @@ void EventRegistry::registerEventHandlers() {
             keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_CONFIRMATION_CLIENT,
             &keto::rpc_client::EventRegistry::electBlockProducerConfirmation);
 
+    // request network state
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::REQUEST_NETWORK_STATE_CLIENT,
+            &keto::rpc_client::EventRegistry::requestNetworkState);
+
     // peer push methods
     keto::server_common::registerEventHandler (
             keto::server_common::Events::ROUTER_QUERY::PUSH_RPC_PEER,
@@ -143,6 +152,10 @@ void EventRegistry::registerEventHandlers() {
 void EventRegistry::deregisterEventHandlers() {
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::ROUTER_QUERY::PUSH_RPC_PEER);
+
+    // request network state
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::REQUEST_NETWORK_STATE_CLIENT);
 
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::RPC_CLIENT_ACTIVATE_RPC_PEER);

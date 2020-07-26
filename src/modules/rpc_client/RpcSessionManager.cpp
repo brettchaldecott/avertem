@@ -59,7 +59,7 @@ std::string RpcSessionManager::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
-RpcSessionManager::RpcSessionManager() : peered(true), activated(false), terminated(false) {
+RpcSessionManager::RpcSessionManager() : peered(true), activated(false), terminated(false), networkState(true) {
     
     this->ioc = std::make_shared<net::io_context>();
     
@@ -166,6 +166,10 @@ void RpcSessionManager::removeAccountSessionMapping(const std::string& account) 
 bool RpcSessionManager::isTerminated() {
     std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     return this->terminated;
+}
+
+bool RpcSessionManager::hasNetworkState() {
+    return this->networkState;
 }
 
 bool RpcSessionManager::hasAccountSessionMapping(const std::string& account) {
@@ -301,6 +305,12 @@ keto::event::Event RpcSessionManager::activatePeer(const keto::event::Event& eve
             }
         }
     }
+    return event;
+}
+
+keto::event::Event RpcSessionManager::requestNetworkState(const keto::event::Event& event) {
+    KETO_LOG_INFO << "[RpcSessionManager::requestBlockSync] The client request network state has been set.";
+    this->networkState = false;
     return event;
 }
 

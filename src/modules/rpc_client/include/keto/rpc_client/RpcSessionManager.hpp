@@ -74,6 +74,7 @@ public:
     void stop();
 
     keto::event::Event activatePeer(const keto::event::Event& event);
+    keto::event::Event requestNetworkState(const keto::event::Event& event);
     keto::event::Event requestBlockSync(const keto::event::Event& event);
     keto::event::Event routeTransaction(const keto::event::Event& event);
     keto::event::Event pushBlock(const keto::event::Event& event);
@@ -94,6 +95,7 @@ protected:
             const RpcSessionPtr& rpcSessionPtr);
     void removeAccountSessionMapping(const std::string& account);
     bool isTerminated();
+    bool hasNetworkState();
 private:
     std::recursive_mutex classMutex;
     std::map<std::string,RpcSessionPtr> sessionMap;
@@ -109,6 +111,7 @@ private:
     bool peered;
     bool activated;
     bool terminated;
+    bool networkState;
 
 
     bool hasAccountSessionMapping(const std::string& account);

@@ -16,6 +16,7 @@
 #include <thread>
 
 #include "Account.pb.h"
+#include "Route.pb.h"
 
 #include <keto/block_db/MerkleUtils.hpp>
 
@@ -398,11 +399,13 @@ void BlockProducer::loadState(const State& state) {
         keto::server_common::StatePersistanceManagerPtr statePersistanceManagerPtr =
                 keto::server_common::StatePersistanceManager::getInstance();
         if (statePersistanceManagerPtr->contains(Constants::PERSISTED_STATE)) {
+            KETO_LOG_INFO << "[BlockProducer::loadState] Use the persisted state";
             this->currentState = (BlockProducer::State)(long)(*statePersistanceManagerPtr)[Constants::PERSISTED_STATE];
         } else {
             this->currentState = BlockProducer::State::inited;
             _setState(state);
         }
+        KETO_LOG_INFO << "[BlockProducer::loadState] The loaded state is now : " << this->currentState;
     } else {
         _setState(state);
     }
@@ -702,9 +705,17 @@ void BlockProducer::load() {
         StorageManager::getInstance()->load();
 
         // check if this is a block producer
+        KETO_LOG_INFO << "[BlockProducer::load] loaded and check if genesis is required : " << this->getState();
         if (this->getState() == BlockProducer::State::block_producer) {
-            BlockService::getInstance()->genesis();
-            BlockSyncManager::getInstance()->notifyPeers();
+            if (BlockService::getInstance()->genesis()) {
+                BlockSyncManager::getInstance()->notifyPeers();
+            } else {
+                KETO_LOG_INFO << "[BlockProducer::load] request network state from peers.";
+                this->requestNetworkState();
+            }
+        } else {
+            KETO_LOG_INFO << "[BlockProducer::load] force request of network information from peers.";
+            this->requestNetworkState();
         }
         transactionPtr->commit();
     } catch (keto::common::Exception& ex) {
@@ -766,6 +777,18 @@ BlockProducer::ProducerState BlockProducer::_getProducerState() {
     return this->producerState;
 }
 
+
+void BlockProducer::requestNetworkState() {
+    // assume we are out of date an force the sync
+    _setState(BlockProducer::State::sync_blocks);
+    keto::proto::RequestNetworkState requestNetworkState;
+    // these method are currently not completely implemented but are there as a means to sync with the network state
+    // should this later be required.
+    keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::RequestNetworkState>(
+            keto::server_common::Events::REQUEST_NETWORK_STATE_SERVER,requestNetworkState));
+    keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::RequestNetworkState>(
+            keto::server_common::Events::REQUEST_NETWORK_STATE_CLIENT,requestNetworkState));
+}
 
 
 }

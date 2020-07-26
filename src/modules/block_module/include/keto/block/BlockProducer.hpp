@@ -225,6 +225,8 @@ private:
     void _setProducerState(const ProducerState& state, bool notify = false);
     ProducerState getProducerState();
     ProducerState _getProducerState();
+
+    void requestNetworkState();
 };
 
 

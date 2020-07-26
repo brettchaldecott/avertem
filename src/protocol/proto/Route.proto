@@ -46,4 +46,16 @@ message RpcPeer {
     bool active = 6;
 }
 
+message RequestNetworkState {
+    uint32 version = 1;
+}
 
+
+message NetworkStatus {
+    // the version for this protocol
+    uint32 version = 1;
+    // the list of account hashes
+    repeated bytes elected_account_hashes = 2;
+    // the current slot
+    uint32 current_slot = 3;
+}

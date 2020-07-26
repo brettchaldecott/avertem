@@ -16,9 +16,6 @@
 #include "keto/environment/Config.hpp"
 #include "keto/environment/EnvironmentManager.hpp"
 
-#include "keto/rpc_protocol/NetworkKeysWrapperHelper.hpp"
-#include "keto/rpc_protocol/NetworkKeysHelper.hpp"
-#include "keto/rpc_protocol/NetworkKeyHelper.hpp"
 #include "keto/software_consensus/ConsensusStateManager.hpp"
 
 
@@ -75,6 +72,22 @@ keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr NetworkSessionKeyMan
 
 uint8_t NetworkSessionKeyManager::NetworkSessionSlot::getSlot() {
     return this->slot;
+}
+
+bool NetworkSessionKeyManager::NetworkSessionSlot::checkHashIndex(const std::vector<keto::rpc_protocol::NetworkKeyHelper>& networkKeyHelpers) {
+    for (keto::rpc_protocol::NetworkKeyHelper networkKeyHelper: networkKeyHelpers) {
+        bool found = false;
+        for (std::vector<uint8_t> checkHash : this->hashIndex) {
+            if (checkHash == networkKeyHelper.getHash()) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            return false;
+        }
+    }
+    return true;
 }
 
 NetworkSessionKeyManager::NetworkSessionKeyManager(const keto::software_consensus::ConsensusHashGeneratorPtr& consensusHashGenerator) :
@@ -158,10 +171,17 @@ void NetworkSessionKeyManager::setSession(const keto::proto::NetworkKeysWrapper&
     keto::rpc_protocol::NetworkKeysHelper networkKeysHelper(
         keto::crypto::SecureVectorUtils().copySecureToString(this->consensusHashGenerator->decrypt(networkKeysWrapperHelper.getBytes())));
     std::vector<keto::rpc_protocol::NetworkKeyHelper> networkKeyHelpers =  networkKeysHelper.getNetworkKeys();
-    // ignore a duplicate slot;
+
+    // check if the slot is registered
     if (this->sessionSlots.count(networkKeysHelper.getSlot())) {
-        return;
+        NetworkSessionSlotPtr networkSessionSlotPtr = this->sessionSlots[networkKeysHelper.getSlot()];
+        if (networkSessionSlotPtr->checkHashIndex(networkKeyHelpers)) {
+            // found match and will now ignore
+            return;
+        }
     }
+
+    // setup a new slot
     SessionMap sessionKeys;
     std::vector<std::vector<uint8_t>> hashIndex;
     for (keto::rpc_protocol::NetworkKeyHelper networkKeyHelper : networkKeyHelpers) {

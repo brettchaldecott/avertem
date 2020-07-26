@@ -700,16 +700,28 @@ void RpcSession::handlePeerResponse(const std::string& command, const std::strin
 
 std::string RpcSession::handleRegisterRequest(const std::string& command, const std::string& message) {
 
+    // peer request helper
+    keto::rpc_protocol::PeerRequestHelper peerRequestHelper;
+    peerRequestHelper.addAccountHash(this->accountHash);
+    peerRequestHelper.setHostname(this->externalHostname);
+    keto::proto::PeerRequest peerRequest = peerRequestHelper;
+    std::string peerRequestValue;
+    peerRequest.SerializePartialToString(&peerRequestValue);
+
     // notify the accepted
     keto::router_utils::RpcPeerHelper rpcPeerHelper;
     rpcPeerHelper.setAccountHash(keto::server_common::ServerInfo::getInstance()->getAccountHash());
     rpcPeerHelper.setActive(RpcSessionManager::getInstance()->isActivated());
-
     keto::proto::RpcPeer rpcPeer = rpcPeerHelper;
     std::string rpcValue;
     rpcPeer.SerializePartialToString(&rpcValue);
 
-    return serverRequest(keto::server_common::Constants::RPC_COMMANDS::REGISTER, Botan::hex_encode((uint8_t*)rpcValue.data(),rpcValue.size(),true));
+    // setup the registration response including the mising peer request and rpc information
+    std::stringstream sstream;
+    sstream <<  Botan::hex_encode((uint8_t*)peerRequestValue.data(),peerRequestValue.size(),true) << "#" <<
+        Botan::hex_encode((uint8_t*)rpcValue.data(),rpcValue.size(),true);
+
+    return serverRequest(keto::server_common::Constants::RPC_COMMANDS::REGISTER, sstream.str());
 }
 
 std::string RpcSession::handleTransaction(const std::string& command, const std::string& message) {
