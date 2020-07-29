@@ -56,9 +56,9 @@ public:
     void initNetworkHeartbeat(int networkSlot, int electionSlot, int electionPublishSlot, int confirmationSlot);
     void initNetworkHeartbeat(const keto::proto::ProtocolHeartbeatMessage& msg);
     int getActiveSessionCount();
-
+    std::recursive_mutex& getMutex();
 private:
-    std::mutex classMutex;
+    std::recursive_mutex classMutex;
 
     keto::crypto::SecureVector sessionHash;
     bool activeSession;

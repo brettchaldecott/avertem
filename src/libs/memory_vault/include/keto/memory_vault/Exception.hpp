@@ -29,9 +29,9 @@ KETO_DECLARE_EXCEPTION( MemoryVaultException, "An exception occurred in the memo
 KETO_DECLARE_DERIVED_EXCEPTION (MemoryVaultException, VaultEntryNotFoundException , "Failed to find the entry.");
 KETO_DECLARE_DERIVED_EXCEPTION (MemoryVaultException, DecryptionFailedException , "Failed to decrypt the entry.");
 KETO_DECLARE_DERIVED_EXCEPTION (MemoryVaultException, InvalidPasswordException , "Invalid password exception.");
-KETO_DECLARE_DERIVED_EXCEPTION (MemoryVaultException, InvalidSesssionException , "Invalid password exception.");
-KETO_DECLARE_DERIVED_EXCEPTION (MemoryVaultException, DuplicateVaultException , "Invalid password exception.");
-KETO_DECLARE_DERIVED_EXCEPTION (MemoryVaultException, UnknownVaultException , "Invalid password exception.");
+KETO_DECLARE_DERIVED_EXCEPTION (MemoryVaultException, InvalidSesssionException , "Invalid Session exception.");
+KETO_DECLARE_DERIVED_EXCEPTION (MemoryVaultException, DuplicateVaultException , "Duplicate Vault exception.");
+KETO_DECLARE_DERIVED_EXCEPTION (MemoryVaultException, UnknownVaultException , "Unknown Vault exception.");
 KETO_DECLARE_DERIVED_EXCEPTION (MemoryVaultException, InvalidCipherIDException , "Invalid cipher id exception.");
 }
 }

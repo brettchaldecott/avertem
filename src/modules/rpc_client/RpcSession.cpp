@@ -457,13 +457,10 @@ void RpcSession::processQueueEntry(const ReadQueueEntryPtr& readQueueEntryPtr) {
         KETO_LOG_DEBUG << this->sessionNumber << ": [RpcSession][on_read] process the command :" << command;
         if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS) == 0) {
             message = helloConsensusResponse(command, stringVector[1], stringVector[2]);
-        }
-        if (command.compare(keto::server_common::Constants::RPC_COMMANDS::GO_AWAY) == 0) {
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::GO_AWAY) == 0) {
             closeResponse(keto::server_common::Constants::RPC_COMMANDS::CLOSE, stringVector[1]);
-        }
-        if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ACCEPTED) == 0) {
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ACCEPTED) == 0) {
             if (!this->rpcPeer.getPeered()) {
-
                 message = handlePeerRequest(command, message);
             } else if (this->isRegistered()) {
                 message = handleRequestNetworkSessionKeys(command, stringVector[1]);
@@ -644,6 +641,8 @@ void RpcSession::closeResponse(const std::string& command, const std::string& me
 std::string RpcSession::helloConsensusResponse(const std::string& command, const std::string& sessionKey, const std::string& initHash) {
     keto::asn1::HashHelper initHashHelper(initHash,keto::common::StringEncoding::HEX);
     keto::crypto::SecureVector initVector = Botan::hex_decode_locked(sessionKey,true);
+    // guarantee order of consensus handling to prevent sessions from getting incorrectly setup
+    std::unique_lock<std::recursive_mutex> uniqueLock(keto::software_consensus::ConsensusSessionManager::getInstance()->getMutex());
     keto::software_consensus::ConsensusSessionManager::getInstance()->updateSessionKey(initVector);
     return serverRequest(keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS,buildConsensus(initHashHelper));
 }

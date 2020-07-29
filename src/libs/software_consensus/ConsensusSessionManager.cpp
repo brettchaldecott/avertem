@@ -83,7 +83,7 @@ void ConsensusSessionManager::fin() {
 
 
 void ConsensusSessionManager::updateSessionKey(const keto::crypto::SecureVector& sessionKey) {
-    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
     // the session key is zero length
     if (!sessionKey.size()) {
         KETO_LOG_ERROR << "[updateSessionKey] The session key is zero lenght ignore update";
@@ -133,7 +133,7 @@ void ConsensusSessionManager::updateSessionKey(const keto::crypto::SecureVector&
 
 
 void ConsensusSessionManager::setSession(keto::proto::ConsensusMessage& msg) {
-    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
     if (!this->activeSession) {
         this->activeSession = true;
         // setup the consensus message
@@ -161,7 +161,7 @@ void ConsensusSessionManager::setSession(keto::proto::ConsensusMessage& msg) {
 }
 
 void ConsensusSessionManager::notifyAccepted() {
-    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
     if (!this->accepted) {
         this->accepted = true;
         for (std::string event : Constants::CONSENSUS_SESSION_ACCEPTED) {
@@ -201,7 +201,7 @@ bool ConsensusSessionManager::resetProtocolCheck() {
 }
 
 void ConsensusSessionManager::notifyProtocolCheck(bool master) {
-    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
     if (master || this->protolCount == this->networkProtocolCount) {
         for (std::string event : Constants::CONSENSUS_SESSION_CHECK) {
             try {
@@ -239,7 +239,7 @@ void ConsensusSessionManager::initNetworkHeartbeat(int networkSlot, int election
 }
 
 void ConsensusSessionManager::initNetworkHeartbeat(const keto::proto::ProtocolHeartbeatMessage& msg) {
-    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
     if (!checkHeartbeatTimestamp(msg)) {
         return;
     }
@@ -272,6 +272,9 @@ void ConsensusSessionManager::initNetworkHeartbeat(const keto::proto::ProtocolHe
     }
 }
 
+std::recursive_mutex& ConsensusSessionManager::getMutex() {
+    return this->classMutex;
+}
 
 int  ConsensusSessionManager::getActiveSessionCount() {
     return this->activeSessionCount;
