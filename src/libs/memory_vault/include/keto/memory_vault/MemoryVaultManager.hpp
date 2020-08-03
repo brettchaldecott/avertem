@@ -32,7 +32,7 @@ class MemoryVaultManager {
 public:
     class MemoryVaultWrapper {
     public:
-        MemoryVaultWrapper(const keto::crypto::SecureVector& password, const keto::crypto::SecureVector& sessionId,
+        MemoryVaultWrapper(int slot, const std::string& name, const keto::crypto::SecureVector& password, const keto::crypto::SecureVector& sessionId,
                 const MemoryVaultPtr& memoryVaultPtr);
         MemoryVaultWrapper(const MemoryVaultWrapper& orig) = delete;
         virtual ~MemoryVaultWrapper();
@@ -43,6 +43,8 @@ public:
 
     private:
         std::mutex classMutex;
+        int slot;
+        std::string name;
         keto::crypto::SecureVector sessionId;
         MemoryVaultPtr memoryVaultPtr;
         keto::crypto::PasswordPipeLinePtr passwordPipeLinePtr;

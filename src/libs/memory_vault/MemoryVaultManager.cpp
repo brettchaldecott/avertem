@@ -16,10 +16,11 @@ std::string MemoryVaultManager::getSourceVersion() {
     return OBFUSCATED("$Id:");
 }
 
-MemoryVaultManager::MemoryVaultWrapper::MemoryVaultWrapper(const keto::crypto::SecureVector& password,
-                                                           const keto::crypto::SecureVector& sessionId,
-                                                           const MemoryVaultPtr& memoryVaultPtr)
-                                                           : sessionId(sessionId), memoryVaultPtr(memoryVaultPtr) {
+MemoryVaultManager::MemoryVaultWrapper::MemoryVaultWrapper(int slot, const std::string& name,
+        const keto::crypto::SecureVector& password,
+        const keto::crypto::SecureVector& sessionId,
+        const MemoryVaultPtr& memoryVaultPtr)
+                                                           : slot(slot), name(name), sessionId(sessionId), memoryVaultPtr(memoryVaultPtr) {
     this->passwordPipeLinePtr = keto::crypto::PasswordPipeLinePtr(new keto::crypto::PasswordPipeLine());
     this->hash = this->passwordPipeLinePtr->generatePassword(password);
 }
@@ -35,8 +36,9 @@ keto::crypto::SecureVector MemoryVaultManager::MemoryVaultWrapper::getSessionId(
 MemoryVaultPtr MemoryVaultManager::MemoryVaultWrapper::getMemoryVault(const keto::crypto::SecureVector& password) {
     std::lock_guard<std::mutex> guard(classMutex);
     if (!(this->hash == this->passwordPipeLinePtr->generatePassword(password))) {
-
-        BOOST_THROW_EXCEPTION(InvalidPasswordException());
+        std::stringstream ss;
+        ss << "Invalid password for [" << slot << "][" << name << "]";
+        BOOST_THROW_EXCEPTION(InvalidPasswordException(ss.str()));
     }
     return memoryVaultPtr;
 }
@@ -56,7 +58,7 @@ MemoryVaultManager::MemoryVaultSlot::MemoryVaultSlot(const uint8_t& slot, const 
 }
 
 MemoryVaultManager::MemoryVaultSlot::~MemoryVaultSlot() {
-    KETO_LOG_ERROR << "The slot destructor : " << (int)slot;
+    KETO_LOG_ERROR << "[MemoryVaultManager::MemoryVaultSlot::~MemoryVaultSlot] The slot destructor : " << (int)slot;
 }
 
 
@@ -89,7 +91,7 @@ MemoryVaultPtr MemoryVaultManager::MemoryVaultSlot::createVault(const std::strin
         BOOST_THROW_EXCEPTION(DuplicateVaultException());
     }
     MemoryVaultPtr memoryVaultPtr(new MemoryVault(this->getSlot(),sessionId,this->memoryVaultEncryptorPtr));
-    memoryVaultWrapperPtr = MemoryVaultWrapperPtr(new MemoryVaultWrapper(password,sessionId,memoryVaultPtr));
+    memoryVaultWrapperPtr = MemoryVaultWrapperPtr(new MemoryVaultWrapper(this->getSlot(),name,password,sessionId,memoryVaultPtr));
     this->sessions[sessionId] = memoryVaultWrapperPtr;
     this->vaults[name] = memoryVaultWrapperPtr;
     return memoryVaultPtr;
@@ -139,12 +141,14 @@ void MemoryVaultManager::createSession(
     std::lock_guard<std::mutex> guard(classMutex);
     if (!currentMemoryVaultSlotPtr) {
         uint8_t slotId = nextSlot();
+        KETO_LOG_ERROR << "[MemoryVaultManager::createSession] Add a new slot : " << (int)slotId;
         MemoryVaultSlotPtr memoryVaultSlotPtr(new MemoryVaultSlot(slotId, this->memoryVaultEncryptorPtr, sessions));
         this->slots.push_front(memoryVaultSlotPtr);
         this->slotIndex[slotId] = memoryVaultSlotPtr;
         this->currentMemoryVaultSlotPtr = memoryVaultSlotPtr;
     } else {
         // add sessions
+        KETO_LOG_ERROR << "[MemoryVaultManager::createSession] Add a new session : " << sessions.size();
         this->currentMemoryVaultSlotPtr->addSessions(sessions);
     }
 }
@@ -152,9 +156,13 @@ void MemoryVaultManager::createSession(
 void MemoryVaultManager::clearSession() {
     std::lock_guard<std::mutex> guard(classMutex);
     currentMemoryVaultSlotPtr.reset();
+    KETO_LOG_ERROR << "[MemoryVaultManager::clearSession] clear the session for the manager : " <<
+                                                                             this->slots.size();
     if (this->slots.size() <= 3) {
         return;
     }
+    KETO_LOG_ERROR << "[MemoryVaultManager::clearSession] Clear the slot : " <<
+        this->slots.back()->getSlot();
     this->slotIndex.erase(this->slots.back()->getSlot());
     this->slots.pop_back();
 }
@@ -162,7 +170,12 @@ void MemoryVaultManager::clearSession() {
 MemoryVaultPtr MemoryVaultManager::createVault(const std::string& name,
                                   const keto::crypto::SecureVector& sessionId, const keto::crypto::SecureVector& password) {
     std::lock_guard<std::mutex> guard(classMutex);
-    return this->slots.front()->createVault(name,sessionId,password);
+    if (!this->currentMemoryVaultSlotPtr) {
+        std::stringstream ss;
+        ss << "Invalid session state cannot create value for [" << name << "].";
+        BOOST_THROW_EXCEPTION(InvalidSessionStateException(ss.str()));
+    }
+    return this->currentMemoryVaultSlotPtr->createVault(name,sessionId,password);
 }
 
 MemoryVaultPtr MemoryVaultManager::getVault(const uint8_t& slot, const std::string& name, const keto::crypto::SecureVector& password) {

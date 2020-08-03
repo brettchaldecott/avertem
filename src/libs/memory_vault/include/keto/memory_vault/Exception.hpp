@@ -33,6 +33,7 @@ KETO_DECLARE_DERIVED_EXCEPTION (MemoryVaultException, InvalidSesssionException ,
 KETO_DECLARE_DERIVED_EXCEPTION (MemoryVaultException, DuplicateVaultException , "Duplicate Vault exception.");
 KETO_DECLARE_DERIVED_EXCEPTION (MemoryVaultException, UnknownVaultException , "Unknown Vault exception.");
 KETO_DECLARE_DERIVED_EXCEPTION (MemoryVaultException, InvalidCipherIDException , "Invalid cipher id exception.");
+KETO_DECLARE_DERIVED_EXCEPTION (MemoryVaultException, InvalidSessionStateException , "Invalid cipher id exception.");
 }
 }
 

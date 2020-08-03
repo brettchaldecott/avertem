@@ -46,6 +46,7 @@ private:
     MemoryVaultSession* memoryVaultSession;
     keto::crypto::SecureVector entryId;
     keto::memory_vault_session::PasswordCachePtr passwordCachePtr;
+    int slotId;
 
 
 };
