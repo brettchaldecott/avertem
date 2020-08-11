@@ -55,3 +55,11 @@ message ElectionConfirmation {
     // the account hash the request is being performed for
     bytes account_hash = 2;
 }
+
+
+message PublishedElectionInformation {
+    // the version for this protocol
+    uint32 version = 1;
+    // the list of published elected tangle accounts
+    repeated ElectionPublishTangleAccount election_publish_tangle_accounts = 2;
+}

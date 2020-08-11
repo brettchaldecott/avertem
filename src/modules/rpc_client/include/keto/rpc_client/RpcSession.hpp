@@ -267,6 +267,8 @@ private:
     void handleElectionResponse(const std::string& command, const std::string& message);
     void handleElectionPublish(const std::string& command, const std::string& message);
     void handleElectionConfirmation(const std::string& command, const std::string& message);
+    std::string handleRequestNetworkStatus(const std::string& command, const std::string& message);
+    void handleResponseNetworkStatus(const std::string& command, const std::string& message);
 
     std::string handleRegisterResponse(const std::string& command, const std::string& message);
     std::string handleRequestNetworkSessionKeys(const std::string& command, const std::string& message);

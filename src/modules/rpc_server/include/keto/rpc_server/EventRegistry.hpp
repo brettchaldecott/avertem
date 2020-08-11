@@ -48,6 +48,7 @@ public:
     static keto::event::Event electRpcConfirmationServer(const keto::event::Event& event);
     static keto::event::Event activatePeers(const keto::event::Event& event);
     static keto::event::Event requestNetworkState(const keto::event::Event& event);
+    static keto::event::Event activateNetworkState(const keto::event::Event& event);
     static keto::event::Event requestBlockSync(const keto::event::Event& event);
     
     static keto::event::Event routeTransaction(const keto::event::Event& event);

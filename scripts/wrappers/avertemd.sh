@@ -30,6 +30,6 @@ if [ "${AUTO_UPGRADE}" == "1" ] ; then
 fi
 
 # execute avertemd
-${KETO_HOME}/bin/avertemd $@
+exec ${KETO_HOME}/bin/avertemd $@
 
 

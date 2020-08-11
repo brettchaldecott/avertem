@@ -446,6 +446,8 @@ keto::event::Event RouterService::registerService(const keto::event::Event& even
 
 
 void RouterService::routeLocal(keto::transaction_common::MessageWrapperProtoHelper&  messageWrapperProtoHelper) {
+    KETO_LOG_INFO << "[RouterService::routeLocal] route locally : " <<
+                  messageWrapperProtoHelper.getAccountHash().getHash(keto::common::StringEncoding::HEX);
     keto::transaction_common::TransactionProtoHelperPtr transactionProtoHelperPtr = messageWrapperProtoHelper.getTransaction();
     if (transactionProtoHelperPtr->getStatus() == keto::proto::TransactionStatus::DEBIT ||
             transactionProtoHelperPtr->getStatus() == keto::proto::TransactionStatus::INIT) {
@@ -485,6 +487,8 @@ void RouterService::routeLocal(keto::transaction_common::MessageWrapperProtoHelp
 }
 
 void RouterService::routeToAccount(keto::transaction_common::MessageWrapperProtoHelper&  messageWrapperProtoHelper) {
+    KETO_LOG_INFO << "[RouterService::routeToAccount] route to account : " <<
+                  messageWrapperProtoHelper.getAccountHash().getHash(keto::common::StringEncoding::HEX);
     keto::transaction_common::TransactionProtoHelperPtr transactionProtoHelperPtr = messageWrapperProtoHelper.getTransaction();
     if (transactionProtoHelperPtr->getStatus() == keto::proto::TransactionStatus::DEBIT ||
             transactionProtoHelperPtr->getStatus() == keto::proto::TransactionStatus::INIT) {
@@ -541,6 +545,8 @@ void RouterService::routeToRpcClient(keto::transaction_common::MessageWrapperPro
 }
 
 void RouterService::routeToRpcPeer(keto::transaction_common::MessageWrapperProtoHelper& messageWrapperProtoHelper) {
+    KETO_LOG_INFO << "[RouterService::routeToRpcPeer] route to peer : " <<
+                   messageWrapperProtoHelper.getAccountHash().getHash(keto::common::StringEncoding::HEX);
     keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
                     keto::server_common::Events::RPC_CLIENT_TRANSACTION,messageWrapperProtoHelper));
 

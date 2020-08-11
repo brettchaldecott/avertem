@@ -125,6 +125,20 @@ keto::event::Event EventRegistry::electRpcProcessPublish(const keto::event::Even
     return event;
 }
 
+keto::event::Event EventRegistry::setPublishedElectionInfo(const keto::event::Event& event) {
+    keto::election_common::PublishedElectionInformationHelperPtr publishedElectionInformationHelperPtr(
+            new keto::election_common::PublishedElectionInformationHelper(
+                    keto::server_common::fromEvent<keto::proto::PublishedElectionInformation>(event)));
+    TangleServiceCache::getInstance()->setPublishedElection(publishedElectionInformationHelperPtr);
+    return event;
+}
+
+keto::event::Event EventRegistry::getPublishedElectionInfo(const keto::event::Event& event) {
+    keto::election_common::PublishedElectionInformationHelperPtr publishedElectionInformationHelperPtr =
+        TangleServiceCache::getInstance()->getPublishedElection();
+    return keto::server_common::toEvent<keto::proto::PublishedElectionInformation>(*publishedElectionInformationHelperPtr);
+}
+
 keto::event::Event EventRegistry::electRpcProcessConfirmation(const keto::event::Event& event) {
     keto::election_common::ElectionConfirmationHelper electionConfirmationHelper(
             keto::server_common::fromEvent<keto::proto::ElectionConfirmation>(event));
@@ -191,6 +205,12 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::ROUTER_QUERY::ELECT_RPC_PROCESS_CONFIRMATION,
             &keto::router::EventRegistry::electRpcProcessConfirmation);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::ROUTER_QUERY::GET_PUBLISHED_ELECTION_INFO,
+            &keto::router::EventRegistry::getPublishedElectionInfo);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::ROUTER_QUERY::SET_PUBLISHED_ELECTION_INFO,
+            &keto::router::EventRegistry::setPublishedElectionInfo);
 
     keto::server_common::registerEventHandler (
             keto::server_common::Events::PRODUCER_QUERY::GET_PRODUCER,
@@ -201,6 +221,11 @@ void EventRegistry::deregisterEventHandlers() {
 
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::PRODUCER_QUERY::GET_PRODUCER);
+
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::ROUTER_QUERY::SET_PUBLISHED_ELECTION_INFO);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::ROUTER_QUERY::GET_PUBLISHED_ELECTION_INFO);
 
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::ROUTER_QUERY::ELECT_RPC_PROCESS_PUBLISH);

@@ -73,9 +73,20 @@ bool TangleServiceCache::AccountTangle::isGrowing() {
     return this->growing;
 }
 
+keto::election_common::ElectionPublishTangleAccountProtoHelperPtr TangleServiceCache::AccountTangle::getElectionPublishTangleAccountProtoHelper() {
+    keto::election_common::ElectionPublishTangleAccountProtoHelperPtr electionPublishTangleAccountProtoHelperPtr(
+            new keto::election_common::ElectionPublishTangleAccountProtoHelper());
+    electionPublishTangleAccountProtoHelperPtr->setAccount(this->accountHash);
+    for (TanglePtr tanglePtr: this->tangleList) {
+        electionPublishTangleAccountProtoHelperPtr->addTangle(tanglePtr->getTangle());
+    }
+    electionPublishTangleAccountProtoHelperPtr->setGrowing(this->growing);
+    return electionPublishTangleAccountProtoHelperPtr;
+}
+
 static TangleServiceCachePtr singleton;
 
-TangleServiceCache::TangleServiceCache() {
+TangleServiceCache::TangleServiceCache() :activeSession(false) {
 }
 
 TangleServiceCache::~TangleServiceCache() {
@@ -142,6 +153,7 @@ void TangleServiceCache::publish(const keto::election_common::ElectionPublishTan
 
 void TangleServiceCache::confirmation(const keto::election_common::ElectionConfirmationHelper& electionConfirmationHelper) {
     std::lock_guard<std::mutex> guard(classMutex);
+    this->activeSession = true;
     AccountTanglePtr accountTanglePtr = this->nextSessionAccounts[electionConfirmationHelper.getAccount()];
     if (!accountTanglePtr) {
         this->nextSessionAccounts.erase(electionConfirmationHelper.getAccount());
@@ -159,6 +171,28 @@ void TangleServiceCache::confirmation(const keto::election_common::ElectionConfi
     this->nextSessionAccounts.erase(electionConfirmationHelper.getAccount());
     KETO_LOG_INFO << "[TangleServiceCache::confirmation] Added the account [" << electionConfirmationHelper.getAccount().getHash(keto::common::StringEncoding::HEX)
         << "] to the tangle cache list";
+}
+
+keto::election_common::PublishedElectionInformationHelperPtr TangleServiceCache::getPublishedElection() {
+    std::lock_guard<std::mutex> guard(classMutex);
+    keto::election_common::PublishedElectionInformationHelperPtr publishedElectionInformationHelperPtr(new keto::election_common::PublishedElectionInformationHelper());
+
+    for (std::map<std::string, AccountTanglePtr>::iterator iter = this->sessionAccounts.begin(); iter != this->sessionAccounts.end(); iter++) {
+        publishedElectionInformationHelperPtr->addElectionPublishTangleAccount(iter->second->getElectionPublishTangleAccountProtoHelper());
+    }
+
+    return publishedElectionInformationHelperPtr;
+}
+
+void TangleServiceCache::setPublishedElection(const keto::election_common::PublishedElectionInformationHelperPtr& publishedElectionInformationHelperPtr) {
+    std::lock_guard<std::mutex> guard(classMutex);
+    if (this->activeSession) {
+        return;
+    }
+    for (keto::election_common::ElectionPublishTangleAccountProtoHelperPtr electionPublishTangleAccountProtoHelperPtr : publishedElectionInformationHelperPtr->getElectionPublishTangleAccounts()) {
+        this->sessionAccounts[electionPublishTangleAccountProtoHelperPtr->getAccount()] = AccountTanglePtr(new AccountTangle(*electionPublishTangleAccountProtoHelperPtr));
+    }
+    this->activeSession = true;
 }
 
 keto::chain_query_common::ProducerResultProtoHelper TangleServiceCache::getProducers() {

@@ -55,6 +55,10 @@ keto::event::Event EventRegistry::requestNetworkState(const keto::event::Event& 
     return RpcSessionManager::getInstance()->requestNetworkState(event);
 }
 
+keto::event::Event EventRegistry::activateNetworkState(const keto::event::Event& event) {
+    return RpcSessionManager::getInstance()->activateNetworkState(event);
+}
+
 keto::event::Event EventRegistry::requestBlockSync(const keto::event::Event& event) {
     return RpcSessionManager::getInstance()->requestBlockSync(event);
 }
@@ -141,6 +145,9 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::REQUEST_NETWORK_STATE_CLIENT,
             &keto::rpc_client::EventRegistry::requestNetworkState);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::ACTIVATE_NETWORK_STATE_CLIENT,
+            &keto::rpc_client::EventRegistry::activateNetworkState);
 
     // peer push methods
     keto::server_common::registerEventHandler (

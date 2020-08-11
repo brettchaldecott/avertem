@@ -92,6 +92,7 @@ public:
     keto::event::Event electBlockProducer(const keto::event::Event& event);
     keto::event::Event activatePeers(const keto::event::Event& event);
     keto::event::Event requestNetworkState(const keto::event::Event& event);
+    keto::event::Event activateNetworkState(const keto::event::Event& event);
     keto::event::Event requestBlockSync(const keto::event::Event& event);
 
     keto::event::Event electBlockProducerPublish(const keto::event::Event& event);
@@ -107,6 +108,7 @@ protected:
     void setExternalHostname(
             const std::string& externalHostname);
     bool hasNetworkState();
+    void enableNetworkState();
     
 private:
     boost::asio::ip::address serverIp;

@@ -11,6 +11,7 @@
 #include "keto/environment/EnvironmentManager.hpp"
 #include "keto/environment/Constants.hpp"
 #include "keto/module/ModuleManager.hpp"
+#include "keto/module/StateMonitor.hpp"
 
 namespace ketoEnv = keto::environment;
 namespace ketoCommon = keto::common;
@@ -18,7 +19,6 @@ namespace ketoModule = keto::module;
 
 // the shared ptr for the module manager
 std::shared_ptr<ketoModule::ModuleManager> moduleManagerPtr;
-
 
 boost::program_options::options_description generateOptionDescriptions() {
     boost::program_options::options_description optionDescripion;
@@ -31,23 +31,23 @@ boost::program_options::options_description generateOptionDescriptions() {
 }
 
 void signalHandler(int signal) {
-    std::cerr << "####################################################################" << std::endl;
-    std::cerr << "Keto has been signaled to shut down signal: " << signal << std::endl;
-    std::cerr << "####################################################################" << std::endl;
+    KETO_LOG_ERROR << "####################################################################";
+    KETO_LOG_ERROR << "Avertem has been signaled to shut down signal: " << signal;
+    KETO_LOG_ERROR << "####################################################################";
     if (moduleManagerPtr) {
         moduleManagerPtr->terminate();
     }
 }
 
 void signalAbortHandler(int signal) {
-    std::cerr << "####################################################################" << std::endl;
-    std::cerr << "Keto is ABORTING: this is most likely due to an environmental issue." << std::endl;
-    std::cerr << "Please check the following : " << std::endl;
-    std::cerr << "  - enough file handles " << std::endl;
-    std::cerr << "  - enough memory " << std::endl;
-    std::cerr << "  - enough disk space " << std::endl;
-    std::cerr << "  - Keto Shell and Modules are alligned" << std::endl;
-    std::cerr << "####################################################################" << std::endl;
+    KETO_LOG_ERROR << "####################################################################";
+    KETO_LOG_ERROR << "Avertem is ABORTING: this is most likely due to an environmental issue.";
+    KETO_LOG_ERROR << "Please check the following : ";
+    KETO_LOG_ERROR << "  - enough file handles ";
+    KETO_LOG_ERROR << "  - enough memory ";
+    KETO_LOG_ERROR << "  - enough disk space ";
+    KETO_LOG_ERROR << "  - Keto Shell and Modules are alligned";
+    KETO_LOG_ERROR << "####################################################################";
     if (moduleManagerPtr) {
         moduleManagerPtr->terminate();
     }
@@ -57,12 +57,13 @@ void signalAbortHandler(int signal) {
 int main(int argc, char** argv)
 {
     try {
+        keto::module::StateMonitor::init();
         // setup the signal handler
         signal(SIGINT, signalHandler);
         signal(SIGHUP, signalHandler);
         signal(SIGTERM, signalHandler);
         signal(SIGABRT, signalAbortHandler);
-        
+
         // setup the environment
         boost::program_options::options_description optionDescription =
                 generateOptionDescriptions();
@@ -75,11 +76,13 @@ int main(int argc, char** argv)
         
         if (config->getVariablesMap().count(ketoEnv::Constants::KETO_VERSION)) {
             std::cout << ketoCommon::MetaInfo::VERSION << std::endl;
+            keto::module::StateMonitor::fin();
             return 0;
         }
         
         if (config->getVariablesMap().count(ketoEnv::Constants::KETO_HELP)) {
             std::cout <<  optionDescription << std::endl;
+            keto::module::StateMonitor::fin();
             return 0;
         }
         
@@ -88,9 +91,17 @@ int main(int argc, char** argv)
         
         KETO_LOG_INFO << "Load the module";
         moduleManagerPtr->load();
-        
+
+        //KETO_LOG_INFO << "Setup signal handlers";
+        //signal(SIGINT, signalHandler);
+        //signal(SIGHUP, signalHandler);
+        //signal(SIGTERM, signalHandler);
+        //signal(SIGABRT, signalAbortHandler);
+
         KETO_LOG_INFO << "Monitor the modules";
         moduleManagerPtr->monitor();
+        KETO_LOG_INFO << "Wait to unload";
+        keto::module::StateMonitor::getInstance()->monitor();
         
         KETO_LOG_INFO << "Unload the module";
         moduleManagerPtr->unload();
@@ -106,6 +117,7 @@ int main(int argc, char** argv)
         if (moduleManagerPtr) {
             moduleManagerPtr->unload();
         }
+        keto::module::StateMonitor::fin();
         return -1;
     } catch (boost::exception& ex) {
         std::cerr << "[boost::exception]Keto exited unexpectedly : " << boost::diagnostic_information(ex,true) << std::endl;
@@ -114,6 +126,7 @@ int main(int argc, char** argv)
         if (moduleManagerPtr) {
             moduleManagerPtr->unload();
         }
+        keto::module::StateMonitor::fin();
         return -1;
     } catch (std::exception& ex) {
         std::cerr << "[std::exception]Keto exited unexpectedly : " << std::endl;
@@ -123,6 +136,7 @@ int main(int argc, char** argv)
         if (moduleManagerPtr) {
             moduleManagerPtr->unload();
         }
+        keto::module::StateMonitor::fin();
         return -1;
     } catch (...) {
         std::cerr << "[unknown]Keto exited unexpectedly : " << std::endl;
@@ -132,6 +146,7 @@ int main(int argc, char** argv)
         if (moduleManagerPtr) {
             moduleManagerPtr->unload();
         }
+        keto::module::StateMonitor::fin();
         return -1;
     }
     KETO_LOG_INFO << "Exit";

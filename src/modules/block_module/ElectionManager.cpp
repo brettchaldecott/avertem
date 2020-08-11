@@ -6,6 +6,8 @@
 
 #include <botan/hex.h>
 
+#include "Route.pb.h"
+
 #include "keto/block/BlockProducer.hpp"
 #include "keto/block/ElectionManager.hpp"
 #include "keto/block/Constants.hpp"
@@ -39,6 +41,7 @@
 #include "keto/software_consensus/ModuleHashMessageHelper.hpp"
 
 #include "keto/key_store_utils/Events.hpp"
+#include "keto/module/StateMonitor.hpp"
 
 namespace keto {
 namespace block {
@@ -121,6 +124,7 @@ keto::event::Event ElectionManager::consensusHeartbeat(const keto::event::Event&
 
     if (protocolHeartbeatMessageHelper.getNetworkSlot() == protocolHeartbeatMessageHelper.getElectionSlot()) {
         KETO_LOG_DEBUG << "[ElectionManager::consensusHeartbeat] clean out the election information : " << state;
+        keto::module::StateMonitor::getInstance()->activate();
         this->accountElectionResult.clear();
         this->responseCount = 0;
         this->nextWindow.clear();
@@ -134,6 +138,13 @@ keto::event::Event ElectionManager::consensusHeartbeat(const keto::event::Event&
             KETO_LOG_INFO << "[ElectionManager::consensusHeartbeat] after running the election";
         }
 
+        // these method are currently not completely implemented but are there as a means to sync with the network state
+        // should this later be required.
+        keto::proto::RequestNetworkState requestNetworkState;
+        keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::RequestNetworkState>(
+                keto::server_common::Events::ACTIVATE_NETWORK_STATE_CLIENT,requestNetworkState));
+        keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::RequestNetworkState>(
+                keto::server_common::Events::ACTIVATE_NETWORK_STATE_CLIENT,requestNetworkState));
     } else if (protocolHeartbeatMessageHelper.getNetworkSlot() == protocolHeartbeatMessageHelper.getElectionPublishSlot()){
         if (state == BlockProducer::State::block_producer) {
             KETO_LOG_INFO << "[BlockProducer::consensusHeartbeat] the election publish has been called";
@@ -244,7 +255,6 @@ keto::event::Event ElectionManager::electRpcProcessConfirmation(const keto::even
         KETO_LOG_INFO << "[ElectionManager::electRpcProcessConfirmation]######## Node is now a producer [" <<
             Botan::hex_encode(keto::server_common::ServerInfo::getInstance()->getAccountHash(),true) << "] ########";
         KETO_LOG_INFO << "[ElectionManager::electRpcProcessConfirmation]####################################################################";
-
     } else if (!this->nextWindow.size() && this->state == ElectionManager::State::CONFIRMATION) {
         KETO_LOG_DEBUG << "[ElectionManager::electRpcProcessConfirmation] this node is not elected clear it.";
         BlockProducer::getInstance()->setActiveTangles(nextWindow);
@@ -253,6 +263,7 @@ keto::event::Event ElectionManager::electRpcProcessConfirmation(const keto::even
         KETO_LOG_INFO << "[ElectionManager::electRpcProcessConfirmation]######## Node is no longer a producer [" <<
                       Botan::hex_encode(keto::server_common::ServerInfo::getInstance()->getAccountHash(),true) << "] ########";
         KETO_LOG_INFO << "[ElectionManager::electRpcProcessConfirmation]####################################################################";
+        keto::module::StateMonitor::getInstance()->deactivate();
     }
 
     return event;

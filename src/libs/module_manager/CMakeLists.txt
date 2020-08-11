@@ -6,6 +6,7 @@ add_library( keto_module_manager
             ModuleManager.cpp 
             ModuleWrapper.cpp
         ../server_common/include/keto/server_common/ModuleSession.hpp
+            StateMonitor.cpp
             
              ${HEADERS}
            )

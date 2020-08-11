@@ -81,10 +81,15 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::REQUEST_NETWORK_STATE_SERVER,
             &keto::rpc_server::EventRegistry::requestNetworkState);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::ACTIVATE_NETWORK_STATE_SERVER,
+            &keto::rpc_server::EventRegistry::activateNetworkState);
 }
 
 void EventRegistry::deregisterEventHandlers() {
 
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::ACTIVATE_NETWORK_STATE_SERVER);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::REQUEST_NETWORK_STATE_SERVER);
 
@@ -178,6 +183,11 @@ keto::event::Event EventRegistry::activatePeers(const keto::event::Event& event)
 keto::event::Event EventRegistry::requestNetworkState(const keto::event::Event& event) {
     KETO_LOG_DEBUG << "[EventRegistry::requestNetworkState] request network state";
     return RpcServer::getInstance()->requestNetworkState(event);
+}
+
+keto::event::Event EventRegistry::activateNetworkState(const keto::event::Event& event) {
+    KETO_LOG_DEBUG << "[EventRegistry::activateNetworkState] activate network state";
+    return RpcServer::getInstance()->activateNetworkState(event);
 }
 
 keto::event::Event EventRegistry::requestBlockSync(const keto::event::Event& event) {

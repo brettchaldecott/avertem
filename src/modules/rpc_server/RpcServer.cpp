@@ -73,6 +73,7 @@
 #include "keto/election_common/ElectionResultCache.hpp"
 #include "keto/election_common/ElectionUtils.hpp"
 #include "keto/election_common/Constants.hpp"
+#include "keto/election_common/PublishedElectionInformationHelper.hpp"
 
 
 #include "keto/rpc_protocol/NetworkStatusHelper.hpp"
@@ -1182,12 +1183,25 @@ public:
     std::string handleClientNetworkComplete(const std::string& command, const std::string& payload) {
         KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleClientNetworkComplete] The client has completed networking";
         std::stringstream ss;
-
         // At present the network status is not required
-        //if (!RpcServer::getInstance()->hasNetworkState()) {
-        //    ss << keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_STATUS
-        //       << " " << keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_STATUS;
-        //}
+        if (!RpcServer::getInstance()->hasNetworkState()) {
+            KETO_LOG_ERROR << "[RpcServer][" << getAccount() << "][handleClientNetworkComplete] request network status";
+            ss << keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_STATUS
+               << " " << keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_STATUS;
+        } else {
+            // respond with the published election information
+            keto::proto::PublishedElectionInformation publishedElectionInformation;
+            publishedElectionInformation =
+                    keto::server_common::fromEvent<keto::proto::PublishedElectionInformation>(
+                            keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::PublishedElectionInformation>(
+                                    keto::server_common::Events::ROUTER_QUERY::GET_PUBLISHED_ELECTION_INFO,publishedElectionInformation)));
+
+            std::string result = publishedElectionInformation.SerializeAsString();
+            KETO_LOG_DEBUG << "[RpcSession][handleRequestNetworkStatus] retrieve the network status";
+            ss << keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_STATUS
+               << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
+            KETO_LOG_DEBUG << "[RpcSession][handleRequestNetworkStatus] provide the network status";
+        }
         // at present there is no requirement to activate as this is handled in the registration response.
         //if (RpcServer::getInstance()->isServerActive()) {
         //    keto::router_utils::RpcPeerHelper rpcPeerHelper;
@@ -1202,13 +1216,15 @@ public:
     }
 
     std::string handleResponseNetworkStatus(const std::string& command, const std::string& payload) {
-        keto::rpc_protocol::NetworkStatusHelper networkStatusHelper(
+        keto::election_common::PublishedElectionInformationHelper publishedElectionInformationHelper(
                 keto::server_common::VectorUtils().copyVectorToString(
                         Botan::hex_decode(payload)));
 
-        keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::NetworkStatus>(
-                keto::server_common::Events::UPDATE_NETWORK_STATE,networkStatusHelper));
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleBlockPush] pushed the block";
+        KETO_LOG_ERROR << "[RpcServer][" << getAccount() << "][handleResponseNetworkStatus] set the network status";
+        keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::PublishedElectionInformation>(
+                keto::server_common::Events::ROUTER_QUERY::SET_PUBLISHED_ELECTION_INFO,publishedElectionInformationHelper));
+        RpcServer::getInstance()->enableNetworkState();
+        KETO_LOG_ERROR << "[RpcServer][" << getAccount() << "][handleResponseNetworkStatus] setup network status";
 
         return std::string();
     }
@@ -1587,6 +1603,16 @@ bool RpcServer::hasNetworkState() {
     return this->networkState;
 }
 
+
+void RpcServer::enableNetworkState() {
+    keto::proto::RequestNetworkState requestNetworkState;
+    // these method are currently not completely implemented but are there as a means to sync with the network state
+    // should this later be required.
+    keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::RequestNetworkState>(
+            keto::server_common::Events::ACTIVATE_NETWORK_STATE_CLIENT,requestNetworkState));
+    this->networkState = true;
+}
+
 keto::crypto::SecureVector RpcServer::getSecret() {
     return this->secret;
 }
@@ -1815,6 +1841,14 @@ keto::event::Event RpcServer::activatePeers(const keto::event::Event& event) {
 keto::event::Event RpcServer::requestNetworkState(const keto::event::Event& event) {
     KETO_LOG_INFO << "Request network state from client";
     this->networkState = false;
+    return event;
+}
+
+keto::event::Event RpcServer::activateNetworkState(const keto::event::Event& event) {
+    if (!this->networkState) {
+        KETO_LOG_INFO << "Activte network state from client";
+        this->networkState = true;
+    }
     return event;
 }
 

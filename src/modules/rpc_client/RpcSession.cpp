@@ -72,6 +72,7 @@
 
 #include "keto/election_common/ElectionPeerMessageProtoHelper.hpp"
 #include "keto/election_common/ElectionResultMessageProtoHelper.hpp"
+#include "keto/election_common/PublishedElectionInformationHelper.hpp"
 #include "keto/election_common/ElectionUtils.hpp"
 #include "keto/election_common/Constants.hpp"
 
@@ -528,6 +529,12 @@ void RpcSession::processQueueEntry(const ReadQueueEntryPtr& readQueueEntryPtr) {
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION) == 0) {
             handleElectionConfirmation(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION,
                                        stringVector[1]);
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_STATUS) == 0) {
+            message = handleRequestNetworkStatus(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_STATUS,
+                                       stringVector[1]);
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_STATUS) == 0) {
+            handleResponseNetworkStatus(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_STATUS,
+                                                 stringVector[1]);
         }
         transactionPtr->commit();
     } catch (keto::common::Exception &ex) {
@@ -881,6 +888,38 @@ void RpcSession::handleElectionConfirmation(const std::string& command, const st
     KETO_LOG_DEBUG << "[RpcSession::handleElectionConfirmation] election process confirmation";
     keto::election_common::ElectionUtils(keto::election_common::Constants::ELECTION_PROCESS_CONFIRMATION).
             confirmation(electionConfirmationHelper);
+}
+
+
+std::string RpcSession::handleRequestNetworkStatus(const std::string& command, const std::string& message) {
+    keto::proto::PublishedElectionInformation publishedElectionInformation;
+    publishedElectionInformation =
+            keto::server_common::fromEvent<keto::proto::PublishedElectionInformation>(
+                    keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::PublishedElectionInformation>(
+                            keto::server_common::Events::ROUTER_QUERY::GET_PUBLISHED_ELECTION_INFO,publishedElectionInformation)));
+
+    std::string result = publishedElectionInformation.SerializeAsString();
+    KETO_LOG_DEBUG << "[RpcSession][handleRequestNetworkStatus] retrieve the network status";
+    std::stringstream ss;
+    ss << keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_STATUS
+       << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
+    KETO_LOG_DEBUG << "[RpcSession][handleRequestNetworkStatus] provide the network status";
+    return ss.str();
+}
+
+
+void RpcSession::handleResponseNetworkStatus(const std::string& command, const std::string& message) {
+    if (RpcSessionManager::getInstance()->hasNetworkState()) {
+        return;
+    }
+    keto::election_common::PublishedElectionInformationHelper publishedElectionInformationHelper(
+            keto::server_common::VectorUtils().copyVectorToString(
+                    Botan::hex_decode(message)));
+
+    keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::PublishedElectionInformation>(
+                            keto::server_common::Events::ROUTER_QUERY::SET_PUBLISHED_ELECTION_INFO,publishedElectionInformationHelper));
+    RpcSessionManager::getInstance()->activateNetworkState();
+    KETO_LOG_DEBUG << "[RpcSession][handleRequestNetworkStatus] provide the network status";
 }
 
 

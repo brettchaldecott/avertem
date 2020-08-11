@@ -76,6 +76,8 @@ public:
     // network state information
     static const char* REQUEST_NETWORK_STATE_CLIENT;
     static const char* REQUEST_NETWORK_STATE_SERVER;
+    static const char* ACTIVATE_NETWORK_STATE_CLIENT;
+    static const char* ACTIVATE_NETWORK_STATE_SERVER;
     static const char* UPDATE_NETWORK_STATE;
 
     // balancer
@@ -263,6 +265,8 @@ public:
         static const char* ELECT_RPC_PROCESS_CONFIRMATION;
         static const char* PUSH_RPC_PEER;
         static const char* PROCESS_PUSH_RPC_PEER;
+        static const char* GET_PUBLISHED_ELECTION_INFO;
+        static const char* SET_PUBLISHED_ELECTION_INFO;
     };
 
     class BLOCK_QUERY {

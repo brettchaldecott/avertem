@@ -22,6 +22,7 @@
 #include "keto/router_utils/RpcPeerHelper.hpp"
 #include "keto/election_common/ElectionPublishTangleAccountProtoHelper.hpp"
 #include "keto/election_common/ElectionConfirmationHelper.hpp"
+#include "keto/election_common/PublishedElectionInformationHelper.hpp"
 
 #include "keto/chain_query_common/ProducerResultProtoHelper.hpp"
 
@@ -66,6 +67,7 @@ public:
         TanglePtr getTangle(const keto::asn1::HashHelper& tangle);
         std::vector<keto::asn1::HashHelper> getTangles();
         bool isGrowing();
+        keto::election_common::ElectionPublishTangleAccountProtoHelperPtr getElectionPublishTangleAccountProtoHelper();
 
     private:
         keto::asn1::HashHelper accountHash;
@@ -92,11 +94,14 @@ public:
 
     void publish(const keto::election_common::ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper);
     void confirmation(const keto::election_common::ElectionConfirmationHelper& electionPublishTangleAccountProtoHelper);
+    keto::election_common::PublishedElectionInformationHelperPtr getPublishedElection();
+    void setPublishedElection(const keto::election_common::PublishedElectionInformationHelperPtr& publishedElectionInformationHelperPtr);
 
     keto::chain_query_common::ProducerResultProtoHelper getProducers();
 
 private:
     std::mutex classMutex;
+    bool activeSession;
     std::map<std::string,AccountTanglePtr> sessionAccounts;
     std::map<std::string,AccountTanglePtr> nextSessionAccounts;
 
