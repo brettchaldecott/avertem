@@ -66,10 +66,10 @@ void BlockSyncManager::sync() {
     KETO_LOG_INFO << "[BlockSyncManager::sync] attempt to get the last block hash";
     this->tangleHashes = keto::block_db::BlockChainStore::getInstance()->getLastBlockHashs();
 
-    KETO_LOG_DEBUG << "[BlockSyncManager::sync] loop through the signed blocks : " << this->tangleHashes.size();
+    //KETO_LOG_DEBUG << "[BlockSyncManager::sync] loop through the signed blocks : " << this->tangleHashes.size();
     keto::block_db::SignedBlockBatchRequestProtoHelper signedBlockBatchRequestProtoHelper;
     for (keto::asn1::HashHelper hash: this->tangleHashes) {
-        KETO_LOG_DEBUG << "[BlockSyncManager::sync] add the block hash to the list : " << hash.getHash(keto::common::HEX);
+        KETO_LOG_INFO << "[BlockSyncManager::sync] add the block hash to the list : " << hash.getHash(keto::common::HEX);
         signedBlockBatchRequestProtoHelper.addHash(hash);
     }
 
@@ -78,7 +78,7 @@ void BlockSyncManager::sync() {
         keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::SignedBlockBatchRequest>(
                 keto::server_common::Events::RPC_CLIENT_REQUEST_BLOCK_SYNC, signedBlockBatchRequestProtoHelper));
 
-        KETO_LOG_DEBUG << "[BlockSyncManager::sync] reset the start time for the sync";
+        //KETO_LOG_DEBUG << "[BlockSyncManager::sync] reset the start time for the sync";
         {
             std::unique_lock<std::mutex> uniqueLock(this->classMutex);
             this->startTime = time(0);
@@ -107,9 +107,9 @@ keto::proto::SignedBlockBatchMessage  BlockSyncManager::requestBlocks(const keto
     // pull the block sync information
     keto::block_db::SignedBlockBatchRequestProtoHelper signedBlockBatchRequestProtoHelper(signedBlockBatchRequest);
     std::vector<keto::asn1::HashHelper> tangledHashes;
-    KETO_LOG_DEBUG<< "[BlockSyncManager::requestBlocks]" << " Request blocks : " << signedBlockBatchRequestProtoHelper.hashCount();
+    //KETO_LOG_DEBUG<< "[BlockSyncManager::requestBlocks]" << " Request blocks : " << signedBlockBatchRequestProtoHelper.hashCount();
     for (int index = 0; index < signedBlockBatchRequestProtoHelper.hashCount(); index++) {
-        KETO_LOG_DEBUG<< "[BlockSyncManager::requestBlocks]" << " Request block sync for the following block  : " <<
+        KETO_LOG_INFO << "[BlockSyncManager::requestBlocks]" << " Request block sync for the following block  : " <<
             signedBlockBatchRequestProtoHelper.getHash(index).getHash(keto::common::HEX);
         tangledHashes.push_back(signedBlockBatchRequestProtoHelper.getHash(index));
     }
@@ -153,7 +153,7 @@ keto::proto::MessageWrapperResponse  BlockSyncManager::processBlockSyncResponse(
 
 void
 BlockSyncManager::processRequestBlockSyncRetry() {
-    KETO_LOG_DEBUG << "[BlockSyncManager::processRequestBlockSyncRetry] trigger the retry by resetting the start time";
+    //KETO_LOG_DEBUG << "[BlockSyncManager::processRequestBlockSyncRetry] trigger the retry by resetting the start time";
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
     // reschedule to run in a minutes time
     this->startTime = time(0) - Constants::SYNC_RETRY_DELAY_MIN;
@@ -193,11 +193,11 @@ void BlockSyncManager::broadcastBlock(const keto::block_db::SignedBlockWrapperMe
             signedBlockWrapperMessageProtoHelper;
     keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::SignedBlockWrapperMessage>(
             keto::server_common::Events::RPC_SERVER_BLOCK,_signedBlockWrapperMessageProtoHelper));
-    KETO_LOG_DEBUG << "[BlockSyncManager::broadcastBlock] push block via the client : "
+    KETO_LOG_INFO << "[BlockSyncManager::broadcastBlock] push block via the client : "
                 << signedBlockWrapperMessageProtoHelper.getMessageHash().getHash(keto::common::StringEncoding::HEX);
     keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::SignedBlockWrapperMessage>(
             keto::server_common::Events::RPC_CLIENT_BLOCK,_signedBlockWrapperMessageProtoHelper));
-    KETO_LOG_DEBUG << "[BlockSyncManager::broadcastBlock] push block via the server : "
+    KETO_LOG_INFO << "[BlockSyncManager::broadcastBlock] push block via the server : "
                    << signedBlockWrapperMessageProtoHelper.getMessageHash().getHash(keto::common::StringEncoding::HEX);
 }
 

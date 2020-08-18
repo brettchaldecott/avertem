@@ -30,11 +30,9 @@ return OBFUSCATED("$Id$");
 
 
 MemoryVaultModuleManager::MemoryVaultModuleManager() {
-    KETO_LOG_INFO << "The memory vault module manager has been loaded";
 }
 
 MemoryVaultModuleManager::~MemoryVaultModuleManager() {
-    KETO_LOG_INFO << "The test module manager has been unloaded";
 }
 
 // meta methods

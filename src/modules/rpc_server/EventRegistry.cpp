@@ -145,48 +145,39 @@ keto::event::Event EventRegistry::pushBlock(const keto::event::Event& event) {
 keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Event& event) {
     keto::software_consensus::ConsensusStateManager::getInstance()->setState(
             keto::software_consensus::ConsensusStateManager::ACCEPTED);
-    KETO_LOG_DEBUG << "[EventRegistry::consensusSessionAccepted] the node has been accepted";
     return RpcServer::getInstance()->performNetworkSessionReset(event);
 }
 
 keto::event::Event EventRegistry::consensusProtocolCheck(const keto::event::Event& event) {
-    KETO_LOG_DEBUG << "[EventRegistry::consensusSessionAccepted] the node has been accepted";
     return RpcServer::getInstance()->performProtocoCheck(event);
 }
 
 keto::event::Event EventRegistry::consensusHeartbeat(const keto::event::Event& event) {
-    KETO_LOG_DEBUG << "[EventRegistry::consensusHeartbeat] consensus heart beat";
     return RpcServer::getInstance()->performConsensusHeartbeat(event);
 }
 
 keto::event::Event EventRegistry::electBlockProducer(const keto::event::Event& event) {
-    KETO_LOG_DEBUG << "[EventRegistry::electBlockProducer] elect a block producer";
     return RpcServer::getInstance()->electBlockProducer(event);
 }
 
 keto::event::Event EventRegistry::electRpcPublishServer(const keto::event::Event& event) {
-    KETO_LOG_DEBUG << "[EventRegistry::electRpcPublishServer] the node has been accepted";
     return RpcServer::getInstance()->electBlockProducerPublish(event);
 }
 
 keto::event::Event EventRegistry::electRpcConfirmationServer(const keto::event::Event& event) {
-    KETO_LOG_DEBUG << "[EventRegistry::consensusHeartbeat] the node has been accepted";
     return RpcServer::getInstance()->electBlockProducerConfirmation(event);
 }
 
 
 keto::event::Event EventRegistry::activatePeers(const keto::event::Event& event) {
-    KETO_LOG_DEBUG << "[EventRegistry::activatePeers] the node has been accepted";
     return RpcServer::getInstance()->activatePeers(event);
 }
 
 keto::event::Event EventRegistry::requestNetworkState(const keto::event::Event& event) {
-    KETO_LOG_DEBUG << "[EventRegistry::requestNetworkState] request network state";
     return RpcServer::getInstance()->requestNetworkState(event);
 }
 
 keto::event::Event EventRegistry::activateNetworkState(const keto::event::Event& event) {
-    KETO_LOG_DEBUG << "[EventRegistry::activateNetworkState] activate network state";
     return RpcServer::getInstance()->activateNetworkState(event);
 }
 

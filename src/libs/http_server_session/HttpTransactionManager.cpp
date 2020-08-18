@@ -149,11 +149,11 @@ bool HttpTransactionManager::validateSignature(
             keto::account_query::AccountSparqlQueryHelper(keto::server_common::Events::SPARQL_QUERY_WITH_RESULTSET_MESSAGE,
                                                           accountHash,ss.str()).execute();
     if (resultVectorMap.size() != 1) {
-        KETO_LOG_INFO << "Cannot find the account";
+        //KETO_LOG_INFO << "Cannot find the account";
         return false;
     }
 
-    KETO_LOG_ERROR << "Load the public key : " << resultVectorMap[0]["publicKey"];
+    //KETO_LOG_ERROR << "Load the public key : " << resultVectorMap[0]["publicKey"];
     if (!keto::crypto::SignatureVerification(Botan::hex_decode(resultVectorMap[0]["publicKey"]),
                                              (std::vector<uint8_t>)transactionHash).check(transactionSignature)) {
         KETO_LOG_ERROR << "The signature is invalid [" << transactionHash.getHash(keto::common::HEX) << "][" <<

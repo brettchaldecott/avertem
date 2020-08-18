@@ -34,12 +34,10 @@ StatePersistanceManager::StatePersistanceObject::~StatePersistanceObject() {
 }
 
 StatePersistanceManager::StatePersistanceObject::operator std::string() {
-    KETO_LOG_DEBUG << "The string operator is being called";
     return this->statePersistanceManager->pTree.get<std::string>(key);
 }
 
 StatePersistanceManager::StatePersistanceObject::operator bool() {
-    KETO_LOG_DEBUG << "Get the bool value";
     if (this->statePersistanceManager->pTree.get<std::string>(key) == "true") {
         return true;
     }
@@ -47,30 +45,25 @@ StatePersistanceManager::StatePersistanceObject::operator bool() {
 }
 
 StatePersistanceManager::StatePersistanceObject::operator long() {
-    KETO_LOG_DEBUG << "Get the long value";
     return this->statePersistanceManager->pTree.get<long>(key);
 }
 
 void StatePersistanceManager::StatePersistanceObject::set(const char* value) {
-    KETO_LOG_DEBUG << "Set the string key [" << key << "][" << value << "]";
     this->statePersistanceManager->pTree.put(key,value);
     this->statePersistanceManager->setDirty();
 }
 
 void StatePersistanceManager::StatePersistanceObject::set(const std::string& value) {
-    KETO_LOG_DEBUG << "Set the string key [" << key << "][" << value << "]";
     this->statePersistanceManager->pTree.put(key,value);
     this->statePersistanceManager->setDirty();
 }
 
 void StatePersistanceManager::StatePersistanceObject::set(const bool value) {
-    KETO_LOG_DEBUG << "Set the bool key [" << key << "][" << value << "]";
     this->statePersistanceManager->pTree.put(key,value);
     this->statePersistanceManager->setDirty();
 }
 
 void StatePersistanceManager::StatePersistanceObject::set(const long value) {
-    KETO_LOG_DEBUG << "Set the long key [" << key << "][" << value << "]";
     this->statePersistanceManager->pTree.put(key,value);
     this->statePersistanceManager->setDirty();
 }

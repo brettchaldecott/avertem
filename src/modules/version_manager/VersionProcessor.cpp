@@ -49,7 +49,7 @@ VersionProcessor::VersionProcessor() {
     
     std::string autoUpdate = 
         config->getVariablesMap()[Constants::AUTO_UPDATE].as<std::string>();
-    KETO_LOG_DEBUG << "[VersionProcess] auto update : " << autoUpdate;    
+    KETO_LOG_INFO << "[VersionProcess] auto update : " << autoUpdate;
     this->autoUpdate = true;
     if (autoUpdate.compare("false") == 0) {
         this->autoUpdate = false;
@@ -94,11 +94,10 @@ VersionProcessorPtr VersionProcessor::getInstance() {
 }
 
 void VersionProcessor::run() {
-    KETO_LOG_DEBUG << "[VersionProcess] process run";
     while(!this->checkTerminated()) {
-        KETO_LOG_DEBUG << "[VersionProcess] perform check";
+        KETO_LOG_INFO << "[VersionProcess] perform check";
         performUpdateCheck();
-        KETO_LOG_DEBUG << "[VersionProcess] perform update check";
+        KETO_LOG_INFO << "[VersionProcess] perform update check";
     }
 }
 

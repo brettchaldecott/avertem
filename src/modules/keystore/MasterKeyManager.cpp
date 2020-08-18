@@ -34,7 +34,6 @@ MasterKeyManager::MasterKeyListEntry::MasterKeyListEntry() {
 }
 
 MasterKeyManager::MasterKeyListEntry::MasterKeyListEntry(const std::string& jsonString) {
-    //KETO_LOG_DEBUG << "The json string : " << jsonString;
     nlohmann::json jsonEntry = nlohmann::json::parse(jsonString);
     for (nlohmann::json::iterator it = jsonEntry.begin(); it != jsonEntry.end(); ++it) {
         this->keys.push_back(*it);
@@ -110,16 +109,12 @@ void MasterKeyManager::MasterSession::initSession() {
     initMasterKeys();
 
     try {
-        //KETO_LOG_DEBUG << "Init the session";
         Session::initSession();
 
         keto::event::Event event;
 
-        //KETO_LOG_DEBUG << "Set the master key";
         setMasterKey(event);
-        //KETO_LOG_DEBUG << "Set the wrapping keys";
         setWrappingKeys(event);
-        //KETO_LOG_DEBUG << "After setting the wrapping keys";
     }  catch (keto::common::Exception& ex) {
         KETO_LOG_ERROR << "[initSession]Failed to init the session : " << ex.what();
         KETO_LOG_ERROR << "[initSession]Cause: " << boost::diagnostic_information(ex,true);
@@ -163,16 +158,12 @@ keto::event::Event MasterKeyManager::MasterSession::getMasterKey(const keto::eve
 
 keto::event::Event MasterKeyManager::MasterSession::setMasterKey(const keto::event::Event& event) {
     // ignore this
-    //KETO_LOG_DEBUG << "Load the onions";
     keto::key_store_db::OnionKeys onionKeys;
     onionKeys.push_back(KeyStoreStorageManager::getInstance()->getKeyLoader()->getPrivateKey());
     onionKeys.push_back(this->masterKeyLock->getPrivateKey());
     keto::rpc_protocol::NetworkKeysHelper networkKeysHelper;
-    //KETO_LOG_DEBUG << "load the keys";
     this->loadKeys(this->masterKeyList, networkKeysHelper, onionKeys);
-    //KETO_LOG_DEBUG << "Set the keys";
     KeyStoreWrapIndexManager::getInstance()->setMasterKey(networkKeysHelper);
-    //KETO_LOG_DEBUG << "Return the keys";
     return event;
 }
 
@@ -195,9 +186,7 @@ keto::event::Event MasterKeyManager::MasterSession::setWrappingKeys(const keto::
     onionKeys.push_back(this->masterKeyLock->getPrivateKey());
     keto::rpc_protocol::NetworkKeysHelper networkKeysHelper;
     this->loadKeys(this->masterWrapperKeyList, networkKeysHelper, onionKeys);
-    //KETO_LOG_DEBUG << "Set the wrapping keys";
     KeyStoreWrapIndexManager::getInstance()->setWrappingKeys(networkKeysHelper);
-    //KETO_LOG_DEBUG << "After setting the wrapping keys";
     return event;
 }
 
@@ -209,18 +198,13 @@ void MasterKeyManager::MasterSession::initMasterKeys() {
 
     try {
         std::string value;
-        //KETO_LOG_DEBUG << "Get value";
         if (!this->keyStoreDBPtr->getValue(Constants::KEY_STORE_DB::KEY_STORE_MASTER_ENTRY, onionKeys, value)) {
-            //KETO_LOG_DEBUG << "Generate the keys";
             this->masterKeyList = generateKeys(1, onionKeys);
-            //KETO_LOG_DEBUG << "Set the value value";
             this->keyStoreDBPtr->setValue(Constants::KEY_STORE_DB::KEY_STORE_MASTER_ENTRY,
                                           this->masterKeyList->getJson(), onionKeys);
         } else {
-            //KETO_LOG_DEBUG << "Load the master key value";
             this->masterKeyList = MasterKeyListEntryPtr(new MasterKeyListEntry(value));
         }
-        //KETO_LOG_DEBUG << "Load the wrapper keys";
 
         if (!this->keyStoreDBPtr->getValue(Constants::KEY_STORE_DB::KEY_STORE_WRAPPER_ENTRY, onionKeys, value)) {
             KETO_LOG_DEBUG << "Generate the wrapper keys";
@@ -232,7 +216,6 @@ void MasterKeyManager::MasterSession::initMasterKeys() {
             KETO_LOG_DEBUG << "Load the wrapper values";
             this->masterWrapperKeyList = MasterKeyListEntryPtr(new MasterKeyListEntry(value));
         }
-        //KETO_LOG_DEBUG << "Finished initing the keys";
     } catch (keto::common::Exception& ex) {
         KETO_LOG_ERROR << "[initMasterKeys]Failed to add the master : " << ex.what();
         KETO_LOG_ERROR << "[initMasterKeys]Cause: " << boost::diagnostic_information(ex,true);
@@ -264,26 +247,18 @@ MasterKeyManager::MasterKeyListEntryPtr MasterKeyManager::MasterSession::generat
 
 void MasterKeyManager::MasterSession::loadKeys(MasterKeyManager::MasterKeyListEntryPtr keyList,
         keto::rpc_protocol::NetworkKeysHelper& networkKeysHelper, keto::key_store_db::OnionKeys& onionKeys) {
-    //KETO_LOG_DEBUG << "The list of keys";
     for (std::string key : keyList->getKeys()) {
         std::string value;
-        //KETO_LOG_DEBUG << "Get the key value";
         if (!this->keyStoreDBPtr->getValue(key,onionKeys,value)) {
             BOOST_THROW_EXCEPTION(keto::keystore::UnknownKeyException());
         }
-        //KETO_LOG_DEBUG << "Load the key : " << value;
         KeyStoreEntry keyStoreEntry(value);
         keto::rpc_protocol::NetworkKeyHelper networkKeyHelper;
-        //KETO_LOG_DEBUG << "Set the hash";
         networkKeyHelper.setHash(keyStoreEntry.getHash());
-        //KETO_LOG_DEBUG << "Load the key : " << value;
         networkKeyHelper.setKeyBytes(Botan::PKCS8::BER_encode(*keyStoreEntry.getPrivateKey()));
-        //KETO_LOG_DEBUG << "Get the active key";
         networkKeyHelper.setActive(keyStoreEntry.getActive());
-        //KETO_LOG_DEBUG << "The network key helper";
         networkKeysHelper.addNetworkKey(networkKeyHelper);
     }
-    //KETO_LOG_DEBUG << "After the keys";
 }
 
 
@@ -318,7 +293,7 @@ bool MasterKeyManager::SlaveSession::isMaster() const {
 keto::event::Event MasterKeyManager::SlaveSession::getMasterKey(const keto::event::Event& event) {
     std::lock_guard<std::mutex> uniqueLock(this->classMutex);
     if (!this->slaveMaster) {
-        KETO_LOG_ERROR << "[MasterKeyManager][SlaveSession][getMasterKey] the slave masters keys have not been set";
+        //KETO_LOG_ERROR << "[MasterKeyManager][SlaveSession][getMasterKey] the slave masters keys have not been set";
         BOOST_THROW_EXCEPTION(keto::keystore::NetworkSessionNotStartedException());
     }
     return keto::server_common::toEvent<keto::proto::NetworkKeysWrapper>(this->slaveMasterKeys);
@@ -326,10 +301,7 @@ keto::event::Event MasterKeyManager::SlaveSession::getMasterKey(const keto::even
 
 keto::event::Event MasterKeyManager::SlaveSession::setMasterKey(const keto::event::Event& event) {
     std::lock_guard<std::mutex> uniqueLock(this->classMutex);
-    KETO_LOG_DEBUG << "[MasterKeyManager][SlaveSession][setMasterKey] set up the slave master key";
-    //if (this->slaveMaster) {
-    //    return event;
-    //}
+    //KETO_LOG_DEBUG << "[MasterKeyManager][SlaveSession][setMasterKey] set up the slave master key";
     keto::proto::NetworkKeysWrapper networkKeysWrapper =
             keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(event);
     if (this->slaveMaster) {
@@ -355,9 +327,9 @@ keto::event::Event MasterKeyManager::SlaveSession::setMasterKey(const keto::even
 // this method returns the wrapping keys
 keto::event::Event MasterKeyManager::SlaveSession::getWrappingKeys(const keto::event::Event& event) {
     std::lock_guard<std::mutex> uniqueLock(this->classMutex);
-    KETO_LOG_DEBUG << "[MasterKeyManager][SlaveSession][getWrappingKeys] get the wrapping keys";
+    //KETO_LOG_DEBUG << "[MasterKeyManager][SlaveSession][getWrappingKeys] get the wrapping keys";
     if (!this->slaveWrapper) {
-        KETO_LOG_ERROR << "[MasterKeyManager][SlaveSession][getWrappingKeys] the slave wrapper keys have not been set";
+        //KETO_LOG_ERROR << "[MasterKeyManager][SlaveSession][getWrappingKeys] the slave wrapper keys have not been set";
         BOOST_THROW_EXCEPTION(keto::keystore::NetworkSessionNotStartedException());
     }
     return keto::server_common::toEvent<keto::proto::NetworkKeysWrapper>(this->slaveWrapperKeys);
@@ -365,7 +337,7 @@ keto::event::Event MasterKeyManager::SlaveSession::getWrappingKeys(const keto::e
 
 keto::event::Event MasterKeyManager::SlaveSession::setWrappingKeys(const keto::event::Event& event) {
     std::lock_guard<std::mutex> uniqueLock(this->classMutex);
-    KETO_LOG_DEBUG << "[MasterKeyManager][SlaveSession][setWrappingKeys] set up the slave wrapping keys";
+    //KETO_LOG_DEBUG << "[MasterKeyManager][SlaveSession][setWrappingKeys] set up the slave wrapping keys";
     if (this->slaveWrapper) {
         return event;
     }

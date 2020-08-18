@@ -140,7 +140,7 @@ WavmEngineWrapper::WavmEngineWrapper(const std::string& wast, const std::string&
 WavmEngineWrapper::~WavmEngineWrapper() {
     emscriptenProcess.reset();
     if (!WAVM::Runtime::tryCollectCompartment(std::move(compartment))) {
-        KETO_LOG_ERROR << "Failed to clean out the compartment";
+        //KETO_LOG_ERROR << "Failed to clean out the compartment";
     }
 }
 

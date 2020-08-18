@@ -43,7 +43,7 @@ std::string AccountGraphDirtySession::getName() {
 }
 
 void AccountGraphDirtySession::persistDirty(keto::asn1::RDFSubjectHelperPtr& subject) {
-    KETO_LOG_DEBUG << "[AccountGraphDirtySession::persistDirty]Persist the dirty changes [" << name << "]";
+    //KETO_LOG_DEBUG << "[AccountGraphDirtySession::persistDirty]Persist the dirty changes [" << name << "]";
     for (keto::asn1::RDFPredicateHelperPtr predicateHelper : subject->getPredicates()) {
         for (keto::asn1::RDFObjectHelperPtr objectHelper : predicateHelper->listObjects()) {
             librdf_statement* statement= 0;
@@ -80,7 +80,7 @@ void AccountGraphDirtySession::persistDirty(keto::asn1::RDFSubjectHelperPtr& sub
 }
 
 librdf_model* AccountGraphDirtySession::getDirtyModel() {
-    KETO_LOG_DEBUG << "[AccountGraphDirtySession::getDirtyModel]Get the model dirty changes [" << name << "]";
+    //KETO_LOG_DEBUG << "[AccountGraphDirtySession::getDirtyModel]Get the model dirty changes [" << name << "]";
     return this->model;
 }
 

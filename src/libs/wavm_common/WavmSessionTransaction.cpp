@@ -65,22 +65,15 @@ WavmSessionTransaction::WavmSessionTransaction(const keto::proto::SandboxCommand
     transactionMessageHelperPtr = transactionProtoHelper.getTransactionMessageHelper();
     rdfSessionPtr = std::make_shared<RDFMemorySession>();
     if (sandboxCommandMessage.model().size()) {
-        //KETO_LOG_ERROR << "[WavmSessionTransaction::WavmSessionTransaction] The model size : " <<
-        //    sandboxCommandMessage.model().size();
         keto::asn1::AnyHelper anyHelper(sandboxCommandMessage.model());
         RDFModel_t* rdfModel;
         TransactionMessage_t* transactionMessage;
         if ((rdfModel = anyHelper.extract<RDFModel_t>(&asn_DEF_RDFModel)) != NULL) {
-            //KETO_LOG_ERROR << "[WavmSessionTransaction::WavmSessionTransaction] Load the RDF model " << sandboxCommandMessage.contract_name();
-            //KETO_LOG_ERROR << "[WavmSessionTransaction::WavmSessionTransaction] Deserialize the any [" << Botan::hex_encode((uint8_t*)sandboxCommandMessage.model().c_str(),
-            //                                                                        sandboxCommandMessage.model().size()) << "]";
             keto::asn1::RDFModelHelper rdfModelHelper(rdfModel);
             for (keto::asn1::RDFSubjectHelperPtr subject : rdfModelHelper.getSubjects()) {
-                //KETO_LOG_ERROR << "[WavmSessionTransaction::WavmSessionTransaction] load the subject : " << subject->getSubject();
                 rdfSessionPtr->persist(subject);
             }
             for (keto::asn1::RDFNtGroupHelperPtr group : rdfModelHelper.getRDFNtGroups()) {
-                //KETO_LOG_ERROR << "[WavmSessionTransaction::WavmSessionTransaction] add a new group of nodes";
                 rdfSessionPtr->persist(group);
             }
         } else if ((transactionMessage = anyHelper.extract<TransactionMessage_t>(&asn_DEF_TransactionMessage)) != NULL) {
@@ -384,15 +377,6 @@ void WavmSessionTransaction::validateSubject(const std::string& subjectUrl) {
     if (subjectUrl.find(Constants::BLOCKCHAIN_CURRENCY_NAMESPACE) == 0) {
         return;
     }
-    /*
-    the original logic relied on using the contract name or contract hash to uniquely identify it. this has been
-    changed to namespace
-    if (subjectUrl.find(this->sandboxCommandMessage.contract_name()) != std::string::npos) {
-        return;
-    }
-    if (subjectUrl.find(this->contractHash.getHash(keto::common::StringEncoding::HEX)) != std::string::npos) {
-        return;
-    }*/
     KETO_LOG_ERROR << "[WavmSessionTransaction::validateSubject] The subject is invalid ["
         << subjectUrl << "][" << subjectUrl.find(Constants::BLOCKCHAIN_CURRENCY_NAMESPACE) <<"]";
     BOOST_THROW_EXCEPTION(keto::wavm_common::InvalidSubjectForContract());
@@ -597,14 +581,14 @@ long WavmSessionTransaction::getBalance(const std::string& transactionValueModel
     long debitVal = 0;
     long creditVal = 0;
     for (ResultMap resultMap : resultVectorMap) {
-        KETO_LOG_ERROR << "[WavmSessionTransaction::getBalance] entry [" << resultMap["type"] << "] value [" << resultMap["totalValue"] << "]";
+        //KETO_LOG_ERROR << "[WavmSessionTransaction::getBalance] entry [" << resultMap["type"] << "] value [" << resultMap["totalValue"] << "]";
         if (resultMap["type"] == keto::server_common::Constants::Constants::ACCOUNT_ACTIONS::CREDIT) {
             creditVal += std::stol(resultMap["totalValue"]);
         } else if (resultMap["type"] == keto::server_common::Constants::Constants::ACCOUNT_ACTIONS::DEBIT) {
             debitVal += std::stol(resultMap["totalValue"]);
         }
     }
-    KETO_LOG_ERROR << "[WavmSessionTransaction::getBalance] debit [" << debitVal << "] credit [" << creditVal << "]";
+    //KETO_LOG_ERROR << "[WavmSessionTransaction::getBalance] debit [" << debitVal << "] credit [" << creditVal << "]";
     return debitVal - creditVal;
 }
 

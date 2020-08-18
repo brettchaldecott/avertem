@@ -27,7 +27,6 @@ namespace keto {
 namespace account_db {
 
     
-// TODO: Implement a custom Berkely DB loader to support full transactions
 // at present transaction rollback is not supported.
 std::string AccountGraphSession::getSourceVersion() {
     return OBFUSCATED("$Id$");
@@ -36,7 +35,7 @@ std::string AccountGraphSession::getSourceVersion() {
     
 AccountGraphSession::~AccountGraphSession() {
 
-    KETO_LOG_ERROR << "[AccountGraphSession::AccountGraphSession] The destructor has been called";
+    //KETO_LOG_ERROR << "[AccountGraphSession::AccountGraphSession] The destructor has been called";
     // free all the extras
     if (world) {
         librdf_free_model(removeModel);
@@ -140,16 +139,16 @@ std::string AccountGraphSession::query(const std::string& queryStr, const std::v
     AccountGraphStore::StorageScopeLockPtr scopeLockPtr = this->accountGraphStore->getStorageLock()->aquireReadLock();
 
     std::string formatedQuery = rdfQueryParser.getQuery();
-    KETO_LOG_DEBUG << "[AccountGraphSession::query]Prepare the query";
+    //KETO_LOG_DEBUG << "[AccountGraphSession::query]Prepare the query";
     librdf_query* query = librdf_new_query(this->accountGraphStore->getWorld(), "sparql",
             NULL, (const unsigned char *)formatedQuery.c_str(), NULL);
-    KETO_LOG_DEBUG << "[AccountGraphSession::query]Execute the query";
+    //KETO_LOG_DEBUG << "[AccountGraphSession::query]Execute the query";
     librdf_query_results* results = librdf_model_query_execute(this->accountGraphStore->getModel(), query);
     if (!results) {
         librdf_free_query(query);
         return "NA";
     }
-    KETO_LOG_DEBUG << "[AccountGraphSession::query]get the results";
+    //KETO_LOG_DEBUG << "[AccountGraphSession::query]get the results";
     unsigned char* strBuffer = librdf_query_results_to_string2(results,"json",NULL,NULL,NULL);
     if (!strBuffer) {
         librdf_free_query_results(results);
@@ -162,7 +161,7 @@ std::string AccountGraphSession::query(const std::string& queryStr, const std::v
     librdf_free_query_results(results);
     librdf_free_query(query);
     librdf_model_sync(this->accountGraphStore->getModel());
-    KETO_LOG_DEBUG << "[AccountGraphSession::query]return the results";
+    //KETO_LOG_DEBUG << "[AccountGraphSession::query]return the results";
     return strResult;
 }
 
@@ -178,7 +177,7 @@ ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryS
     AccountGraphDirtySession::AccountGraphDirtySessionScope accountGraphDirtySessionScope(
             this->accountGraphStore->dbName,this->accountGraphStore->getModel());
 
-    KETO_LOG_DEBUG << "[AccountGraphSession::executeDirtyQuery]Execute the query.";
+    //KETO_LOG_DEBUG << "[AccountGraphSession::executeDirtyQuery]Execute the query.";
     std::string formatedQuery = rdfQueryParser.getQuery();
 
     librdf_query* query = librdf_new_query(this->accountGraphStore->getWorld(), "sparql",
@@ -187,7 +186,7 @@ ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryS
     librdf_query_results* results = librdf_model_query_execute(this->accountGraphStore->getModel(), query);
     ResultVectorMap resultVectorMap;
     if (!results) {
-        KETO_LOG_DEBUG << "[AccountGraphSession::executeDirtyQuery]Return the empty results";
+        //KETO_LOG_DEBUG << "[AccountGraphSession::executeDirtyQuery]Return the empty results";
         librdf_free_query(query);
         return resultVectorMap;
     }
@@ -198,7 +197,7 @@ ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryS
         librdf_node *nodes[librdf_query_results_get_bindings_count(results)];
 
         if (librdf_query_results_get_bindings(results, &names, nodes)) {
-            KETO_LOG_DEBUG << "[AccountGraphSession::executeDirtyQuery]Break from the loop as no results where found";
+            //KETO_LOG_DEBUG << "[AccountGraphSession::executeDirtyQuery]Break from the loop as no results where found";
             break;
         }
         if (names) {
@@ -222,7 +221,7 @@ ResultVectorMap AccountGraphSession::executeDirtyQuery(const std::string& queryS
     librdf_free_query(query);
     librdf_model_sync(this->accountGraphStore->getModel());
 
-    KETO_LOG_DEBUG << "Return the results of the query";
+    //KETO_LOG_DEBUG << "Return the results of the query";
     return resultVectorMap;
 }
 
@@ -248,18 +247,18 @@ ResultVectorMap AccountGraphSession::executeQueryInternal(const std::string& que
     AccountGraphStore::StorageScopeLockPtr scopeLockPtr = this->accountGraphStore->getStorageLock()->aquireReadLock();
 
     std::string formatedQuery = rdfQueryParser.getQuery();
-    KETO_LOG_INFO << "[AccountGraphSession::executeQueryInternal]Prepare the query : " << formatedQuery;
+    //KETO_LOG_INFO << "[AccountGraphSession::executeQueryInternal]Prepare the query : " << formatedQuery;
     librdf_query* query = librdf_new_query(this->accountGraphStore->getWorld(), "sparql",
                              NULL, (const unsigned char *)formatedQuery.c_str(), NULL);
-    KETO_LOG_DEBUG << "[AccountGraphSession::executeQueryInternal]Execute the query";
+    //KETO_LOG_DEBUG << "[AccountGraphSession::executeQueryInternal]Execute the query";
     librdf_query_results* results = librdf_model_query_execute(this->accountGraphStore->getModel(), query);
     ResultVectorMap resultVectorMap;
     if (!results) {
         librdf_free_query(query);
-        KETO_LOG_INFO << "[AccountGraphSession::executeQueryInternal] no results found";
+        //KETO_LOG_INFO << "[AccountGraphSession::executeQueryInternal] no results found";
         return resultVectorMap;
     }
-    KETO_LOG_DEBUG << "[AccountGraphSession::executeQueryInternal]loop through the results";
+    //KETO_LOG_DEBUG << "[AccountGraphSession::executeQueryInternal]loop through the results";
     while (!librdf_query_results_finished(results)) {
         ResultMap resultMap;
         const char **names=NULL;
@@ -284,7 +283,7 @@ ResultVectorMap AccountGraphSession::executeQueryInternal(const std::string& que
     librdf_free_query_results(results);
     librdf_free_query(query);
     librdf_model_sync(this->accountGraphStore->getModel());
-    KETO_LOG_DEBUG << "[AccountGraphSession::executeQueryInternal]return the results";
+    //KETO_LOG_DEBUG << "[AccountGraphSession::executeQueryInternal]return the results";
     return resultVectorMap;
 }
 
@@ -303,7 +302,7 @@ AccountGraphSession::AccountGraphSession(const AccountGraphStorePtr& accountGrap
 }
 
 void AccountGraphSession::commit() {
-    KETO_LOG_DEBUG << "[AccountGraphSession::commit] commit the changes [" << librdf_model_size(addModel) << "][" << librdf_model_size(removeModel) << "]";
+    //KETO_LOG_DEBUG << "[AccountGraphSession::commit] commit the changes [" << librdf_model_size(addModel) << "][" << librdf_model_size(removeModel) << "]";
     if (librdf_model_size(addModel) || librdf_model_size(removeModel)) {
 
         // aquire the write lock
@@ -312,16 +311,16 @@ void AccountGraphSession::commit() {
         // only commit if there are changes in the model
         if (librdf_model_size(addModel)) {
             // now we stream the memory into the db object
-            KETO_LOG_ERROR << "[AccountGraphSession::commit] changes are being streamed to model";
+            //KETO_LOG_ERROR << "[AccountGraphSession::commit] changes are being streamed to model";
             librdf_stream *stream = librdf_model_as_stream(this->addModel);
             librdf_model_add_statements(this->accountGraphStore->getModel(), stream);
             librdf_free_stream(stream);
             // sync the changes to the store otherwise we have to wait for close
             librdf_model_sync(this->accountGraphStore->getModel());
-            KETO_LOG_ERROR << "[AccountGraphSession::commit] changes have been applied";
+            //KETO_LOG_ERROR << "[AccountGraphSession::commit] changes have been applied";
         }
         if (librdf_model_size(removeModel)) {
-            KETO_LOG_ERROR << "[AccountGraphSession::commit] changes are being removed";
+            //KETO_LOG_ERROR << "[AccountGraphSession::commit] changes are being removed";
             // now we stream into the memory object and remove statement by statement
             librdf_stream *stream = librdf_model_as_stream(this->addModel);
             while (!librdf_stream_end(stream)) {
@@ -331,7 +330,7 @@ void AccountGraphSession::commit() {
             librdf_free_stream(stream);
             // sync the changes to the store otherwise we have to wait for close
             librdf_model_sync(this->accountGraphStore->getModel());
-            KETO_LOG_ERROR << "[AccountGraphSession::commit] changes are been removed";
+            //KETO_LOG_ERROR << "[AccountGraphSession::commit] changes are been removed";
         }
     }
 }

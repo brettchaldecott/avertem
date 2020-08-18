@@ -39,13 +39,13 @@ ResultVectorMap AccountSparqlQueryHelper::execute() {
         ResultMap resultMap;
         for (int columnIndex = 0; columnIndex < row.entries_size(); columnIndex++) {
             const keto::proto::SparqlRowEntry& entry = row.entries(columnIndex);
-            KETO_LOG_DEBUG << "Add the entry [" << entry.key() << "][" << entry.value() << "]";
+            //KETO_LOG_DEBUG << "Add the entry [" << entry.key() << "][" << entry.value() << "]";
             resultMap[entry.key()] = entry.value();
         }
         resultVectorMap.push_back(resultMap);
     }
 
-    KETO_LOG_DEBUG << "Return the query results";
+    //KETO_LOG_DEBUG << "Return the query results";
     return resultVectorMap;
 }
 
@@ -67,13 +67,13 @@ ResultVectorMap AccountSparqlQueryHelper::processResult(const keto::event::Event
         ResultMap resultMap;
         for (int columnIndex = 0; columnIndex < row.entries_size(); columnIndex++) {
             const keto::proto::SparqlRowEntry& entry = row.entries(columnIndex);
-            KETO_LOG_DEBUG << "Add the entry [" << entry.key() << "][" << entry.value() << "]";
+            //KETO_LOG_DEBUG << "Add the entry [" << entry.key() << "][" << entry.value() << "]";
             resultMap[entry.key()] = entry.value();
         }
         resultVectorMap.push_back(resultMap);
     }
 
-    KETO_LOG_DEBUG << "Return the query results";
+    //KETO_LOG_DEBUG << "Return the query results";
     return resultVectorMap;
 }
 

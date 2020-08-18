@@ -57,6 +57,7 @@ SandboxFork::Child::~Child() {
 
 keto::event::Event SandboxFork::Child::executeActionMessage(const keto::event::Event& event) {
     try {
+        KETO_LOG_INFO << "[executeActionMessage] setup engine";
         keto::proto::SandboxCommandMessage sandboxCommandMessage =
                 keto::server_common::fromEvent<keto::proto::SandboxCommandMessage>(event);
         keto::wavm_common::WavmSessionScope wavmSessionScope(sandboxCommandMessage);
@@ -65,29 +66,31 @@ keto::event::Event SandboxFork::Child::executeActionMessage(const keto::event::E
                 buffer,true));
         keto::wavm_common::WavmEngineManager::getInstance()->getEngine(code,sandboxCommandMessage.contract_name())->execute();
         sandboxCommandMessage = std::dynamic_pointer_cast<keto::wavm_common::WavmSessionTransaction>(wavmSessionScope.getSession())->getSandboxCommandMessage();
+        KETO_LOG_INFO << "[executeActionMessage] return result";
         keto::wavm_common::ParentForkGateway::returnResult(
                 keto::server_common::toEvent<keto::proto::SandboxCommandMessage>(sandboxCommandMessage));
+        KETO_LOG_INFO << "[executeActionMessage] after execution";
     } catch (keto::common::Exception& ex) {
         std::stringstream ss;
         ss << "[SandboxFork::Child::executeActionMessage]Failed to process the contract : " << ex.what() << std::endl;
         ss << "Cause: " << boost::diagnostic_information(ex,true) << std::endl;
         KETO_LOG_ERROR << ss.str();
-        keto::wavm_common::ParentForkGateway::raiseException(ss.str());
+        keto::wavm_common::ParentForkGateway::raiseException(ss.str(),false);
     } catch (boost::exception& ex) {
         std::stringstream ss;
         ss << "[SandboxFork::Child::executeActionMessage]Failed to process the contract : " << boost::diagnostic_information(ex,true) << std::endl;
         KETO_LOG_ERROR << ss.str();
-        keto::wavm_common::ParentForkGateway::raiseException(ss.str());
+        keto::wavm_common::ParentForkGateway::raiseException(ss.str(),false);
     } catch (std::exception& ex) {
         std::stringstream ss;
         ss << "[SandboxFork::Child::executeActionMessage]Failed to process the contract : " << ex.what() << std::endl;
         KETO_LOG_ERROR << ss.str();
-        keto::wavm_common::ParentForkGateway::raiseException(ss.str());
+        keto::wavm_common::ParentForkGateway::raiseException(ss.str(),false);
     } catch (...) {
         std::stringstream ss;
         ss << "[[SandboxFork::Child::executeActionMessage]]Failed to process the contract" << std::endl;
         KETO_LOG_ERROR << ss.str();
-        keto::wavm_common::ParentForkGateway::raiseException(ss.str());
+        keto::wavm_common::ParentForkGateway::raiseException(ss.str(),false);
     }
     return keto::event::Event();
 }
@@ -108,22 +111,22 @@ keto::event::Event SandboxFork::Child::executeHttpActionMessage(const keto::even
         ss << "[SandboxFork::Child::executeHttpActionMessage]Failed to process the contract : " << ex.what() << std::endl;
         ss << "Cause: " << boost::diagnostic_information(ex,true) << std::endl;
         KETO_LOG_ERROR <<   ss.str();
-        keto::wavm_common::ParentForkGateway::raiseException(ss.str());
+        keto::wavm_common::ParentForkGateway::raiseException(ss.str(),false);
     } catch (boost::exception& ex) {
         std::stringstream ss;
         ss << "[SandboxFork::Child::executeHttpActionMessage]Failed to process the contract : " << boost::diagnostic_information(ex,true) << std::endl;
         KETO_LOG_ERROR << ss.str();
-        keto::wavm_common::ParentForkGateway::raiseException(ss.str());
+        keto::wavm_common::ParentForkGateway::raiseException(ss.str(),false);
     } catch (std::exception& ex) {
         std::stringstream ss;
         ss << "[SandboxFork::Child::executeHttpActionMessage]Failed to process the contract : " << ex.what() << std::endl;
         KETO_LOG_ERROR << ss.str();
-        keto::wavm_common::ParentForkGateway::raiseException(ss.str());
+        keto::wavm_common::ParentForkGateway::raiseException(ss.str(),false);
     } catch (...) {
         std::stringstream ss;
         ss << "[SandboxFork::Child::executeHttpActionMessage]Failed to process the contract" << std::endl;
         KETO_LOG_ERROR << ss.str();
-        keto::wavm_common::ParentForkGateway::raiseException(ss.str());
+        keto::wavm_common::ParentForkGateway::raiseException(ss.str(),false);
     }
     return keto::event::Event();
 }
@@ -285,8 +288,9 @@ keto::event::Event SandboxFork::Parent::execute() {
             ss << "[SandboxFork::Parent::execute]Failed to process the event : " << ex.what() << std::endl;
             ss << "Cause: " << boost::diagnostic_information(ex, true) << std::endl;
             KETO_LOG_ERROR << ss.str();
-            KETO_LOG_ERROR << "Ignore these exceptions as they indicate an invalid contract";
-            //throw;
+            //KETO_LOG_ERROR << "Ignore these exceptions as they indicate an invalid contract";
+            throw;
+            //break;
         } catch (boost::exception &ex) {
             std::stringstream ss;
             ss << "[SandboxFork::Parent::execute]Failed to process the event : "

@@ -26,7 +26,7 @@ MemoryVaultManager::MemoryVaultWrapper::MemoryVaultWrapper(int slot, const std::
 }
 
 MemoryVaultManager::MemoryVaultWrapper::~MemoryVaultWrapper() {
-    KETO_LOG_ERROR << "The vault is being removed from memory : " << Botan::hex_encode(sessionId);
+    //KETO_LOG_ERROR << "The vault is being removed from memory : " << Botan::hex_encode(sessionId);
 }
 
 keto::crypto::SecureVector MemoryVaultManager::MemoryVaultWrapper::getSessionId() {
@@ -52,13 +52,12 @@ bool MemoryVaultManager::MemoryVaultWrapper::validPassword(const keto::crypto::S
 MemoryVaultManager::MemoryVaultSlot::MemoryVaultSlot(const uint8_t& slot, const MemoryVaultEncryptorPtr& memoryVaultEncryptorPtr, const vectorOfSecureVectors& sessions) :
     slot(slot),  memoryVaultEncryptorPtr(memoryVaultEncryptorPtr) {
     for (keto::crypto::SecureVector vector : sessions) {
-        //KETO_LOG_DEBUG << "[createSession] vectors : " << Botan::hex_encode(vector);
         this->sessions.insert(std::pair<keto::crypto::SecureVector,MemoryVaultWrapperPtr>(vector,MemoryVaultWrapperPtr()));
     }
 }
 
 MemoryVaultManager::MemoryVaultSlot::~MemoryVaultSlot() {
-    KETO_LOG_ERROR << "[MemoryVaultManager::MemoryVaultSlot::~MemoryVaultSlot] The slot destructor : " << (int)slot;
+    //KETO_LOG_ERROR << "[MemoryVaultManager::MemoryVaultSlot::~MemoryVaultSlot] The slot destructor : " << (int)slot;
 }
 
 
@@ -141,14 +140,14 @@ void MemoryVaultManager::createSession(
     std::lock_guard<std::mutex> guard(classMutex);
     if (!currentMemoryVaultSlotPtr) {
         uint8_t slotId = nextSlot();
-        KETO_LOG_ERROR << "[MemoryVaultManager::createSession] Add a new slot : " << (int)slotId;
+        //KETO_LOG_ERROR << "[MemoryVaultManager::createSession] Add a new slot : " << (int)slotId;
         MemoryVaultSlotPtr memoryVaultSlotPtr(new MemoryVaultSlot(slotId, this->memoryVaultEncryptorPtr, sessions));
         this->slots.push_front(memoryVaultSlotPtr);
         this->slotIndex[slotId] = memoryVaultSlotPtr;
         this->currentMemoryVaultSlotPtr = memoryVaultSlotPtr;
     } else {
         // add sessions
-        KETO_LOG_ERROR << "[MemoryVaultManager::createSession] Add a new session : " << sessions.size();
+        //KETO_LOG_ERROR << "[MemoryVaultManager::createSession] Add a new session : " << sessions.size();
         this->currentMemoryVaultSlotPtr->addSessions(sessions);
     }
 }
@@ -156,13 +155,13 @@ void MemoryVaultManager::createSession(
 void MemoryVaultManager::clearSession() {
     std::lock_guard<std::mutex> guard(classMutex);
     currentMemoryVaultSlotPtr.reset();
-    KETO_LOG_ERROR << "[MemoryVaultManager::clearSession] clear the session for the manager : " <<
+    //KETO_LOG_ERROR << "[MemoryVaultManager::clearSession] clear the session for the manager : " <<
                                                                              this->slots.size();
     if (this->slots.size() <= 3) {
         return;
     }
-    KETO_LOG_ERROR << "[MemoryVaultManager::clearSession] Clear the slot : " <<
-        this->slots.back()->getSlot();
+    //KETO_LOG_ERROR << "[MemoryVaultManager::clearSession] Clear the slot : " <<
+    //    this->slots.back()->getSlot();
     this->slotIndex.erase(this->slots.back()->getSlot());
     this->slots.pop_back();
 }

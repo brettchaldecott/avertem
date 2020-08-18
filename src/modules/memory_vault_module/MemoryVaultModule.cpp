@@ -17,11 +17,9 @@ std::string MemoryVaultModule::getSourceVersion() {
 
 
 MemoryVaultModule::MemoryVaultModule() {
-    KETO_LOG_INFO << "The test module has been started";
 }
 
 MemoryVaultModule::~MemoryVaultModule() {
-    KETO_LOG_INFO << "The test module has closed";
 }
 
 

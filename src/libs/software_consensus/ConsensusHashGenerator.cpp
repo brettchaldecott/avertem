@@ -327,8 +327,6 @@ bool ConsensusHashGenerator::setSession(
     if (this->sessionKey == sessionKey) {
         return false;
     } else {
-        KETO_LOG_ERROR << "[setSession] Setup a new session [" <<  Botan::hex_encode(sessionKey) << "]["
-        << Botan::hex_encode(this->sessionKey) << "]";
         this->sessionKey = sessionKey;
         this->currentSoftwareHash.clear();
         bool validSession = false;

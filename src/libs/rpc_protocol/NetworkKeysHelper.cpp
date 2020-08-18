@@ -35,14 +35,9 @@ NetworkKeysHelper& NetworkKeysHelper::addNetworkKey(const keto::proto::NetworkKe
 }
 
 NetworkKeysHelper& NetworkKeysHelper::addNetworkKey(const NetworkKeyHelper& networkKeyHelper) {
-    //KETO_LOG_DEBUG << "set the keys";
     keto::proto::NetworkKey* newNetworkKey = networkKeys.add_network_keys();
-    //KETO_LOG_DEBUG << "set the network key helper";
     keto::proto::NetworkKey networkKey(networkKeyHelper.getNetworkKey());
-    //KETO_LOG_DEBUG << "Copy the network key";
     *newNetworkKey = networkKey;
-    //newNetworkKey->MergeFrom((keto::proto::NetworkKey&)networkKeyHelper);
-    //KETO_LOG_DEBUG << "add the network key";
     return *this;
 }
 

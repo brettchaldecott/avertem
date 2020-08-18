@@ -31,7 +31,7 @@ std::string AccountGenerator::getSourceVersion() {
 
 
 AccountGenerator::AccountGenerator() : generator(new Botan::AutoSeeded_RNG()) {
-    KETO_LOG_DEBUG << "Generate a new key ";
+    //KETO_LOG_DEBUG << "Generate a new key ";
     this->privateKey = std::shared_ptr<Botan::Private_Key>(
             new Botan::RSA_PrivateKey(*generator, 2056));
     Botan::RSA_PrivateKey* privateKey = (Botan::RSA_PrivateKey*)this->privateKey.get();

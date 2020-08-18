@@ -124,20 +124,20 @@ long WavmSession::getQueryLongValue(long id, long row, long headerNumber) {
 }
 
 long WavmSession::getQueryLongValue(long id, long row, const std::string& header) {
-    KETO_LOG_DEBUG << "[WavmSession::getQueryLongValue]The query long value [" << id << "]";
+    //KETO_LOG_DEBUG << "[WavmSession::getQueryLongValue]The query long value [" << id << "]";
     if (id >= this->queryResults.size()) {
         std::stringstream ss;
         ss << "The requested index is out of range [" << id << "] currently have [" << this->queryResults.size() << "]";
         BOOST_THROW_EXCEPTION(keto::wavm_common::RdfIndexOutOfRangeException(ss.str()));
     }
-    KETO_LOG_DEBUG << "[WavmSession::getQueryLongValue]The row [" << row<< "]";
+    //KETO_LOG_DEBUG << "[WavmSession::getQueryLongValue]The row [" << row<< "]";
     ResultVectorMap& resultVectorMap = this->queryResults[id];
     if (row >= resultVectorMap.size()) {
         std::stringstream ss;
         ss << "The requested row is out of range [" << row << "] currently have [" << resultVectorMap.size() << "]";
         BOOST_THROW_EXCEPTION(keto::wavm_common::RdfIndexOutOfRangeException(ss.str()));
     }
-    KETO_LOG_DEBUG << "[WavmSession::getQueryLongValue]The header [" << header << "]";
+    //KETO_LOG_DEBUG << "[WavmSession::getQueryLongValue]The header [" << header << "]";
     return std::stol(resultVectorMap[row][header]);
 }
 

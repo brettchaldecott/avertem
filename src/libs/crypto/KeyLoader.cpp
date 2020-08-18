@@ -98,12 +98,12 @@ std::shared_ptr<Botan::Private_Key> KeyLoader::getPrivateKey() {
     }
     // attempt to load the private key using the path supplied and the
     if (!keto::server_common::StringUtils::isHexidecimal(this->privateKeyPath)) {
-        KETO_LOG_DEBUG << "Load the file [" << this->privateKeyPath << "]";
+        //KETO_LOG_DEBUG << "Load the file [" << this->privateKeyPath << "]";
         return std::shared_ptr<Botan::Private_Key>(
                 Botan::PKCS8::load_key(this->privateKeyPath, *generator));
 
     } else {
-        KETO_LOG_DEBUG << "Load the hex encoded entry [" << this->privateKeyPath << "]";
+        //KETO_LOG_DEBUG << "Load the hex encoded entry [" << this->privateKeyPath << "]";
         Botan::DataSource_Memory derivedDatasource(Botan::hex_decode(this->privateKeyPath,true));
         return std::shared_ptr<Botan::Private_Key>(
                 Botan::PKCS8::load_key(derivedDatasource));
@@ -120,11 +120,11 @@ std::shared_ptr<Botan::Public_Key> KeyLoader::getPublicKey() {
     }
     // attempt to load the private key using the path supplied and the
     if (!keto::server_common::StringUtils::isHexidecimal(this->publicKeyPath)) {
-        KETO_LOG_DEBUG << "Load the public key from file [" << this->publicKeyPath << "]";
+        //KETO_LOG_DEBUG << "Load the public key from file [" << this->publicKeyPath << "]";
         return std::shared_ptr<Botan::Public_Key>(
                 Botan::X509::load_key(this->publicKeyPath));
     } else {
-        KETO_LOG_DEBUG << "Load the public key from hex [" << this->publicKeyPath << "]";
+        //KETO_LOG_DEBUG << "Load the public key from hex [" << this->publicKeyPath << "]";
         return std::shared_ptr<Botan::Public_Key>(
                 Botan::X509::load_key(Botan::hex_decode(this->publicKeyPath,true)));
     }

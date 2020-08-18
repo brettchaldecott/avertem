@@ -47,7 +47,7 @@ public:
     static ParentForkGatewayPtr init(const PipePtr& inPipe, const PipePtr& outPipe);
     static void fin();
 
-    static void raiseException(const std::string& exception);
+    static void raiseException(const std::string& exception, bool throwEx = true);
     static keto::event::Event processEvent(const keto::event::Event& event);
     static void triggerEvent(const keto::event::Event& event);
     static void returnResult(const keto::event::Event& event);
@@ -58,7 +58,7 @@ private:
 
     static ParentForkGatewayPtr getInstance();
 
-    void _raiseException(const std::string& exception);
+    void _raiseException(const std::string& exception, bool throwEx = true);
     keto::event::Event _processEvent(const keto::event::Event& event);
     void _triggerEvent(const keto::event::Event& event);
     void _returnResult(const keto::event::Event& event);

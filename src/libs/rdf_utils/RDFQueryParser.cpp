@@ -216,7 +216,7 @@ void RDFQueryParser::processPattern() {
     querySize = 0;
     stream = raptor_new_iostream_to_string(
             rasqal_world_get_raptor(this->world),(void**)&updatedQuery,&querySize,malloc);
-    KETO_LOG_ERROR << "[processPatter] second rasqal query write [" << ss.str() << "][" << this->sparql << "]";
+    //KETO_LOG_ERROR << "[processPatter] second rasqal query write [" << ss.str() << "][" << this->sparql << "]";
     if (rasqal_query_write(stream,query,NULL,NULL)) {
         BOOST_THROW_EXCEPTION(keto::rdf_utils::FailedToProcessQueryException());
     }
@@ -273,7 +273,7 @@ bool RDFQueryParser::isExcludedPredicate(rasqal_triple* patternTripple) {
         return false;
     }
     std::string predicate = this->getLiteralInfo(patternTripple->predicate);
-    KETO_LOG_DEBUG << "The predicate : " << predicate;
+    //KETO_LOG_DEBUG << "The predicate : " << predicate;
     for (const char* uri : Constants::EXCLUDES) {
         if (predicate.find(uri) == 0) {
             return true;
@@ -311,7 +311,7 @@ void RDFQueryParser::addTripplePattern(
 
     rasqal_variable* variable = rasqal_variables_table_add2(this->variablesTable,RASQAL_VARIABLE_TYPE_NORMAL,(const unsigned char *)objectUri.c_str(),objectUri.size(),NULL);
     for (rasqal_literal* subject : subjectVar) {
-        KETO_LOG_ERROR << "[addTripplePattern]Add the extra tripple to the pattern [" << predicateUri << "][" << objectUri << "]";
+        //KETO_LOG_ERROR << "[addTripplePattern]Add the extra tripple to the pattern [" << predicateUri << "][" << objectUri << "]";
         raptor_sequence_push(patternTrippleSequence, rasqal_new_triple(rasqal_new_literal_from_literal(subject),
                 rasqal_new_uri_literal(this->world, raptor_new_uri(
                         rasqal_world_get_raptor(this->world), (const unsigned char *)predicateUri.c_str())),

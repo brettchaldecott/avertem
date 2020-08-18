@@ -117,7 +117,7 @@ void AccountStore::applyDirtyTransaction(
         keto::asn1::RDFModelHelperPtr rdfModel = accountRDFStatement->getModel();
         for (keto::asn1::RDFSubjectHelperPtr rdfSubject : rdfModel->getSubjects()) {
             if (accountRDFStatement->getOperation() == PERSIST) {
-                KETO_LOG_DEBUG << "This is an attempt to persist the subject";
+                //KETO_LOG_DEBUG << "This is an attempt to persist the subject";
                 sessionPtr->persistDirty(rdfSubject);
             }
         }
@@ -151,7 +151,7 @@ void AccountStore::applyTransaction(
         keto::asn1::RDFModelHelperPtr rdfModel = accountRDFStatement->getModel();
         for (keto::asn1::RDFSubjectHelperPtr rdfSubject : rdfModel->getSubjects()) {
             if (accountRDFStatement->getOperation() == PERSIST) {
-                KETO_LOG_DEBUG << "This is an attempt to persist the subject";
+                //KETO_LOG_DEBUG << "This is an attempt to persist the subject";
                 sessionPtr->persist(rdfSubject);
             } else {
                 sessionPtr->remove(rdfSubject);
@@ -262,14 +262,14 @@ void AccountStore::createAccount(
             const keto::transaction_common::TransactionWrapperHelperPtr& transactionWrapperHelperPtr,
             AccountRDFStatementBuilderPtr accountRDFStatementBuilder,
             keto::proto::AccountInfo& accountInfo) {
-    KETO_LOG_ERROR << "[AccountStore::createAccount] Create the account [" << accountHash.getHash(keto::common::HEX) << "]";
+    //KETO_LOG_ERROR << "[AccountStore::createAccount] Create the account [" << accountHash.getHash(keto::common::HEX) << "]";
     if (accountRDFStatementBuilder->accountAction().compare(
                 AccountSystemOntologyTypes::ACCOUNT_CREATE_OBJECT_STATUS)) {
         std::stringstream ss;
         ss << "Cannot create the account because [" <<
                 accountHash.getHash(keto::common::HEX) << "] because the action is invalid [" <<
                 accountRDFStatementBuilder->accountAction() << "]";
-        KETO_LOG_ERROR << "[AccountStore::createAccount] " << ss.str();
+        //KETO_LOG_ERROR << "[AccountStore::createAccount] " << ss.str();
         BOOST_THROW_EXCEPTION(keto::account_db::InvalidAccountOperationException(
                 ss.str()));
     }
@@ -329,7 +329,7 @@ void AccountStore::copyResultSet(
             keto::proto::SparqlRowEntry entry;
             entry.set_key(column.first);
             entry.set_value(column.second);
-            KETO_LOG_DEBUG << "Key[" << column.first << "] value [" << column.second << "]";
+            //KETO_LOG_DEBUG << "Key[" << column.first << "] value [" << column.second << "]";
             *row.add_entries() = entry;
         }
 

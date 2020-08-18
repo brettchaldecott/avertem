@@ -61,11 +61,7 @@ HttpSessionManager::HttpSessionManager() {
     // retrieve the configuration
     std::shared_ptr<keto::environment::Config> config = keto::environment::EnvironmentManager::getInstance()->getConfig();
 
-    //if (config->getVariablesMap().count(Constants::HTTP_SESSION_ACCOUNT)) {
-    //    sessionAccount = Botan::hex_decode(config->getVariablesMap()[Constants::HTTP_SESSION_ACCOUNT].as<std::string>(),true);
-    //} else {
-        sessionAccount = keto::server_common::ServerInfo::getInstance()->getAccountHash();
-    //}
+    sessionAccount = keto::server_common::ServerInfo::getInstance()->getAccountHash();
 
 }
 
@@ -149,15 +145,15 @@ boost::beast::http::response<boost::beast::http::string_body> HttpSessionManager
             keto::account_query::AccountSparqlQueryHelper(keto::server_common::Events::SPARQL_QUERY_WITH_RESULTSET_MESSAGE,
                                                   uriAuthenticationParser.getAccountHash(),ss.str()).execute();
     if (resultVectorMap.size() != 1) {
-        KETO_LOG_INFO << "Cannot find the account ["
-            << uriAuthenticationParser.getAccountHash().getHash(keto::common::StringEncoding::HEX) << "]";
+        //  KETO_LOG_INFO << "Cannot find the account ["
+        //    << uriAuthenticationParser.getAccountHash().getHash(keto::common::StringEncoding::HEX) << "]";
         return buildResponse("Invalid account",403);
     }
 
     if (!keto::crypto::SignatureVerification(Botan::hex_decode(resultVectorMap[0]["publicKey"]),
             (std::vector<uint8_t>)uriAuthenticationParser.getSourceHash()).check(uriAuthenticationParser.getSignature())) {
-        KETO_LOG_INFO << "The signature is invalid [" << uriAuthenticationParser.getSourceHash().getHash(keto::common::HEX) << "][" <<
-            Botan::hex_encode(uriAuthenticationParser.getSignature(),true) << "]";
+        //KETO_LOG_INFO << "The signature is invalid [" << uriAuthenticationParser.getSourceHash().getHash(keto::common::HEX) << "][" <<
+        //    Botan::hex_encode(uriAuthenticationParser.getSignature(),true) << "]";
         return buildResponse("Invalid signature",403);
     }
 
@@ -218,8 +214,8 @@ std::shared_ptr<Botan::Public_Key> HttpSessionManager::validateRemoteHash(
             Botan::X509::BER_encode(*publicKey)));
 
         if (publicKeyHashVector == clientHash) {
-            KETO_LOG_DEBUG << "[HttpSessionManager::validateRemoteHash] Check the signature [" <<
-                           Botan::hex_encode(publicKeyHashVector,true) << "][" << Botan::hex_encode(clientHash,true) << "]";
+            //KETO_LOG_DEBUG << "[HttpSessionManager::validateRemoteHash] Check the signature [" <<
+            //               Botan::hex_encode(publicKeyHashVector,true) << "][" << Botan::hex_encode(clientHash,true) << "]";
             if (keto::crypto::SignatureVerification(publicKey,publicKeyHashVector).check(signature)) {
                 return publicKey;
             } else {
@@ -227,8 +223,8 @@ std::shared_ptr<Botan::Public_Key> HttpSessionManager::validateRemoteHash(
             }
         }
     }
-    KETO_LOG_ERROR << "[HttpSessionManager::validateRemoteHash] Failed to vaidate the hash for [" << Botan::hex_encode(clientHash,true)
-        << "][" << Botan::hex_encode(signature,true) << "]";
+    //KETO_LOG_ERROR << "[HttpSessionManager::validateRemoteHash] Failed to vaidate the hash for [" << Botan::hex_encode(clientHash,true)
+    //    << "][" << Botan::hex_encode(signature,true) << "]";
     return std::shared_ptr<Botan::Public_Key>();
 }
 

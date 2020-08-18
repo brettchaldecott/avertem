@@ -153,9 +153,8 @@ void ConsensusServer::process() {
                 std::chrono::duration_cast<std::chrono::minutes>(currentTime - this->networkPoint));
         std::chrono::seconds heartbeatDiff(
                 std::chrono::duration_cast<std::chrono::seconds>(currentTime - this->networkHeartbeatPoint));
-        KETO_LOG_ERROR << "[ConsensusServer::process] Process the session[" << diff.count() << "][" << this->netwokSessionLength << "]";
         if ((this->currentPos == -1) || (diff.count() > this->netwokSessionLength)) {
-            KETO_LOG_ERROR << "[ConsensusServer::process] Release a new session key";
+            KETO_LOG_INFO << "[ConsensusServer::process] Release a new session key";
             this->currentPos++;
             if (this->currentPos >= this->sessionKeys.size()) {
                 this->currentPos = 0;
@@ -167,7 +166,7 @@ void ConsensusServer::process() {
             this->networkHeartbeatPoint = this->networkPoint = this->sessionkeyPoint = std::chrono::system_clock::now();
             this->networkHeartbeatCurrentSlot = 0;
         } else if (networkDiff.count() > this->netwokProtocolDelay) {
-            KETO_LOG_ERROR << "[ConsensusServer::process] Time to retest the network.";
+            KETO_LOG_INFO << "[ConsensusServer::process] Time to retest the network.";
             keto::crypto::SecureVector initVector = Botan::hex_decode_locked(
                     this->sessionKeys[this->currentPos], true);
             long time = currentTime.time_since_epoch().count();
@@ -182,7 +181,7 @@ void ConsensusServer::process() {
             this->sessionkeyPoint = this->sessionkeyPoint + (endTime - currentTime);
 
         } else if (heartbeatDiff.count() > this->networkHeartbeatDelay) {
-            KETO_LOG_DEBUG << "[ConsensusServer::process] The network heartbeat.";
+            KETO_LOG_INFO << "[ConsensusServer::process] The network heartbeat.";
             initNetworkHeartbeat();
             std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
             this->networkHeartbeatPoint = endTime;

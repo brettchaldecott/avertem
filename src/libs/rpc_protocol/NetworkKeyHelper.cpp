@@ -75,7 +75,6 @@ NetworkKeyHelper& NetworkKeyHelper::setActive(bool active) {
 
 
 keto::proto::NetworkKey NetworkKeyHelper::getNetworkKey() const {
-    //KETO_LOG_DEBUG << "return the network key";
     return networkKey;
 }
 

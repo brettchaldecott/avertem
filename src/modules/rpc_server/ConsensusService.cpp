@@ -79,7 +79,6 @@ keto::event::Event ConsensusService::setModuleSession(const keto::event::Event& 
     keto::software_consensus::ConsensusStateManager::getInstance()->setState(
             keto::software_consensus::ConsensusStateManager::GENERATE);
     this->consensusHashGenerator->setSession(moduleSessionHelper.getSecret());
-    KETO_LOG_DEBUG << "Setting up the module secret : ";
     this->rpcServerPtr->setSecret(moduleSessionHelper.getSecret());
     return event;
 }

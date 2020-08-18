@@ -107,7 +107,7 @@ void BalancerService::_setState(const BalancerService::State& state) {
 keto::event::Event BalancerService::balanceMessage(const keto::event::Event& event) {
 
     // at present
-    KETO_LOG_DEBUG << "[BalancerService::balanceMessage] balance the message";
+    //KETO_LOG_DEBUG << "[BalancerService::balanceMessage] balance the message";
     keto::proto::MessageWrapper  messageWrapper =
             keto::server_common::fromEvent<keto::proto::MessageWrapper>(event);
     messageWrapper.set_message_operation(keto::proto::MessageOperation::MESSAGE_BLOCK);
@@ -137,7 +137,7 @@ keto::event::Event BalancerService::balanceMessage(const keto::event::Event& eve
 
 keto::event::Event BalancerService::consensusHeartbeat(const keto::event::Event& event) {
 
-    KETO_LOG_DEBUG << "[BalancerService][consensusHeartbeat] balance [ not available yet ]";
+    //KETO_LOG_DEBUG << "[BalancerService][consensusHeartbeat] balance [ not available yet ]";
     return event;
 }
 

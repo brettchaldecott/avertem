@@ -532,13 +532,13 @@ void RouterService::routeToRpcClient(keto::transaction_common::MessageWrapperPro
     
     if (!rpcPeerHelper.isServer()) {
         messageWrapperProtoHelper.setAccountHash(rpcPeerHelper.getAccountHashString());
-        KETO_LOG_ERROR << "[RouterService::routeToRpcClient] route to client : " <<
+        KETO_LOG_INFO << "[RouterService::routeToRpcClient] route to client : " <<
             messageWrapperProtoHelper.getAccountHash().getHash(keto::common::StringEncoding::HEX);
         keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
                         keto::server_common::Events::RPC_SERVER_TRANSACTION,messageWrapperProtoHelper));
     } else {
         // route to a peer
-        KETO_LOG_ERROR << "[RouterService::routeToRpcClient] route to peer : " <<
+        KETO_LOG_INFO << "[RouterService::routeToRpcClient] route to peer : " <<
                        messageWrapperProtoHelper.getAccountHash().getHash(keto::common::StringEncoding::HEX);
         routeToRpcPeer(messageWrapperProtoHelper);
     }

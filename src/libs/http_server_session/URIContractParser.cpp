@@ -36,7 +36,7 @@ URIContractParser::URIContractParser(const std::string &uri) : cors(false) {
     if (subUri.compare(0,strlen(keto::common::HttpEndPoints::SESSION_ID),keto::common::HttpEndPoints::SESSION_ID) == 0) {
         int sessionIdLen = strlen(keto::common::HttpEndPoints::SESSION_ID);
         this->sessionHash = subUri.substr(sessionIdLen,nextSlash - sessionIdLen);
-        KETO_LOG_DEBUG << "Session hash : " << this->sessionHash;
+        //KETO_LOG_DEBUG << "Session hash : " << this->sessionHash;
         subUri = subUri.substr(nextSlash+1);
         nextSlash = subUri.find("/");
     }

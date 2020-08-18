@@ -39,8 +39,8 @@ void ParentForkGateway::fin() {
     singleton.reset();
 }
 
-void ParentForkGateway::raiseException(const std::string& exception) {
-    ParentForkGateway::getInstance()->_raiseException(exception);
+void ParentForkGateway::raiseException(const std::string& exception, bool throwEx) {
+    ParentForkGateway::getInstance()->_raiseException(exception,throwEx);
 }
 
 keto::event::Event ParentForkGateway::processEvent(const keto::event::Event& event) {
@@ -59,7 +59,7 @@ ParentForkGatewayPtr ParentForkGateway::getInstance() {
     return singleton;
 }
 
-void ParentForkGateway::_raiseException(const std::string& exception) {
+void ParentForkGateway::_raiseException(const std::string& exception, bool throwEx) {
     ForkMessageWrapperHelper forkMessageWrapperHelper;
     forkMessageWrapperHelper.setCommand(ParentForkGateway::REQUEST::RAISE_EXCEPTION);
     forkMessageWrapperHelper.setMessage(exception);
@@ -67,7 +67,7 @@ void ParentForkGateway::_raiseException(const std::string& exception) {
     write(forkMessageWrapperHelper);
     ForkMessageWrapperHelper resultMessage = read();
 
-    if (resultMessage.getCommand() == ParentForkGateway::REQUEST::RAISE_EXCEPTION) {
+    if (resultMessage.getCommand() == ParentForkGateway::REQUEST::RAISE_EXCEPTION && throwEx) {
         BOOST_THROW_EXCEPTION(ParentRequestException(resultMessage.getException()));
     }
 }
@@ -112,28 +112,23 @@ void ParentForkGateway::_returnResult(const keto::event::Event& event) {
 }
 
 keto::wavm_common::ForkMessageWrapperHelper ParentForkGateway::read() {
-    //KETO_LOG_ERROR << "[ParentForkGateway::read] Read the bytes in until EOF";
     while(true) {
         size_t size;
         pin >> size;
         if (!size) {
             continue;
         }
-        //KETO_LOG_ERROR << "[ParentForkGateway::read] Read the bytes in until EOF : " << size;
         std::vector<uint8_t> message(size);
         pin.read((char *) message.data(), size);
-        //KETO_LOG_ERROR << "[ParentForkGateway::read] read in the buffer size : " << message.size();
         return keto::wavm_common::ForkMessageWrapperHelper(message);
     }
 }
 
 void ParentForkGateway::write(const keto::wavm_common::ForkMessageWrapperHelper& forkMessageWrapperHelper) {
     std::vector<uint8_t> message = forkMessageWrapperHelper;
-    //KETO_LOG_ERROR << "[ParentForkGateway::write] message size : " << message.size();
     pout << (size_t)message.size();
     pout.write((char*)message.data(),message.size());
     pout.flush();
-    //KETO_LOG_ERROR << "[ParentForkGateway::write] hex is : " << Botan::hex_encode(message);
 }
 
 }

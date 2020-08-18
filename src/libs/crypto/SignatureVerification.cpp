@@ -95,25 +95,25 @@ bool SignatureVerification::check(const std::vector<uint8_t>& signature) {
     });
 
     for (SignatureVerification::SignatureVerificationType signatureType: signatureTypes) {
-        KETO_LOG_DEBUG << "verify the signature using type [" << signatureType.getType() << "]["
-            << this->source.size() << "][" << signature.size()
-            << "][" << signatureType.getFormat() << "]";
+        //KETO_LOG_DEBUG << "verify the signature using type [" << signatureType.getType() << "]["
+        //    << this->source.size() << "][" << signature.size()
+        //    << "][" << signatureType.getFormat() << "]";
         if (signatureType.getType() == Constants::SECP256K_SIGNATURE_TYPE) {
             if (keto::crypto::Secp256K1Utils::verifySignature(this->key,this->source,signature)) {
                 return true;
             }
         } else {
             Botan::PK_Verifier verify(*this->publicKey, signatureType.getType(), signatureType.getFormat());
-            KETO_LOG_DEBUG << "Verify the message.";
+            //KETO_LOG_DEBUG << "Verify the message.";
             verify.update(this->source);
             if (verify.check_signature(signature)) {
-                KETO_LOG_DEBUG << "The signature is valid";
+                //KETO_LOG_DEBUG << "The signature is valid";
                 return true;
             }
-            KETO_LOG_DEBUG << "After the message";
+            //KETO_LOG_DEBUG << "After the message";
         }
     }
-    KETO_LOG_DEBUG << "No signature was found";
+    //KETO_LOG_DEBUG << "No signature was found";
     return false;
 }
 

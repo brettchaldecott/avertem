@@ -23,7 +23,7 @@ KeyStoreWrapIndexEncryptor::~KeyStoreWrapIndexEncryptor() {
 
 std::vector<uint8_t> KeyStoreWrapIndexEncryptor::encrypt(const keto::crypto::SecureVector& value) const {
     size_t numKeys = this->keyStoreWrapIndexManager->getNumberOfKeys();
-    KETO_LOG_DEBUG << "The number of keys is : " << numKeys;
+    //KETO_LOG_DEBUG << "The number of keys is : " << numKeys;
     if (numKeys == 0) {
         BOOST_THROW_EXCEPTION(keto::keystore::KeyStoreWrapIndexContainsNoKeysConfigured());
     }

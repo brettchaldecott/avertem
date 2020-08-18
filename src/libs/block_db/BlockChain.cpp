@@ -50,14 +50,14 @@ BlockChain::BlockChainWriteCache::~BlockChainWriteCache() {
 
 bool BlockChain::BlockChainWriteCache::checkCache(const keto::asn1::HashHelper& blockHash) {
     if (this->cacheLookup.count(blockHash)) {
-        KETO_LOG_DEBUG << "[BlockChain::checkCache] The cache contains the block : " << blockHash.getHash(keto::common::StringEncoding::HEX);
+        //KETO_LOG_DEBUG << "[BlockChain::checkCache] The cache contains the block : " << blockHash.getHash(keto::common::StringEncoding::HEX);
         return true;
     }
     return false;
 }
 
 void BlockChain::BlockChainWriteCache::addToCache(const keto::asn1::HashHelper& blockHash) {
-    KETO_LOG_DEBUG << "[BlockChain::checkCache] Adding the block to the cache : " << blockHash.getHash(keto::common::StringEncoding::HEX);
+    //KETO_LOG_DEBUG << "[BlockChain::checkCache] Adding the block to the cache : " << blockHash.getHash(keto::common::StringEncoding::HEX);
     if (this->cacheHistory.size() >= Constants::MAX_BLOCK_CACHE_SIZE) {
         this->cacheLookup.erase(this->cacheHistory.front());
         this->cacheHistory.pop_front();
@@ -133,28 +133,12 @@ void BlockChain::MasterTangleManager::setActiveTangles(const std::vector<keto::a
     }
 }
 
-//keto::asn1::HashHelper BlockChain::MasterTangleManager::getTangleHash() {
-//    if (this->currentTangle) {
-//        return this->currentTangle->getHash();
-//    }
-//    BOOST_THROW_EXCEPTION(keto::block_db::MasterTangleNotConfiguredException());
-//}
-
 keto::asn1::HashHelper BlockChain::MasterTangleManager::getParentHash() {
     if (this->currentTangle) {
         return this->currentTangle->getLastBlockHash();
     }
     BOOST_THROW_EXCEPTION(keto::block_db::MasterTangleNotConfiguredException("The required current tangle has not been configured"));
 }
-
-//keto::asn1::HashHelper BlockChain::MasterTangleManager::selectParentHashByLastBlockHash(const keto::asn1::HashHelper& id) {
-//    BlockChainTangleMetaPtr tangle =
-//        this->blockChainMetaPtr->getTangleEntryByLastBlock(id);
-//    if (!tangle) {
-//        BOOST_THROW_EXCEPTION(keto::block_db::InvalidLastBlockHashException());
-//    }
-//    return tangle->getHash();
-//}
 
 keto::asn1::HashHelper BlockChain::MasterTangleManager::selectParentHash() {
     if (this->currentTangle) {
@@ -191,32 +175,12 @@ void BlockChain::NestedTangleManager::setActiveTangles(const std::vector<keto::a
 
 }
 
-//keto::asn1::HashHelper BlockChain::NestedTangleManager::getTangleHash() {
-//    if (activeTangle) {
-//        return activeTangle->getLastBlockHash();
-//    }
-//    activeTangle = this->blockChainMetaPtr->selectTangleEntry();
-//    if (!activeTangle) {
-//        return keto::asn1::HashHelper();
-//    }
-//    return activeTangle->getHash();
-//}
-
 keto::asn1::HashHelper BlockChain::NestedTangleManager::getParentHash() {
     if (!this->activeTangle) {
         return selectParentHash();
     }
     return this->activeTangle->getLastBlockHash();
 }
-
-//keto::asn1::HashHelper BlockChain::NestedTangleManager::selectParentHashByLastBlockHash(const keto::asn1::HashHelper& id) {
-//    this->activeTangle =
-//            this->blockChainMetaPtr->getTangleEntryByLastBlock(id);
-//    if (!this->activeTangle) {
-//        BOOST_THROW_EXCEPTION(keto::block_db::InvalidLastBlockHashException());
-//    }
-//    return this->activeTangle->getHash();
-//}
 
 keto::asn1::HashHelper BlockChain::NestedTangleManager::selectParentHash() {
     if (activeTangle) {
@@ -322,18 +286,6 @@ BlockChain::BlockChain(std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr,
     load(id);
     this->blockChainWriteCachePtr = BlockChain::BlockChainWriteCachePtr(new BlockChainWriteCache());
 }
-
-//keto::asn1::HashHelper BlockChain::selectParentHash() {
-//    return this->tangleManagerInterfacePtr->selectParentHash();
-//}
-
-//keto::asn1::HashHelper BlockChain::selectParentHashByLastBlockHash(const keto::asn1::HashHelper& id) {
-//    return this->tangleManagerInterfacePtr->selectParentHashByLastBlockHash(id);
-//}
-
-//keto::asn1::HashHelper BlockChain::getTangleHash() {
-//    return this->tangleManagerInterfacePtr->getTangleHash();
-//}
 
 bool BlockChain::writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage, const BlockChainCallback& callback) {
     //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
@@ -455,7 +407,7 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
 
     keto::asn1::HashHelper blockHash(signedBlock.hash);
 
-    KETO_LOG_DEBUG << "[BlockChain::writeBlock] Look for the block : " << blockHash.getHash(keto::common::StringEncoding::HEX);
+    //KETO_LOG_DEBUG << "[BlockChain::writeBlock] Look for the block : " << blockHash.getHash(keto::common::StringEncoding::HEX);
     if (duplicateCheck(blockTransaction,blockHash)) {
         // ignore as the block already exists
         KETO_LOG_INFO << "[BlockChain::writeBlock] The block already exists in the store ignore it : " <<
@@ -544,7 +496,7 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
     blockMeta.set_encrypted(this->blockChainMetaPtr->isEncrypted());
 
     if (this->blockChainMetaPtr->isEncrypted()) {
-        KETO_LOG_DEBUG << "[BlockChain::writeBlock] Decrypt the block";
+        //KETO_LOG_DEBUG << "[BlockChain::writeBlock] Decrypt the block";
         keto::key_store_utils::EncryptionRequestProtoHelper encryptionRequestProtoHelper;
         encryptionRequestProtoHelper = blockBytes;
         keto::key_store_utils::EncryptionResponseProtoHelper encryptionResponseProtoHelper(
@@ -552,9 +504,9 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
                 keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::EncryptRequest>(
                         keto::server_common::Events::ENCRYPT_ASN1::ENCRYPT,encryptionRequestProtoHelper))));
         blockWrapper.set_asn1_block(encryptionResponseProtoHelper);
-        KETO_LOG_DEBUG << "[BlockChain::writeBlock] Decrypted the block : ";
+        //KETO_LOG_DEBUG << "[BlockChain::writeBlock] Decrypted the block : ";
     } else {
-        KETO_LOG_DEBUG << "[BlockChain::writeBlock] Block is not encrypted copy bytes";
+        //KETO_LOG_DEBUG << "[BlockChain::writeBlock] Block is not encrypted copy bytes";
         blockWrapper.set_asn1_block(keto::server_common::VectorUtils().copyVectorToString(
            blockBytes));
     }
@@ -580,11 +532,11 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
     std::string blockChildrenStr;
     blockChildren.SerializeToString(&blockChildrenStr);
     keto::rocks_db::SliceHelper blockChildrenHelper(blockChildrenStr);
-    KETO_LOG_DEBUG << "[BlockChain::writeBlock] Add children to parent block : " << parentHash.getHash(keto::common::StringEncoding::HEX);
+    //KETO_LOG_DEBUG << "[BlockChain::writeBlock] Add children to parent block : " << parentHash.getHash(keto::common::StringEncoding::HEX);
     childTransaction->Put(parentHashHelper,blockChildrenHelper);
 
     // update the tangle information
-    KETO_LOG_DEBUG << "[BlockChain::writeBlock] Set the last block hash : "  << blockHash.getHash(keto::common::StringEncoding::HEX);
+    //KETO_LOG_DEBUG << "[BlockChain::writeBlock] Set the last block hash : "  << blockHash.getHash(keto::common::StringEncoding::HEX);
     blockChainTangleMetaPtr->setLastBlockHash(blockHash);
     blockChainTangleMetaPtr->setLastModified(keto::asn1::TimeHelper(signedBlock.date));
 
@@ -668,7 +620,7 @@ bool BlockChain::processBlockSyncResponse(const keto::proto::SignedBlockBatch& s
             complete = !write;
         }
     }
-    KETO_LOG_DEBUG << "[BlockChain::processBlockSyncResponse] process the tangle block : " << signedBlockBatch.tangle_batches_size();
+    //KETO_LOG_DEBUG << "[BlockChain::processBlockSyncResponse] process the tangle block : " << signedBlockBatch.tangle_batches_size();
     for (int index = 0; index < signedBlockBatch.tangle_batches_size(); index++) {
         if (!processBlockSyncResponse(signedBlockBatch.tangle_batches(index),callback) && complete) {
             complete = false;

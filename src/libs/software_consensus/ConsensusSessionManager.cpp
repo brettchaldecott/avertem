@@ -93,12 +93,10 @@ void ConsensusSessionManager::updateSessionKey(const keto::crypto::SecureVector&
 
     if (sessionHash == this->sessionHash) {
         // ignore at this point the session matches and we dont need to update it.
-        KETO_LOG_DEBUG << "[updateSessionKey] Ignore the session key : " << Botan::hex_encode((uint8_t*)sessionHash.data(),sessionHash.size(),true);
         activeSessionCount++;
         return;
     } else {
         activeSessionCount=1;
-        KETO_LOG_DEBUG << "[updateSessionKey] Start a new session as the session hashes dont match : " << Botan::hex_encode((uint8_t*)sessionHash.data(),sessionHash.size(),true);
     }
     this->sessionHash = sessionHash;
     this->accepted = false;

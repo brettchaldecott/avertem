@@ -55,7 +55,7 @@ AccountGraphStore::StorageScopeLockPtr AccountGraphStore::StorageLock::aquireRea
         this->stateCondition.wait(uniqueLock);
     }
     this->readLock++;
-    KETO_LOG_ERROR << "[AccountGraphStore::StorageLock::aquireWriteLock]Aquire read lock [" << this->readLock << "][" <<this->writeLock << "]";
+    //KETO_LOG_ERROR << "[AccountGraphStore::StorageLock::aquireWriteLock]Aquire read lock [" << this->readLock << "][" <<this->writeLock << "]";
     return AccountGraphStore::StorageScopeLockPtr(new AccountGraphStore::StorageScopeLock(this,true,false));
 }
 
@@ -69,13 +69,13 @@ AccountGraphStore::StorageScopeLockPtr AccountGraphStore::StorageLock::aquireWri
     while(this->readLock){
         this->stateCondition.wait(uniqueLock);
     }
-    KETO_LOG_ERROR << "[AccountGraphStore::StorageLock::aquireWriteLock]Aquire write lock [" << this->readLock << "][" <<this->writeLock << "]";
+    //KETO_LOG_ERROR << "[AccountGraphStore::StorageLock::aquireWriteLock]Aquire write lock [" << this->readLock << "][" <<this->writeLock << "]";
     return AccountGraphStore::StorageScopeLockPtr(new AccountGraphStore::StorageScopeLock(this,false,true));
 }
 
 void AccountGraphStore::StorageLock::release(bool _readLock, bool _writeLock) {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
-    KETO_LOG_ERROR << "[AccountGraphStore::StorageLock::release]Release the lock [" << this->readLock << "][" <<this->writeLock << "]";
+    //KETO_LOG_ERROR << "[AccountGraphStore::StorageLock::release]Release the lock [" << this->readLock << "][" <<this->writeLock << "]";
     if (_readLock) {
         this->readLock--;
     } else if (_writeLock) {
@@ -134,15 +134,15 @@ AccountGraphStore::AccountGraphStore(const std::string& dbName) : dbName(dbName)
         keto::proto::PasswordResponse passwordResponse = keto::server_common::fromEvent<keto::proto::PasswordResponse>(
                 keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::PasswordRequest>(
                         keto::server_common::Events::REQUEST_PASSWORD, passwordRequest)));
-        KETO_LOG_DEBUG << "The db path is : " << dbPath;
+        //KETO_LOG_DEBUG << "The db path is : " << dbPath;
         ss << "hash-type='bdb',dir='" << dbPath.c_str() << "',write='yes',contexts='yes',index-predicates='yes',password='" << passwordResponse.password()
            << "'";
     }
 
-    KETO_LOG_DEBUG << "The db name is : " << dbName << "[" << ss.str() << "]";
+    //KETO_LOG_DEBUG << "The db name is : " << dbName << "[" << ss.str() << "]";
     storage=librdf_new_storage(world, "hashes", dbName.c_str(),
                              ss.str().c_str());
-    KETO_LOG_DEBUG << "Load the model from the storage";
+    //KETO_LOG_DEBUG << "Load the model from the storage";
     model = librdf_new_model(world,storage,NULL);
     if (!storage || !model) {
         BOOST_THROW_EXCEPTION(keto::account_db::AccountDBInitFailureException());

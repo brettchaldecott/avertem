@@ -126,9 +126,9 @@ void GenesisLoader::load() {
                     keto::asn1::RDFPredicateHelper predicateHelper(predIter.key()); 
                     KETO_LOG_INFO << "key : " << predIter.key();
                     nlohmann::json contentWrapper = predIter.value();
-                    KETO_LOG_INFO << "Content wrapper" << contentWrapper;
+                    //KETO_LOG_INFO << "Content wrapper" << contentWrapper;
                     nlohmann::json jsonObj = contentWrapper.begin().value();
-                    KETO_LOG_INFO << "Json object" << jsonObj;
+                    //KETO_LOG_INFO << "Json object" << jsonObj;
                     keto::asn1::RDFObjectHelper objectHelper;
                     objectHelper.setDataType(jsonObj["datatype"].get<std::string>()).
                     setType(jsonObj["type"].get<std::string>()).
@@ -147,9 +147,9 @@ void GenesisLoader::load() {
         transactionPtr->addAction(actionBuilderPtr);
         
         
-        KETO_LOG_INFO << "Memory data source private key " << element["private_key"].get<std::string>();
-        KETO_LOG_INFO << "Memory data source private key " << Botan::hex_encode(
-            Botan::hex_decode_locked(element["private_key"].get<std::string>(),false),true);
+        //KETO_LOG_INFO << "Memory data source private key " << element["private_key"].get<std::string>();
+        //KETO_LOG_INFO << "Memory data source private key " << Botan::hex_encode(
+        //    Botan::hex_decode_locked(element["private_key"].get<std::string>(),false),true);
         keto::asn1::PrivateKeyHelper privateKeyHelper(element["private_key"].get<std::string>(),keto::common::HEX);
         KETO_LOG_INFO << "Signed transaction builder";
         std::shared_ptr<keto::chain_common::SignedTransactionBuilder> signedTransBuild = 

@@ -346,11 +346,11 @@ public:
         , doc_root_(doc_root)
         , lambda_(*this)
     {
-        KETO_LOG_ERROR << "[session::session] the session has been started.";
+        KETO_LOG_INFO << "[session::session] the session has been started.";
     }
 
     virtual ~session() {
-        KETO_LOG_ERROR << "[session::~session] the session is closing.";
+        KETO_LOG_INFO << "[session::~session] the session is closing.";
     }
 
     // Start the asynchronous operation
@@ -461,7 +461,7 @@ public:
         }
 
         // At this point the connection is closed gracefully
-        KETO_LOG_ERROR << "[session::on_shutdown] shutting down the session";
+        KETO_LOG_INFO << "[session::on_shutdown] shutting down the session";
     }
 };
 

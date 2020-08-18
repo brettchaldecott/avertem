@@ -93,7 +93,7 @@ bool BlockChainStore::writeBlock(const SignedBlockBuilderPtr& signedBlock, const
 bool BlockChainStore::writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlock, const BlockChainCallback& callback) {
     std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (!masterChain) {
-        KETO_LOG_DEBUG << "The block chain has not been initialized yet, ignore new blocks";
+        //KETO_LOG_DEBUG << "The block chain has not been initialized yet, ignore new blocks";
         return false;
     }
     return this->masterChain->writeBlock(signedBlock,callback);
@@ -102,7 +102,7 @@ bool BlockChainStore::writeBlock(const keto::proto::SignedBlockWrapperMessage& s
 std::vector<keto::asn1::HashHelper> BlockChainStore::getLastBlockHashs() {
     std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (!masterChain) {
-        KETO_LOG_DEBUG << "The block chain has not been initialized yet, ignore new blocks";
+        //KETO_LOG_DEBUG << "The block chain has not been initialized yet, ignore new blocks";
         return std::vector<keto::asn1::HashHelper>();
     }
     return this->masterChain->getLastBlockHashs();
@@ -118,8 +118,8 @@ keto::proto::SignedBlockBatchMessage BlockChainStore::requestBlocks(const std::v
     if (!hashes.size()) {
         for (int index = 0; index < this->masterChain->getBlockChainMeta()->tangleCount(); index++) {
             keto::asn1::HashHelper tangleHash = this->masterChain->getBlockChainMeta()->getTangleEntry(index)->getHash();
-            KETO_LOG_DEBUG<< "[BlockChainStore::requestBlocks][" << index << "] Client is requesting the complete chain using the starting point of :  " <<
-                          tangleHash.getHash(keto::common::StringEncoding::HEX);
+            //KETO_LOG_DEBUG<< "[BlockChainStore::requestBlocks][" << index << "] Client is requesting the complete chain using the starting point of :  " <<
+            //              tangleHash.getHash(keto::common::StringEncoding::HEX);
             hashes.push_back(tangleHash);
         }
 

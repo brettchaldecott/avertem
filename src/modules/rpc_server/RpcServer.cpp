@@ -499,8 +499,8 @@ public:
         if (serverHelloProtoHelperPtr) {
             std::string accountHash = keto::server_common::VectorUtils().copyVectorToString(
                     serverHelloProtoHelperPtr->getAccountHash());
-            KETO_LOG_DEBUG << "End of server session remove it from the account session cache : " <<
-                Botan::hex_encode(serverHelloProtoHelperPtr->getAccountHash());
+            //KETO_LOG_DEBUG << "End of server session remove it from the account session cache : " <<
+            //    Botan::hex_encode(serverHelloProtoHelperPtr->getAccountHash());
             AccountSessionCache::getInstance()->removeAccount(accountHash,this);
         }
 
@@ -561,36 +561,36 @@ public:
         std::string message;
         
         try {
-            KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] process the command : " << command;
+            //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] process the command : " << command;
             keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
             if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO) == 0) {
                 message = handleHello(command, payload);
-                KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " Said hello";
+                //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " Said hello";
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS) == 0) {
                 message = handleHelloConsensus(command, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PEERS) == 0) {
-                KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " requested peers";
+                //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " requested peers";
                 message = handlePeer(command,payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REGISTER) == 0) {
-                KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " register";
+                //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " register";
                 message = handleRegister(keto::server_common::Constants::RPC_COMMANDS::REGISTER, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PUSH_RPC_PEERS) == 0) {
-                KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " push rpc peers";
+                //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " push rpc peers";
                 handlePushRpcPeers(keto::server_common::Constants::RPC_COMMANDS::PUSH_RPC_PEERS, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ACTIVATE) == 0) {
-                KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " activate";
+                //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " activate";
                 handleActivate(keto::server_common::Constants::RPC_COMMANDS::ACTIVATE, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
-                KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] handle a transaction";
+                //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] handle a transaction";
                 message = handleTransaction(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION, payload);
-                KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] Transaction processing complete";
+                //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] Transaction processing complete";
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED) == 0) {
                 handleTransactionProcessed(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED, payload);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS) == 0) {
 
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLOSE) == 0) {
                 // implement
-                KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] close the session";
+                //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] close the session";
                 removeFromCache();
                 return;
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS) == 0) {
@@ -622,7 +622,7 @@ public:
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_STATUS) == 0) {
                 handleResponseNetworkStatus(command,payload);
             }
-            KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] processed the command : " << command;
+            //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] processed the command : " << command;
             transactionPtr->commit();
         } catch (keto::common::Exception& ex) {
             KETO_LOG_ERROR << "[RpcServer][processQueueEntry][" << getAccount() << "] Failed to handle the request [" << command << "] on the server [keto::common::Exception]: " << boost::diagnostic_information(ex,true);
@@ -643,21 +643,21 @@ public:
             send(message);
         }
 
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] Finished processing.";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] Finished processing.";
     }
 
     void
     activatePeer(const keto::router_utils::RpcPeerHelper& rpcPeerHelper) {
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] Activate this node with its peer";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] Activate this node with its peer";
 
         std::string rpcValue = rpcPeerHelper;
         clientRequest(keto::server_common::Constants::RPC_COMMANDS::ACTIVATE, Botan::hex_encode((uint8_t*)rpcValue.data(),rpcValue.size(),true));
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] Activate this node with its peer";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] Activate this node with its peer";
     }
 
     void
     electBlockProducerPublish(const keto::election_common::ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper) {
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "[session::electBlockProducerPublish]: publish the election result";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "[session::electBlockProducerPublish]: publish the election result";
         // prevent echo propergation at the boundary
         if (this->electionResultCache.containsPublishAccount(electionPublishTangleAccountProtoHelper.getAccount())) {
             return;
@@ -667,12 +667,12 @@ public:
                 electionPublishTangleAccountProtoHelper);
         clientRequest(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_PUBLISH,
                       Botan::hex_encode((uint8_t*)messageBytes.data(),messageBytes.size(),true));
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "[session::electBlockProducerPublish]: published the election result";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "[session::electBlockProducerPublish]: published the election result";
     }
 
     void
     electBlockProducerConfirmation(const keto::election_common::ElectionConfirmationHelper& electionConfirmationHelper) {
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "[session::electBlockProducerConfirmation]: confirmation of the election results";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "[session::electBlockProducerConfirmation]: confirmation of the election results";
         // prevent echo propergation at the boundary
         if (this->electionResultCache.containsConfirmationAccount(electionConfirmationHelper.getAccount())) {
             return;
@@ -683,7 +683,7 @@ public:
 
         clientRequest(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION,
                       Botan::hex_encode((uint8_t*)messageBytes.data(),messageBytes.size(),true));
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "[session::electBlockProducerConfirmation]: confirmation sent for election results";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "[session::electBlockProducerConfirmation]: confirmation sent for election results";
     }
 
     void requestBlockSync(const keto::proto::SignedBlockBatchRequest& signedBlockBatchRequest) {
@@ -691,31 +691,31 @@ public:
         std::vector<uint8_t> messageBytes =  keto::server_common::VectorUtils().copyStringToVector(
                 messageWrapperStr);
 
-        KETO_LOG_DEBUG << "[session::requestBlockSync][" << getAccount() << "] request the block sync from a";
+        //KETO_LOG_DEBUG << "[session::requestBlockSync][" << getAccount() << "] request the block sync from a";
         clientRequest(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST,
                       Botan::hex_encode((uint8_t*)messageBytes.data(),messageBytes.size(),true));
-        KETO_LOG_DEBUG << "[session::requestBlockSync][" << getAccount() << "] The request for [" <<
-                      keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST << "]";
+        //KETO_LOG_DEBUG << "[session::requestBlockSync][" << getAccount() << "] The request for [" <<
+        //              keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST << "]";
     }
 
     void
     routeTransaction(keto::proto::MessageWrapper&  messageWrapper) {
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]Route transaction";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]Route transaction";
         std::string messageWrapperStr;
         messageWrapper.SerializeToString(&messageWrapperStr);
         clientRequest(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION,
                       Botan::hex_encode((uint8_t*)messageWrapperStr.data(),messageWrapperStr.size(),true));
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]Routed the transaction";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]Routed the transaction";
     }
 
     void
     pushBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage) {
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]Attempt to push the block";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]Attempt to push the block";
         std::string messageWrapperStr;
         signedBlockWrapperMessage.SerializeToString(&messageWrapperStr);
         clientRequest(keto::server_common::Constants::RPC_COMMANDS::BLOCK,
                       Botan::hex_encode((uint8_t*)messageWrapperStr.data(),messageWrapperStr.size(),true));
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]After writing the block";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]After writing the block";
     }
 
     //
@@ -723,42 +723,42 @@ public:
     // the protocol methods
     void
     performNetworkSessionReset() {
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]Attempt to perform the protocol reset via forcing the client to say hello";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]Attempt to perform the protocol reset via forcing the client to say hello";
         // different message format
         std::stringstream ss;
         ss << keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS
                                                << " " << Botan::hex_encode(this->rpcServer->getSecret())
                                                << " " << Botan::hex_encode(this->generateSession());
         send(ss.str());
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]After requesting the protocol reset from peers";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]After requesting the protocol reset from peers";
     }
 
 
     void
     performProtocolCheck() {
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]Attempt to perform the protocol check";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]Attempt to perform the protocol check";
         clientRequest(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_REQUEST,
                       Botan::hex_encode(this->generateSession()));
 
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]After requesting the protocol check from peers";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]After requesting the protocol check from peers";
     }
 
 
 
     void
     performNetworkHeartbeat(const keto::proto::ProtocolHeartbeatMessage& protocolHeartbeatMessage) {
-        KETO_LOG_DEBUG << "Attempt to perform the protocol heartbeat";
+        //KETO_LOG_DEBUG << "Attempt to perform the protocol heartbeat";
         this->electionResultCache.heartBeat(protocolHeartbeatMessage);
         std::string messageWrapperStr;
         protocolHeartbeatMessage.SerializeToString(&messageWrapperStr);
         clientRequest(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_HEARTBEAT,
                 Botan::hex_encode((uint8_t*)messageWrapperStr.data(),messageWrapperStr.size(),true));
-        KETO_LOG_DEBUG << "After requesting the protocol heartbeat";
+        //KETO_LOG_DEBUG << "After requesting the protocol heartbeat";
     }
 
     void
     electBlockProducer() {
-        KETO_LOG_DEBUG << getAccount() << "[electBlockProducer]: elect block producer";
+        //KETO_LOG_DEBUG << getAccount() << "[electBlockProducer]: elect block producer";
         keto::election_common::ElectionPeerMessageProtoHelper electionPeerMessageProtoHelper;
         electionPeerMessageProtoHelper.setAccount(keto::server_common::ServerInfo::getInstance()->getAccountHash());
 
@@ -767,7 +767,7 @@ public:
 
         clientRequest(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_REQUEST,
                            messageBytes);
-        KETO_LOG_DEBUG << getAccount() << "[electBlockProducer]: after invoking election ";
+        //KETO_LOG_DEBUG << getAccount() << "[electBlockProducer]: after invoking election ";
     }
 
     std::string
@@ -787,18 +787,18 @@ public:
         if (moduleConsensusValidationMessageHelper.isValid()) {
             ss << keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_ACCEPT
                                            << " " << keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_ACCEPT;
-            KETO_LOG_DEBUG << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " was accepted";
+            //KETO_LOG_DEBUG << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " was accepted";
         } else {
             ss << keto::server_common::Constants::RPC_COMMANDS::GO_AWAY
                                            << " " << keto::server_common::Constants::RPC_COMMANDS::GO_AWAY;
-            KETO_LOG_DEBUG << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " was rejected from network";
+            //KETO_LOG_DEBUG << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " was rejected from network";
         }
         return ss.str();
     }
 
     std::string
     handleElectionRequest(const std::string& command, const std::string& payload) {
-        KETO_LOG_DEBUG << "[RpcServer::handleElectionRequest] handle the election request : " << command;
+        //KETO_LOG_DEBUG << "[RpcServer::handleElectionRequest] handle the election request : " << command;
         keto::election_common::ElectionPeerMessageProtoHelper electionPeerMessageProtoHelper(
                 keto::server_common::VectorUtils().copyVectorToString(
                         Botan::hex_decode(payload)));
@@ -810,14 +810,14 @@ public:
                                         keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_REQUEST,electionPeerMessageProtoHelper))));
 
         std::string result = electionResultMessageProtoHelper;
-        KETO_LOG_DEBUG << "[RpcServer::handleElectionRequest] elected a node : " << command;
+        //KETO_LOG_DEBUG << "[RpcServer::handleElectionRequest] elected a node : " << command;
         return buildMessage(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE,
                       Botan::hex_encode((uint8_t*)result.data(),result.size(),true));
     }
 
     void
     handleElectionResponse(const std::string& command, const std::string& payload) {
-        KETO_LOG_DEBUG << "[RpcServer::handleElectionResponse] handle the election response : " << command;
+        //KETO_LOG_DEBUG << "[RpcServer::handleElectionResponse] handle the election response : " << command;
         keto::election_common::ElectionResultMessageProtoHelper electionResultMessageProtoHelper(
                 keto::server_common::VectorUtils().copyVectorToString(
                         Botan::hex_decode(payload)));
@@ -825,55 +825,55 @@ public:
         keto::server_common::triggerEvent(
                 keto::server_common::toEvent<keto::proto::ElectionResultMessage>(
                         keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_RESPONSE,electionResultMessageProtoHelper));
-        KETO_LOG_DEBUG << "[RpcServer::handleElectionResponse] handled the election response : " << command;
+        //KETO_LOG_DEBUG << "[RpcServer::handleElectionResponse] handled the election response : " << command;
     }
 
     void handleElectionPublish(const std::string& command, const std::string& message) {
-        KETO_LOG_DEBUG << "[handleElectionPublish] handle the election";
+        //KETO_LOG_DEBUG << "[handleElectionPublish] handle the election";
         keto::election_common::ElectionPublishTangleAccountProtoHelper electionPublishTangleAccountProtoHelper(
                 keto::server_common::VectorUtils().copyVectorToString(
                         Botan::hex_decode(message)));
 
         // prevent echo propergation at the boundary
         if (this->electionResultCache.containsPublishAccount(electionPublishTangleAccountProtoHelper.getAccount())) {
-            KETO_LOG_DEBUG << "[handleElectionPublish] handle the election";
+            //KETO_LOG_DEBUG << "[handleElectionPublish] handle the election";
             return;
         }
 
-        KETO_LOG_DEBUG << "[handleElectionPublish] publish the election";
+        //KETO_LOG_DEBUG << "[handleElectionPublish] publish the election";
         keto::election_common::ElectionUtils(keto::election_common::Constants::ELECTION_PROCESS_PUBLISH).
                 publish(electionPublishTangleAccountProtoHelper);
     }
 
 
     void handleElectionConfirmation(const std::string& command, const std::string& message) {
-        KETO_LOG_DEBUG << "[handleElectionConfirmation] confirm the election";
+        //KETO_LOG_DEBUG << "[handleElectionConfirmation] confirm the election";
         keto::election_common::ElectionConfirmationHelper electionConfirmationHelper(
                 keto::server_common::VectorUtils().copyVectorToString(
                         Botan::hex_decode(message)));
 
         // prevent echo propergation at the boundary
         if (this->electionResultCache.containsConfirmationAccount(electionConfirmationHelper.getAccount())) {
-            KETO_LOG_DEBUG << "[handleElectionConfirmation] ignore the confirmation election";
+            //KETO_LOG_DEBUG << "[handleElectionConfirmation] ignore the confirmation election";
             return;
         }
 
-        KETO_LOG_DEBUG << "[handleElectionConfirmation] process the confirmation";
+        //KETO_LOG_DEBUG << "[handleElectionConfirmation] process the confirmation";
         keto::election_common::ElectionUtils(keto::election_common::Constants::ELECTION_PROCESS_CONFIRMATION).
                 confirmation(electionConfirmationHelper);
     }
 
 
     void clientRequest(const std::string& command, const std::vector<uint8_t>& message) {
-        KETO_LOG_DEBUG << "[RpcServer] Send the server request : " << command;
+        //KETO_LOG_DEBUG << "[RpcServer] Send the server request : " << command;
         clientRequest(command,Botan::hex_encode((uint8_t*)message.data(),message.size(),true));
-        KETO_LOG_DEBUG << "[RpcServer] Sent the server request : " << command;
+        //KETO_LOG_DEBUG << "[RpcServer] Sent the server request : " << command;
     }
 
     void clientRequest(const std::string& command, const std::string& message) {
-        KETO_LOG_DEBUG << "[RpcServer] Send the server request : " << command;
+        //KETO_LOG_DEBUG << "[RpcServer] Send the server request : " << command;
         send(buildMessage(command,message));
-        KETO_LOG_DEBUG << "[RpcServer] Sent the server request : " << command;
+        //KETO_LOG_DEBUG << "[RpcServer] Sent the server request : " << command;
     }
 
 
@@ -935,11 +935,11 @@ public:
         if (moduleConsensusValidationMessageHelper.isValid()) {
             ss << keto::server_common::Constants::RPC_COMMANDS::ACCEPTED
                 << " " << keto::server_common::Constants::RPC_COMMANDS::ACCEPTED;
-            KETO_LOG_DEBUG << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " was accepted";
+            //KETO_LOG_DEBUG << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " was accepted";
         } else {
             ss << keto::server_common::Constants::RPC_COMMANDS::GO_AWAY
                 << " " << keto::server_common::Constants::RPC_COMMANDS::GO_AWAY;
-            KETO_LOG_DEBUG << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " was rejected from network";
+            //KETO_LOG_DEBUG << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " was rejected from network";
         }
         return ss.str();
     }
@@ -955,7 +955,7 @@ public:
             this->remoteHostname = peerRequestHelper.getHostname();
         }
 
-        KETO_LOG_DEBUG << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " get the peers for a client";
+        //KETO_LOG_DEBUG << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " get the peers for a client";
         this->rpcServer->setExternalIp(this->localAddress);
         this->rpcServer->setExternalHostname(this->localHostname);
         std::vector<std::string> urls;
@@ -980,7 +980,7 @@ public:
         std::stringstream ss;
         ss << keto::server_common::Constants::RPC_COMMANDS::PEERS
                 << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
-        KETO_LOG_DEBUG << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " return the peers to the client";
+        //KETO_LOG_DEBUG << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " return the peers to the client";
         return ss.str();
     }
     
@@ -1004,7 +1004,7 @@ public:
         if (!peerRequestHelper.getHostname().empty()) {
             this->remoteHostname = peerRequestHelper.getHostname();
         }
-        KETO_LOG_DEBUG << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " get the peers for a client";
+        //KETO_LOG_DEBUG << "[RpcServer] " << this->serverHelloProtoHelperPtr->getAccountHashStr() << " get the peers for a client";
         this->rpcServer->setExternalIp(this->localAddress);
         this->rpcServer->setExternalHostname(this->localHostname);
         std::stringstream str;
@@ -1060,7 +1060,7 @@ public:
         std::string rpcVector = keto::server_common::VectorUtils().copyVectorToString(
                 Botan::hex_decode(payload));
         keto::router_utils::RpcPeerHelper rpcPeerHelper(rpcVector);
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleActivate] activate the node : " << rpcPeerHelper.isActive();
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleActivate] activate the node : " << rpcPeerHelper.isActive();
         this->active = rpcPeerHelper.isActive();
 
         keto::server_common::triggerEvent(
@@ -1070,7 +1070,7 @@ public:
     
     
     std::string handleTransaction(const std::string& command, const std::string& payload) {
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleTransaction] handle transaction";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleTransaction] handle transaction";
         keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper(
             keto::server_common::VectorUtils().copyVectorToString(
                 Botan::hex_decode(payload)));
@@ -1089,26 +1089,26 @@ public:
         ss << keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED
                 << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
 
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleTransaction] process the transaction";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleTransaction] process the transaction";
         return ss.str();
     }
     
     void handleTransactionProcessed(const std::string& command, const std::string& payload) {
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleTransactionProcessed] handle the transaction";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleTransactionProcessed] handle the transaction";
 
         keto::proto::MessageWrapperResponse messageWrapperResponse;
         messageWrapperResponse.ParseFromString(
             keto::server_common::VectorUtils().copyVectorToString(
                 Botan::hex_decode(payload)));
 
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] transaction processed by peer [" <<
-                this->serverHelloProtoHelperPtr->getAccountHashStr() << "] : " 
-                << messageWrapperResponse.result();
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] transaction processed by peer [" <<
+        //        this->serverHelloProtoHelperPtr->getAccountHashStr() << "] : "
+        //        << messageWrapperResponse.result();
         
     }
 
     std::string handleRequestNetworkSessionKeys(const std::string& command, const std::string& payload) {
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleRequestNetworkSessionKeys] << request the network session keys :" << command;
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleRequestNetworkSessionKeys] << request the network session keys :" << command;
 
         keto::proto::NetworkKeysWrapper networkKeysWrapper;
         networkKeysWrapper =
@@ -1117,16 +1117,16 @@ public:
                                 keto::server_common::Events::GET_NETWORK_SESSION_KEYS,networkKeysWrapper)));
 
         std::string result = networkKeysWrapper.SerializeAsString();
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleRequestNetworkKeys] set the response for the network session keys";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleRequestNetworkKeys] set the response for the network session keys";
         std::stringstream ss;
         ss << keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_SESSION_KEYS
                                        << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleRequestNetworkSessionKeys] << after handling the network session keys request :" << command;
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleRequestNetworkSessionKeys] << after handling the network session keys request :" << command;
         return ss.str();
     }
 
     std::string handleRequestMasterNetworkKeys(const std::string& command, const std::string& payload) {
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleRequestMasterNetworkKeys] << request the master network keys :" << command;
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleRequestMasterNetworkKeys] << request the master network keys :" << command;
 
         keto::proto::NetworkKeysWrapper networkKeysWrapper;
         networkKeysWrapper =
@@ -1135,16 +1135,16 @@ public:
                                 keto::server_common::Events::GET_MASTER_NETWORK_KEYS,networkKeysWrapper)));
 
         std::string result = networkKeysWrapper.SerializeAsString();
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleRequestNetworkKeys] set the response for the network keys";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleRequestNetworkKeys] set the response for the network keys";
         std::stringstream ss;
         ss << keto::server_common::Constants::RPC_COMMANDS::RESPONSE_MASTER_NETWORK_KEYS
                                        << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleRequestMasterNetworkKeys] << after handling the master network keys :" << command;
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleRequestMasterNetworkKeys] << after handling the master network keys :" << command;
         return ss.str();
     }
 
     std::string handleRequestNetworkKeys(const std::string& command, const std::string& payload) {
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleRequestNetworkKeys] << request the network key :" << command;
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleRequestNetworkKeys] << request the network key :" << command;
 
         keto::proto::NetworkKeysWrapper networkKeysWrapper;
         networkKeysWrapper =
@@ -1153,18 +1153,18 @@ public:
                                 keto::server_common::Events::GET_NETWORK_KEYS,networkKeysWrapper)));
 
         std::string result = networkKeysWrapper.SerializeAsString();
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleRequestNetworkKeys] send the response";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleRequestNetworkKeys] send the response";
         std::stringstream ss;
         ss << keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_KEYS
                                        << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
 
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleRequestNetworkKeys] << after handling the request:" << command;
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleRequestNetworkKeys] << after handling the request:" << command;
         return ss.str();
     }
 
 
      std::string handleRequestNetworkFees(const std::string& command, const std::string& payload) {
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleRequestNetworkFees] handle request network fees";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleRequestNetworkFees] handle request network fees";
         keto::proto::FeeInfoMsg feeInfoMsg;
         feeInfoMsg =
                 keto::server_common::fromEvent<keto::proto::FeeInfoMsg>(
@@ -1172,20 +1172,20 @@ public:
                                 keto::server_common::Events::NETWORK_FEE_INFO::GET_NETWORK_FEE,feeInfoMsg)));
 
         std::string result = feeInfoMsg.SerializeAsString();
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleRequestNetworkFees] setup the network fees response";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleRequestNetworkFees] setup the network fees response";
         std::stringstream ss;
         ss << keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_FEES
                                        << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleRequestNetworkFees] request network fees";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleRequestNetworkFees] request network fees";
         return ss.str();
     }
 
     std::string handleClientNetworkComplete(const std::string& command, const std::string& payload) {
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleClientNetworkComplete] The client has completed networking";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleClientNetworkComplete] The client has completed networking";
         std::stringstream ss;
         // At present the network status is not required
         if (!RpcServer::getInstance()->hasNetworkState()) {
-            KETO_LOG_ERROR << "[RpcServer][" << getAccount() << "][handleClientNetworkComplete] request network status";
+            //KETO_LOG_ERROR << "[RpcServer][" << getAccount() << "][handleClientNetworkComplete] request network status";
             ss << keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_STATUS
                << " " << keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_STATUS;
         } else {
@@ -1197,10 +1197,10 @@ public:
                                     keto::server_common::Events::ROUTER_QUERY::GET_PUBLISHED_ELECTION_INFO,publishedElectionInformation)));
 
             std::string result = publishedElectionInformation.SerializeAsString();
-            KETO_LOG_DEBUG << "[RpcSession][handleRequestNetworkStatus] retrieve the network status";
+            //KETO_LOG_DEBUG << "[RpcSession][handleRequestNetworkStatus] retrieve the network status";
             ss << keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_STATUS
                << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
-            KETO_LOG_DEBUG << "[RpcSession][handleRequestNetworkStatus] provide the network status";
+            //KETO_LOG_DEBUG << "[RpcSession][handleRequestNetworkStatus] provide the network status";
         }
         // at present there is no requirement to activate as this is handled in the registration response.
         //if (RpcServer::getInstance()->isServerActive()) {
@@ -1211,7 +1211,7 @@ public:
         //    ss << keto::server_common::Constants::RPC_COMMANDS::ACTIVATE << " "
         //        << Botan::hex_encode((uint8_t*)rpcValue.data(),rpcValue.size(),true);
         //}
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleClientNetworkComplete] Finished post network configuration";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleClientNetworkComplete] Finished post network configuration";
         return ss.str();
     }
 
@@ -1230,7 +1230,7 @@ public:
     }
 
     void handleBlockPush(const std::string& command, const std::string& payload) {
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleBlockPush] handle block push";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleBlockPush] handle block push";
         keto::proto::SignedBlockWrapperMessage signedBlockWrapperMessage;
         signedBlockWrapperMessage.ParseFromString(keto::server_common::VectorUtils().copyVectorToString(
                 Botan::hex_decode(payload)));
@@ -1239,14 +1239,14 @@ public:
                 keto::server_common::fromEvent<keto::proto::MessageWrapperResponse>(
                         keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SignedBlockWrapperMessage>(
                                 keto::server_common::Events::BLOCK_PERSIST_MESSAGE,signedBlockWrapperMessage)));
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleBlockPush] pushed the block";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleBlockPush] pushed the block";
 
     }
 
     std::string handleBlockSyncRequest(const std::string& command, const std::string& payload) {
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleBlockSyncRequest] handle the block sync request : " << command;
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleBlockSyncRequest] handle the block sync request : " << command;
         if (!RpcServer::getInstance()->isServerActive()) {
-            KETO_LOG_INFO << "[RpcServer] This server is inactive hand has not synced cannot handle this request.";
+            //KETO_LOG_INFO << "[RpcServer] This server is inactive hand has not synced cannot handle this request.";
             return handleRetryResponse(command);
         }
         keto::proto::SignedBlockBatchRequest signedBlockBatchRequest;
@@ -1261,16 +1261,16 @@ public:
                                 keto::server_common::Events::BLOCK_DB_REQUEST_BLOCK_SYNC,signedBlockBatchRequest)));
 
         std::string result = signedBlockBatchMessage.SerializeAsString();
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleBlockSyncRequest] Setup the block sync reply";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleBlockSyncRequest] Setup the block sync reply";
         std::stringstream ss;
         ss << keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_RESPONSE
                                        << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleBlockSyncRequest] The block data returned [" << result.size() << "]";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleBlockSyncRequest] The block data returned [" << result.size() << "]";
         return ss.str();
     }
 
     std::string handleBlockSyncResponse(const std::string& command, const std::string& payload) {
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleBlockSyncResponse] handle the block sync request : " << command;
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleBlockSyncResponse] handle the block sync request : " << command;
         keto::proto::SignedBlockBatchMessage signedBlockBatchMessage;
         signedBlockBatchMessage.ParseFromString(keto::server_common::VectorUtils().copyVectorToString(
                 Botan::hex_decode(payload)));
@@ -1284,7 +1284,7 @@ public:
         std::stringstream ss;
         ss << keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_PROCESSED
            << " " << Botan::hex_encode((uint8_t*)result.data(),result.size(),true);
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleBlockSyncResponse] block sync response processed : " << command;
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleBlockSyncResponse] block sync response processed : " << command;
         return ss.str();
     }
 
@@ -1313,7 +1313,7 @@ public:
 
     void
     sendMessage(std::shared_ptr<std::string> ss) {
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][sendMessage] : push an entry into the queue";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][sendMessage] : push an entry into the queue";
 
         // Always add to queue
         queue_.push_back(ss);
@@ -1324,12 +1324,12 @@ public:
         }
 
         sendFirstQueueMessage();
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][sendMessage] : send a message";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][sendMessage] : send a message";
     }
 
     void sendFirstQueueMessage() {
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][sendFirstQueueMessage] send the message from the message buffer : " <<
-            keto::server_common::StringUtils(*queue_.front()).tokenize(" ")[0];
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][sendFirstQueueMessage] send the message from the message buffer : " <<
+        //    keto::server_common::StringUtils(*queue_.front()).tokenize(" ")[0];
         // We are not currently writing, so send this immediately
 
         // Echo the message
@@ -1340,7 +1340,7 @@ public:
                         &session::on_write,
                         shared_from_this()));
 
-        KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][sendFirstQueueMessage] after sending the message";
+        //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][sendFirstQueueMessage] after sending the message";
     }
 
 
@@ -1556,7 +1556,7 @@ void RpcServer::start() {
             this->ioc->run();
         });
     }
-    KETO_LOG_DEBUG << "[RpcServer::start] All the threads have been started : " << this->threads;
+    //KETO_LOG_DEBUG << "[RpcServer::start] All the threads have been started : " << this->threads;
 }
     
 void RpcServer::stop() {
@@ -1647,7 +1647,7 @@ keto::event::Event RpcServer::routeTransaction(const keto::event::Event& event) 
 keto::event::Event RpcServer::pushBlock(const keto::event::Event& event) {
     for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
         try {
-            KETO_LOG_DEBUG << "[RpcServer::pushBlock] push block to node [" << Botan::hex_encode((const uint8_t*)account.c_str(),account.size(),true) << "]";
+            //KETO_LOG_DEBUG << "[RpcServer::pushBlock] push block to node [" << Botan::hex_encode((const uint8_t*)account.c_str(),account.size(),true) << "]";
             SessionBasePtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
                             account);
             if (sessionPtr_) {
@@ -1736,7 +1736,7 @@ keto::event::Event RpcServer::performProtocoCheck(const keto::event::Event& even
 keto::event::Event RpcServer::performConsensusHeartbeat(const keto::event::Event& event) {
     for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
         try {
-            KETO_LOG_DEBUG << "[RpcServer::performConsensusHeartbeat] perform consensus heart beat on [" << Botan::hex_encode((const uint8_t*)account.c_str(),account.size(),true) << "]";
+            //KETO_LOG_DEBUG << "[RpcServer::performConsensusHeartbeat] perform consensus heart beat on [" << Botan::hex_encode((const uint8_t*)account.c_str(),account.size(),true) << "]";
             SessionBasePtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
                     account);
             if (sessionPtr_) {
@@ -1788,8 +1788,8 @@ keto::event::Event RpcServer::electBlockProducer(const keto::event::Event& event
 
         SessionBasePtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
                 account);
-        KETO_LOG_DEBUG << "[RpcServer::electBlockProducer] elect an account ["
-            << keto::asn1::HashHelper(account).getHash(keto::common::StringEncoding::HEX) << "][" << sessionPtr_->isActive() << "]";
+        //KETO_LOG_DEBUG << "[RpcServer::electBlockProducer] elect an account ["
+        //    << keto::asn1::HashHelper(account).getHash(keto::common::StringEncoding::HEX) << "][" << sessionPtr_->isActive() << "]";
         if (sessionPtr_ && sessionPtr_->isActive()) {
             try {
                 sessionPtr_->electBlockProducer();

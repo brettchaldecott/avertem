@@ -67,7 +67,7 @@ std::vector<uint8_t> SignatureGenerator::sign(const keto::crypto::SecureVector& 
             Botan::PK_Signer signer(*privateKey, *rng, Constants::EMSA1_SIGNATURE_TYPE);
             return signer.sign_message(value, *rng);
         } catch (...) {
-            KETO_LOG_DEBUG << "Failed to sign the message";
+            KETO_LOG_ERROR << "Failed to sign the message";
             throw;
         }
     }
@@ -80,7 +80,7 @@ std::shared_ptr<Botan::Private_Key> SignatureGenerator::loadKey(std::shared_ptr<
         return this->loader->getPrivateKey();
     } else {
         if (key[0] == 0x0 || key[0] == 0x0) {
-            KETO_LOG_DEBUG << "Load the key using secp information";
+            //KETO_LOG_DEBUG << "Load the key using secp information";
             Botan::EC_Group ecGroup("secp256k1");
             Botan::BigInt bigInt(key.data()+1,key.size()-1);
             return std::shared_ptr<Botan::Private_Key>(new Botan::ECDSA_PrivateKey(*rng,ecGroup,bigInt));

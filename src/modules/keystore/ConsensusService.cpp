@@ -79,7 +79,7 @@ keto::event::Event ConsensusService::setModuleSession(const keto::event::Event& 
     keto::software_consensus::ConsensusStateManager::getInstance()->setState(
             keto::software_consensus::ConsensusStateManager::GENERATE);
     if (this->consensusHashGenerator->setSession(moduleSessionHelper.getSecret())) {
-        KETO_LOG_ERROR << "[setModuleSession] clear out the session";
+        KETO_LOG_INFO << "[setModuleSession] clear out the session";
         MasterKeyManager::getInstance()->clearSession();
         keto::memory_vault_session::MemoryVaultSession::getInstance()->clearSession();
         NetworkSessionKeyManager::getInstance()->clearSession();
@@ -91,9 +91,9 @@ keto::event::Event ConsensusService::setModuleSession(const keto::event::Event& 
 
 
 keto::event::Event ConsensusService::consensusSessionAccepted(const keto::event::Event& event) {
-    KETO_LOG_ERROR << "[consensusSessionAccepted] consensus session accepted";
+    KETO_LOG_INFO << "[consensusSessionAccepted] consensus session accepted";
     if (!this->activeService) {
-        KETO_LOG_ERROR << "[consensusSessionAccepted] setup new keys";
+        KETO_LOG_INFO << "[consensusSessionAccepted] setup new keys";
         keto::memory_vault_session::MemoryVaultSession::getInstance()->initSession();
         NetworkSessionKeyManager::getInstance()->generateSession();
         //KETO_LOG_DEBUG << "[consensusSessionAccepted] init the store";

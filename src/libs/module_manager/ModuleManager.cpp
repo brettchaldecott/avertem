@@ -311,9 +311,7 @@ bool ModuleManager::checkForReload() {
 
 ModuleManager::State ModuleManager::checkState() {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
-    KETO_LOG_DEBUG << "Before check state";
     this->stateCondition.wait_for(uniqueLock,std::chrono::milliseconds(60 * 1000));
-    KETO_LOG_DEBUG << "After check state";
     return this->currentState;
 }
 
