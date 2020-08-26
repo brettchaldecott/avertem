@@ -37,7 +37,7 @@ std::string VersionProcessor::getSourceVersion() {
 }
 
     
-VersionProcessor::VersionProcessor() {
+VersionProcessor::VersionProcessor() : terminated(false) {
     std::shared_ptr<keto::environment::Config> config = 
             keto::environment::EnvironmentManager::getInstance()->getConfig();
     
