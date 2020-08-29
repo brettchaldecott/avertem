@@ -17,7 +17,7 @@
 #include <string>
 #include <memory>
 
-#include "WAVM/Runtime/Runtime.h"
+//#include "WAVM/Runtime/Runtime.h"
 
 #include "keto/wavm_common/Emscripten.hpp"
 #include "keto/obfuscate/MetaString.hpp"

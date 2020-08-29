@@ -18,6 +18,8 @@
 #include "keto/common/Log.hpp"
 #include "keto/common/MetaInfo.hpp"
 
+#include "keto/wavm_common/WavmEngineManager.hpp"
+
 #include "keto/sandbox/SandboxModuleManager.hpp"
 #include "keto/sandbox/SandboxModuleManagerMisc.hpp"
 #include "keto/sandbox/SandboxService.hpp"
@@ -25,7 +27,6 @@
 #include "keto/sandbox/EventRegistry.hpp"
 #include "keto/server_common/ServiceRegistryHelper.hpp"
 #include "keto/server_common/Constants.hpp"
-#include "keto/wavm_common/WavmEngineManager.hpp"
 
 
 
