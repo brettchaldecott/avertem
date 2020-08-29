@@ -27,7 +27,8 @@
 #include "keto/module/Exception.hpp"
 #include "keto/module/ModuleWrapper.hpp"
 #include "keto/module/ModuleManagementInterface.hpp"
-#include "include/keto/module/ModuleWrapper.hpp"
+#include "keto/module/ModuleWrapper.hpp"
+#include "keto/module/StateMonitor.hpp"
 
 
 namespace keto {
@@ -102,6 +103,7 @@ void ModuleManager::monitor() {
     this->setState(State::monitoring);
     while(this->checkState() != State::terminated) {
         if (this->checkForReload()) {
+            keto::module::StateMonitor::getInstance()->monitor();
             this->unload();
             this->load();
             this->setState(State::monitoring);
