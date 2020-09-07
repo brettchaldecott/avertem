@@ -119,7 +119,6 @@ keto::proto::SignedBlockBatchMessage  BlockSyncManager::requestBlocks(const keto
 }
 
 keto::proto::MessageWrapperResponse  BlockSyncManager::processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage) {
-
     keto::proto::MessageWrapperResponse response;
     if (keto::block_db::BlockChainStore::getInstance()->processBlockSyncResponse(signedBlockBatchMessage,BlockChainCallbackImpl())) {
         response.set_result("complete");
