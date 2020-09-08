@@ -13,6 +13,8 @@
 
 #include <sstream>
 
+#include <boost/process.hpp>
+
 #include "keto/version_manager/VersionProcessor.hpp"
 
 #include "keto/common/Log.hpp"
@@ -29,8 +31,7 @@ namespace keto {
 namespace version_manager {
 
 static VersionProcessorPtr singleton; 
-static std::shared_ptr<std::thread> versionThreadPtr; 
-
+static std::shared_ptr<std::thread> versionThreadPtr;
 
 std::string VersionProcessor::getSourceVersion() {
     return OBFUSCATED("$Id$");
@@ -125,7 +126,7 @@ bool VersionProcessor::checkTerminated() {
 
 
 void VersionProcessor::performUpdateCheck() {
-    std::system(this->checkScript.c_str());
+    boost::process::system(this->checkScript.c_str());
 }
 
 }
