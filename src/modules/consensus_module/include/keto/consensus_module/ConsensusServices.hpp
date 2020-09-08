@@ -22,6 +22,7 @@
 #include "keto/event/Event.hpp"
 
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
+#include "keto/consensus_module/ConsensusServer.hpp"
 #include "keto/common/MetaInfo.hpp"
 
 namespace keto {
@@ -53,7 +54,7 @@ public:
     keto::event::Event validateSoftwareConsensus(const keto::event::Event& event);
     keto::event::Event generateSoftwareHash(const keto::event::Event& event);
     keto::event::Event setModuleSession(const keto::event::Event& event);
-    
+
 private:
     keto::crypto::KeyLoaderPtr keyLoaderPtr;
     

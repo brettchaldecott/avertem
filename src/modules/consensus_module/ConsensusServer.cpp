@@ -14,6 +14,7 @@
 #include <botan/hex.h>
 #include <botan/base64.h>
 
+#include "BlockChain.pb.h"
 
 #include "keto/crypto/HashGenerator.hpp"
 #include "keto/environment/EnvironmentManager.hpp"
@@ -59,7 +60,7 @@ ConsensusServer::ConsensusServer() :
     networkHeartbeatElectionSlot(Constants::NETWORK_CONSENSUS_HEARTBEAT_ELECTION_SLOT_DEFAULT),
     networkHeartbeatElectionPublishSlot(Constants::NETWORK_CONSENSUS_HEARTBEAT_ELECTION_PUBLISH_SLOT_DEFAULT),
     networkHeartbeatConfirmationSlot(Constants::NETWORK_CONSENSUS_HEARTBEAT_CONFIRMATION_SLOT_DEFAULT)
-    {
+{
     networkHeartbeatPoint = networkPoint = sessionkeyPoint = std::chrono::system_clock::now();
 
     // retrieve the configuration
@@ -129,7 +130,7 @@ void ConsensusServer::start() {
     
     boost::posix_time::seconds interval(0);  // 1 second
     this->timer = std::make_shared<boost::asio::deadline_timer>(*this->ioc.get());
-    this->timer->expires_from_now(interval);
+        this->timer->expires_from_now(interval);
     this->timer->async_wait(&keto::consensus_module::process);
     
     this->threadsVector.reserve(THREAD_COUNT);
@@ -181,6 +182,10 @@ void ConsensusServer::process() {
             this->sessionkeyPoint = this->sessionkeyPoint + (endTime - currentTime);
 
         } else if (heartbeatDiff.count() > this->networkHeartbeatDelay) {
+            if (!isBlockSyncComplete()) {
+                this->reschedule();
+                return;
+            }
             KETO_LOG_INFO << "[ConsensusServer::process] The network heartbeat.";
             initNetworkHeartbeat();
             std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
@@ -206,6 +211,14 @@ void ConsensusServer::process() {
     this->reschedule();
 }
 
+bool ConsensusServer::isBlockSyncComplete() {
+    keto::proto::IsBlockSyncComplete isBlockSyncCompleteProto;
+    isBlockSyncCompleteProto = keto::server_common::fromEvent<keto::proto::IsBlockSyncComplete>(
+            keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::IsBlockSyncComplete>(
+            keto::server_common::Events::IS_BLOCK_SYNC_COMPLETE,isBlockSyncCompleteProto)));
+    return isBlockSyncCompleteProto.completed();
+}
+
 
 void ConsensusServer::internalConsensusInit(const keto::crypto::SecureVector& initHash) {
     //KETO_LOG_DEBUG << "Setup the internal consensus";
@@ -222,9 +235,6 @@ void ConsensusServer::internalConsensusInit(const keto::crypto::SecureVector& in
     keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
     keto::software_consensus::ConsensusSessionManager::getInstance()->notifyAccepted();
     transactionPtr->commit();
-
-
-
 }
 
 

@@ -708,7 +708,7 @@ void BlockProducer::load() {
         KETO_LOG_INFO << "[BlockProducer::load] loaded and check if genesis is required : " << this->getState();
         if (this->getState() == BlockProducer::State::block_producer) {
             if (BlockService::getInstance()->genesis()) {
-                BlockSyncManager::getInstance()->notifyPeers();
+                BlockSyncManager::getInstance()->notifyPeers(BlockSyncManager::COMPLETE);
             } else {
                 KETO_LOG_INFO << "[BlockProducer::load] request network state from peers.";
                 this->requestNetworkState();

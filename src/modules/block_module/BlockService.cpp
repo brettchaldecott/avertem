@@ -138,6 +138,7 @@ bool BlockService::genesis() {
         GenesisReader reader(genesisConfig);
         GenesisLoader loader(reader);
         loader.load();
+
         return true;
     } else {
         return false;

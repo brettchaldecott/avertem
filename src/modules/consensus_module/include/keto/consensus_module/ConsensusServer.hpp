@@ -42,6 +42,7 @@ public:
     void start();
     
     void process();
+
 private:
     static const int THREAD_COUNT;
     std::shared_ptr<boost::asio::io_context> ioc;
@@ -65,6 +66,7 @@ private:
     void initNetworkHeartbeat();
     void reschedule();
 
+    bool isBlockSyncComplete();
 };
 
 

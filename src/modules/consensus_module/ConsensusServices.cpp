@@ -35,7 +35,6 @@
 
 #include "keto/consensus_module/Exception.hpp"
 #include "keto/consensus_module/Constants.hpp"
-#include "keto/consensus_module/ConsensusServices.hpp"
 
 namespace keto {
 namespace consensus_module {

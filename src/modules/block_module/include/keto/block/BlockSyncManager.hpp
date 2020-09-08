@@ -49,9 +49,9 @@ public:
     keto::proto::MessageWrapperResponse
     processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage);
     void
-    processRequestBlockSyncRetry();
+    notifyPeers(Status status);
     void
-    notifyPeers();
+    processRequestBlockSyncRetry();
     bool
     isEnabled();
     void
@@ -59,6 +59,7 @@ public:
 
     void broadcastBlock(const keto::block_db::SignedBlockWrapperMessageProtoHelper& signedBlockWrapperProtoHelper);
 
+    keto::event::Event isBlockSyncComplete(const keto::event::Event& event);
 private:
     std::mutex classMutex;
     bool enabled;
@@ -68,6 +69,10 @@ private:
 
 
     bool isExpired();
+
+    void
+    notifyPeers();
+
 
 };
 

@@ -126,6 +126,7 @@ keto::proto::MessageWrapperResponse  BlockSyncManager::processBlockSyncResponse(
             std::unique_lock<std::mutex> uniqueLock(this->classMutex);
             this->startTime = 0;
             this->status = COMPLETE;
+
         }
         KETO_LOG_INFO << "[BlockSyncManager::processBlockSyncResponse]" << " ########################################################";
         KETO_LOG_INFO << "[BlockSyncManager::processBlockSyncResponse]" << " ######## Synchronization has now been completed ########";
@@ -156,6 +157,22 @@ BlockSyncManager::processRequestBlockSyncRetry() {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
     // reschedule to run in a minutes time
     this->startTime = time(0) - Constants::SYNC_RETRY_DELAY_MIN;
+}
+
+void
+BlockSyncManager::notifyPeers(Status status) {
+    // update the status
+    {
+        std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+        this->startTime = 0;
+        this->status = status;
+
+    }
+    // as this node is not enabled we will not notify our
+    // peers of the fact that the synchronization has been completed.
+    if (this->isEnabled()) {
+        notifyPeers();
+    }
 }
 
 void
@@ -200,6 +217,18 @@ void BlockSyncManager::broadcastBlock(const keto::block_db::SignedBlockWrapperMe
                    << signedBlockWrapperMessageProtoHelper.getMessageHash().getHash(keto::common::StringEncoding::HEX);
 }
 
+
+keto::event::Event BlockSyncManager::isBlockSyncComplete(const keto::event::Event& event) {
+    keto::proto::IsBlockSyncComplete isBlockSyncCompleteProto =
+            keto::server_common::fromEvent<keto::proto::IsBlockSyncComplete>(event);
+    Status status = getStatus();
+    if (status == COMPLETE) {
+        isBlockSyncCompleteProto.set_completed(true);
+    } else {
+        isBlockSyncCompleteProto.set_completed(false);
+    }
+    return keto::server_common::toEvent<keto::proto::IsBlockSyncComplete>(isBlockSyncCompleteProto);
+}
 
 bool BlockSyncManager::isExpired() {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);

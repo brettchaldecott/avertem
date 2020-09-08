@@ -64,6 +64,8 @@ public:
     static keto::event::Event getTransaction(const keto::event::Event& event);
     static keto::event::Event getAccountTransactions(const keto::event::Event& event);
 
+    static keto::event::Event isBlockSyncComplete(const keto::event::Event& event);
+
 private:
     EventRegistry();
     

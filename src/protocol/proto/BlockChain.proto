@@ -65,6 +65,12 @@ message SignedBlockBatchMessage {
     repeated SignedBlockBatch tangle_batches = 1;
 }
 
+
+message IsBlockSyncComplete {
+    uint32 version = 1;
+    bool completed = 2;
+}
+
 /**
  * The change set
  */
