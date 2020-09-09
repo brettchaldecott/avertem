@@ -112,22 +112,22 @@ BlockChain::MasterTangleManager::~MasterTangleManager() {
 }
 
 void BlockChain::MasterTangleManager::addTangle(const keto::asn1::HashHelper& tangle) {
-    this->activeTangles[tangle] = this->blockChainMetaPtr->getTangleEntry(tangle);
+    if (!this->activeTangles.count(tangle)) {
+        this->activeTangles[tangle] = this->blockChainMetaPtr->getTangleEntry(tangle);
+        this->activeTangleList.push_back(tangle);
+    }
 }
 
 std::vector<keto::asn1::HashHelper> BlockChain::MasterTangleManager::getActiveTangles() {
-    std::vector<keto::asn1::HashHelper> keys;
-    std::transform(
-            this->activeTangles.begin(),
-            this->activeTangles.end(),
-            std::back_inserter(keys),
-            [](const std::map<std::vector<uint8_t>,BlockChainTangleMetaPtr>::value_type
-               &pair){return pair.first;});
-    return keys;
+    return this->activeTangleList;
+}
+
+void BlockChain::MasterTangleManager::clearActiveTangles() {
+    this->activeTangles.clear();
+    this->activeTangleList.clear();
 }
 
 void BlockChain::MasterTangleManager::setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles) {
-    this->activeTangles.clear();
     for (keto::asn1::HashHelper tangle : tangles) {
         addTangle(tangle);
     }
@@ -169,6 +169,10 @@ void BlockChain::NestedTangleManager::addTangle(const keto::asn1::HashHelper& ta
 
 std::vector<keto::asn1::HashHelper> BlockChain::NestedTangleManager::getActiveTangles() {
     return std::vector<keto::asn1::HashHelper>();
+}
+
+void BlockChain::NestedTangleManager::clearActiveTangles() {
+
 }
 
 void BlockChain::NestedTangleManager::setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles) {
@@ -865,6 +869,10 @@ std::vector<keto::asn1::HashHelper> BlockChain::getActiveTangles() {
 
 keto::asn1::HashHelper BlockChain::getGrowTangle() {
     return this->tangleManagerInterfacePtr->getActiveTangles().back();
+}
+
+void BlockChain::clearActiveTangles() {
+    this->tangleManagerInterfacePtr->clearActiveTangles();
 }
 
 void BlockChain::setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles) {

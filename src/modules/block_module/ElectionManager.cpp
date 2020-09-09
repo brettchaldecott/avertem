@@ -257,7 +257,7 @@ keto::event::Event ElectionManager::electRpcProcessConfirmation(const keto::even
         KETO_LOG_INFO << "[ElectionManager::electRpcProcessConfirmation]####################################################################";
     } else if (!this->nextWindow.size() && this->state == ElectionManager::State::CONFIRMATION) {
         KETO_LOG_DEBUG << "[ElectionManager::electRpcProcessConfirmation] this node is not elected clear it.";
-        BlockProducer::getInstance()->setActiveTangles(nextWindow);
+        BlockProducer::getInstance()->clearActiveTangles();
         this->state = ElectionManager::State::PROCESSING;
         KETO_LOG_INFO << "[ElectionManager::electRpcProcessConfirmation]####################################################################";
         KETO_LOG_INFO << "[ElectionManager::electRpcProcessConfirmation]######## Node is no longer a producer [" <<
@@ -286,11 +286,11 @@ void ElectionManager::invokeElection(const std::string& event, const std::string
 
 void ElectionManager::publishElection() {
     if (!this->responseCount) {
-        KETO_LOG_DEBUG << "[ElectionManager::publishElection] None of the peers responded this node will remain master until the next election";
+        KETO_LOG_INFO << "[ElectionManager::publishElection] None of the peers responded this node will remain master until the next election";
         return;
     }
     if (this->responseCount != this->accountElectionResult.size()) {
-        KETO_LOG_DEBUG << "[ElectionManager::publishElection] Expected [" << this->accountElectionResult.size()
+        KETO_LOG_INFO << "[ElectionManager::publishElection] Expected [" << this->accountElectionResult.size()
             << "] got [" << this->responseCount << "]";
     }
 
@@ -298,14 +298,16 @@ void ElectionManager::publishElection() {
     std::vector<std::vector<uint8_t>> accounts = this->listAccounts();
     this->electedAccounts.clear();
 
+    // loop through the tangle size and attempt to send to different nodes
+    // this will re-balance the nodes when max tangle count is reached.
     while (tangles.size()) {
         //KETO_LOG_DEBUG << "[ElectionManager::publishElection] generate the signed elect node";
         keto::election_common::SignedElectNodeHelperPtr signedElectNodeHelperPtr = generateSignedElectedNode(accounts);
         keto::asn1::HashHelper accountHash =
                 signedElectNodeHelperPtr->getElectedNode()->getElectedNode()->getElectionHelper()->getAccountHash();
         // push to network
-        //KETO_LOG_DEBUG << "[ElectionManager::publishElection] get the tangle information associated with elected node ["
-        //    << accountHash.getHash(keto::common::StringEncoding::HEX) << "]";
+        KETO_LOG_INFO << "[ElectionManager::publishElection] set the tangle information associated with elected node ["
+            << accountHash.getHash(keto::common::StringEncoding::HEX) << "]";
         keto::election_common::ElectionPublishTangleAccountProtoHelperPtr electionPublishTangleAccountProtoHelperPtr(
                 new keto::election_common::ElectionPublishTangleAccountProtoHelper());
         electionPublishTangleAccountProtoHelperPtr->setAccount(accountHash);
@@ -372,7 +374,9 @@ keto::election_common::SignedElectNodeHelperPtr ElectionManager::generateSignedE
         // retrieve
         int pos = distribution(stdGenerator);
         std::vector<uint8_t> account = accounts[pos];
-        accounts.erase(accounts.begin() + pos);
+        // as there are a limited number of nodes on the network re-use of nodes for tasks is crucial
+        // there for we don't remove a possibility from the list. At worst a node will have to perform double duety.
+        //accounts.erase(accounts.begin() + pos);
         ElectorPtr electorPtr = this->accountElectionResult[account];
         keto::asn1::HashHelper electedHash = electorPtr->getElectionResult()->getElectionMsg().getElectionHash();
 
@@ -380,9 +384,13 @@ keto::election_common::SignedElectNodeHelperPtr ElectionManager::generateSignedE
         keto::election_common::ElectNodeHelper electNodeHelper;
         electNodeHelper.setAccountHash(keto::server_common::ServerInfo::getInstance()->getAccountHash());
         electNodeHelper.setElectedNode(*electorPtr->getElectionResult()->getElectionMsg());
-        for (std::vector<uint8_t> account: accounts) {
+        for (std::vector<uint8_t> currentAccount: accounts) {
+            // ignore the alternative accounts
+            if (currentAccount == account) {
+                continue;
+            }
             electNodeHelper.addAlternative(
-                    *this->accountElectionResult[account]->getElectionResult()->getElectionMsg());
+                    *this->accountElectionResult[currentAccount]->getElectionResult()->getElectionMsg());
         }
 
         electNodeHelper.setAcceptedCheck(BlockProducer::getInstance()->getAcceptedCheck().getMsg());

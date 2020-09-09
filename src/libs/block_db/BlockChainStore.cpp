@@ -209,6 +209,14 @@ keto::asn1::HashHelper BlockChainStore::getGrowTangle() {
     return this->masterChain->getGrowTangle();
 }
 
+void BlockChainStore::clearActiveTangles() {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+    if (!masterChain) {
+        BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
+    }
+    this->masterChain->clearActiveTangles();
+}
+
 void BlockChainStore::setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles) {
     std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (!masterChain) {

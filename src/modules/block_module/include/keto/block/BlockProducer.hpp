@@ -151,13 +151,13 @@ public:
      * be in.
      */
     enum State {
-        unloaded,
-        inited,
-        block_producer_wait,
-        block_producer,
-        block_producer_complete,
-        terminated,
-        sync_blocks
+        unloaded = 1,
+        inited = 2,
+        block_producer_wait = 3,
+        block_producer = 4,
+        block_producer_complete = 5,
+        terminated = 6,
+        sync_blocks = 7
     };
 
     enum ProducerState {
@@ -192,6 +192,7 @@ public:
 
     // setup the active tangles
     std::vector<keto::asn1::HashHelper> getActiveTangles();
+    void clearActiveTangles();
     void setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles);
     void processProducerEnding(
             const keto::block_db::SignedBlockWrapperMessageProtoHelper& signedBlockWrapperMessageProtoHelper);

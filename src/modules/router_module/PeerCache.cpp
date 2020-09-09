@@ -16,6 +16,8 @@
 #include "keto/router/PeerCache.hpp"
 #include "keto/router/Exception.hpp"
 
+#include "keto/router/TangleServiceCache.hpp"
+
 namespace keto {
 namespace router {
 
@@ -100,7 +102,7 @@ std::vector<std::vector<uint8_t>> PeerCache::getAccounts() {
     std::lock_guard<std::mutex> guard(classMutex);
     std::vector<std::vector<uint8_t>> result;
     for (std::pair<std::vector<uint8_t>,keto::router_utils::RpcPeerHelper> pair : this->entries) {
-        if (pair.second.isActive()) {
+        if (pair.second.isActive() && !TangleServiceCache::getInstance()->containsAccount(pair.first)) {
             result.push_back(pair.first);
         }
     }

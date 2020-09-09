@@ -505,14 +505,35 @@ std::vector<keto::asn1::HashHelper> BlockProducer::getActiveTangles() {
     return keto::block_db::BlockChainStore::getInstance()->getActiveTangles();
 }
 
+void BlockProducer::clearActiveTangles() {
+    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    BlockProducer::State state = _getState();
+    if (state == BlockProducer::State::block_producer) {
+        _setProducerState(BlockProducer::ProducerState::ending);
+        while(_getProducerState() == BlockProducer::ProducerState::ending) {
+            this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(
+                    Constants::BLOCK_PRDUCER_DEACTIVATE_CHECK_DELAY));
+        }
+        _setProducerState(BlockProducer::ProducerState::idle);
+    }
+    // clear the active tangles after the given delay
+    keto::block_db::BlockChainStore::getInstance()->clearActiveTangles();
+}
+
 void BlockProducer::setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles) {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    BlockProducer::State state = _getState();
+    // logic assumes the node selected for producing will receive this state update
     if (tangles.size()) {
         keto::block_db::BlockChainStore::getInstance()->setActiveTangles(tangles);
-        _setProducerState(BlockProducer::ProducerState::producing);
-        _setState(BlockProducer::State::block_producer_wait);
-        this->delay = Constants::ACTIVATE_PRODUCER_DELAY;
-    } else if (_getState() == BlockProducer::State::block_producer) {
+        // there is a chance the block producer might receive this tangle update post status change
+        // if this happens then the block producer enters a state it will never leave.
+        if (state != BlockProducer::State::block_producer && state != BlockProducer::State::block_producer_wait) {
+            _setProducerState(BlockProducer::ProducerState::producing);
+            _setState(BlockProducer::State::block_producer_wait);
+            this->delay = Constants::ACTIVATE_PRODUCER_DELAY;
+        }
+    } else if (state == BlockProducer::State::block_producer) {
         _setProducerState(BlockProducer::ProducerState::ending);
         while(_getProducerState() == BlockProducer::ProducerState::ending) {
             this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(

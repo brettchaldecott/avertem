@@ -81,6 +81,7 @@ public:
     public:
         virtual void addTangle(const keto::asn1::HashHelper& tangle) = 0;
         virtual std::vector<keto::asn1::HashHelper> getActiveTangles() = 0;
+        virtual void clearActiveTangles() = 0;
         virtual void setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles) = 0;
         //virtual keto::asn1::HashHelper getTangleHash() = 0;
         virtual keto::asn1::HashHelper getParentHash() = 0;
@@ -98,6 +99,7 @@ public:
 
         virtual void addTangle(const keto::asn1::HashHelper& tangle);
         virtual std::vector<keto::asn1::HashHelper> getActiveTangles();
+        virtual void clearActiveTangles();
         virtual void setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles);
         //virtual keto::asn1::HashHelper getTangleHash();
         virtual keto::asn1::HashHelper getParentHash();
@@ -108,6 +110,7 @@ public:
     private:
         BlockChainMetaPtr blockChainMetaPtr;
         std::map<std::vector<uint8_t>,BlockChainTangleMetaPtr> activeTangles;
+        std::vector<keto::asn1::HashHelper> activeTangleList;
         BlockChainTangleMetaPtr currentTangle;
 
 
@@ -121,6 +124,7 @@ public:
 
         virtual void addTangle(const keto::asn1::HashHelper& tangle);
         virtual std::vector<keto::asn1::HashHelper> getActiveTangles();
+        virtual void clearActiveTangles();
         virtual void setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles);
         //virtual keto::asn1::HashHelper getTangleHash();
         virtual keto::asn1::HashHelper getParentHash();
@@ -174,6 +178,7 @@ public:
 
     std::vector<keto::asn1::HashHelper> getActiveTangles();
     keto::asn1::HashHelper getGrowTangle();
+    void clearActiveTangles();
     void setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles);
     void setCurrentTangle(const keto::asn1::HashHelper& tangle);
 

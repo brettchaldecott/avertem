@@ -77,6 +77,7 @@ public:
 
     std::vector<keto::asn1::HashHelper> getActiveTangles();
     keto::asn1::HashHelper getGrowTangle();
+    void clearActiveTangles();
     void setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles);
     void setCurrentTangle(const keto::asn1::HashHelper& tangle);
 
