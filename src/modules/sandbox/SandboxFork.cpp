@@ -106,6 +106,7 @@ keto::event::Event SandboxFork::Child::executeHttpActionMessage(const keto::even
         keto::wavm_common::WavmEngineManager::getInstance()->getEngine(code,httpRequestMessage.contract_name())->executeHttp();
         keto::wavm_common::ParentForkGateway::returnResult(keto::server_common::toEvent<keto::proto::HttpResponseMessage>(
                 std::dynamic_pointer_cast<keto::wavm_common::WavmSessionHttp>(wavmSessionScope.getSession())->getHttpResponse()));
+
     } catch (keto::common::Exception& ex) {
         std::stringstream ss;
         ss << "[SandboxFork::Child::executeHttpActionMessage]Failed to process the contract : " << ex.what() << std::endl;
@@ -167,10 +168,10 @@ keto::event::Event SandboxFork::Parent::executeActionMessage(const keto::event::
     if (pid == 0) {
         try {
             SandboxFork::Child(this->inPipe, this->outPipe).executeActionMessage(event);
-            std::quick_exit(0);
+            std::_Exit(0);
         } catch (...) {
             KETO_LOG_ERROR << "[SandboxFork::Parent::executeActionMessage] failed execute correctly unexpected exception. Child is terminating";
-            std::quick_exit(-1);
+            std::_Exit(-1);
         }
         return keto::event::Event();
     }
@@ -183,10 +184,10 @@ keto::event::Event SandboxFork::Parent::executeHttpActionMessage(const keto::eve
     if (pid == 0) {
         try {
             SandboxFork::Child(this->inPipe, this->outPipe).executeHttpActionMessage(event);
-            std::quick_exit(0);
+            std::_Exit(0);
         } catch (...) {
             KETO_LOG_ERROR << "[SandboxFork::Parent::executeHttpActionMessage] failed execute correctly unexpected exception. Child is terminating";
-            std::quick_exit(-1);
+            std::_Exit(-1);
         }
 
         return keto::event::Event();
@@ -324,15 +325,30 @@ void SandboxFork::Parent::write(boost::process::opstream& pout, const keto::wavm
 }
 
 keto::wavm_common::ForkMessageWrapperHelper SandboxFork::Parent::read(boost::process::ipstream& pin) {
-    while (true) {
-        size_t size;
-        pin >> size;
-        if (!size) {
-            continue;
-        }
-        std::vector<uint8_t> message(size);
-        pin.read((char *) message.data(), size);
+    size_t size;
+    pin >> size;
+    //KETO_LOG_DEBUG << "The size is [" << size << "]";
+    std::vector<uint8_t> message(size);
+    pin.read((char *) message.data(), size);
+    //KETO_LOG_DEBUG << "The size is [" << size << "][" << pin.gcount() << "]";
+    try {
         return keto::wavm_common::ForkMessageWrapperHelper(message);
+    } catch (boost::exception &ex) {
+        std::stringstream ss;
+        ss << "[SandboxFork::Parent::read] failed deserialize the object : "
+           << boost::diagnostic_information(ex, true) << std::endl;
+        KETO_LOG_ERROR << ss.str();
+        throw;
+    } catch (std::exception &ex) {
+        std::stringstream ss;
+        ss << "[SandboxFork::Parent::read] failed deserialize the object : " << ex.what() << std::endl;
+        KETO_LOG_ERROR << ss.str();
+        throw;
+    } catch (...) {
+        std::stringstream ss;
+        ss << "[SandboxFork::Parent::read] failed deserialize the object : " << std::endl;
+        KETO_LOG_ERROR << ss.str();
+        throw;
     }
 }
 

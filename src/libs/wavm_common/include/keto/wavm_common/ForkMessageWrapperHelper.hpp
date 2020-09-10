@@ -7,6 +7,7 @@
 
 #include <string>
 #include <memory>
+#include <iosfwd>
 
 #include "Protocol.pb.h"
 
@@ -29,6 +30,7 @@ public:
 
     ForkMessageWrapperHelper();
     ForkMessageWrapperHelper(const std::string& message);
+    ForkMessageWrapperHelper(std::istream* stream);
     ForkMessageWrapperHelper(const std::vector<uint8_t>& message);
     ForkMessageWrapperHelper(const keto::proto::ForkMessageWrapper& forkMessageWrapper);
     ForkMessageWrapperHelper(const ForkMessageWrapperHelper& orig) = default;

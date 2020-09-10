@@ -24,6 +24,12 @@ ForkMessageWrapperHelper::ForkMessageWrapperHelper(const std::string& message) {
     }
 }
 
+ForkMessageWrapperHelper::ForkMessageWrapperHelper(std::istream* stream) {
+    if (!this->forkMessageWrapper.ParseFromIstream(stream)) {
+        BOOST_THROW_EXCEPTION(FailedToParseFormMessage());
+    }
+}
+
 ForkMessageWrapperHelper::ForkMessageWrapperHelper(const std::vector<uint8_t>& message) {
     if (!this->forkMessageWrapper.ParseFromString(keto::server_common::VectorUtils().copyVectorToString(message))) {
         BOOST_THROW_EXCEPTION(FailedToParseFormMessage());

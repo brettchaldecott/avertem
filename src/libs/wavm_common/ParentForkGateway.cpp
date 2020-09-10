@@ -112,15 +112,30 @@ void ParentForkGateway::_returnResult(const keto::event::Event& event) {
 }
 
 keto::wavm_common::ForkMessageWrapperHelper ParentForkGateway::read() {
-    while(true) {
-        size_t size;
-        pin >> size;
-        if (!size) {
-            continue;
-        }
-        std::vector<uint8_t> message(size);
-        pin.read((char *) message.data(), size);
+    size_t size;
+    pin >> size;
+    //KETO_LOG_DEBUG << "The size is [" << size << "]";
+    std::vector<uint8_t> message(size);
+    pin.read((char *) message.data(), size);
+    //KETO_LOG_DEBUG << "The size is [" << size << "][" << pin.gcount() << "]";
+    try {
         return keto::wavm_common::ForkMessageWrapperHelper(message);
+    } catch (boost::exception &ex) {
+        std::stringstream ss;
+        ss << "[SandboxFork::Parent::read] failed deserialize the object : "
+           << boost::diagnostic_information(ex, true) << std::endl;
+        KETO_LOG_ERROR << ss.str();
+        throw;
+    } catch (std::exception &ex) {
+        std::stringstream ss;
+        ss << "[SandboxFork::Parent::read] failed deserialize the object : " << ex.what() << std::endl;
+        KETO_LOG_ERROR << ss.str();
+        throw;
+    } catch (...) {
+        std::stringstream ss;
+        ss << "[SandboxFork::Parent::read] failed deserialize the object : " << std::endl;
+        KETO_LOG_ERROR << ss.str();
+        throw;
     }
 }
 
