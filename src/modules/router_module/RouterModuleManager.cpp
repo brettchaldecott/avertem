@@ -71,6 +71,10 @@ void RouterModuleManager::start() {
     KETO_LOG_INFO << "[RouterModuleManager] Started the RouterModuleManager";
 }
 
+void RouterModuleManager::preStop() {
+    KETO_LOG_INFO << "[RouterModuleManager::preStop] Pre stop the router module ";
+    RouterService::getInstance()->preStop();
+}
 
 void RouterModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();

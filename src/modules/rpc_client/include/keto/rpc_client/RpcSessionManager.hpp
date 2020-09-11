@@ -71,6 +71,7 @@ public:
     
     void start();
     void postStart();
+    void preStop();
     void stop();
 
     keto::event::Event activatePeer(const keto::event::Event& event);

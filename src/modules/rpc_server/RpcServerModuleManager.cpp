@@ -66,6 +66,11 @@ void RpcServerModuleManager::start() {
     KETO_LOG_INFO << "[RpcServerModuleManager] Started the RpcServerModuleManager";
 }
 
+void RpcServerModuleManager::preStop() {
+    KETO_LOG_INFO << "[RpcServerModuleManager::preStop] The pre stop has been called";
+    RpcServer::getInstance()->preStop();
+}
+
 void RpcServerModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
     ConsensusService::fin();

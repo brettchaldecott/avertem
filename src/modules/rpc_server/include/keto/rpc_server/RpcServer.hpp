@@ -80,6 +80,7 @@ public:
     
     
     void start();
+    void preStop();
     void stop();
     void setSecret(
             const keto::crypto::SecureVector& secret);

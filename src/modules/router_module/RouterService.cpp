@@ -182,8 +182,10 @@ RouterService::RouterService() {
 }
 
 RouterService::~RouterService() {
-    this->routeQueuePtr->deactivate();
-    this->routeQueuePtr.reset();
+    if (this->routeQueuePtr) {
+        this->routeQueuePtr->deactivate();
+        this->routeQueuePtr.reset();
+    }
 }
 
 std::shared_ptr<RouterService> RouterService::init() {
@@ -199,6 +201,12 @@ void RouterService::fin() {
 
 std::shared_ptr<RouterService> RouterService::getInstance() {
     return singleton;
+}
+
+void RouterService::preStop() {
+    if (this->routeQueuePtr) {
+        this->routeQueuePtr->deactivate();
+    }
 }
 
 void RouterService::processQueueEntry(const RouterService::RouteQueueEntryPtr& event) {

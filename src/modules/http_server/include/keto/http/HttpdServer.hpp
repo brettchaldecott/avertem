@@ -62,7 +62,7 @@ public:
     virtual ~HttpdServer();
     
     void start();
-    
+    void preStop();
     void stop();
     
 private:

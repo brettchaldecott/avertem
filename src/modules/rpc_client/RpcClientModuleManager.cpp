@@ -76,6 +76,11 @@ void RpcClientModuleManager::postStart() {
     KETO_LOG_INFO << "[RpcClientModuleManager] Post Started the RpcClientModuleManager";
 }
 
+void RpcClientModuleManager::preStop() {
+    KETO_LOG_INFO << "[RpcClientModuleManager] Pre Stop the RpcClientModuleManager";
+    RpcSessionManager::getInstance()->preStop();
+}
+
 void RpcClientModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
     if (RpcSessionManager::getInstance()) {

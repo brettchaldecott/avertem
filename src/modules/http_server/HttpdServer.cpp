@@ -649,14 +649,16 @@ void HttpdServer::start() {
     }
 }
 
-void HttpdServer::stop() {
+void HttpdServer::preStop() {
     this->ioc->stop();
-    
+
     for (std::vector<std::thread>::iterator iter = this->threadsVector.begin();
-            iter != this->threadsVector.end(); iter++) {
+         iter != this->threadsVector.end(); iter++) {
         iter->join();
     }
+}
 
+void HttpdServer::stop() {
     listenerPtr.reset();
     
     this->threadsVector.clear();

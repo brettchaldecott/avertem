@@ -64,6 +64,12 @@ void HttpdModuleManager::start() {
     KETO_LOG_INFO << "[HttpdModuleManager] Started the HttpdModuleManager";
 
 }
+
+void HttpdModuleManager::preStop() {
+    this->httpServer->preStop();
+    KETO_LOG_INFO << "[HttpdModuleManager::preStop] The HttpdModuleManager is being stopped";
+}
+
 void HttpdModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
     keto::server_common::ModuleSessionManager::fin();

@@ -1443,7 +1443,7 @@ public:
     {
         if(ec)
         {
-            fail(ec, "accept");
+            return fail(ec, "accept");
         }
         else
         {
@@ -1559,15 +1559,18 @@ void RpcServer::start() {
     }
     //KETO_LOG_DEBUG << "[RpcServer::start] All the threads have been started : " << this->threads;
 }
-    
-void RpcServer::stop() {
+
+void RpcServer::preStop() {
     this->ioc->stop();
-    
+
     for (std::vector<std::thread>::iterator iter = this->threadsVector.begin();
-            iter != this->threadsVector.end(); iter++) {
+         iter != this->threadsVector.end(); iter++) {
         iter->join();
     }
-    
+
+}
+
+void RpcServer::stop() {
     listenerPtr.reset();
     
     this->threadsVector.clear();

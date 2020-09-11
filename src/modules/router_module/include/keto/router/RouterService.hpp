@@ -93,6 +93,8 @@ public:
     static void fin();
     static std::shared_ptr<RouterService> getInstance();
 
+    void preStop();
+
     keto::event::Event routeMessage(const keto::event::Event& event, int retryCount = 0);
     keto::event::Event queueMessage(const keto::event::Event& event);
     void processQueueEntry(const RouteQueueEntryPtr& event);

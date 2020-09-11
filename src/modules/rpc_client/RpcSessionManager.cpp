@@ -265,20 +265,25 @@ void RpcSessionManager::postStart() {
     
 }
 
-void RpcSessionManager::stop() {
+void RpcSessionManager::preStop() {
+    // terminated
     {
         std::lock_guard<std::recursive_mutex> guard(this->classMutex);
         this->terminated = true;
     }
+
+    // stop the threads
     if (this->ioc) {
         this->ioc->stop();
     }
 
     for (std::vector<std::thread>::iterator iter = this->threadsVector.begin();
-            iter != this->threadsVector.end(); iter++) {
+         iter != this->threadsVector.end(); iter++) {
         iter->join();
     }
+}
 
+void RpcSessionManager::stop() {
     this->threadsVector.clear();
     
     this->sessionMap.clear();
