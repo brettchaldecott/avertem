@@ -547,9 +547,9 @@ public:
     {
         if(ec)
         {
-            fail(ec, "accept");
+            return fail(ec, "accept");
             // backoff to prevent the cpu from using all available resources
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            //std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
         else
         {
