@@ -131,6 +131,19 @@ void RpcSessionManager::reconnect(RpcPeer& rpcPeer) {
     KETO_LOG_INFO << "After the reconnect";
 }
 
+
+std::vector<std::shared_ptr<keto::rpc_client::RpcSession>> RpcSessionManager::getPeers() {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+    std::vector<std::shared_ptr<keto::rpc_client::RpcSession>> peers;
+    std::transform(
+            this->sessionMap.begin(),
+            this->sessionMap.end(),
+            std::back_inserter(peers),
+            [](const std::map<std::string,std::shared_ptr<keto::rpc_client::RpcSession>>::value_type
+               &pair){return pair.second;});
+    return peers;
+}
+
 std::vector<std::string> RpcSessionManager::listPeers() {
     std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     std::vector<std::string> keys;
@@ -200,8 +213,34 @@ int RpcSessionManager::decrementSessionCount() {
 void RpcSessionManager::waitForSessionEnd() {
     std::unique_lock<std::mutex> unique_lock(this->sessionClassMutex);
     KETO_LOG_ERROR << "[RpcSessionManager::waitForSessionEnd] waitForSessionEnd : " << this->sessionCount;
+
+    std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
+    std::chrono::system_clock::time_point runTime = startTime;
     while(this->sessionCount) {
-        this->stateCondition.wait(unique_lock);
+        if (runTime == startTime ||
+                (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - runTime).count() > 1500)) {
+            KETO_LOG_ERROR << "[RpcSessionManager::waitForSessionEnd] stop the peers";
+            for (RpcSessionPtr rpcSessionPtr : getPeers()) {
+                if (rpcSessionPtr) {
+                    try {
+                        rpcSessionPtr->closeSession();
+                    } catch (keto::common::Exception &ex) {
+                        KETO_LOG_ERROR << "[RpcSessionManager::preStop] Failed to close the session : " << ex.what();
+                        KETO_LOG_ERROR << "[RpcSessionManager::preStop] Cause : "
+                                       << boost::diagnostic_information(ex, true);
+                    } catch (boost::exception &ex) {
+                        KETO_LOG_ERROR << "[RpcSessionManager::preStop] Failed to close the session : "
+                                       << boost::diagnostic_information(ex, true);
+                    } catch (std::exception &ex) {
+                        KETO_LOG_ERROR << "[RpcSessionManager::preStop] Failed to close the session : " << ex.what();
+                    } catch (...) {
+                        KETO_LOG_ERROR << "[RpcSessionManager::preStop] Failed to close the session : unknown cause";
+                    }
+                }
+            }
+        }
+
+        this->stateCondition.wait_for(unique_lock,std::chrono::milliseconds(1000));
         KETO_LOG_ERROR << "[RpcSessionManager::waitForSessionEnd] waitForSessionEnd : " << this->sessionCount;
     }
 }
@@ -311,26 +350,6 @@ void RpcSessionManager::preStop() {
     // terminated
     KETO_LOG_ERROR << "[RpcSessionManager::preStop] Terminate the session manager";
     terminate();
-
-    KETO_LOG_ERROR << "[RpcSessionManager::preStop] stop the peers";
-    std::vector<std::string> peers = this->listAccountPeers();
-    for (std::string peer : peers) {
-        RpcSessionPtr rpcSessionPtr = getAccountSessionMapping(peer);
-        if (rpcSessionPtr) {
-            try {
-                rpcSessionPtr->closeSession();
-            } catch (keto::common::Exception& ex) {
-                KETO_LOG_ERROR << "[RpcSessionManager::preStop] Failed to close the session : " << ex.what();
-                KETO_LOG_ERROR << "[RpcSessionManager::preStop] Cause : " << boost::diagnostic_information(ex,true);
-            } catch (boost::exception& ex) {
-                KETO_LOG_ERROR << "[RpcSessionManager::preStop] Failed to close the session : " << boost::diagnostic_information(ex,true);
-            } catch (std::exception& ex) {
-                KETO_LOG_ERROR << "[RpcSessionManager::preStop] Failed to close the session : " << ex.what();
-            } catch (...) {
-                KETO_LOG_ERROR << "[RpcSessionManager::preStop] Failed to close the session : unknown cause";
-            }
-        }
-    }
 
     KETO_LOG_ERROR << "[RpcSessionManager::preStop] wait for the sessions";
     this->waitForSessionEnd();

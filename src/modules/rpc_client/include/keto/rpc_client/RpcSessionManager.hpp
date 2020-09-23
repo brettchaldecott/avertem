@@ -66,6 +66,7 @@ public:
     static RpcSessionManagerPtr getInstance();
     
     // the list of peers
+    std::vector<std::shared_ptr<keto::rpc_client::RpcSession>> getPeers();
     std::vector<std::string> listPeers();
     std::vector<std::string> listAccountPeers();
     

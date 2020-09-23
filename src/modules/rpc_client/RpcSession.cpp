@@ -421,7 +421,7 @@ RpcSession::on_read(
 
     this->readQueuePtr->pushEntry(command,stringVector);
 
-    if (this->isClosed() || RpcSessionManager::getInstance()->isTerminated()) {
+    if (this->isClosed()) {
         KETO_LOG_INFO << this->sessionNumber << " Closing the session";
         return;
     } else {

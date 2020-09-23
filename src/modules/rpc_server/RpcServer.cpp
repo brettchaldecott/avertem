@@ -942,6 +942,7 @@ public:
 
 
     void closeSession() {
+        close();
         send(keto::server_common::Constants::RPC_COMMANDS::CLOSE);
     }
 
@@ -1661,27 +1662,6 @@ void RpcServer::preStop() {
     this->terminate();
     listenerPtr->terminate();
 
-    // get the list of sessions
-    for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
-        try {
-            //KETO_LOG_DEBUG << "[RpcServer::pushBlock] push block to node [" << Botan::hex_encode((const uint8_t*)account.c_str(),account.size(),true) << "]";
-            SessionBasePtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
-                    account);
-            if (sessionPtr_) {
-                sessionPtr_->closeSession();
-            }
-        } catch (keto::common::Exception& ex) {
-            KETO_LOG_ERROR << "[RpcServer::pushBlock]Failed to push the block : " << ex.what();
-            KETO_LOG_ERROR << "[RpcServer::pushBlock]Cause : " << boost::diagnostic_information(ex,true);
-        } catch (boost::exception& ex) {
-            KETO_LOG_ERROR << "[RpcServer::pushBlock]Failed to push the block : " << boost::diagnostic_information(ex,true);
-        } catch (std::exception& ex) {
-            KETO_LOG_ERROR << "[RpcServer::pushBlock]Failed to push the block : " << ex.what();
-        } catch (...) {
-            KETO_LOG_ERROR << "[RpcServer::pushBlock]Failed to push the block : unknown cause";
-        }
-    }
-
     KETO_LOG_ERROR << "[RpcServer] wait for session end";
     this->waitForSessionEnd();
 
@@ -2062,8 +2042,35 @@ int RpcServer::decrementSessionCount() {
 void RpcServer::waitForSessionEnd() {
     std::unique_lock<std::mutex> unique_lock(classMutex);
     KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerPublish] waitForSessionEnd : " << this->sessionCount;
+    std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
+    std::chrono::system_clock::time_point runTime = startTime;
     while(this->sessionCount)  {
-        this->stateCondition.wait(unique_lock);
+        // get the list of sessions
+        if (runTime == startTime ||
+            (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - runTime).count() > 1500)) {
+            for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
+                try {
+                    //KETO_LOG_DEBUG << "[RpcServer::pushBlock] push block to node [" << Botan::hex_encode((const uint8_t*)account.c_str(),account.size(),true) << "]";
+                    SessionBasePtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
+                            account);
+                    if (sessionPtr_) {
+                        sessionPtr_->closeSession();
+                    }
+                } catch (keto::common::Exception &ex) {
+                    KETO_LOG_ERROR << "[RpcServer::pushBlock]Failed to push the block : " << ex.what();
+                    KETO_LOG_ERROR << "[RpcServer::pushBlock]Cause : " << boost::diagnostic_information(ex, true);
+                } catch (boost::exception &ex) {
+                    KETO_LOG_ERROR << "[RpcServer::pushBlock]Failed to push the block : "
+                                   << boost::diagnostic_information(ex, true);
+                } catch (std::exception &ex) {
+                    KETO_LOG_ERROR << "[RpcServer::pushBlock]Failed to push the block : " << ex.what();
+                } catch (...) {
+                    KETO_LOG_ERROR << "[RpcServer::pushBlock]Failed to push the block : unknown cause";
+                }
+            }
+        }
+
+        this->stateCondition.wait_for(unique_lock,std::chrono::milliseconds(1000));
         KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerPublish] waitForSessionEnd : " << this->sessionCount;
     }
 }
