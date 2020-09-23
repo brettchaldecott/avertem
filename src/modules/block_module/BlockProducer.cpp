@@ -334,9 +334,6 @@ BlockProducerPtr BlockProducer::init() {
 }
 
 void BlockProducer::fin() {
-    singleton->terminate();
-    producerThreadPtr->join();
-    producerThreadPtr.reset();
     singleton.reset();
 }
 
@@ -383,9 +380,14 @@ void BlockProducer::run() {
 }
 
 void BlockProducer::terminate() {
-    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
-    this->currentState = State::terminated;
-    this->stateCondition.notify_all();
+    {
+        std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+        this->currentState = State::terminated;
+        this->stateCondition.notify_all();
+    }
+
+    producerThreadPtr->join();
+    producerThreadPtr.reset();
 }
 
 void BlockProducer::setState(const State& state) {
@@ -584,6 +586,9 @@ BlockProducer::State BlockProducer::checkState() {
         this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(Constants::BLOCK_TIME));
     }
     KETO_LOG_DEBUG << "[BlockProducer::checkState] return the state";
+    if (this->currentState == BlockProducer::State::terminated) {
+        return this->currentState;
+    }
     return result;
 }
 
@@ -755,7 +760,8 @@ void BlockProducer::load() {
 
 void BlockProducer::sync() {
     try {
-        while (this->getState()  == BlockProducer::State::sync_blocks &&
+        while (this->getState() != BlockProducer::State::terminated &&
+                this->getState() == BlockProducer::State::sync_blocks &&
             BlockSyncManager::getInstance()->getStatus() != BlockSyncManager::COMPLETE) {
             std::this_thread::sleep_for(std::chrono::seconds(2));
             keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();

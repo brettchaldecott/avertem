@@ -69,8 +69,6 @@ public:
         virtual ~RouteQueue();
 
         bool isActive();
-        void activate();
-        void deactivate();
         void pushEntry(const RouteQueueEntryPtr& event);
 
     private:
@@ -83,6 +81,8 @@ public:
 
         bool popEntry(RouteQueueEntryPtr& event);
         void run();
+        void deactivate();
+
     };
     typedef std::shared_ptr<RouteQueue> RouteQueuePtr;
 

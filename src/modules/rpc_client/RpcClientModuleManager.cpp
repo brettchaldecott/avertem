@@ -79,18 +79,20 @@ void RpcClientModuleManager::postStart() {
 void RpcClientModuleManager::preStop() {
     KETO_LOG_INFO << "[RpcClientModuleManager] Pre Stop the RpcClientModuleManager";
     RpcSessionManager::getInstance()->preStop();
+    KETO_LOG_INFO << "[RpcClientModuleManager] Pre Stop the RpcClientModuleManager";
 }
 
 void RpcClientModuleManager::stop() {
-    EventRegistry::deregisterEventHandlers();
+    KETO_LOG_INFO << "[RpcClientModuleManager] The RpcClientModuleManager is stopped";
     if (RpcSessionManager::getInstance()) {
         RpcSessionManager::getInstance()->stop();
     }
     RpcSessionManager::fin();
     keto::software_consensus::ConsensusSessionManager::fin();
     ConsensusService::fin();
+    EventRegistry::deregisterEventHandlers();
     modules.clear();
-    KETO_LOG_INFO << "[RpcClientModuleManager] The RpcClientModuleManager is being stopped";
+    KETO_LOG_INFO << "[RpcClientModuleManager] The RpcClientModuleManager is stopped";
 }
 
 const std::vector<std::string> RpcClientModuleManager::listModules() {

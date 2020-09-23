@@ -40,10 +40,13 @@ public:
     
     bool require();
     void start();
+    void stop();
     
     void process();
 
 private:
+    std::mutex classMutex;
+    bool terminated;
     static const int THREAD_COUNT;
     std::shared_ptr<boost::asio::io_context> ioc;
     std::shared_ptr<boost::asio::deadline_timer> timer;
@@ -67,6 +70,10 @@ private:
     void reschedule();
 
     bool isBlockSyncComplete();
+
+    // is terminated
+    bool isTerminated();
+    void terminate();
 };
 
 

@@ -67,8 +67,9 @@ void RpcServerModuleManager::start() {
 }
 
 void RpcServerModuleManager::preStop() {
-    KETO_LOG_INFO << "[RpcServerModuleManager::preStop] The pre stop has been called";
+    KETO_LOG_INFO << "[RpcServerModuleManager] Pre stop the rpc server";
     RpcServer::getInstance()->preStop();
+    KETO_LOG_INFO << "[RpcServerModuleManager] Stop the server";
 }
 
 void RpcServerModuleManager::stop() {

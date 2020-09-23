@@ -40,11 +40,12 @@ keto::crypto::SecureVector ${TEST_CONSENSUS_DETECT_BREAK_METHOD}(const keto::cry
 
 keto::crypto::SecureVector ${TEST_CONSENSUS_TEST_PTRACE_METHOD}(const keto::crypto::SecureVector& input) {
     keto::crypto::SecureVector result = keto::crypto::HashGenerator().generateHash(input);
-    if (ptrace(PTRACE_TRACEME, 0, 1, 0) == 0)
-    {
+    //if (ptrace(PTRACE_TRACEME, 0, 1, 0) == 0)
+    //{
+    //    ptrace(PTRACE_DETACH, 0, 1, 0);
         return keto::crypto::HashGenerator().generateHash(result);
-    }
-    return result;
+    //}
+    //return result;
 }
 
 

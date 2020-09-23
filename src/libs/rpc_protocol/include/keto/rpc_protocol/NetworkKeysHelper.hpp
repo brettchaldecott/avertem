@@ -31,6 +31,9 @@ public:
     NetworkKeysHelper& setSlot(int slot);
     int getSlot();
 
+    NetworkKeysHelper& setTimeStamp(long timestamp);
+    long getTimeStamp();
+
     operator keto::proto::NetworkKeys();
     operator std::string();
     operator keto::crypto::SecureVector();

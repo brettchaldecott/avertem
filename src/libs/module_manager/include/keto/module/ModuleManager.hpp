@@ -78,6 +78,12 @@ public:
      * @return The reference to the module manager
      */
     static std::shared_ptr<ModuleManager>& getInstance();
+
+
+    /**
+     * Fin the singleton
+     */
+    static void fin();
     
     // module lifecycle methods
     void load();

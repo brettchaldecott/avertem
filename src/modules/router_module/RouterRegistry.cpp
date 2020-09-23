@@ -49,7 +49,7 @@ RouterRegistryPtr RouterRegistry::getInstance() {
     return singleton;
 }
 
-void  RouterRegistry::fin() {
+void RouterRegistry::fin() {
     singleton.reset();
 }
 

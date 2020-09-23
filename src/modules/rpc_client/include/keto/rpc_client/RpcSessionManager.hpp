@@ -91,16 +91,22 @@ public:
 
     bool hasNetworkState();
     void activateNetworkState();
+    bool isTerminated();
+    void terminate();
+
+    int incrementSessionCount();
+    int decrementSessionCount();
 
 protected:
     void setPeers(const std::vector<std::string>& peers, bool peered = true);
-    void reconnect(const RpcPeer& rpcPeer);
+    void reconnect(RpcPeer& rpcPeer);
     void setAccountSessionMapping(const std::string& account,
             const RpcSessionPtr& rpcSessionPtr);
-    void removeAccountSessionMapping(const std::string& account);
-    bool isTerminated();
+    void removeSession(const RpcPeer& rpcPeer, const std::string& account);
 private:
     std::recursive_mutex classMutex;
+    std::mutex sessionClassMutex;
+    std::condition_variable stateCondition;
     std::map<std::string,RpcSessionPtr> sessionMap;
     std::map<std::string,RpcSessionPtr> accountSessionMap;
     // The io_context is required for all I/O
@@ -115,6 +121,7 @@ private:
     bool activated;
     bool terminated;
     bool networkState;
+    int sessionCount;
 
 
     bool hasAccountSessionMapping(const std::string& account);
@@ -122,6 +129,8 @@ private:
     RpcSessionPtr getDefaultPeer();
     RpcSessionPtr getActivePeer();
     bool registeredAccounts();
+
+    void waitForSessionEnd();
 };
 
 

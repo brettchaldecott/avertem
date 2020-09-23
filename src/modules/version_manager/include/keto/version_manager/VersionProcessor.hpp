@@ -48,6 +48,7 @@ public:
     static VersionProcessorPtr getInstance();
     
     void run();
+    void preStop();
     void terminate();
     bool isTerminated(); 
     bool isAutoUpdateEnabled();

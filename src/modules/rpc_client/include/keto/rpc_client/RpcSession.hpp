@@ -120,17 +120,14 @@ public:
 
     class ReadQueue {
     public:
-        ReadQueue(const RpcSessionPtr& session);
+        ReadQueue(RpcSession* session);
         ReadQueue(const ReadQueue& orig) = delete;
         virtual ~ReadQueue();
-
-        bool isActive();
-        void activate();
-        void deactivate();
         void pushEntry(const std::string& command, const keto::server_common::StringVector& stringVector);
+        void deactivate();
 
     private:
-        RpcSessionPtr session;
+        RpcSession* session;
         bool active;
         std::mutex classMutex;
         std::condition_variable stateCondition;
@@ -139,6 +136,8 @@ public:
 
         ReadQueueEntryPtr popEntry();
         void run();
+        bool isActive();
+
     };
     typedef std::shared_ptr<ReadQueue> ReadQueuePtr;
 
@@ -206,6 +205,9 @@ public:
     pushBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage);
 
     void
+    closeSession();
+
+    void
     electBlockProducer();
     void
     electBlockProducerPublish(const keto::election_common::ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper);
@@ -219,13 +221,14 @@ public:
     bool isClosed();
     bool isActive();
     bool isRegistered();
+    //void deactivateQueue();
     
 private:
-    bool reading;
     bool closed;
     bool active;
     bool registered;
-    //std::recursive_mutex classMutex;
+    bool terminated;
+    std::recursive_mutex classMutex;
     tcp::resolver resolver;
     websocket::stream<beast::ssl_stream<beast::tcp_stream>> ws_;
     boost::beast::flat_buffer buffer_;
@@ -295,6 +298,10 @@ private:
     // set active
     void deactivate();
     void setActive(bool active);
+
+    // terminated methods
+    void terminate();
+    bool isTerminated();
 };
 
 

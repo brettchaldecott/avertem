@@ -656,6 +656,7 @@ void HttpdServer::preStop() {
          iter != this->threadsVector.end(); iter++) {
         iter->join();
     }
+
 }
 
 void HttpdServer::stop() {

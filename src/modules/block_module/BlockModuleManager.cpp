@@ -93,7 +93,10 @@ void BlockModuleManager::preStop() {
         std::this_thread::sleep_for(std::chrono::seconds(Constants::BLOCK_PRODUCER_SAFE_MODE_DELAY));
     }
 
-    KETO_LOG_INFO << "[BlockModuleManager::preStop] Block manager post start has been called";
+    // terminate the block producer
+    KETO_LOG_INFO << "[BlockModuleManager::preStop] call terminate";
+    BlockProducer::getInstance()->terminate();
+    KETO_LOG_INFO << "[BlockModuleManager::preStop] Block manager pre stop has been called";
 }
 
 void BlockModuleManager::stop() {

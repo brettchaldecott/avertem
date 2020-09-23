@@ -34,7 +34,7 @@ class NetworkSessionKeyManager {
 public:
     class NetworkSessionSlot {
     public:
-        NetworkSessionSlot(uint8_t slot, std::vector<std::vector<uint8_t>> hashIndex, const SessionMap& sessionKeys);
+        NetworkSessionSlot(uint8_t slot, long timeStamp, std::vector<std::vector<uint8_t>> hashIndex, const SessionMap& sessionKeys);
         NetworkSessionSlot(const NetworkSessionSlot& orig) = delete;
         virtual ~NetworkSessionSlot();
 
@@ -43,9 +43,11 @@ public:
 
         keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr getKey(int index);
         uint8_t getSlot();
+        long getTimeStamp();
         bool checkHashIndex(const std::vector<keto::rpc_protocol::NetworkKeyHelper>& networkKeyHelpers);
     private:
         uint8_t slot;
+        long timeStamp;
         SessionMap sessionKeys;
         // the hash index is used to determine which key should be used to decrypt the entry
         std::vector<std::vector<uint8_t>> hashIndex;

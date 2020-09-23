@@ -72,7 +72,7 @@ VersionProcessor::~VersionProcessor() {
 VersionProcessorPtr VersionProcessor::init() {
     singleton = std::make_shared<VersionProcessor>();
     if (singleton->isAutoUpdateEnabled()) {
-    versionThreadPtr = std::shared_ptr<std::thread>(new std::thread(
+        versionThreadPtr = std::shared_ptr<std::thread>(new std::thread(
         []
         {
             singleton->run();
@@ -82,11 +82,7 @@ VersionProcessorPtr VersionProcessor::init() {
 }
 
 void VersionProcessor::fin() {
-    if (singleton->isAutoUpdateEnabled()) {
-        singleton->terminate();
-        versionThreadPtr->join();
-        versionThreadPtr.reset();
-    }
+
     singleton.reset();
 }
 
@@ -99,6 +95,14 @@ void VersionProcessor::run() {
         KETO_LOG_INFO << "[VersionProcess] perform check";
         performUpdateCheck();
         KETO_LOG_INFO << "[VersionProcess] perform update check";
+    }
+}
+
+void VersionProcessor::preStop() {
+    if (singleton->isAutoUpdateEnabled()) {
+        singleton->terminate();
+        versionThreadPtr->join();
+        versionThreadPtr.reset();
     }
 }
 

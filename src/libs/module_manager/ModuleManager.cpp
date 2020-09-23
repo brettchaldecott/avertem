@@ -73,6 +73,10 @@ std::shared_ptr<ModuleManager>& ModuleManager::getInstance() {
     return singleton;
 }
 
+void ModuleManager::fin() {
+    singleton.reset();
+}
+
 // module lifecycle methods
 void ModuleManager::load() {
     // load 
@@ -99,22 +103,16 @@ void ModuleManager::load() {
 }
 
 void ModuleManager::monitor() {
-    
     this->setState(State::monitoring);
-    while(this->checkState() != State::terminated) {
-        if (this->checkForReload()) {
-            keto::module::StateMonitor::getInstance()->monitor();
-            this->unload();
-            this->load();
-            this->setState(State::monitoring);
-        }
+    while(this->checkState() != State::terminated && !this->checkForReload()) {
+        //  do nothing
     }
-    
-    
 }
 
 void ModuleManager::unload() {
+    KETO_LOG_INFO << "Set state";
     this->setState(State::unloading);
+    KETO_LOG_INFO << "Get the  modules";
     std::map<boost::filesystem::path,std::shared_ptr<ModuleWrapper>> loadedLibraryModule;
     {
         std::lock_guard<std::mutex> guard(this->classMutex);
@@ -124,16 +122,19 @@ void ModuleManager::unload() {
         
     }
 
+    KETO_LOG_INFO << "Pre stop  the modules";
     for (std::map<boost::filesystem::path,std::shared_ptr<ModuleWrapper>>::reverse_iterator it=loadedLibraryModule.rbegin();
          it!=loadedLibraryModule.rend(); ++it) {
         it->second->getModuleManagerInterface()->preStop();
     }
 
+    KETO_LOG_INFO << "Stop the  modules";
     for (std::map<boost::filesystem::path,std::shared_ptr<ModuleWrapper>>::reverse_iterator it=loadedLibraryModule.rbegin(); 
             it!=loadedLibraryModule.rend(); ++it) {
         it->second->getModuleManagerInterface()->stop();
     }
-    
+
+    KETO_LOG_INFO << "Clear the states";
     {
         std::lock_guard<std::mutex> guard(this->classMutex);
         this->loadedModules.clear();
@@ -141,7 +142,8 @@ void ModuleManager::unload() {
         this->loadedLibraryModuleManagers.clear();
         
     }
-    
+
+    KETO_LOG_INFO << "Unload the  modules";
     for (std::map<boost::filesystem::path,std::shared_ptr<ModuleWrapper>>::reverse_iterator it=loadedLibraryModule.rbegin(); 
             it!=loadedLibraryModule.rend(); ++it) {
         it->second->unload();
@@ -150,6 +152,7 @@ void ModuleManager::unload() {
     loadedLibraryModule.clear();
 
     // set the state
+    KETO_LOG_INFO << "Set status to unloaded";
     this->setState(State::unloaded);
 }
 

@@ -158,7 +158,7 @@ void ConsensusSessionManager::setSession(keto::proto::ConsensusMessage& msg) {
     }
 }
 
-void ConsensusSessionManager::notifyAccepted() {
+bool ConsensusSessionManager::notifyAccepted() {
     std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
     if (!this->accepted) {
         this->accepted = true;
@@ -183,6 +183,9 @@ void ConsensusSessionManager::notifyAccepted() {
                 KETO_LOG_ERROR << "[notifyAccepted]Failed to process the event [" << event << "]";
             }
         }
+        return true;
+    } else {
+        return false;
     }
 }
 

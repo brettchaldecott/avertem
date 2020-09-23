@@ -59,15 +59,8 @@ std::string RpcSessionManager::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
-RpcSessionManager::RpcSessionManager() : peered(true), activated(false), terminated(false), networkState(false) {
-    
-    this->ioc = std::make_shared<net::io_context>();
-    
-    this->ctx = std::make_shared<sslBeast::context>(sslBeast::context::tlsv12_client);
+RpcSessionManager::RpcSessionManager() : peered(true), activated(false), terminated(false), networkState(false), sessionCount(0) {
 
-    // This holds the root certificate used for verification
-    keto::ssl::load_root_certificates(*ctx);
-    
     // retrieve the configuration
     std::shared_ptr<ketoEnv::Config> config = ketoEnv::EnvironmentManager::getInstance()->getConfig();
     if (config->getVariablesMap().count(Constants::PEERS)) {
@@ -80,6 +73,16 @@ RpcSessionManager::RpcSessionManager() : peered(true), activated(false), termina
         threads = std::max<int>(1,atoi(config->getVariablesMap()[Constants::RPC_CLIENT_THREADS].as<std::string>().c_str()));
     }
 
+    // setup the ioc threads
+    this->ioc = std::make_shared<net::io_context>(threads);
+
+    // setup the context
+    this->ctx = std::make_shared<sslBeast::context>(sslBeast::context::tlsv12_client);
+
+    // This holds the root certificate used for verification
+    keto::ssl::load_root_certificates(*ctx);
+
+
     PeerStore::init();
 }
 
@@ -89,11 +92,15 @@ RpcSessionManager::~RpcSessionManager() {
 
 void RpcSessionManager::setPeers(const std::vector<std::string>& peers, bool peered) {
     std::lock_guard<std::recursive_mutex> guard(this->classMutex);
-    PeerStore::getInstance()->setPeers(peers);
     this->peered = peered;
+    if (this->peered) {
+        PeerStore::getInstance()->setPeers(peers);
+        this->sessionMap.clear();
+    }
     for (std::vector<std::string>::const_iterator iter = peers.begin();
             iter != peers.end(); iter++) {
         RpcPeer rpcPeer((*iter),this->peered);
+        KETO_LOG_INFO << "Connect to peered server : " << rpcPeer.getPeer();
         this->sessionMap[(*iter)] = std::make_shared<RpcSession>(
                 this->ioc,
                 this->ctx,rpcPeer);
@@ -101,7 +108,12 @@ void RpcSessionManager::setPeers(const std::vector<std::string>& peers, bool pee
     }
 }
 
-void RpcSessionManager::reconnect(const RpcPeer& rpcPeer) {
+void RpcSessionManager::reconnect(RpcPeer& rpcPeer) {
+    if (isTerminated()) {
+        KETO_LOG_INFO << "The session manager is terminated ignoring the peer " << rpcPeer.getPeer();
+        return;
+    }
+    rpcPeer.incrementReconnectCount();
     std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     this->sessionMap.erase((std::string)rpcPeer);
     if (rpcPeer.getReconnectCount() >= Constants::SESSION::MAX_RETRY_COUNT) {
@@ -149,19 +161,49 @@ void RpcSessionManager::setAccountSessionMapping(const std::string& account,
     this->accountSessionMap[account] = rpcSessionPtr;
 }
 
-void RpcSessionManager::removeAccountSessionMapping(const std::string& account) {
+void RpcSessionManager::removeSession(const RpcPeer& rpcPeer, const std::string& account) {
     std::lock_guard<std::recursive_mutex> guard(this->classMutex);
-    if (!this->accountSessionMap.count(account)) {
-        return;
+    if (this->sessionMap.count((std::string)rpcPeer)) {
+        this->sessionMap.erase((std::string) rpcPeer);
     }
-    RpcSessionPtr rpcSessionPtr = this->accountSessionMap[account];
-    this->accountSessionMap.erase(account);
-    this->sessionMap.erase(rpcSessionPtr->getPeer().getPeer());
+    if (this->accountSessionMap.count(account)) {
+        this->accountSessionMap.erase(account);
+    }
+
 }
 
 bool RpcSessionManager::isTerminated() {
     std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     return this->terminated;
+}
+
+void RpcSessionManager::terminate() {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+    this->terminated = true;
+}
+
+
+int RpcSessionManager::incrementSessionCount() {
+    std::unique_lock<std::mutex> unique_lock(this->sessionClassMutex);
+    int result = ++this->sessionCount;
+    this->stateCondition.notify_all();
+    return result;
+}
+
+int RpcSessionManager::decrementSessionCount() {
+    std::unique_lock<std::mutex> unique_lock(this->sessionClassMutex);
+    int result = --this->sessionCount;
+    this->stateCondition.notify_all();
+    return result;
+}
+
+void RpcSessionManager::waitForSessionEnd() {
+    std::unique_lock<std::mutex> unique_lock(this->sessionClassMutex);
+    KETO_LOG_ERROR << "[RpcSessionManager::waitForSessionEnd] waitForSessionEnd : " << this->sessionCount;
+    while(this->sessionCount) {
+        this->stateCondition.wait(unique_lock);
+        KETO_LOG_ERROR << "[RpcSessionManager::waitForSessionEnd] waitForSessionEnd : " << this->sessionCount;
+    }
 }
 
 bool RpcSessionManager::hasNetworkState() {
@@ -267,26 +309,49 @@ void RpcSessionManager::postStart() {
 
 void RpcSessionManager::preStop() {
     // terminated
-    {
-        std::lock_guard<std::recursive_mutex> guard(this->classMutex);
-        this->terminated = true;
+    KETO_LOG_ERROR << "[RpcSessionManager::preStop] Terminate the session manager";
+    terminate();
+
+    KETO_LOG_ERROR << "[RpcSessionManager::preStop] stop the peers";
+    std::vector<std::string> peers = this->listAccountPeers();
+    for (std::string peer : peers) {
+        RpcSessionPtr rpcSessionPtr = getAccountSessionMapping(peer);
+        if (rpcSessionPtr) {
+            try {
+                rpcSessionPtr->closeSession();
+            } catch (keto::common::Exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::preStop] Failed to close the session : " << ex.what();
+                KETO_LOG_ERROR << "[RpcSessionManager::preStop] Cause : " << boost::diagnostic_information(ex,true);
+            } catch (boost::exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::preStop] Failed to close the session : " << boost::diagnostic_information(ex,true);
+            } catch (std::exception& ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::preStop] Failed to close the session : " << ex.what();
+            } catch (...) {
+                KETO_LOG_ERROR << "[RpcSessionManager::preStop] Failed to close the session : unknown cause";
+            }
+        }
     }
 
+    KETO_LOG_ERROR << "[RpcSessionManager::preStop] wait for the sessions";
+    this->waitForSessionEnd();
+
     // stop the threads
+    KETO_LOG_ERROR << "[RpcSessionManager::preStop] terminate the threads";
     if (this->ioc) {
         this->ioc->stop();
     }
 
+    KETO_LOG_ERROR << "[RpcSessionManager::preStop] terminate the threads";
     for (std::vector<std::thread>::iterator iter = this->threadsVector.begin();
          iter != this->threadsVector.end(); iter++) {
         iter->join();
     }
+    this->threadsVector.clear();
 }
 
 void RpcSessionManager::stop() {
-    this->threadsVector.clear();
-    
     this->sessionMap.clear();
+    this->accountSessionMap.clear();
 }
 
 keto::event::Event RpcSessionManager::activatePeer(const keto::event::Event& event) {

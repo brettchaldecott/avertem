@@ -81,6 +81,7 @@ public:
         static const char* CONSENSUS_SESSION;
         static const char* CONSENSUS;
         static const char* CLOSE;
+        static const char* CLOSED;
         static const char* GO_AWAY;
         static const char* ACCEPTED;
         static const char* REQUEST_NETWORK_SESSION_KEYS;

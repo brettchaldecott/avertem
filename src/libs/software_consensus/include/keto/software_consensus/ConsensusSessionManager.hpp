@@ -50,7 +50,7 @@ public:
 
     void updateSessionKey(const keto::crypto::SecureVector& sessionKey);
     void setSession(keto::proto::ConsensusMessage& event);
-    void notifyAccepted();
+    bool notifyAccepted();
     bool resetProtocolCheck();
     void notifyProtocolCheck(bool master = false);
     void initNetworkHeartbeat(int networkSlot, int electionSlot, int electionPublishSlot, int confirmationSlot);

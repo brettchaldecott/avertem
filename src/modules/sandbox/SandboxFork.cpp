@@ -134,7 +134,7 @@ keto::event::Event SandboxFork::Child::executeHttpActionMessage(const keto::even
 
 
 SandboxFork::Parent::Parent()
-    : inPipe(new boost::process::pipe()), outPipe(new boost::process::pipe()), stack(NULL) {
+    : inPipe(new boost::process::pipe()), outPipe(new boost::process::pipe()) {
 }
 
 SandboxFork::Parent::~Parent() {

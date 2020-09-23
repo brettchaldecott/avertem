@@ -78,13 +78,13 @@ void RouterModuleManager::preStop() {
 
 void RouterModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
-    modules.clear();
     PeerCache::fin();
     RouterService::fin();
     StorageManager::fin();
     RouterRegistry::fin();
     TangleServiceCache::fin();
     ConsensusService::fin();
+    modules.clear();
     KETO_LOG_INFO << "[RouterModuleManager] The RouterModuleManager is being stopped";
 }
 

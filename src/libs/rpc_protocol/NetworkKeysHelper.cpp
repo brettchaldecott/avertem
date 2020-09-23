@@ -62,6 +62,15 @@ int NetworkKeysHelper::getSlot() {
     return this->networkKeys.slot();
 }
 
+NetworkKeysHelper& NetworkKeysHelper::setTimeStamp(long timestamp) {
+    this->networkKeys.set_timestamp(timestamp);
+    return *this;
+}
+
+long NetworkKeysHelper::getTimeStamp() {
+    return this->networkKeys.timestamp();
+}
+
 
 NetworkKeysHelper::operator std::string() {
     std::string result;

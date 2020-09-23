@@ -61,6 +61,7 @@ const char* Constants::RPC_COMMANDS::BLOCK_SYNC_PROCESSED = "BLOCK_SYNC_PROCESSE
 const char* Constants::RPC_COMMANDS::CONSENSUS_SESSION = "CONSENSUS_SESSION";
 const char* Constants::RPC_COMMANDS::CONSENSUS = "CONSENSUS";
 const char* Constants::RPC_COMMANDS::CLOSE = "CLOSE";
+const char* Constants::RPC_COMMANDS::CLOSED = "CLOSED";
 const char* Constants::RPC_COMMANDS::GO_AWAY = "GO_AWAY";
 const char* Constants::RPC_COMMANDS::ACCEPTED = "ACCEPTED";
 const char* Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS = "REQUEST_NETWORK_SESSION_KEYS";

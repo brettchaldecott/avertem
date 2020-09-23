@@ -68,7 +68,13 @@ void ConsensusModuleManager::postStart() {
     if (consensusServerPtr->require()) {
         consensusServerPtr->start();
     }
-    
+}
+
+void ConsensusModuleManager::preStop() {
+    if (consensusServerPtr->require()) {
+        KETO_LOG_INFO << "[ConsensusModuleManager] Pre stop the consensus module server";
+        consensusServerPtr->stop();
+    }
 }
 
 void ConsensusModuleManager::stop() {

@@ -59,6 +59,11 @@ void VersionManagerModuleManager::start() {
     KETO_LOG_INFO << "[VersionManagerModuleManager] Started the VersionManagerModuleManager";
 }
 
+void VersionManagerModuleManager::preStop() {
+    KETO_LOG_INFO << "[VersionManagerModuleManager::preStop] Pre stop the VersionManagerModuleManager";
+    VersionProcessor::getInstance()->preStop();
+}
+
 void VersionManagerModuleManager::stop() {
     EventRegistry::deregisterEventHandlers();
     ConsensusService::fin();

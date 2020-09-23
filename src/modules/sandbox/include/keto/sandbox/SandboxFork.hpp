@@ -57,7 +57,6 @@ public:
     private:
         keto::wavm_common::PipePtr inPipe;
         keto::wavm_common::PipePtr outPipe;
-        char *stack;
         std::shared_ptr<boost::process::child> childPtr;
 
         keto::event::Event execute();

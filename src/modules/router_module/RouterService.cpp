@@ -71,6 +71,7 @@ RouterService::RouteQueueEntry::RouteQueueEntry(keto::event::Event event, int re
 }
 
 RouterService::RouteQueueEntry::~RouteQueueEntry() {
+
 }
 
 keto::event::Event RouterService::RouteQueueEntry::getEvent() {
@@ -89,11 +90,16 @@ int RouterService::RouteQueueEntry::getRetryCount() {
     return this->retryCount;
 }
 
-RouterService::RouteQueue::RouteQueue(RouterService* service) : service(service), active(false) {
-
+RouterService::RouteQueue::RouteQueue(RouterService* service) : service(service), active(true) {
+    queueThreadPtr = std::shared_ptr<std::thread>(new std::thread(
+            [this]
+            {
+                this->run();
+            }));
 }
 
 RouterService::RouteQueue::~RouteQueue() {
+    deactivate();
 }
 
 bool RouterService::RouteQueue::isActive() {
@@ -101,35 +107,14 @@ bool RouterService::RouteQueue::isActive() {
     return this->active;
 }
 
-void RouterService::RouteQueue::activate() {
-    std::unique_lock<std::mutex> guard(classMutex);
-    queueThreadPtr = std::shared_ptr<std::thread>(new std::thread(
-            [this]
-            {
-                this->run();
-            }));
-    this->active = true;
-}
-
 void RouterService::RouteQueue::deactivate() {
     {
         std::unique_lock<std::mutex> guard(classMutex);
-        if (!this->active) {
-            if (this->service) {
-                this->service = NULL;
-            }
-            return;
-        }
         this->active = false;
         stateCondition.notify_all();
     }
-    if (queueThreadPtr) {
-        queueThreadPtr->join();
-        queueThreadPtr.reset();
-    }
-    if (this->service) {
-        this->service = NULL;
-    }
+    queueThreadPtr->join();
+    queueThreadPtr.reset();
 }
 
 void RouterService::RouteQueue::pushEntry(const RouteQueueEntryPtr& event) {
@@ -151,7 +136,7 @@ bool RouterService::RouteQueue::popEntry(RouteQueueEntryPtr& event) {
 }
 
 void RouterService::RouteQueue::run() {
-    while(this->isActive() || !this->routeQueue.empty()) {
+    while(this->isActive()) {
         RouterService::RouteQueueEntryPtr entry;
         if (popEntry(entry)) {
             this->service->processQueueEntry(entry);
@@ -178,14 +163,10 @@ RouterService::RouterService() {
                                                              publicKeyPath);
 
     this->routeQueuePtr = RouterService::RouteQueuePtr(new RouteQueue(this));
-    this->routeQueuePtr->activate();
 }
 
 RouterService::~RouterService() {
-    if (this->routeQueuePtr) {
-        this->routeQueuePtr->deactivate();
-        this->routeQueuePtr.reset();
-    }
+    this->routeQueuePtr.reset();
 }
 
 std::shared_ptr<RouterService> RouterService::init() {
@@ -204,9 +185,6 @@ std::shared_ptr<RouterService> RouterService::getInstance() {
 }
 
 void RouterService::preStop() {
-    if (this->routeQueuePtr) {
-        this->routeQueuePtr->deactivate();
-    }
 }
 
 void RouterService::processQueueEntry(const RouterService::RouteQueueEntryPtr& event) {

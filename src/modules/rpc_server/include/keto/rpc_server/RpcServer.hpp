@@ -35,6 +35,7 @@
 #include <thread>
 #include <vector>
 #include <mutex>
+#include <condition_variable>
 
 #include "keto/common/MetaInfo.hpp"
 #include "keto/crypto/Containers.hpp"
@@ -102,6 +103,11 @@ public:
     bool isServerActive();
 
     std::string getExternalPeerInfo();
+    bool isTerminated();
+    void terminate();
+
+    int getSessionCount();
+
 protected:
     keto::crypto::SecureVector getSecret();
     void setExternalIp(
@@ -110,20 +116,30 @@ protected:
             const std::string& externalHostname);
     bool hasNetworkState();
     void enableNetworkState();
+
+    // session count
+    int incrementSessionCount();
+    int decrementSessionCount();
     
 private:
+    std::mutex classMutex;
+    std::condition_variable stateCondition;
     boost::asio::ip::address serverIp;
     boost::asio::ip::address externalIp;
     std::string externalHostname;
     unsigned short serverPort;
     int threads;
+    int sessionCount;
     std::shared_ptr<sslBeast::context> contextPtr;
     std::shared_ptr<net::io_context> ioc;
     std::vector<std::thread> threadsVector;
     keto::crypto::SecureVector secret;
     bool serverActive;
     bool networkState;
-    
+    bool terminated;
+
+
+    void waitForSessionEnd();
 };
 
 }

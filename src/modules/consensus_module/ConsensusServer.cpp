@@ -53,7 +53,9 @@ void process(const boost::system::error_code& error) {
 const int ConsensusServer::THREAD_COUNT = 1;
 
 ConsensusServer::ConsensusServer() :
-    currentPos(-1),netwokSessionLength(Constants::NETWORK_SESSION_LENGTH_DEFAULT),
+    terminated(false),
+    currentPos(-1),
+    netwokSessionLength(Constants::NETWORK_SESSION_LENGTH_DEFAULT),
     netwokProtocolDelay(keto::software_consensus::Constants::NETWORK_PROTOCOL_DELAY_DEFAULT),
     networkHeartbeatDelay(Constants::NETWORK_CONSENSUS_HEARTBEAT_DEFAULT),
     networkHeartbeatCurrentSlot(0),
@@ -107,7 +109,6 @@ ConsensusServer::~ConsensusServer() {
     consensusServerPtr = NULL;
     if (this->ioc) {
         this->ioc->stop();
-
         for (std::vector<std::thread>::iterator iter = this->threadsVector.begin();
                 iter != this->threadsVector.end(); iter++) {
             iter->join();
@@ -143,8 +144,25 @@ void ConsensusServer::start() {
     }
 }
 
+void ConsensusServer::stop() {
+    this->terminate();
+    if (this->ioc) {
+        this->ioc->stop();
+        for (std::vector<std::thread>::iterator iter = this->threadsVector.begin();
+             iter != this->threadsVector.end(); iter++) {
+            iter->join();
+        }
+
+        this->threadsVector.clear();
+        this->ioc.reset();
+    }
+}
+
 
 void ConsensusServer::process() {
+    if (this->isTerminated()) {
+        return;
+    }
     try {
         std::chrono::system_clock::time_point currentTime = std::chrono::system_clock::now();
         std::chrono::minutes diff(
@@ -267,8 +285,32 @@ void ConsensusServer::initNetworkHeartbeat() {
 }
 
 void ConsensusServer::reschedule() {
-    this->timer->expires_from_now(boost::posix_time::seconds(10));
-    this->timer->async_wait(&keto::consensus_module::process);
+    std::unique_lock<std::mutex> guard(classMutex);
+    if (this->terminated) {
+        return;
+    }
+    try {
+        this->timer->expires_from_now(boost::posix_time::seconds(10));
+        this->timer->async_wait(&keto::consensus_module::process);
+    } catch (...) {
+        KETO_LOG_ERROR << "[ConsensusServer] Reschedule aborted";
+    }
+}
+
+
+bool ConsensusServer::isTerminated() {
+    std::unique_lock<std::mutex> guard(classMutex);
+    return this->terminated;
+}
+
+void ConsensusServer::terminate() {
+    std::unique_lock<std::mutex> guard(classMutex);
+    this->terminated = true;
+    try {
+        this->timer->cancel();
+    } catch (...) {
+        KETO_LOG_ERROR << "[ConsensusServer] failed to terminate.";
+    }
 }
 
 }

@@ -31,8 +31,8 @@ std::string NetworkSessionKeyManager::getSourceVersion() {
 
 
 NetworkSessionKeyManager::NetworkSessionSlot::NetworkSessionSlot(
-        uint8_t slot, std::vector<std::vector<uint8_t>> hashIndex, const SessionMap& sessionKeys) :
-        slot(slot), hashIndex(hashIndex), sessionKeys(sessionKeys) {
+        uint8_t slot, long timeStamp, std::vector<std::vector<uint8_t>> hashIndex, const SessionMap& sessionKeys) :
+        slot(slot), timeStamp(timeStamp), sessionKeys(sessionKeys), hashIndex(hashIndex) {
 
 }
 NetworkSessionKeyManager::NetworkSessionSlot::~NetworkSessionSlot() {
@@ -53,7 +53,8 @@ keto::proto::NetworkKeysWrapper NetworkSessionKeyManager::NetworkSessionSlot::ge
         networkKeyHelper.setKeyBytes(Botan::PKCS8::BER_encode(*session->second->getPrivateKey()));
         networkKeysHelper.addNetworkKey(networkKeyHelper);
     }
-    networkKeysHelper.setSlot(this->slot);
+    networkKeysHelper.setSlot(this->getSlot());
+    networkKeysHelper.setTimeStamp( this->getTimeStamp());
     keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper;
     networkKeysWrapperHelper.setBytes(
             NetworkSessionKeyManager::getInstance()->consensusHashGenerator->encrypt((keto::crypto::SecureVector)networkKeysHelper));
@@ -64,6 +65,7 @@ keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr NetworkSessionKeyMan
     if (index >= this->hashIndex.size()) {
         std::stringstream ss;
         ss << "Index out of bounds [" << index << "][" << this->hashIndex.size() << "]";
+        KETO_LOG_INFO << ss.str();
         BOOST_THROW_EXCEPTION(keto::keystore::IndexOutOfBoundsException(ss.str()));
     }
     return this->sessionKeys[this->hashIndex[index]];
@@ -72,6 +74,10 @@ keto::memory_vault_session::MemoryVaultSessionKeyWrapperPtr NetworkSessionKeyMan
 
 uint8_t NetworkSessionKeyManager::NetworkSessionSlot::getSlot() {
     return this->slot;
+}
+
+long NetworkSessionKeyManager::NetworkSessionSlot::getTimeStamp() {
+    return this->timeStamp;
 }
 
 bool NetworkSessionKeyManager::NetworkSessionSlot::checkHashIndex(const std::vector<keto::rpc_protocol::NetworkKeyHelper>& networkKeyHelpers) {
@@ -156,7 +162,7 @@ void NetworkSessionKeyManager::generateSession() {
     if (slot >= 255) {
         this->slot = 1;
     }
-    this->sessionSlots[this->slot] = NetworkSessionSlotPtr(new NetworkSessionSlot(this->slot,hashIndex,sessionKeys));
+    this->sessionSlots[this->slot] = NetworkSessionSlotPtr(new NetworkSessionSlot(this->slot,std::time(0),hashIndex,sessionKeys));
     this->slots.push_back(this->slot);
 
     // remove the extra slot
@@ -175,8 +181,16 @@ void NetworkSessionKeyManager::setSession(const keto::proto::NetworkKeysWrapper&
     // check if the slot is registered
     if (this->sessionSlots.count(networkKeysHelper.getSlot())) {
         NetworkSessionSlotPtr networkSessionSlotPtr = this->sessionSlots[networkKeysHelper.getSlot()];
+        if (networkSessionSlotPtr->getTimeStamp() >= networkKeysHelper.getTimeStamp()) {
+            // the network timestamp is less than the current timestamp ignore
+            KETO_LOG_INFO << "[NetworkSessionKeyManager::setSession] the time stamp is old [" <<
+                networkSessionSlotPtr->getTimeStamp() << "][" <<
+                networkKeysHelper.getTimeStamp() << "]";
+            return;
+        }
         if (networkSessionSlotPtr->checkHashIndex(networkKeyHelpers)) {
             // found match and will now ignore
+            KETO_LOG_INFO << "[NetworkSessionKeyManager::setSession] The hashes were set.";
             return;
         }
     }
@@ -200,13 +214,22 @@ void NetworkSessionKeyManager::setSession(const keto::proto::NetworkKeysWrapper&
 
     // setup the slot
     this->slot = networkKeysHelper.getSlot();
-    this->sessionSlots[networkKeysHelper.getSlot()] = NetworkSessionSlotPtr(new NetworkSessionSlot(networkKeysHelper.getSlot(),hashIndex,sessionKeys));
+    NetworkSessionSlotPtr networkSessionSlotPtr(new NetworkSessionSlot(
+            networkKeysHelper.getSlot(),networkKeysHelper.getTimeStamp(),hashIndex,sessionKeys));
+    if (this->sessionSlots.count(networkKeysHelper.getSlot())) {
+        // remove the slot entry
+        this->slots.erase(std::remove(this->slots.begin(), this->slots.end(), networkKeysHelper.getSlot()), this->slots.end());
+    }
+    this->sessionSlots[networkKeysHelper.getSlot()] = networkSessionSlotPtr;
     this->slots.push_back(networkKeysHelper.getSlot());
 
     // remove the extra slot
     popSlot();
 
     networkSessionConfigured = true;
+    KETO_LOG_INFO << "[NetworkSessionKeyManager::setSession] the time stamp is old [" <<
+                  networkSessionSlotPtr->getTimeStamp() << "][" <<
+                  networkKeysHelper.getTimeStamp() << "]";
 }
 
 keto::proto::NetworkKeysWrapper NetworkSessionKeyManager::getSession() {
