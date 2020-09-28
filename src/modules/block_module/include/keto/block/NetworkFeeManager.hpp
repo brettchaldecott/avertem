@@ -8,6 +8,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <mutex>
 
 #include "BlockChain.pb.h"
 
@@ -50,6 +51,7 @@ public:
     keto::event::Event setNetworkFeeInfo(const keto::event::Event& event);
 
 private:
+    std::recursive_mutex classMutex;
     keto::transaction_common::FeeInfoMsgProtoHelperPtr feeInfoMsgProtoHelperPtr;
 };
 

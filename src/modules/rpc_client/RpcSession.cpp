@@ -981,8 +981,7 @@ std::string RpcSession::handleRetryResponse(const std::string& command) {
 
         KETO_LOG_INFO << "[RpcSession::handleRetryResponse]Send the retry : " << command;
         result = serverRequest(command, command);
-    } else if (command == keto::server_common::Constants::RPC_COMMANDS::HELLO ||
-            command == keto::server_common::Constants::RPC_COMMANDS::GO_AWAY) {
+    } else if (command == keto::server_common::Constants::RPC_COMMANDS::HELLO) {
         // attempt to make a new request for the failed response processing.
         std::this_thread::sleep_for(std::chrono::milliseconds(Constants::SESSION::RETRY_COUNT_DELAY));
 
@@ -1006,6 +1005,7 @@ std::string RpcSession::handleRetryResponse(const std::string& command) {
         KETO_LOG_INFO << "[RpcSession::handleRetryResponse] Send the retry : " << request;
         result = serverRequest(request,request);
     } else if (command == keto::server_common::Constants::RPC_COMMANDS::ACCEPTED ||
+               command == keto::server_common::Constants::RPC_COMMANDS::GO_AWAY ||
                command == keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_ACCEPT ||
                command == keto::server_common::Constants::RPC_COMMANDS::CONSENSUS ||
                command == keto::server_common::Constants::RPC_COMMANDS::CONSENSUS_SESSION ||

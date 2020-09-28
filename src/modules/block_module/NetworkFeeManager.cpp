@@ -43,6 +43,7 @@ void NetworkFeeManager::fin() {
 }
 
 void NetworkFeeManager::load() {
+    std::unique_lock<std::recursive_mutex> uniqueLock(classMutex);
     if (keto::server_common::ServerInfo::getInstance()->isMaster()) {
         std::shared_ptr<keto::environment::Config> config =
                 keto::environment::EnvironmentManager::getInstance()->getConfig();
@@ -58,10 +59,12 @@ void NetworkFeeManager::load() {
 }
 
 void NetworkFeeManager::clear() {
+    std::unique_lock<std::recursive_mutex> uniqueLock(classMutex);
     this->feeInfoMsgProtoHelperPtr.reset();
 }
 
 keto::transaction_common::FeeInfoMsgProtoHelperPtr NetworkFeeManager::getFeeInfo() {
+    std::unique_lock<std::recursive_mutex> uniqueLock(classMutex);
     if (this->feeInfoMsgProtoHelperPtr) {
         return this->feeInfoMsgProtoHelperPtr;
     }  else {
@@ -70,10 +73,12 @@ keto::transaction_common::FeeInfoMsgProtoHelperPtr NetworkFeeManager::getFeeInfo
 }
 
 void NetworkFeeManager::setFeeInfo(const keto::transaction_common::FeeInfoMsgProtoHelperPtr& feeInfoMsgProtoHelperPtr) {
+    std::unique_lock<std::recursive_mutex> uniqueLock(classMutex);
     this->feeInfoMsgProtoHelperPtr = feeInfoMsgProtoHelperPtr;
 }
 
 keto::event::Event NetworkFeeManager::getNetworkFeeInfo(const keto::event::Event& event) {
+    std::unique_lock<std::recursive_mutex> uniqueLock(classMutex);
     if (this->feeInfoMsgProtoHelperPtr) {
         keto::proto::FeeInfoMsg feeInfoMsg = *getFeeInfo();
         return keto::server_common::toEvent<keto::proto::FeeInfoMsg>(feeInfoMsg);
@@ -83,6 +88,7 @@ keto::event::Event NetworkFeeManager::getNetworkFeeInfo(const keto::event::Event
 }
 
 keto::event::Event NetworkFeeManager::setNetworkFeeInfo(const keto::event::Event& event) {
+    std::unique_lock<std::recursive_mutex> uniqueLock(classMutex);
     setFeeInfo(keto::transaction_common::FeeInfoMsgProtoHelperPtr(new keto::transaction_common::FeeInfoMsgProtoHelper(
             keto::server_common::fromEvent<keto::proto::FeeInfoMsg>(event))));
     return event;
