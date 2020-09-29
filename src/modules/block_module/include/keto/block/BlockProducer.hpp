@@ -196,6 +196,7 @@ public:
     void setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles);
     void processProducerEnding(
             const keto::block_db::SignedBlockWrapperMessageProtoHelper& signedBlockWrapperMessageProtoHelper);
+    void activateWaitingBlockProducer();
 
     // get transaction lock
     ProducerScopeLockPtr aquireTransactionLock();
@@ -219,6 +220,7 @@ private:
 
     void load();
     void sync();
+    void waitingBlockProducerSync();
     void _setState(const State& state);
     State _getState();
 

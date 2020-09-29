@@ -364,6 +364,13 @@ void BlockProducer::run() {
                        keto::software_consensus::ConsensusStateManager::getInstance()->getState()
                        == keto::software_consensus::ConsensusStateManager::State::ACCEPTED) {
                 sync();
+            } else if (currentState == BlockProducer::State::block_producer_wait &&
+                        BlockSyncManager::getInstance()->getStatus() != BlockSyncManager::Status::COMPLETE &&
+                       keto::software_consensus::ConsensusStateManager::getInstance()->getState()
+                       == keto::software_consensus::ConsensusStateManager::State::ACCEPTED) {
+                // perform a sync using the block sync manager as we are very out of sync and will not be able
+                // to apply blocks or write blocks until this occurs.
+                waitingBlockProducerSync();
             }
         } catch (keto::common::Exception &ex) {
             KETO_LOG_ERROR << "[BlockProducer::run] failed to run block producer: " << ex.what();
@@ -563,6 +570,14 @@ void BlockProducer::processProducerEnding(
                           << signedBlockWrapperMessageProtoHelper.getMessageHash().getHash(keto::common::StringEncoding::HEX);
             _setState(BlockProducer::State::block_producer);
         }
+    }
+}
+
+void BlockProducer::activateWaitingBlockProducer() {
+    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    if (_getState() == BlockProducer::State::block_producer_wait) {
+        KETO_LOG_INFO << "[BlockProducer::activateWaitingBlockProducer] Activate waiting block producer" ;
+        _setState(BlockProducer::State::block_producer);
     }
 }
 
@@ -781,8 +796,31 @@ void BlockProducer::sync() {
 }
 
 
+void BlockProducer::waitingBlockProducerSync() {
+    try {
+        while (this->getState() != BlockProducer::State::terminated &&
+               this->getState() == BlockProducer::State::block_producer_wait &&
+               BlockSyncManager::getInstance()->getStatus() != BlockSyncManager::COMPLETE) {
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+            keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
+            BlockService::getInstance()->sync();
+            transactionPtr->commit();
+        }
+    } catch (keto::common::Exception& ex) {
+        KETO_LOG_ERROR << "[BlockProducer::sync]Failed to sync : " << ex.what();
+        KETO_LOG_ERROR << "[BlockProducer::sync]Cause : " << boost::diagnostic_information(ex,true);
+    } catch (boost::exception& ex) {
+        KETO_LOG_ERROR << "[BlockProducer::sync]Failed sync : " << boost::diagnostic_information(ex,true);
+    } catch (std::exception& ex) {
+        KETO_LOG_ERROR << "[BlockProducer::sync]Failed sync : " << ex.what();
+    } catch (...) {
+        KETO_LOG_ERROR << "[BlockProducer::sync]Failed sync: unknown cause";
+    }
+}
 
-void BlockProducer::setProducerState(const  BlockProducer::ProducerState& state, bool notify) {
+
+
+    void BlockProducer::setProducerState(const  BlockProducer::ProducerState& state, bool notify) {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
     _setProducerState(state,notify);
 }

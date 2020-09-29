@@ -10,6 +10,7 @@
 #include "keto/block/Constants.hpp"
 #include "keto/block/BlockSyncManager.hpp"
 #include "keto/block/Exception.hpp"
+#include "keto/block/BlockProducer.hpp"
 
 #include "keto/block_db/BlockChainStore.hpp"
 #include "keto/block_db/SignedBlockBatchRequestProtoHelper.hpp"
@@ -134,6 +135,7 @@ keto::proto::MessageWrapperResponse  BlockSyncManager::processBlockSyncResponse(
         // as this node is not enabled we will not notify our
         // peers of the fact that the synchronization has been completed.
         if (this->isEnabled()) {
+            BlockProducer::getInstance()->activateWaitingBlockProducer();
             notifyPeers();
         }
 
