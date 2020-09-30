@@ -126,11 +126,15 @@ public:
             KETO_LOG_INFO << "KETOD Complete";
             keto::module::StateMonitor::fin();
         } catch (keto::common::Exception& ex) {
-            std::cerr << "[keto::common::Exception]Keto exited unexpectedly : " << ex.what() << std::endl;
+            std::cerr << "[keto::common::Exception]Avertem exited unexpectedly : " << ex.what() << std::endl;
             std::cerr << "Cause: " << boost::diagnostic_information(ex,true) << std::endl;
             KETO_LOG_ERROR << "Failed to start because : " << ex.what();
             KETO_LOG_ERROR << "Cause: " << boost::diagnostic_information(ex,true);
             ketoModule::ModuleManager::getInstance()->terminate();
+            KETO_LOG_INFO << "Wait to unload";
+            if (keto::module::StateMonitor::getInstance()) {
+                keto::module::StateMonitor::getInstance()->monitor();
+            }
             // unload to force a clean up
             if (ketoModule::ModuleManager::getInstance()) {
                 ketoModule::ModuleManager::getInstance()->unload();
@@ -139,9 +143,13 @@ public:
             keto::module::StateMonitor::fin();
             return -1;
         } catch (boost::exception& ex) {
-            std::cerr << "[boost::exception]Keto exited unexpectedly : " << boost::diagnostic_information(ex,true) << std::endl;
+            std::cerr << "[boost::exception]Avertem exited unexpectedly : " << boost::diagnostic_information(ex,true) << std::endl;
             KETO_LOG_ERROR << "Failed to start because : " << boost::diagnostic_information(ex,true);
             ketoModule::ModuleManager::getInstance()->terminate();
+            KETO_LOG_INFO << "Wait to unload";
+            if (keto::module::StateMonitor::getInstance()) {
+                keto::module::StateMonitor::getInstance()->monitor();
+            }
             // unload to force a clean up
             if (ketoModule::ModuleManager::getInstance()) {
                 ketoModule::ModuleManager::getInstance()->unload();
@@ -150,10 +158,14 @@ public:
             keto::module::StateMonitor::fin();
             return -1;
         } catch (std::exception& ex) {
-            std::cerr << "[std::exception]Keto exited unexpectedly : " << std::endl;
-            std::cerr << "Keto exited unexpectedly : " << ex.what() << std::endl;
-            KETO_LOG_ERROR << "Keto exited unexpectedly : " << ex.what();
+            std::cerr << "[std::exception]Avertem exited unexpectedly : " << std::endl;
+            std::cerr << "Avertem exited unexpectedly : " << ex.what() << std::endl;
+            KETO_LOG_ERROR << "Avertem exited unexpectedly : " << ex.what();
             ketoModule::ModuleManager::getInstance()->terminate();
+            KETO_LOG_INFO << "Wait to unload";
+            if (keto::module::StateMonitor::getInstance()) {
+                keto::module::StateMonitor::getInstance()->monitor();
+            }
             // unload to force a clean up
             if (ketoModule::ModuleManager::getInstance()) {
                 ketoModule::ModuleManager::getInstance()->unload();
@@ -162,10 +174,14 @@ public:
             keto::module::StateMonitor::fin();
             return -1;
         } catch (...) {
-            std::cerr << "[unknown]Keto exited unexpectedly : " << std::endl;
-            std::cerr << "Keto exited unexpectedly" << std::endl;
-            KETO_LOG_ERROR << "Keto exited unexpectedly.";
+            std::cerr << "[unknown]Avertem exited unexpectedly : " << std::endl;
+            std::cerr << "Avertem exited unexpectedly" << std::endl;
+            KETO_LOG_ERROR << "Avertem exited unexpectedly.";
             ketoModule::ModuleManager::getInstance()->terminate();
+            KETO_LOG_INFO << "Wait to unload";
+            if (keto::module::StateMonitor::getInstance()) {
+                keto::module::StateMonitor::getInstance()->monitor();
+            }
             // unload to force a clean up
             if (ketoModule::ModuleManager::getInstance()) {
                 ketoModule::ModuleManager::getInstance()->unload();

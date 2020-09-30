@@ -255,6 +255,7 @@ keto::event::Event ElectionManager::electRpcProcessConfirmation(const keto::even
         KETO_LOG_INFO << "[ElectionManager::electRpcProcessConfirmation]######## Node is now a producer [" <<
             Botan::hex_encode(keto::server_common::ServerInfo::getInstance()->getAccountHash(),true) << "] ########";
         KETO_LOG_INFO << "[ElectionManager::electRpcProcessConfirmation]####################################################################";
+        keto::module::StateMonitor::getInstance()->activate();
     } else if (!this->nextWindow.size() && this->state == ElectionManager::State::CONFIRMATION) {
         KETO_LOG_DEBUG << "[ElectionManager::electRpcProcessConfirmation] this node is not elected clear it.";
         BlockProducer::getInstance()->clearActiveTangles();
