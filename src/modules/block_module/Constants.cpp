@@ -55,7 +55,7 @@ const int Constants::MAX_TANGLE_ACCOUNTS = 50;
 const int Constants::MAX_TANGLES_TO_ACCOUNT = 50;
 
 // the delay values
-const int Constants::ACTIVATE_PRODUCER_DELAY    = 45;
+const int Constants::ACTIVATE_PRODUCER_DELAY    = 60;
 const int Constants::BLOCK_TIME                 = 15;
 const int Constants::BLOCK_PRDUCER_DEACTIVATE_CHECK_DELAY    = 10;
 const int Constants::BLOCK_PRODUCER_RETRY_MAX   = 4;

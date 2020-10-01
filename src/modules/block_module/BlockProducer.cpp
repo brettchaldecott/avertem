@@ -595,8 +595,19 @@ BlockProducer::State BlockProducer::checkState() {
     KETO_LOG_DEBUG << "[BlockProducer::checkState] perform the delay";
     State result = this->currentState;
     if (delay) {
-        this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(delay));
-        delay = 0;
+        std::cv_status monitorStatus = this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(delay));
+        if (this->currentState == BlockProducer::State::block_producer) {
+            delay = 0;
+            return this->currentState;
+        }
+        if (monitorStatus == std::cv_status::no_timeout && this->currentState == BlockProducer::State::block_producer_wait) {
+            return this->currentState;
+        }
+        if (monitorStatus == std::cv_status::timeout && this->currentState == BlockProducer::State::block_producer_wait) {
+            delay  = 0;
+            BlockSyncManager::getInstance()->forceResync();
+            return this->currentState;
+        }
     } else {
         this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(Constants::BLOCK_TIME));
     }
