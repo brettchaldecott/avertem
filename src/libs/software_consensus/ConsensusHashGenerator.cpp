@@ -324,6 +324,7 @@ void ConsensusHashGenerator::registerCallBacks(const CallBacks& callBacks) {
 // method to set the session key
 bool ConsensusHashGenerator::setSession(
         const keto::crypto::SecureVector& sessionKey) {
+    std::unique_lock<std::mutex> guard(classMutex);
     if (this->sessionKey == sessionKey) {
         return false;
     } else {
@@ -359,6 +360,7 @@ bool ConsensusHashGenerator::setSession(
 }
 
 keto::crypto::SecureVector ConsensusHashGenerator::generateSeed(const keto::asn1::HashHelper& previousHash) {
+    std::unique_lock<std::mutex> guard(classMutex);
     keto::key_tools::ContentDecryptor contentDecryptor(this->sessionKey,this->encodedKey,this->sessionScript);
     keto::crypto::SecureVector secureVector = contentDecryptor.getContent();
 
@@ -386,6 +388,7 @@ keto::crypto::SecureVector ConsensusHashGenerator::generateSeed(const keto::asn1
 
 
 keto::crypto::SecureVector ConsensusHashGenerator::generateHash(const keto::crypto::SecureVector& seed) {
+    std::unique_lock<std::mutex> guard(classMutex);
     keto::key_tools::ContentDecryptor contentDecryptor(this->sessionKey,this->encodedKey,this->sessionScript);
     keto::crypto::SecureVector secureVector = contentDecryptor.getContent();
 
@@ -422,6 +425,7 @@ keto::crypto::SecureVector ConsensusHashGenerator::getCurrentSoftwareHash() {
 }
 
 keto::crypto::SecureVector ConsensusHashGenerator::generateSessionHash(const keto::crypto::SecureVector& name) {
+    std::unique_lock<std::mutex> guard(classMutex);
     keto::key_tools::ContentDecryptor contentDecryptor(this->sessionKey,this->encodedKey,this->sessionShortScript);
     keto::crypto::SecureVector secureVector = contentDecryptor.getContent();
 

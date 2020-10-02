@@ -17,11 +17,13 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <mutex>
 
 #include "keto/obfuscate/MetaString.hpp"
 
 #include "keto/asn1/HashHelper.hpp"
 #include "keto/software_consensus/ConsensusHashScriptInfo.hpp"
+
 
 namespace keto {
 namespace software_consensus {
@@ -73,6 +75,7 @@ public:
 
     
 private:
+    std::mutex classMutex;
     ConsensusHashScriptInfoVector consensusVector;
     keto::crypto::SecureVector sessionKey;
     keto::crypto::SecureVector encodedKey;
