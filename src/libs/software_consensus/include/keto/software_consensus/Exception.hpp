@@ -29,6 +29,7 @@ KETO_DECLARE_DERIVED_EXCEPTION (SoftwareConsensusException, FailedParseConsensus
 KETO_DECLARE_DERIVED_EXCEPTION (SoftwareConsensusException, NoSoftwareHashConsensusException , "Failed to parse the consensus string object.");
 KETO_DECLARE_DERIVED_EXCEPTION (SoftwareConsensusException, FailedToAddSystemHashException , "Failed to parse the consensus string object.");
 KETO_DECLARE_DERIVED_EXCEPTION (SoftwareConsensusException, InvalidSessionException , "The session is invalid, could not setup.");
+KETO_DECLARE_DERIVED_EXCEPTION (SoftwareConsensusException, ConsenusScriptExecutionException , "The consensus script execution failed.");
 
 }
 }

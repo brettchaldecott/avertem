@@ -9,6 +9,7 @@
     <mapping directory="$PROJECT_DIR$/src/contracts/keto_standard_typscript_contracts/lib/assemblyscript" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/src/contracts/keto_standard_typscript_contracts/lib/typescript_contract_sdk" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/src/web/avertem-js-utils" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/web/avertem-openid" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/src/web/avertem-restapi" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/src/web/keto-blockchain-explorer" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/src/web/keto-middlware-proxy" vcs="Git" />

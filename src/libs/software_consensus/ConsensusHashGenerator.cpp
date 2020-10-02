@@ -367,7 +367,21 @@ keto::crypto::SecureVector ConsensusHashGenerator::generateSeed(const keto::asn1
     ChaiScriptPtr chaiScriptPtr = scope.getChaiScriptPtr();
     
     std::string code(secureVector.begin(),secureVector.end());
-    return keto::crypto::SecureVectorUtils().copyStringToSecure(chaiScriptPtr->eval<std::string>(code));
+    try {
+        return keto::crypto::SecureVectorUtils().copyStringToSecure(chaiScriptPtr->eval<std::string>(code));
+    } catch (keto::common::Exception& ex) {
+        KETO_LOG_ERROR << "[generateSeed] Failed to execute code [" << code << "] Cause: " << boost::diagnostic_information(ex,true);
+        throw;
+    } catch (boost::exception& ex) {
+        KETO_LOG_ERROR << "[generateSeed] Failed to execute code [" << code << "] Cause: " << boost::diagnostic_information(ex,true);
+        throw;
+    } catch (std::exception& ex) {
+        KETO_LOG_ERROR << "[generateSeed] Failed to execute code [" << code << "] Cause: " << ex.what();
+        throw;
+    } catch (...) {
+        KETO_LOG_ERROR << "[generateSeed] Failed to execute code [" << code << "]";
+        throw;
+    }
 }
 
 
@@ -380,11 +394,25 @@ keto::crypto::SecureVector ConsensusHashGenerator::generateHash(const keto::cryp
     ChaiScriptPtr chaiScriptPtr = scope.getChaiScriptPtr();
     
     std::string code(secureVector.begin(),secureVector.end());
-    if (currentSoftwareHash.size()) {
-        return keto::crypto::SecureVectorUtils().copyStringToSecure(chaiScriptPtr->eval<std::string>(code));
-    } else {
-        return this->currentSoftwareHash = keto::crypto::SecureVectorUtils().copyStringToSecure(
-                chaiScriptPtr->eval<std::string>(code));
+    try {
+        if (currentSoftwareHash.size()) {
+            return keto::crypto::SecureVectorUtils().copyStringToSecure(chaiScriptPtr->eval<std::string>(code));
+        } else {
+            return this->currentSoftwareHash = keto::crypto::SecureVectorUtils().copyStringToSecure(
+                    chaiScriptPtr->eval<std::string>(code));
+        }
+    } catch (keto::common::Exception& ex) {
+        KETO_LOG_ERROR << "[generateHash] Failed to execute code [" << code << "] Cause: " << boost::diagnostic_information(ex,true);
+        throw;
+    } catch (boost::exception& ex) {
+        KETO_LOG_ERROR << "[generateHash] Failed to execute code [" << code << "] Cause: " << boost::diagnostic_information(ex,true);
+        throw;
+    } catch (std::exception& ex) {
+        KETO_LOG_ERROR << "[generateHash] Failed to execute code [" << code << "] Cause: " << ex.what();
+        throw;
+    } catch (...) {
+        KETO_LOG_ERROR << "[generateHash] Failed to execute code [" << code << "]";
+        throw;
     }
 }
 
@@ -402,7 +430,21 @@ keto::crypto::SecureVector ConsensusHashGenerator::generateSessionHash(const ket
     ChaiScriptPtr chaiScriptPtr = scope.getChaiScriptPtr();
 
     std::string code(secureVector.begin(),secureVector.end());
-    return keto::crypto::SecureVectorUtils().copyStringToSecure(chaiScriptPtr->eval<std::string>(code));
+    try {
+        return keto::crypto::SecureVectorUtils().copyStringToSecure(chaiScriptPtr->eval<std::string>(code));
+    } catch (keto::common::Exception& ex) {
+        KETO_LOG_ERROR << "[generateHash] Failed to execute code [" << code << "] Cause: " << boost::diagnostic_information(ex,true);
+        throw;
+    } catch (boost::exception& ex) {
+        KETO_LOG_ERROR << "[generateHash] Failed to execute code [" << code << "] Cause: " << boost::diagnostic_information(ex,true);
+        throw;
+    } catch (std::exception& ex) {
+        KETO_LOG_ERROR << "[generateHash] Failed to execute code [" << code << "] Cause: " << ex.what();
+        throw;
+    } catch (...) {
+        KETO_LOG_ERROR << "[generateHash] Failed to execute code [" << code << "]";
+        throw;
+    }
 }
 
 std::vector<uint8_t> ConsensusHashGenerator::encrypt(const keto::crypto::SecureVector& value) {
