@@ -1970,20 +1970,31 @@ keto::event::Event RpcServer::requestBlockSync(const keto::event::Event& event) 
     keto::proto::SignedBlockBatchRequest request = keto::server_common::fromEvent<keto::proto::SignedBlockBatchRequest>(event);
     std::vector<SessionBasePtr> sessionBasePtrVector = AccountSessionCache::getInstance()->getFirstActive();
     if (sessionBasePtrVector.size()) {
-        for (SessionBasePtr sessionBasePtr : sessionBasePtrVector) {
-            try {
-                sessionBasePtr->requestBlockSync(request);
-            } catch (keto::common::Exception &ex) {
-                KETO_LOG_ERROR << "[RpcServer::requestBlockSync] Failed to request a block sync : " << ex.what();
-                KETO_LOG_ERROR << "[RpcServer::requestBlockSync] Cause : " << boost::diagnostic_information(ex, true);
-            } catch (boost::exception &ex) {
-                KETO_LOG_ERROR << "[RpcServer::requestBlockSync] Failed to request a block sync : "
-                               << boost::diagnostic_information(ex, true);
-            } catch (std::exception &ex) {
-                KETO_LOG_ERROR << "[RpcServer::requestBlockSync] Failed to request a block sync : " << ex.what();
-            } catch (...) {
-                KETO_LOG_ERROR << "[RpcServer::requestBlockSync] Failed to request a block sync : unknown cause";
-            }
+        // select a random client if the session base list is greater then 1
+        int pos = 0;
+        if (sessionBasePtrVector.size()>1) {
+            std::default_random_engine stdGenerator;
+            stdGenerator.seed(std::chrono::system_clock::now().time_since_epoch().count());
+            std::uniform_int_distribution<int> distribution(0, sessionBasePtrVector.size() - 1);
+            // seed
+            distribution(stdGenerator);
+
+            // retrieve
+            pos = distribution(stdGenerator);
+        }
+        // request the block sync from up stream
+        try {
+            sessionBasePtrVector[pos]->requestBlockSync(request);
+        } catch (keto::common::Exception &ex) {
+            KETO_LOG_ERROR << "[RpcServer::requestBlockSync] Failed to request a block sync : " << ex.what();
+            KETO_LOG_ERROR << "[RpcServer::requestBlockSync] Cause : " << boost::diagnostic_information(ex, true);
+        } catch (boost::exception &ex) {
+            KETO_LOG_ERROR << "[RpcServer::requestBlockSync] Failed to request a block sync : "
+                           << boost::diagnostic_information(ex, true);
+        } catch (std::exception &ex) {
+            KETO_LOG_ERROR << "[RpcServer::requestBlockSync] Failed to request a block sync : " << ex.what();
+        } catch (...) {
+            KETO_LOG_ERROR << "[RpcServer::requestBlockSync] Failed to request a block sync : unknown cause";
         }
     } else {
         // this will force a call to the RPC server to sync

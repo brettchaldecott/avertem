@@ -611,21 +611,23 @@ void RpcSession::closeResponse(const std::string& command, const std::string& me
 }
 
 std::string RpcSession::helloConsensusResponse(const std::string& command, const std::string& sessionKey, const std::string& initHash) {
+    std::unique_lock<std::recursive_mutex> uniqueLock(keto::software_consensus::ConsensusSessionManager::getInstance()->getMutex());
     keto::asn1::HashHelper initHashHelper(initHash,keto::common::StringEncoding::HEX);
     keto::crypto::SecureVector initVector = Botan::hex_decode_locked(sessionKey,true);
     // guarantee order of consensus handling to prevent sessions from getting incorrectly setup
-    std::unique_lock<std::recursive_mutex> uniqueLock(keto::software_consensus::ConsensusSessionManager::getInstance()->getMutex());
     keto::software_consensus::ConsensusSessionManager::getInstance()->updateSessionKey(initVector);
     return serverRequest(keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS,buildConsensus(initHashHelper));
 }
 
 std::string RpcSession::consensusSessionResponse(const std::string& command, const std::string& sessionKey) {
+    std::unique_lock<std::recursive_mutex> uniqueLock(keto::software_consensus::ConsensusSessionManager::getInstance()->getMutex());
     keto::crypto::SecureVector initVector = Botan::hex_decode_locked(sessionKey,true);
     keto::software_consensus::ConsensusSessionManager::getInstance()->updateSessionKey(initVector);
     return serverRequest(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS_SESSION,"OK");
 }
 
 std::string RpcSession::consensusResponse(const std::string& command, const std::string& message) {
+    std::unique_lock<std::recursive_mutex> uniqueLock(keto::software_consensus::ConsensusSessionManager::getInstance()->getMutex());
     keto::asn1::HashHelper hashHelper(message,keto::common::StringEncoding::HEX);
     return serverRequest(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS,buildConsensus(hashHelper));
 }
@@ -758,7 +760,7 @@ std::string RpcSession::handleBlockSyncResponse(const std::string& command, cons
 }
 
 std::string RpcSession::handleProtocolCheckRequest(const std::string& command, const std::string& message) {
-
+    std::unique_lock<std::recursive_mutex> uniqueLock(keto::software_consensus::ConsensusSessionManager::getInstance()->getMutex());
     // notify the accepted inorder to set the network keys
     keto::software_consensus::ConsensusSessionManager::getInstance()->resetProtocolCheck();
 

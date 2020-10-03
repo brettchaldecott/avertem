@@ -516,15 +516,16 @@ std::vector<keto::asn1::HashHelper> BlockProducer::getActiveTangles() {
 
 void BlockProducer::clearActiveTangles() {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
-    BlockProducer::State state = _getState();
-    if (state == BlockProducer::State::block_producer) {
+    if (_getState() == BlockProducer::State::block_producer) {
         _setProducerState(BlockProducer::ProducerState::ending);
         while(_getProducerState() == BlockProducer::ProducerState::ending) {
             this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(
                     Constants::BLOCK_PRDUCER_DEACTIVATE_CHECK_DELAY));
         }
         _setProducerState(BlockProducer::ProducerState::idle);
-        _setState(BlockProducer::State::sync_blocks);
+        if (_getState() == BlockProducer::State::block_producer) {
+            _setState(BlockProducer::State::sync_blocks);
+        }
     }
     // clear the active tangles after the given delay
     keto::block_db::BlockChainStore::getInstance()->clearActiveTangles();
