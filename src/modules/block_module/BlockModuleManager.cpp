@@ -86,13 +86,7 @@ void BlockModuleManager::postStart() {
 
 void BlockModuleManager::preStop() {
     KETO_LOG_INFO << "[BlockModuleManager::preStop] Block manager post start has been called";
-    while(BlockProducer::getInstance()->getState() == BlockProducer::State::block_producer &&
-        BlockProducer::getInstance()->isSafe()) {
-        KETO_LOG_INFO << "[BlockModuleManager::preStop] Block manager is current a producer and cannot be restarted until this has been completed";
-        KETO_LOG_INFO << "[BlockModuleManager::preStop] Will re-try in : " << Constants::BLOCK_PRODUCER_SAFE_MODE_DELAY;
-        std::this_thread::sleep_for(std::chrono::seconds(Constants::BLOCK_PRODUCER_SAFE_MODE_DELAY));
-    }
-
+    // removed the logic to check the state pre shut down as this is now managed via the over all state management.
     // terminate the block producer
     KETO_LOG_INFO << "[BlockModuleManager::preStop] call terminate";
     BlockProducer::getInstance()->terminate();

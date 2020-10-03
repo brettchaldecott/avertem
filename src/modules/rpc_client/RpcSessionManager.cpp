@@ -290,6 +290,18 @@ RpcSessionPtr RpcSessionManager::getActivePeer() {
     return RpcSessionPtr();
 }
 
+std::vector<RpcSessionPtr> RpcSessionManager::getActivePeers() {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+    std::vector<RpcSessionPtr> result;
+    for (std::map<std::string,std::shared_ptr<keto::rpc_client::RpcSession>>::iterator iter =
+            this->accountSessionMap.begin(); iter != this->accountSessionMap.end(); iter++) {
+        if (iter->second->isActive()) {
+            result.push_back(iter->second);
+        }
+    }
+    return result;
+}
+
 bool RpcSessionManager::registeredAccounts() {
     std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     return !this->accountSessionMap.empty();
@@ -414,19 +426,26 @@ keto::event::Event RpcSessionManager::activateNetworkState(const keto::event::Ev
 keto::event::Event RpcSessionManager::requestBlockSync(const keto::event::Event& event) {
     KETO_LOG_INFO << "[RpcSessionManager::requestBlockSync] Making requet to the first active peer";
     keto::proto::SignedBlockBatchRequest request = keto::server_common::fromEvent<keto::proto::SignedBlockBatchRequest>(event);
-    RpcSessionPtr rcpSessionPtr = this->getActivePeer();
-    if (rcpSessionPtr) {
-        try {
-            rcpSessionPtr->requestBlockSync(request);
-        } catch (keto::common::Exception& ex) {
-            KETO_LOG_ERROR << "[RpcSessionManager::requestBlockSync] Failed to request a block sync : " << ex.what();
-            KETO_LOG_ERROR << "[RpcSessionManager::requestBlockSync] Cause : " << boost::diagnostic_information(ex,true);
-        } catch (boost::exception& ex) {
-            KETO_LOG_ERROR << "[RpcSessionManager::requestBlockSync] Failed to request a block sync : " << boost::diagnostic_information(ex,true);
-        } catch (std::exception& ex) {
-            KETO_LOG_ERROR << "[RpcSessionManager::requestBlockSync] Failed to request a block sync : " << ex.what();
-        } catch (...) {
-            KETO_LOG_ERROR << "[RpcSessionManager::requestBlockSync] Failed to request a block sync : unknown cause";
+    std::vector<RpcSessionPtr> rcpSessionPtrs = this->getActivePeers();
+    if (rcpSessionPtrs.size()) {
+        for (RpcSessionPtr rcpSessionPtr: rcpSessionPtrs) {
+            try {
+                rcpSessionPtr->requestBlockSync(request);
+            } catch (keto::common::Exception &ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::requestBlockSync] Failed to request a block sync : "
+                               << ex.what();
+                KETO_LOG_ERROR << "[RpcSessionManager::requestBlockSync] Cause : "
+                               << boost::diagnostic_information(ex, true);
+            } catch (boost::exception &ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::requestBlockSync] Failed to request a block sync : "
+                               << boost::diagnostic_information(ex, true);
+            } catch (std::exception &ex) {
+                KETO_LOG_ERROR << "[RpcSessionManager::requestBlockSync] Failed to request a block sync : "
+                               << ex.what();
+            } catch (...) {
+                KETO_LOG_ERROR
+                    << "[RpcSessionManager::requestBlockSync] Failed to request a block sync : unknown cause";
+            }
         }
     } else if (!this->registeredAccounts()) {
         // this will force a call to the RPC server to sync

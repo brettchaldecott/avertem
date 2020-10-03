@@ -524,6 +524,7 @@ void BlockProducer::clearActiveTangles() {
                     Constants::BLOCK_PRDUCER_DEACTIVATE_CHECK_DELAY));
         }
         _setProducerState(BlockProducer::ProducerState::idle);
+        _setState(BlockProducer::State::sync_blocks);
     }
     // clear the active tangles after the given delay
     keto::block_db::BlockChainStore::getInstance()->clearActiveTangles();
