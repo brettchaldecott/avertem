@@ -436,7 +436,10 @@ keto::event::Event RpcSessionManager::activateNetworkState(const keto::event::Ev
 keto::event::Event RpcSessionManager::requestBlockSync(const keto::event::Event& event) {
     KETO_LOG_INFO << "[RpcSessionManager::requestBlockSync] Making requet to the first active peer";
     keto::proto::SignedBlockBatchRequest request = keto::server_common::fromEvent<keto::proto::SignedBlockBatchRequest>(event);
-    std::vector<RpcSessionPtr> rcpSessionPtrs = this->getAccountPeers();
+    std::vector<RpcSessionPtr> rcpSessionPtrs = this->getActivePeers();
+    if (rcpSessionPtrs.size() != 1) {
+        rcpSessionPtrs = this->getAccountPeers();
+    }
     if (rcpSessionPtrs.size()) {
         // select a random rpc service if there are more than one upstream providers
         int pos = 0;

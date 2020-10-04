@@ -249,7 +249,7 @@ public:
         return keys;
     }
 
-    std::vector<SessionBasePtr> getFirstActive() {
+    std::vector<SessionBasePtr> getActiveSessions() {
         std::vector<SessionBasePtr> result;
         for(std::map<std::string,SessionBasePtr>::iterator it = this->accountSessionMap.begin();
             it != this->accountSessionMap.end(); ++it) {
@@ -257,6 +257,15 @@ public:
             if (_sessionPtr->isActive()) {
                 result.push_back(_sessionPtr);
             }
+        }
+        return result;
+    }
+
+    std::vector<SessionBasePtr> getSessionPtrs() {
+        std::vector<SessionBasePtr> result;
+        for(std::map<std::string,SessionBasePtr>::iterator it = this->accountSessionMap.begin();
+            it != this->accountSessionMap.end(); ++it) {
+            result.push_back(it->second);
         }
         return result;
     }
@@ -1968,7 +1977,10 @@ keto::event::Event RpcServer::activateNetworkState(const keto::event::Event& eve
 
 keto::event::Event RpcServer::requestBlockSync(const keto::event::Event& event) {
     keto::proto::SignedBlockBatchRequest request = keto::server_common::fromEvent<keto::proto::SignedBlockBatchRequest>(event);
-    std::vector<SessionBasePtr> sessionBasePtrVector = AccountSessionCache::getInstance()->getFirstActive();
+    std::vector<SessionBasePtr> sessionBasePtrVector = AccountSessionCache::getInstance()->getActiveSessions();
+    if (sessionBasePtrVector.size() == 0) {
+        sessionBasePtrVector = AccountSessionCache::getInstance()->getSessionPtrs();
+    }
     if (sessionBasePtrVector.size()) {
         // select a random client if the session base list is greater then 1
         int pos = 0;
