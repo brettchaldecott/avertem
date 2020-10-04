@@ -43,6 +43,7 @@ private:
     std::mutex classMutex;
     std::condition_variable stateCondition;
     bool active;
+    std::chrono::system_clock::time_point deactivateTime;
 
 };
 

@@ -15,7 +15,7 @@ std::string StateMonitor::getSourceVersion() {
     return OBFUSCATED("$Id$");
 }
 
-StateMonitor::StateMonitor() : active(false) {
+StateMonitor::StateMonitor() : active(false), deactivateTime(std::chrono::system_clock::now()) {
 }
 
 StateMonitor::~StateMonitor() {
@@ -39,8 +39,9 @@ void StateMonitor::fin() {
 
 void StateMonitor::monitor() {
     std::unique_lock<std::mutex> uniqueLock(classMutex);
-    while(active) {
-        this->stateCondition.wait_for(uniqueLock,std::chrono::milliseconds(60 * 1000));
+    while(active ||
+            (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - this->deactivateTime).count() < 120)) {
+        this->stateCondition.wait_for(uniqueLock,std::chrono::milliseconds(30 * 1000));
     }
 }
 
@@ -52,6 +53,7 @@ void StateMonitor::activate() {
 void StateMonitor::deactivate() {
     std::unique_lock<std::mutex> uniqueLock(classMutex);
     this->active = false;
+    this->deactivateTime = std::chrono::system_clock::now();
     this->stateCondition.notify_all();
 }
 
