@@ -130,6 +130,7 @@ private:
     RpcSessionPtr getDefaultPeer();
     RpcSessionPtr getActivePeer();
     std::vector<RpcSessionPtr> getActivePeers();
+    std::vector<RpcSessionPtr> getAccountPeers();
     bool registeredAccounts();
 
     void waitForSessionEnd();
