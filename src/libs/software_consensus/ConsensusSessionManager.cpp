@@ -144,14 +144,18 @@ void ConsensusSessionManager::setSession(keto::proto::ConsensusMessage& msg) {
             } catch (keto::common::Exception& ex) {
                 KETO_LOG_ERROR << "[setSession]Failed to process the event [" << event  << "] : " << ex.what();
                 KETO_LOG_ERROR << "[setSession]Cause: " << boost::diagnostic_information(ex,true);
+                throw;
             } catch (boost::exception& ex) {
                 KETO_LOG_ERROR << "[setSession]Failed to process the event [" << event << "]";
                 KETO_LOG_ERROR << "[setSession]Cause: " << boost::diagnostic_information(ex,true);
+                throw;
             } catch (std::exception& ex) {
                 KETO_LOG_ERROR << "[setSession]Failed to process the event [" << event << "]";
                 KETO_LOG_ERROR << "[setSession]The cause is : " << ex.what();
+                throw;
             } catch (...) {
                 KETO_LOG_ERROR << "[setSession]Failed to process the event [" << event << "]";
+                throw;
             }
         }
 
