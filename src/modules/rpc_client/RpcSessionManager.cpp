@@ -128,7 +128,7 @@ void RpcSessionManager::reconnect(RpcPeer& rpcPeer) {
     std::this_thread::sleep_for(std::chrono::milliseconds(Constants::SESSION::RETRY_COUNT_DELAY));
     KETO_LOG_INFO << "Attempt to reconnect to : " << rpcPeer.getPeer();
     this->sessionMap[(std::string)rpcPeer]->run();
-    KETO_LOG_INFO << "After the reconnect";
+    KETO_LOG_INFO << "After the reconnect : " << rpcPeer.getPeer();
 }
 
 

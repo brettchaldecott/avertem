@@ -391,11 +391,13 @@ RpcSession::on_read(
     if (this->isClosed()) {
         return;
     } else if (ec && !ws_.is_open()) {
+        readQueuePtr->deactivate();
         this->setClosed(true);
         RpcSessionManager::getInstance()->removeSession(this->rpcPeer, this->accountHash);
         RpcSessionManager::getInstance()->reconnect(rpcPeer);
         return;
     } else if (ec) {
+        readQueuePtr->deactivate();
         closeResponse(keto::server_common::Constants::RPC_COMMANDS::CLOSE,keto::server_common::Constants::RPC_COMMANDS::CLOSE);
         RpcSessionManager::getInstance()->reconnect(rpcPeer);
         return fail(ec, "read");
@@ -606,8 +608,8 @@ std::string RpcSession::buildMessage(const std::string& command, const std::vect
 void RpcSession::closeResponse(const std::string& command, const std::string& message) {
 
     KETO_LOG_INFO << "Server closing connection because [" << message << "]";
-    this->setClosed(true);
     send(keto::server_common::Constants::RPC_COMMANDS::CLOSE);
+    this->setClosed(true);
     RpcSessionManager::getInstance()->removeSession(this->rpcPeer, this->accountHash);
 }
 
