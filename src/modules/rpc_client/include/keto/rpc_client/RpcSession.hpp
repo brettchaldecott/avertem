@@ -234,6 +234,7 @@ private:
     boost::beast::flat_buffer buffer_;
     ReadQueuePtr readQueuePtr;
     std::deque<std::shared_ptr<std::string>> queue_;
+    int retryCount;
 
     //bool peered;
     RpcPeer rpcPeer;
