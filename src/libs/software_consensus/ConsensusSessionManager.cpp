@@ -98,14 +98,13 @@ void ConsensusSessionManager::updateSessionKey(const keto::crypto::SecureVector&
     } else {
         activeSessionCount=1;
     }
-    this->sessionHash = sessionHash;
     this->accepted = false;
     this->activeSession = false;
     for (std::string event : Constants::CONSENSUS_SESSION_ORDER) {
         try {
             keto::software_consensus::ModuleSessionMessageHelper moduleSessionMessageHelper;
             moduleSessionMessageHelper.setSecret(sessionKey);
-            keto::proto::ModuleSessionMessage moduleSessionMessage = 
+            keto::proto::ModuleSessionMessage moduleSessionMessage =
                     moduleSessionMessageHelper.getModuleSessionMessage();
             keto::server_common::triggerEvent(
                     keto::server_common::toEvent<keto::proto::ModuleSessionMessage>(
@@ -113,20 +112,26 @@ void ConsensusSessionManager::updateSessionKey(const keto::crypto::SecureVector&
         } catch (keto::common::Exception& ex) {
             KETO_LOG_ERROR << "[updateSessionKey]Failed to process the event [" << event  << "] : " << ex.what();
             KETO_LOG_ERROR << "[updateSessionKey]Cause: " << boost::diagnostic_information(ex,true);
+            activeSessionCount=0;
             BOOST_THROW_EXCEPTION(keto::software_consensus::InvalidSessionException());
         } catch (boost::exception& ex) {
             KETO_LOG_ERROR << "[updateSessionKey]Failed to process the event [" << event << "]";
             KETO_LOG_ERROR << "[updateSessionKey]Cause: " << boost::diagnostic_information(ex,true);
+            activeSessionCount=0;
             BOOST_THROW_EXCEPTION(keto::software_consensus::InvalidSessionException());
         } catch (std::exception& ex) {
             KETO_LOG_ERROR << "[updateSessionKey]Failed to process the event [" << event << "]";
             KETO_LOG_ERROR << "[updateSessionKey]The cause is : " << ex.what();
+            activeSessionCount=0;
             BOOST_THROW_EXCEPTION(keto::software_consensus::InvalidSessionException());
         } catch (...) {
             KETO_LOG_ERROR << "[updateSessionKey]Failed to process the event [" << event << "]";
+            activeSessionCount=0;
             BOOST_THROW_EXCEPTION(keto::software_consensus::InvalidSessionException());
         }
     }
+    // set the current session hash correctly after successfully updating the session key
+    this->sessionHash = sessionHash;
 }
 
 
