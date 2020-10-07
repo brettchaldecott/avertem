@@ -617,12 +617,13 @@ bool BlockChain::processBlockSyncResponse(const keto::proto::SignedBlockBatch& s
     //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     bool complete = true;
     KETO_LOG_INFO << "[BlockChain::processBlockSyncResponse] process the block : " << signedBlockBatch.blocks_size();
+    // check the number of blocks does not exceed max if it does than we will have to re-request.
+    if (signedBlockBatch.blocks_size() >= Constants::MAX_BLOCK_REQUEST) {
+        complete = false;
+    }
     for (int index = 0; index < signedBlockBatch.blocks_size(); index++) {
         const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage = signedBlockBatch.blocks(index);
-        bool write = this->writeBlock(signedBlockWrapperMessage,callback);
-        if (complete) {
-            complete = !write;
-        }
+        this->writeBlock(signedBlockWrapperMessage,callback);
     }
     //KETO_LOG_DEBUG << "[BlockChain::processBlockSyncResponse] process the tangle block : " << signedBlockBatch.tangle_batches_size();
     for (int index = 0; index < signedBlockBatch.tangle_batches_size(); index++) {
