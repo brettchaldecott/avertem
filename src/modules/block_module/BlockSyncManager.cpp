@@ -115,8 +115,12 @@ keto::proto::SignedBlockBatchMessage  BlockSyncManager::requestBlocks(const keto
         tangledHashes.push_back(signedBlockBatchRequestProtoHelper.getHash(index));
     }
 
-
-    return keto::block_db::BlockChainStore::getInstance()->requestBlocks(tangledHashes);
+    try {
+        return keto::block_db::BlockChainStore::getInstance()->requestBlocks(tangledHashes);
+    } catch (...) {
+        this->forceResync();
+        throw;
+    }
 }
 
 keto::proto::MessageWrapperResponse  BlockSyncManager::processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage) {
