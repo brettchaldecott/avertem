@@ -37,7 +37,7 @@ const std::vector<std::string> Constants::DB_LIST =
     {Constants::BLOCK_META_INDEX, Constants::BLOCKS_INDEX, Constants::TRANSACTIONS_INDEX, Constants::ACCOUNTS_INDEX,
     Constants::CHILD_INDEX,Constants::NESTED_INDEX};
 
-const int Constants::MAX_BLOCK_REQUEST = 500;
+const int Constants::MAX_BLOCK_REQUEST = 100;
 
 // cache size
 const int Constants::MAX_BLOCK_CACHE_SIZE = 100;

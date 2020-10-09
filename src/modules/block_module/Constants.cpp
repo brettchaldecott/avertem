@@ -43,11 +43,11 @@ const long Constants::BLOCK_PRODUCER_SAFE_MODE_DELAY
 
 const char* Constants::NETWORK_FEE_RATIO = "network_fee_ratio";
 const long Constants::MAX_RUN_TIME      = 60 * 10;
-const long Constants::SYNC_RETRY_DELAY_MIN  = 60 * 9;
+const long Constants::SYNC_RETRY_DELAY_MIN  = 60;
 
 
 
-const long Constants::SYNC_EXPIRY_TIME  = 7;
+const long Constants::SYNC_EXPIRY_TIME  = 100;
 
 
 // tangle configuration

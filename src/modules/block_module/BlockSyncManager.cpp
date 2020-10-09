@@ -162,7 +162,7 @@ BlockSyncManager::processRequestBlockSyncRetry() {
     //KETO_LOG_DEBUG << "[BlockSyncManager::processRequestBlockSyncRetry] trigger the retry by resetting the start time";
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
     // reschedule to run in a minutes time
-    this->startTime = time(0) - Constants::SYNC_RETRY_DELAY_MIN;
+    this->startTime = time(0) + Constants::SYNC_RETRY_DELAY_MIN;
 }
 
 void
