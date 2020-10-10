@@ -1025,7 +1025,7 @@ std::string RpcSession::handleRetryResponse(const std::string& command) {
         // this indicates the up stream server is currently out of sync and cannot be relied upon we therefore
         // need to use an alternative and mark this one as inactive until it is activated.
         KETO_LOG_INFO << "[RpcSession::handleRetryResponse][" << this->getPeer().getHost() << "] Deactive this session and re-schedule the retry";
-
+        this->deactivate();
         // reschedule the block sync retry
         keto::proto::MessageWrapper messageWrapper;
         keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
@@ -1239,10 +1239,12 @@ void RpcSession::setClosed(bool closed) {
 }
 
 void RpcSession::deactivate() {
+    std::unique_lock<std::recursive_mutex> uniqueLock(classMutex);
     this->active = false;
 }
 
 void RpcSession::setActive(bool active) {
+    std::unique_lock<std::recursive_mutex> uniqueLock(classMutex);
     this->active = active;
 }
 
