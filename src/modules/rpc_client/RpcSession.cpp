@@ -518,19 +518,19 @@ void RpcSession::processQueueEntry(const ReadQueueEntryPtr& readQueueEntryPtr) {
     } catch (keto::common::Exception &ex) {
         KETO_LOG_ERROR << "[RPCSession::processQueueEntry][" << this->sessionNumber << "]" << command
                        << " : Failed to process because : " << boost::diagnostic_information_what(ex, true);
-        message = handleRetryResponse(command);
+        message = handleInternalException(command);
     } catch (boost::exception &ex) {
         KETO_LOG_ERROR << "[RPCSession::processQueueEntry][" << this->sessionNumber << "]" << command
                        << " : Failed to process because : " << boost::diagnostic_information_what(ex, true);
-        message = handleRetryResponse(command);
+        message = handleInternalException(command);
     } catch (std::exception &ex) {
         KETO_LOG_ERROR << "[RPCSession::processQueueEntry][" << this->sessionNumber << "]" << command
                        << " : Failed process the request : " << ex.what();
-        message = handleRetryResponse(command);
+        message = handleInternalException(command);
     } catch (...) {
         KETO_LOG_ERROR << "[RPCSession::processQueueEntry][" << this->sessionNumber << "]" << command
                        << " : Failed process the request" << std::endl;
-        message = handleRetryResponse(command);
+        message = handleInternalException(command);
     }
 
     if (!message.empty() && !this->isClosed()) {
@@ -973,34 +973,74 @@ std::string RpcSession::handleRequestNetworkFeesResponse(const std::string& comm
                          keto::server_common::Constants::RPC_COMMANDS::CLIENT_NETWORK_COMPLETE);
 }
 
-std::string RpcSession::handleRetryResponse(const std::string& command) {
+
+std::string RpcSession::handleInternalException(const std::string& command) {
 
     std::string result;
     KETO_LOG_INFO << "[RpcSession::handleRetryResponse] Processing failed for the command : " << command;
     if (command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_SESSION_KEYS ||
-               command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_MASTER_NETWORK_KEYS  ||
-               command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_KEYS ||
-               command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_FEES) {
+        command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_MASTER_NETWORK_KEYS  ||
+        command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_KEYS) {
 
-        if (++this->retryCount > 30) {
-            KETO_LOG_INFO << "[RpcSession::handleRetryResponse][" << this->getPeer().getHost() << "] Attempt to reconnect";
-            if (!RpcSessionManager::getInstance()->isTerminated()) {
-                closeResponse(command,command);
-                RpcSessionManager::getInstance()->reconnect(rpcPeer);
-            }
-            result = keto::server_common::Constants::RPC_COMMANDS::CLOSED;
-        } else {
-            // attempt to make a new request for the failed response processing.
-            std::this_thread::sleep_for(std::chrono::milliseconds(Constants::SESSION::RETRY_COUNT_DELAY));
+        // reset the session as it is incorrect internally and needs to be restarted with a reconnect
+        keto::software_consensus::ConsensusSessionManager::getInstance()->resetSessionKey();
 
-            std::string request = command;
-            request.replace(0, std::string("RESPONSE").size(), "REQUEST");
-
-            KETO_LOG_INFO << "[RpcSession::handleRetryResponse][" << this->getPeer().getHost() << "] Send the retry : "
-                          << request;
-            result = serverRequest(request, request);
+        KETO_LOG_INFO << "[RpcSession::handleRetryResponse][" << this->getPeer().getHost() << "] Attempt to reconnect";
+        if (!RpcSessionManager::getInstance()->isTerminated()) {
+            closeResponse(command,command);
+            RpcSessionManager::getInstance()->reconnect(rpcPeer);
         }
-    } else if (command == keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS ||
+        result = keto::server_common::Constants::RPC_COMMANDS::CLOSED;
+
+    } else if (command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_FEES) {
+
+        // attempt to make a new request for the failed response processing.
+        std::this_thread::sleep_for(std::chrono::milliseconds(Constants::SESSION::RETRY_COUNT_DELAY));
+
+        std::string request = command;
+        request.replace(0, std::string("RESPONSE").size(), "REQUEST");
+
+        KETO_LOG_INFO << "[RpcSession::handleRetryResponse][" << this->getPeer().getHost() << "] Send the retry : "
+                      << request;
+        result = serverRequest(request, request);
+    } else if (command == keto::server_common::Constants::RPC_COMMANDS::HELLO ||
+               command == keto::server_common::Constants::RPC_COMMANDS::ACCEPTED ||
+               command == keto::server_common::Constants::RPC_COMMANDS::GO_AWAY ||
+               command == keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_ACCEPT ||
+               command == keto::server_common::Constants::RPC_COMMANDS::CONSENSUS ||
+               command == keto::server_common::Constants::RPC_COMMANDS::CONSENSUS_SESSION ||
+               command == keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS ||
+               command == keto::server_common::Constants::RPC_COMMANDS::PEERS ||
+               command == keto::server_common::Constants::RPC_COMMANDS::REGISTER ||
+               command == keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_REQUEST) {
+        KETO_LOG_INFO << "[RpcSession::handleRetryResponse][" << this->getPeer().getHost() << "] Attempt to reconnect";
+        if (!RpcSessionManager::getInstance()->isTerminated()) {
+            closeResponse(command,command);
+            RpcSessionManager::getInstance()->reconnect(rpcPeer);
+        }
+        result = keto::server_common::Constants::RPC_COMMANDS::CLOSED;
+    } else if (command == keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_RESPONSE) {
+        // this indicates the up stream server is currently out of sync and cannot be relied upon we therefore
+        // need to use an alternative and mark this one as inactive until it is activated.
+        KETO_LOG_INFO << "[RpcSession::handleRetryResponse][" << this->getPeer().getHost() << "] Deactive this session and re-schedule the retry";
+        this->deactivate();
+        // reschedule the block sync retry
+        keto::proto::MessageWrapper messageWrapper;
+        keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
+                keto::server_common::Events::BLOCK_DB_REQUEST_BLOCK_SYNC_RETRY,messageWrapper));
+    } else {
+        KETO_LOG_INFO << "[RpcSession::handleRetryResponse] Ignore as no retry is required";
+        KETO_LOG_INFO << this->sessionNumber << ": Setup connection for read : " << command << std::endl;
+    }
+
+    return result;
+}
+
+std::string RpcSession::handleRetryResponse(const std::string& command) {
+
+    std::string result;
+    KETO_LOG_INFO << "[RpcSession::handleRetryResponse] Processing failed for the command : " << command;
+    if (command == keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS ||
                command == keto::server_common::Constants::RPC_COMMANDS::REQUEST_MASTER_NETWORK_KEYS  ||
                command == keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS ||
                command == keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES ||
@@ -1020,12 +1060,11 @@ std::string RpcSession::handleRetryResponse(const std::string& command) {
             RpcSessionManager::getInstance()->reconnect(rpcPeer);
         }
         result = keto::server_common::Constants::RPC_COMMANDS::CLOSED;
-    } else if (command == keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST ||
-               command == keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_RESPONSE) {
+    } else if (command == keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST) {
         // this indicates the up stream server is currently out of sync and cannot be relied upon we therefore
         // need to use an alternative and mark this one as inactive until it is activated.
         KETO_LOG_INFO << "[RpcSession::handleRetryResponse][" << this->getPeer().getHost() << "] Deactive this session and re-schedule the retry";
-        this->deactivate();
+
         // reschedule the block sync retry
         keto::proto::MessageWrapper messageWrapper;
         keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(

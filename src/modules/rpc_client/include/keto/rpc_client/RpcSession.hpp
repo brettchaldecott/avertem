@@ -280,6 +280,7 @@ private:
     std::string handleRequestNetworkMasterKeyResponse(const std::string& command, const std::string& message);
     std::string handleRequestNetworkKeysResponse(const std::string& command, const std::string& message);
     std::string handleRequestNetworkFeesResponse(const std::string& command, const std::string& message);
+    std::string handleInternalException(const std::string& command);
     std::string handleRetryResponse(const std::string& command);
     std::string handleRegisterRequest(const std::string& command, const std::string& message);
     std::string handleTransaction(const std::string& command, const std::string& message);

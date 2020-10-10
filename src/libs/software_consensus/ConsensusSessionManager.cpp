@@ -135,6 +135,14 @@ void ConsensusSessionManager::updateSessionKey(const keto::crypto::SecureVector&
 }
 
 
+void ConsensusSessionManager::resetSessionKey() {
+    std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
+    this->sessionHash = keto::crypto::SecureVector();
+    this->activeSessionCount = 0;
+    this->accepted = false;
+    this->activeSession = false;
+}
+
 void ConsensusSessionManager::setSession(keto::proto::ConsensusMessage& msg) {
     std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
     if (!this->activeSession) {

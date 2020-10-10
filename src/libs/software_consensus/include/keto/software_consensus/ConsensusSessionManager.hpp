@@ -48,6 +48,7 @@ public:
     static ConsensusSessionManagerPtr getInstance();
     static void fin();
 
+    void resetSessionKey();
     void updateSessionKey(const keto::crypto::SecureVector& sessionKey);
     void setSession(keto::proto::ConsensusMessage& event);
     bool notifyAccepted();
