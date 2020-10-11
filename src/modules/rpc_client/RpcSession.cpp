@@ -977,15 +977,15 @@ std::string RpcSession::handleRequestNetworkFeesResponse(const std::string& comm
 std::string RpcSession::handleInternalException(const std::string& command) {
 
     std::string result;
-    KETO_LOG_INFO << "[RpcSession::handleRetryResponse] Processing failed for the command : " << command;
+    KETO_LOG_INFO << "[RpcSession::handleInternalException] Processing failed for the command : " << command;
     if (command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_SESSION_KEYS ||
         command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_MASTER_NETWORK_KEYS  ||
         command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_KEYS) {
 
         // reset the session as it is incorrect internally and needs to be restarted with a reconnect
-        keto::software_consensus::ConsensusSessionManager::getInstance()->resetSessionKey();
+        //keto::software_consensus::ConsensusSessionManager::getInstance()->resetSessionKey();
 
-        KETO_LOG_INFO << "[RpcSession::handleRetryResponse][" << this->getPeer().getHost() << "] Attempt to reconnect";
+        KETO_LOG_INFO << "[RpcSession::handleInternalException][" << this->getPeer().getHost() << "] Attempt to reconnect";
         if (!RpcSessionManager::getInstance()->isTerminated()) {
             closeResponse(command,command);
             RpcSessionManager::getInstance()->reconnect(rpcPeer);
@@ -1000,7 +1000,7 @@ std::string RpcSession::handleInternalException(const std::string& command) {
         std::string request = command;
         request.replace(0, std::string("RESPONSE").size(), "REQUEST");
 
-        KETO_LOG_INFO << "[RpcSession::handleRetryResponse][" << this->getPeer().getHost() << "] Send the retry : "
+        KETO_LOG_INFO << "[RpcSession::handleInternalException][" << this->getPeer().getHost() << "] Send the retry : "
                       << request;
         result = serverRequest(request, request);
     } else if (command == keto::server_common::Constants::RPC_COMMANDS::HELLO ||
@@ -1013,7 +1013,7 @@ std::string RpcSession::handleInternalException(const std::string& command) {
                command == keto::server_common::Constants::RPC_COMMANDS::PEERS ||
                command == keto::server_common::Constants::RPC_COMMANDS::REGISTER ||
                command == keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_REQUEST) {
-        KETO_LOG_INFO << "[RpcSession::handleRetryResponse][" << this->getPeer().getHost() << "] Attempt to reconnect";
+        KETO_LOG_INFO << "[RpcSession::handleInternalException][" << this->getPeer().getHost() << "] Attempt to reconnect";
         if (!RpcSessionManager::getInstance()->isTerminated()) {
             closeResponse(command,command);
             RpcSessionManager::getInstance()->reconnect(rpcPeer);
@@ -1022,14 +1022,14 @@ std::string RpcSession::handleInternalException(const std::string& command) {
     } else if (command == keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_RESPONSE) {
         // this indicates the up stream server is currently out of sync and cannot be relied upon we therefore
         // need to use an alternative and mark this one as inactive until it is activated.
-        KETO_LOG_INFO << "[RpcSession::handleRetryResponse][" << this->getPeer().getHost() << "] Deactive this session and re-schedule the retry";
+        KETO_LOG_INFO << "[RpcSession::handleInternalException][" << this->getPeer().getHost() << "] Deactive this session and re-schedule the retry";
         this->deactivate();
         // reschedule the block sync retry
         keto::proto::MessageWrapper messageWrapper;
         keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
                 keto::server_common::Events::BLOCK_DB_REQUEST_BLOCK_SYNC_RETRY,messageWrapper));
     } else {
-        KETO_LOG_INFO << "[RpcSession::handleRetryResponse] Ignore as no retry is required";
+        KETO_LOG_INFO << "[RpcSession::handleInternalException] Ignore as no retry is required";
         KETO_LOG_INFO << this->sessionNumber << ": Setup connection for read : " << command << std::endl;
     }
 
