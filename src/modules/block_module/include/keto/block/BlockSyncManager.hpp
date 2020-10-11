@@ -52,6 +52,8 @@ public:
     notifyPeers(Status status);
     void
     processRequestBlockSyncRetry();
+    void
+    scheduledDelayRetry();
     bool
     isEnabled();
     void

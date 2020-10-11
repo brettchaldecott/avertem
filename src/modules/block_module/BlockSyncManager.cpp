@@ -95,7 +95,7 @@ void BlockSyncManager::sync() {
     } catch (...) {
         KETO_LOG_ERROR << "[BlockSyncManager::sync]: Failed to request the block sync : " << std::endl;
     }
-    processRequestBlockSyncRetry();
+    scheduledDelayRetry();
 }
 
 keto::proto::SignedBlockBatchMessage  BlockSyncManager::requestBlocks(const keto::proto::SignedBlockBatchRequest& signedBlockBatchRequest) {
@@ -159,6 +159,15 @@ keto::proto::MessageWrapperResponse  BlockSyncManager::processBlockSyncResponse(
 
 void
 BlockSyncManager::processRequestBlockSyncRetry() {
+    //KETO_LOG_DEBUG << "[BlockSyncManager::processRequestBlockSyncRetry] trigger the retry by resetting the start time";
+    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    // reschedule to run in a minutes time
+    //this->startTime = time(0) + Constants::SYNC_RETRY_DELAY_MIN;
+    this->startTime = 0;
+}
+
+void
+BlockSyncManager::scheduledDelayRetry() {
     //KETO_LOG_DEBUG << "[BlockSyncManager::processRequestBlockSyncRetry] trigger the retry by resetting the start time";
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
     // reschedule to run in a minutes time

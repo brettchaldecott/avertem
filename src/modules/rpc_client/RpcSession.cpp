@@ -1053,17 +1053,25 @@ std::string RpcSession::handleRetryResponse(const std::string& command) {
                command == keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS ||
                command == keto::server_common::Constants::RPC_COMMANDS::PEERS ||
                command == keto::server_common::Constants::RPC_COMMANDS::REGISTER ||
-               command == keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_REQUEST) {
+               command == keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_REQUEST ||
+               command == keto::server_common::Constants::RPC_COMMANDS::BLOCK) {
         KETO_LOG_INFO << "[RpcSession::handleRetryResponse][" << this->getPeer().getHost() << "] Attempt to reconnect";
         if (!RpcSessionManager::getInstance()->isTerminated()) {
-            closeResponse(command,command);
+            closeResponse(command, command);
+            RpcSessionManager::getInstance()->reconnect(rpcPeer);
+        }
+        result = keto::server_common::Constants::RPC_COMMANDS::CLOSED;
+    } else if  (command == keto::server_common::Constants::RPC_COMMANDS::BLOCK) {
+        KETO_LOG_INFO << "[RpcSession::handleRetryResponse][" << this->getPeer().getHost() << "] Attempt to reconnect to the upstream to force a session key update";
+        if (!RpcSessionManager::getInstance()->isTerminated()) {
+            closeResponse(command, command);
             RpcSessionManager::getInstance()->reconnect(rpcPeer);
         }
         result = keto::server_common::Constants::RPC_COMMANDS::CLOSED;
     } else if (command == keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST) {
         // this indicates the up stream server is currently out of sync and cannot be relied upon we therefore
         // need to use an alternative and mark this one as inactive until it is activated.
-        KETO_LOG_INFO << "[RpcSession::handleRetryResponse][" << this->getPeer().getHost() << "] Deactive this session and re-schedule the retry";
+        KETO_LOG_INFO << "[RpcSession::handleRetryResponse][" << this->getPeer().getHost() << "] Block sync requires a retry reschedule";
 
         // reschedule the block sync retry
         keto::proto::MessageWrapper messageWrapper;
