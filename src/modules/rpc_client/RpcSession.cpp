@@ -978,8 +978,19 @@ std::string RpcSession::handleInternalException(const std::string& command) {
 
     std::string result;
     KETO_LOG_INFO << "[RpcSession::handleInternalException] Processing failed for the command : " << command;
-    if (command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_SESSION_KEYS ||
-        command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_MASTER_NETWORK_KEYS  ||
+    if (command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_SESSION_KEYS) {
+
+        // force the session
+        KETO_LOG_INFO << "[RpcSession::handleInternalException][" << this->getPeer().getHost() << "] reset the active session";
+        keto::software_consensus::ConsensusSessionManager::getInstance()->resetSessionKey();
+
+        if (!RpcSessionManager::getInstance()->isTerminated()) {
+            closeResponse(command,command);
+            RpcSessionManager::getInstance()->reconnect(rpcPeer);
+        }
+        result = keto::server_common::Constants::RPC_COMMANDS::CLOSED;
+
+    } else if (command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_MASTER_NETWORK_KEYS  ||
         command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_KEYS) {
 
         // reset the session as it is incorrect internally and needs to be restarted with a reconnect
