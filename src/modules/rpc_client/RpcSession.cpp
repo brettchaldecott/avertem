@@ -982,7 +982,7 @@ std::string RpcSession::handleInternalException(const std::string& command) {
 
         // force the session
         KETO_LOG_INFO << "[RpcSession::handleInternalException][" << this->getPeer().getHost() << "] reset the active session";
-        keto::software_consensus::ConsensusSessionManager::getInstance()->resetSessionKey();
+        //keto::software_consensus::ConsensusSessionManager::getInstance()->resetSessionKey();
 
         if (!RpcSessionManager::getInstance()->isTerminated()) {
             closeResponse(command,command);
