@@ -190,14 +190,18 @@ bool ConsensusSessionManager::notifyAccepted() {
             } catch (keto::common::Exception& ex) {
                 KETO_LOG_ERROR << "[notifyAccepted]Failed to process the event [" << event  << "] : " << ex.what();
                 KETO_LOG_ERROR << "[notifyAccepted]Cause: " << boost::diagnostic_information(ex,true);
+                throw;
             } catch (boost::exception& ex) {
                 KETO_LOG_ERROR << "[notifyAccepted]Failed to process the event [" << event << "]";
                 KETO_LOG_ERROR << "[notifyAccepted]Cause: " << boost::diagnostic_information(ex,true);
+                throw;
             } catch (std::exception& ex) {
                 KETO_LOG_ERROR << "[notifyAccepted]Failed to process the event [" << event << "]";
                 KETO_LOG_ERROR << "[notifyAccepted]The cause is : " << ex.what();
+                throw;
             } catch (...) {
                 KETO_LOG_ERROR << "[notifyAccepted]Failed to process the event [" << event << "]";
+                throw;
             }
         }
         return true;
@@ -232,14 +236,18 @@ void ConsensusSessionManager::notifyProtocolCheck(bool master) {
             } catch (keto::common::Exception& ex) {
                 KETO_LOG_ERROR << "[notifyProtocolCheck]Failed to process the event [" << event  << "] : " << ex.what();
                 KETO_LOG_ERROR << "[notifyProtocolCheck]Cause: " << boost::diagnostic_information(ex,true);
+                throw;
             } catch (boost::exception& ex) {
                 KETO_LOG_ERROR << "[notifyProtocolCheck]Failed to process the event [" << event << "]";
                 KETO_LOG_ERROR << "[notifyProtocolCheck]Cause: " << boost::diagnostic_information(ex,true);
+                throw;
             } catch (std::exception& ex) {
                 KETO_LOG_ERROR << "[notifyProtocolCheck]Failed to process the event [" << event << "]";
                 KETO_LOG_ERROR << "[notifyProtocolCheck]The cause is : " << ex.what();
+                throw;
             } catch (...) {
                 KETO_LOG_ERROR << "[notifyProtocolCheck]Failed to process the event [" << event << "]";
+                throw;
             }
         }
     }
