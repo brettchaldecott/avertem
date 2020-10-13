@@ -146,7 +146,6 @@ void ConsensusSessionManager::resetSessionKey() {
 void ConsensusSessionManager::setSession(keto::proto::ConsensusMessage& msg) {
     std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
     if (!this->activeSession) {
-        this->activeSession = true;
         // setup the consensus message
         for (std::string event : Constants::CONSENSUS_SESSION_STATE) {
             try {
@@ -171,14 +170,13 @@ void ConsensusSessionManager::setSession(keto::proto::ConsensusMessage& msg) {
                 throw;
             }
         }
-
+        this->activeSession = true;
     }
 }
 
 bool ConsensusSessionManager::notifyAccepted() {
     std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
     if (!this->accepted) {
-        this->accepted = true;
         for (std::string event : Constants::CONSENSUS_SESSION_ACCEPTED) {
             try {
                 keto::software_consensus::ConsensusAcceptedMessageHelper consensusAcceptedMessageHelper;
@@ -204,6 +202,7 @@ bool ConsensusSessionManager::notifyAccepted() {
                 throw;
             }
         }
+        this->accepted = true;
         return true;
     } else {
         return false;

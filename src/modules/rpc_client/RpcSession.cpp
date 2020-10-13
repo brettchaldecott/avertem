@@ -981,7 +981,7 @@ std::string RpcSession::handleInternalException(const std::string& command) {
     if (command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_SESSION_KEYS) {
 
         // force the session
-        KETO_LOG_INFO << "[RpcSession::handleInternalException][" << this->getPeer().getHost() << "] reset the active session";
+        KETO_LOG_INFO << "[RpcSession::handleInternalException][" << this->getPeer().getHost() << "][" << command << "] reconnect to the server";
         //keto::software_consensus::ConsensusSessionManager::getInstance()->resetSessionKey();
 
         if (!RpcSessionManager::getInstance()->isTerminated()) {
@@ -996,7 +996,7 @@ std::string RpcSession::handleInternalException(const std::string& command) {
         // reset the session as it is incorrect internally and needs to be restarted with a reconnect
         //keto::software_consensus::ConsensusSessionManager::getInstance()->resetSessionKey();
 
-        KETO_LOG_INFO << "[RpcSession::handleInternalException][" << this->getPeer().getHost() << "] Attempt to reconnect";
+        KETO_LOG_INFO << "[RpcSession::handleInternalException][" << this->getPeer().getHost() << "][" << command << "] reconnect to the server";
         if (!RpcSessionManager::getInstance()->isTerminated()) {
             closeResponse(command,command);
             RpcSessionManager::getInstance()->reconnect(rpcPeer);
