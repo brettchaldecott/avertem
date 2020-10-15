@@ -363,6 +363,7 @@ RpcSession::on_write(
     queue_.pop_front();
 
     if(ec) {
+        readQueuePtr->deactivate();
         return fail(ec, "write");
     }
 
@@ -389,6 +390,7 @@ RpcSession::on_read(
     std::string command;
 
     if (this->isClosed()) {
+        readQueuePtr->deactivate();
         return;
     } else if (ec && !ws_.is_open()) {
         readQueuePtr->deactivate();
@@ -556,6 +558,10 @@ RpcSession::do_close() {
 void
 RpcSession::on_close(boost::system::error_code ec)
 {
+    // deactivate the queue
+    KETO_LOG_INFO << this->sessionNumber << ": closing the connection";
+    readQueuePtr->deactivate();
+
     // remove from the peered list
     if (this->rpcPeer.getPeered()) {
         keto::router_utils::RpcPeerHelper rpcPeerHelper;
@@ -564,8 +570,6 @@ RpcSession::on_close(boost::system::error_code ec)
                 keto::server_common::toEvent<keto::proto::RpcPeer>(
                         keto::server_common::Events::DEREGISTER_RPC_PEER,rpcPeerHelper));
     }
-    KETO_LOG_INFO << this->sessionNumber << ": closing the connection";
-    readQueuePtr->deactivate();
 
     if(ec)
         return fail(ec, "close");

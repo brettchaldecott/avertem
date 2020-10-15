@@ -159,6 +159,11 @@ keto::event::Event ElectionManager::consensusHeartbeat(const keto::event::Event&
             KETO_LOG_INFO << "[BlockProducer::consensusHeartbeat] the confirmation has been completed";
         }
     } else {
+        // if the state is still in an elect state that means the publish and confirmation had not been successfull
+        // and we need to deactivate to prevent this node from hanging indefinitly.
+        if (this->state == ElectionManager::State::ELECT && state != BlockProducer::State::block_producer) {
+            keto::module::StateMonitor::getInstance()->deactivate();
+        }
         this->state = ElectionManager::State::PROCESSING;
     }
 
