@@ -514,7 +514,8 @@ void RpcSession::processQueueEntry(const ReadQueueEntryPtr& readQueueEntryPtr) {
     } catch (keto::common::Exception &ex) {
         KETO_LOG_ERROR << "[RPCSession::processQueueEntry][" << this->sessionNumber << "]" << command
                        << " : Failed to process because : " << boost::diagnostic_information_what(ex, true);
-        message = handleInternalException(command);
+        KETO_LOG_ERROR << "[RPCSession::processQueueEntry] cause : " << ex.what();
+        message = handleInternalException(command,ex.what());
     } catch (boost::exception &ex) {
         KETO_LOG_ERROR << "[RPCSession::processQueueEntry][" << this->sessionNumber << "]" << command
                        << " : Failed to process because : " << boost::diagnostic_information_what(ex, true);
@@ -984,15 +985,19 @@ std::string RpcSession::handleRequestNetworkFeesResponse(const std::string& comm
 }
 
 
-std::string RpcSession::handleInternalException(const std::string& command) {
+std::string RpcSession::handleInternalException(const std::string& command, const std::string& cause) {
 
     std::string result;
     KETO_LOG_INFO << "[RpcSession::handleInternalException] Processing failed for the command : " << command;
-    if (command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_SESSION_KEYS) {
+    if (command == keto::server_common::Constants::RPC_COMMANDS::ACCEPTED ||
+            command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_SESSION_KEYS) {
 
         // force the session
         KETO_LOG_INFO << "[RpcSession::handleInternalException][" << this->getPeer().getHost() << "][" << command << "] reconnect to the server";
-        //keto::software_consensus::ConsensusSessionManager::getInstance()->resetSessionKey();
+        if (cause == "Invalid Session exception." || cause == "Invalid password exception.") {
+            KETO_LOG_INFO << "[RpcSession::handleInternalException][" << this->getPeer().getHost() << "][" << command << "] force a reset of the session as it is currently invalid";
+            keto::software_consensus::ConsensusSessionManager::getInstance()->resetSessionKey();
+        }
 
         if (!RpcSessionManager::getInstance()->isTerminated()) {
             closeResponse(command,command);
@@ -1015,7 +1020,6 @@ std::string RpcSession::handleInternalException(const std::string& command) {
         result = keto::server_common::Constants::RPC_COMMANDS::CLOSED;
 
     } else if (command == keto::server_common::Constants::RPC_COMMANDS::HELLO ||
-               command == keto::server_common::Constants::RPC_COMMANDS::ACCEPTED ||
                command == keto::server_common::Constants::RPC_COMMANDS::GO_AWAY ||
                command == keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_ACCEPT ||
                command == keto::server_common::Constants::RPC_COMMANDS::CONSENSUS ||

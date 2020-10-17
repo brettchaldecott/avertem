@@ -37,6 +37,8 @@ const std::vector<std::string> Constants::EVENT_ORDER = {
     keto::server_common::Events::CONSENSUS::MEMORY_VAULT_MANAGER};
 
 const std::vector<std::string> Constants::CONSENSUS_SESSION_ORDER = {
+    keto::server_common::Events::CONSENSUS_SESSION::RPC_SERVER,
+    keto::server_common::Events::CONSENSUS_SESSION::RPC_CLIENT,
     keto::server_common::Events::CONSENSUS_SESSION::TEST,
     keto::server_common::Events::CONSENSUS_SESSION::TRANSACTION,
     keto::server_common::Events::CONSENSUS_SESSION::ROUTER,
@@ -48,8 +50,6 @@ const std::vector<std::string> Constants::CONSENSUS_SESSION_ORDER = {
     keto::server_common::Events::CONSENSUS_SESSION::KEYSTORE,
     keto::server_common::Events::CONSENSUS_SESSION::BALANCER,
     keto::server_common::Events::CONSENSUS_SESSION::ACCOUNT,
-    keto::server_common::Events::CONSENSUS_SESSION::RPC_CLIENT,
-    keto::server_common::Events::CONSENSUS_SESSION::RPC_SERVER,
     keto::server_common::Events::CONSENSUS_SESSION::CONSENSUS_QUERY,
     keto::server_common::Events::CONSENSUS_SESSION::MEMORY_VAULT_MANAGER};
 
