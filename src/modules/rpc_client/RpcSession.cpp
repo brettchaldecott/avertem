@@ -990,29 +990,18 @@ std::string RpcSession::handleInternalException(const std::string& command, cons
     std::string result;
     KETO_LOG_INFO << "[RpcSession::handleInternalException] Processing failed for the command : " << command;
     if (command == keto::server_common::Constants::RPC_COMMANDS::ACCEPTED ||
-            command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_SESSION_KEYS) {
+            command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_SESSION_KEYS ||
+            command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_MASTER_NETWORK_KEYS  ||
+            command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_KEYS ||
+            command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_FEES) {
 
         // force the session
         KETO_LOG_INFO << "[RpcSession::handleInternalException][" << this->getPeer().getHost() << "][" << command << "] reconnect to the server";
-        if (cause == "Invalid Session exception." || cause == "Invalid password exception.") {
+        if (cause == "Invalid Session exception." || cause == "Invalid password exception." || cause.find("Index out of bounds") != std::string::npos) {
             KETO_LOG_INFO << "[RpcSession::handleInternalException][" << this->getPeer().getHost() << "][" << command << "] force a reset of the session as it is currently invalid";
             keto::software_consensus::ConsensusSessionManager::getInstance()->resetSessionKey();
         }
 
-        if (!RpcSessionManager::getInstance()->isTerminated()) {
-            closeResponse(command,command);
-            RpcSessionManager::getInstance()->reconnect(rpcPeer);
-        }
-        result = keto::server_common::Constants::RPC_COMMANDS::CLOSED;
-
-    } else if (command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_MASTER_NETWORK_KEYS  ||
-            command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_KEYS ||
-            command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_FEES) {
-
-        // reset the session as it is incorrect internally and needs to be restarted with a reconnect
-        //keto::software_consensus::ConsensusSessionManager::getInstance()->resetSessionKey();
-
-        KETO_LOG_INFO << "[RpcSession::handleInternalException][" << this->getPeer().getHost() << "][" << command << "] reconnect to the server";
         if (!RpcSessionManager::getInstance()->isTerminated()) {
             closeResponse(command,command);
             RpcSessionManager::getInstance()->reconnect(rpcPeer);
