@@ -95,9 +95,8 @@ void ConsensusSessionManager::updateSessionKey(const keto::crypto::SecureVector&
         // ignore at this point the session matches and we dont need to update it.
         activeSessionCount++;
         return;
-    } else {
-        activeSessionCount=1;
     }
+    this->activeSessionCount=1;
     this->accepted = false;
     this->activeSession = false;
     for (std::string event : Constants::CONSENSUS_SESSION_ORDER) {
@@ -132,6 +131,7 @@ void ConsensusSessionManager::updateSessionKey(const keto::crypto::SecureVector&
     }
     // set the current session hash correctly after successfully updating the session key
     this->sessionHash = sessionHash;
+    activeSessionCount=1;
 }
 
 
@@ -177,6 +177,7 @@ void ConsensusSessionManager::setSession(keto::proto::ConsensusMessage& msg) {
 bool ConsensusSessionManager::notifyAccepted() {
     std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
     if (!this->accepted) {
+        KETO_LOG_INFO << "[ConsensusSessionManager::notifyAccepted] Notifying the waiting modules";
         for (std::string event : Constants::CONSENSUS_SESSION_ACCEPTED) {
             try {
                 keto::software_consensus::ConsensusAcceptedMessageHelper consensusAcceptedMessageHelper;
@@ -205,6 +206,7 @@ bool ConsensusSessionManager::notifyAccepted() {
         this->accepted = true;
         return true;
     } else {
+        KETO_LOG_INFO << "[ConsensusSessionManager::notifyAccepted] The consensus mmodule is already active";
         return false;
     }
 }

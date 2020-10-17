@@ -173,7 +173,9 @@ void ConsensusServer::process() {
         std::chrono::seconds heartbeatDiff(
                 std::chrono::duration_cast<std::chrono::seconds>(currentTime - this->networkHeartbeatPoint));
         if ((this->currentPos == -1) || (diff.count() > this->netwokSessionLength)) {
-            KETO_LOG_INFO << "[ConsensusServer::process] Release a new session key";
+
+            KETO_LOG_INFO << "[ConsensusServer::process] Release a new session key [" << this->currentPos << "]["
+            << diff.count() << "][" << this->netwokSessionLength << "]";
             this->currentPos++;
             if (this->currentPos >= this->sessionKeys.size()) {
                 this->currentPos = 0;
@@ -184,8 +186,11 @@ void ConsensusServer::process() {
             internalConsensusInit(keto::crypto::HashGenerator().generateHash(initVector));
             this->networkHeartbeatPoint = this->networkPoint = this->sessionkeyPoint = std::chrono::system_clock::now();
             this->networkHeartbeatCurrentSlot = 0;
+            KETO_LOG_INFO << "[ConsensusServer::process] After enabling the session [" << this->currentPos << "]["
+                          << diff.count() << "][" << this->netwokSessionLength << "]";
         } else if (networkDiff.count() > this->netwokProtocolDelay) {
-            KETO_LOG_INFO << "[ConsensusServer::process] Time to retest the network.";
+                KETO_LOG_INFO << "[ConsensusServer::process] Time to retest the network [" << networkDiff.count() << "]["
+                << this->netwokProtocolDelay << "]";
             keto::crypto::SecureVector initVector = Botan::hex_decode_locked(
                     this->sessionKeys[this->currentPos], true);
             long time = currentTime.time_since_epoch().count();
@@ -204,7 +209,8 @@ void ConsensusServer::process() {
                 this->reschedule();
                 return;
             }
-            KETO_LOG_INFO << "[ConsensusServer::process] The network heartbeat.";
+            KETO_LOG_INFO << "[ConsensusServer::process] The network heartbeat [" << heartbeatDiff.count() <<
+            "][" << this->networkHeartbeatDelay << "]";
             initNetworkHeartbeat();
             std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
             this->networkHeartbeatPoint = endTime;

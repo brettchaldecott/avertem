@@ -16,6 +16,7 @@
 
 #include "keto/consensus_module/EventRegistry.hpp"
 #include "keto/consensus_module/ConsensusServices.hpp"
+#include "keto/consensus_module/Exception.hpp"
 #include "keto/software_consensus/ConsensusStateManager.hpp"
 
 namespace keto {
@@ -78,6 +79,13 @@ keto::event::Event EventRegistry::generateSoftwareConsensus(const keto::event::E
 }
 
 keto::event::Event EventRegistry::validateSoftwareConsensus(const keto::event::Event& event) {
+    //KETO_LOG_INFO << "[EventRegistry::validateSoftwareConsensus] Validate the consensus";
+    if (keto::software_consensus::ConsensusStateManager::getInstance()->getState() !=
+            keto::software_consensus::ConsensusStateManager::ACCEPTED) {
+        BOOST_THROW_EXCEPTION(keto::consensus_module::SessionNotAccepted(
+                                      "The session is currently not in a state to validate calls."));
+    }
+    //KETO_LOG_INFO << "[EventRegistry::validateSoftwareConsensus] before validating consensus";
     return ConsensusServices::getInstance()->validateSoftwareConsensus(event);
 }
 

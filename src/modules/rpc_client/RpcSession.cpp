@@ -447,13 +447,7 @@ void RpcSession::processQueueEntry(const ReadQueueEntryPtr& readQueueEntryPtr) {
             //closeResponse(keto::server_common::Constants::RPC_COMMANDS::CLOSE, stringVector[1]);
             handleRetryResponse(keto::server_common::Constants::RPC_COMMANDS::GO_AWAY);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ACCEPTED) == 0) {
-            if (!this->rpcPeer.getPeered()) {
-                message = handlePeerRequest(command, message);
-            } else if (this->isRegistered()) {
-                message = handleRequestNetworkSessionKeys(command, stringVector[1]);
-            } else {
-                message = handleRegisterRequest(command, stringVector[1]);
-            }
+            message = helloAcceptedResponse(keto::server_common::Constants::RPC_COMMANDS::ACCEPTED,stringVector[1]);
         } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PEERS) == 0) {
             // peer response requires this session is shut down
             handlePeerResponse(command, stringVector[1]);
@@ -637,6 +631,23 @@ std::string RpcSession::consensusResponse(const std::string& command, const std:
     std::unique_lock<std::recursive_mutex> uniqueLock(keto::software_consensus::ConsensusSessionManager::getInstance()->getMutex());
     keto::asn1::HashHelper hashHelper(message,keto::common::StringEncoding::HEX);
     return serverRequest(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS,buildConsensus(hashHelper));
+}
+
+std::string RpcSession::helloAcceptedResponse(const std::string& command, const std::string& message) {
+    std::unique_lock<std::recursive_mutex> uniqueLock(keto::software_consensus::ConsensusSessionManager::getInstance()->getMutex());
+    if (!this->rpcPeer.getPeered()) {
+        return handlePeerRequest(command, message);
+    }
+
+    // notify the accepted inorder to set the network keys
+    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkSessionKeysResponse] handle network session accepted";
+    keto::software_consensus::ConsensusSessionManager::getInstance()->notifyAccepted();
+
+    if (this->isRegistered()) {
+        return handleRequestNetworkSessionKeys(command, message);
+    } else {
+        return handleRegisterRequest(command, message);
+    }
 }
 
 std::string RpcSession::serverRequest(const std::string& command, const std::vector<uint8_t>& message) {
@@ -905,11 +916,6 @@ std::string RpcSession::handleRequestNetworkSessionKeys(const std::string& comma
 }
 
 std::string RpcSession::handleRequestNetworkSessionKeysResponse(const std::string& command, const std::string& message) {
-    // notify the accepted inorder to set the network keys
-    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkSessionKeysResponse] handle network session accepted";
-    std::unique_lock<std::recursive_mutex> uniqueLock(keto::software_consensus::ConsensusSessionManager::getInstance()->getMutex());
-    keto::software_consensus::ConsensusSessionManager::getInstance()->notifyAccepted();
-
     KETO_LOG_INFO << "[RpcSession::handleRequestNetworkSessionKeysResponse] set the network session keys";
     keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(
             Botan::hex_decode(message));
@@ -995,7 +1001,8 @@ std::string RpcSession::handleInternalException(const std::string& command) {
         result = keto::server_common::Constants::RPC_COMMANDS::CLOSED;
 
     } else if (command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_MASTER_NETWORK_KEYS  ||
-        command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_KEYS) {
+            command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_KEYS ||
+            command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_FEES) {
 
         // reset the session as it is incorrect internally and needs to be restarted with a reconnect
         //keto::software_consensus::ConsensusSessionManager::getInstance()->resetSessionKey();
@@ -1007,17 +1014,6 @@ std::string RpcSession::handleInternalException(const std::string& command) {
         }
         result = keto::server_common::Constants::RPC_COMMANDS::CLOSED;
 
-    } else if (command == keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_FEES) {
-
-        // attempt to make a new request for the failed response processing.
-        std::this_thread::sleep_for(std::chrono::milliseconds(Constants::SESSION::RETRY_COUNT_DELAY));
-
-        std::string request = command;
-        request.replace(0, std::string("RESPONSE").size(), "REQUEST");
-
-        KETO_LOG_INFO << "[RpcSession::handleInternalException][" << this->getPeer().getHost() << "] Send the retry : "
-                      << request;
-        result = serverRequest(request, request);
     } else if (command == keto::server_common::Constants::RPC_COMMANDS::HELLO ||
                command == keto::server_common::Constants::RPC_COMMANDS::ACCEPTED ||
                command == keto::server_common::Constants::RPC_COMMANDS::GO_AWAY ||

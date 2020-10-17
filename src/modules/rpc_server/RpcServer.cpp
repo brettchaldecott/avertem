@@ -592,65 +592,84 @@ public:
         std::string message;
         
         try {
-            //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] process the command : " << command;
+            //KETO_LOG_INFO << "[RpcServer][" << getAccount() << "] process the command : " << command;
             keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
-            if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO) == 0) {
-                message = handleHello(command, payload);
-                //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " Said hello";
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS) == 0) {
-                message = handleHelloConsensus(command, payload);
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PEERS) == 0) {
-                //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " requested peers";
-                message = handlePeer(command,payload);
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REGISTER) == 0) {
-                //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " register";
-                message = handleRegister(keto::server_common::Constants::RPC_COMMANDS::REGISTER, payload);
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PUSH_RPC_PEERS) == 0) {
-                //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " push rpc peers";
-                handlePushRpcPeers(keto::server_common::Constants::RPC_COMMANDS::PUSH_RPC_PEERS, payload);
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ACTIVATE) == 0) {
-                //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " activate";
-                handleActivate(keto::server_common::Constants::RPC_COMMANDS::ACTIVATE, payload);
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
-                //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] handle a transaction";
-                message = handleTransaction(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION, payload);
-                //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] Transaction processing complete";
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED) == 0) {
-                handleTransactionProcessed(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED, payload);
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS) == 0) {
+            if (keto::software_consensus::ConsensusStateManager::getInstance()->getState()
+                != keto::software_consensus::ConsensusStateManager::State::ACCEPTED) {
+                KETO_LOG_INFO << "[RpcServer] This peer is currently not configured reconnection required : "
+                              << keto::software_consensus::ConsensusStateManager::getInstance()->getState();
+                message = handleRetryResponse(command);
+            } else {
+                if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO) == 0) {
+                    message = handleHello(command, payload);
+                    //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " Said hello";
+                } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS) == 0) {
+                    message = handleHelloConsensus(command, payload);
+                } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PEERS) == 0) {
+                    //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " requested peers";
+                    message = handlePeer(command, payload);
+                } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REGISTER) == 0) {
+                    //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " register";
+                    message = handleRegister(keto::server_common::Constants::RPC_COMMANDS::REGISTER, payload);
+                } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PUSH_RPC_PEERS) == 0) {
+                    //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " push rpc peers";
+                    handlePushRpcPeers(keto::server_common::Constants::RPC_COMMANDS::PUSH_RPC_PEERS, payload);
+                } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ACTIVATE) == 0) {
+                    //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "]" << this->serverHelloProtoHelperPtr->getAccountHashStr() << " activate";
+                    handleActivate(keto::server_common::Constants::RPC_COMMANDS::ACTIVATE, payload);
+                } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
+                    //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] handle a transaction";
+                    message = handleTransaction(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION, payload);
+                    //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] Transaction processing complete";
+                } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED) == 0) {
+                    handleTransactionProcessed(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED,
+                                               payload);
+                } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS) == 0) {
 
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLOSE) == 0) {
-                // implement
-                //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] close the session";
-                return removeFromCache();
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS) == 0) {
-                message = handleRequestNetworkSessionKeys(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS, payload);
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_MASTER_NETWORK_KEYS) == 0) {
-                message = handleRequestMasterNetworkKeys(keto::server_common::Constants::RPC_COMMANDS::REQUEST_MASTER_NETWORK_KEYS, payload);
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS) == 0) {
-                message = handleRequestNetworkKeys(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS, payload);
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES) == 0) {
-                message = handleRequestNetworkFees(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES, payload);
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLIENT_NETWORK_COMPLETE) == 0) {
-                message = handleClientNetworkComplete(keto::server_common::Constants::RPC_COMMANDS::CLIENT_NETWORK_COMPLETE, payload);
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK) == 0) {
-                handleBlockPush(keto::server_common::Constants::RPC_COMMANDS::BLOCK, payload);
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST) == 0) {
-                message = handleBlockSyncRequest(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST, payload);
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_RESPONSE) == 0) {
-                message = handleBlockSyncResponse(command,payload);
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_RESPONSE) == 0) {
-                message = handleProtocolCheckResponse(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_RESPONSE, payload);
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_REQUEST) == 0) {
-                message = handleElectionRequest(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_REQUEST, payload);
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE) == 0) {
-                handleElectionResponse(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE, payload);
-            }else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_PUBLISH) == 0) {
-                handleElectionPublish(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_PUBLISH, payload);
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION) == 0) {
-                handleElectionConfirmation(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION, payload);
-            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_STATUS) == 0) {
-                handleResponseNetworkStatus(command,payload);
+                } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLOSE) == 0) {
+                    // implement
+                    //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] close the session";
+                    return removeFromCache();
+                } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS) ==
+                           0) {
+                    message = handleRequestNetworkSessionKeys(
+                            keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS, payload);
+                } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_MASTER_NETWORK_KEYS) ==
+                           0) {
+                    message = handleRequestMasterNetworkKeys(
+                            keto::server_common::Constants::RPC_COMMANDS::REQUEST_MASTER_NETWORK_KEYS, payload);
+                } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS) == 0) {
+                    message = handleRequestNetworkKeys(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS,
+                                                       payload);
+                } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES) == 0) {
+                    message = handleRequestNetworkFees(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES,
+                                                       payload);
+                } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLIENT_NETWORK_COMPLETE) == 0) {
+                    message = handleClientNetworkComplete(
+                            keto::server_common::Constants::RPC_COMMANDS::CLIENT_NETWORK_COMPLETE, payload);
+                } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK) == 0) {
+                    handleBlockPush(keto::server_common::Constants::RPC_COMMANDS::BLOCK, payload);
+                } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST) == 0) {
+                    message = handleBlockSyncRequest(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST,
+                                                     payload);
+                } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_RESPONSE) == 0) {
+                    message = handleBlockSyncResponse(command, payload);
+                } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_RESPONSE) == 0) {
+                    message = handleProtocolCheckResponse(
+                            keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_RESPONSE, payload);
+                } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_REQUEST) == 0) {
+                    message = handleElectionRequest(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_REQUEST,
+                                                    payload);
+                } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE) == 0) {
+                    handleElectionResponse(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE, payload);
+                } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_PUBLISH) == 0) {
+                    handleElectionPublish(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_PUBLISH, payload);
+                } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION) == 0) {
+                    handleElectionConfirmation(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION,
+                                               payload);
+                } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_STATUS) == 0) {
+                    handleResponseNetworkStatus(command, payload);
+                }
             }
             //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] processed the command : " << command;
             transactionPtr->commit();
@@ -669,6 +688,7 @@ public:
         }
 
         // send a message
+        //KETO_LOG_INFO << "[RpcServer] Finished processing : " << message;
         if (!message.empty()) {
             send(message);
         }
@@ -979,11 +999,6 @@ public:
     }
     
     std::string handleHello(const std::string& command, const std::string& payload) {
-        if (keto::software_consensus::ConsensusStateManager::getInstance()->getState()
-            != keto::software_consensus::ConsensusStateManager::State::ACCEPTED) {
-            KETO_LOG_INFO << "[RpcServer] This peer is currently not configured reconnection required.";
-            return handleRetryResponse(command);
-        }
 
         std::string bytes = keto::server_common::VectorUtils().copyVectorToString(
                 Botan::hex_decode(payload));

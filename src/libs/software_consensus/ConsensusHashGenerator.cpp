@@ -328,8 +328,6 @@ bool ConsensusHashGenerator::setSession(
     if (this->sessionKey == sessionKey) {
         return false;
     } else {
-        this->sessionKey = sessionKey;
-        this->currentSoftwareHash.clear();
         bool validSession = false;
         for (ConsensusHashScriptInfoPtr consensusScript : this->consensusVector) {
 
@@ -355,6 +353,8 @@ bool ConsensusHashGenerator::setSession(
             ss << "The session key is invalid [" << Botan::hex_encode(sessionKey, true) << "]";
             BOOST_THROW_EXCEPTION(keto::software_consensus::InvalidSessionException(ss.str()));
         }
+        this->sessionKey = sessionKey;
+        this->currentSoftwareHash.clear();
         return true;
     }
 }

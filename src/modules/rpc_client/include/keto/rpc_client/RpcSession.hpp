@@ -256,6 +256,7 @@ private:
     void closeResponse(const std::string& command, const std::string& message);
     std::string consensusSessionResponse(const std::string& command, const std::string& sessionKey);
     std::string consensusResponse(const std::string& command, const std::string& message);
+    std::string helloAcceptedResponse(const std::string& command, const std::string& message);
     std::string serverRequest(const std::string& command, const std::vector<uint8_t>& message);
     std::string serverRequest(const std::string& command, const std::string& message);
     std::string handlePeerRequest(const std::string& command, const std::string& message);

@@ -143,6 +143,7 @@ keto::event::Event EventRegistry::pushBlock(const keto::event::Event& event) {
 }
 
 keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Event& event) {
+    KETO_LOG_INFO << "[EventRegistry::consensusSessionAccepted] Activate the server";
     keto::software_consensus::ConsensusStateManager::getInstance()->setState(
             keto::software_consensus::ConsensusStateManager::ACCEPTED);
     return RpcServer::getInstance()->performNetworkSessionReset(event);

@@ -27,6 +27,7 @@ KETO_DECLARE_EXCEPTION( ConsensusModuleException, "Consensus Module Exception." 
 // the 
 KETO_DECLARE_DERIVED_EXCEPTION (ConsensusModuleException, PublicKeyNotConfiguredException , "The public key was not found.");
 KETO_DECLARE_DERIVED_EXCEPTION (ConsensusModuleException, PrivateKeyNotConfiguredException , "The private key was not found.");
+KETO_DECLARE_DERIVED_EXCEPTION (ConsensusModuleException, SessionNotAccepted , "Current session is not accepted.");
     
 }
 }
