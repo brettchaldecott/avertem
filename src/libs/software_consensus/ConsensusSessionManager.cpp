@@ -137,6 +137,33 @@ void ConsensusSessionManager::updateSessionKey(const keto::crypto::SecureVector&
 
 void ConsensusSessionManager::resetSessionKey() {
     std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
+    // force a reset of the session key by updating it to blank on all modules
+    for (std::string event : Constants::CONSENSUS_SESSION_ORDER) {
+        try {
+            keto::software_consensus::ModuleSessionMessageHelper moduleSessionMessageHelper;
+            moduleSessionMessageHelper.setSecret(keto::crypto::SecureVector());
+            keto::proto::ModuleSessionMessage moduleSessionMessage =
+                    moduleSessionMessageHelper.getModuleSessionMessage();
+            keto::server_common::triggerEvent(
+                    keto::server_common::toEvent<keto::proto::ModuleSessionMessage>(
+                            event,moduleSessionMessage));
+        } catch (keto::common::Exception& ex) {
+            KETO_LOG_ERROR << "[resetSessionKey]Failed to process the event [" << event  << "] : " << ex.what();
+            KETO_LOG_ERROR << "[resetSessionKey]Cause: " << boost::diagnostic_information(ex,true);
+            activeSessionCount=0;
+        } catch (boost::exception& ex) {
+            KETO_LOG_ERROR << "[resetSessionKey]Failed to process the event [" << event << "]";
+            KETO_LOG_ERROR << "[resetSessionKey]Cause: " << boost::diagnostic_information(ex,true);
+            activeSessionCount=0;
+        } catch (std::exception& ex) {
+            KETO_LOG_ERROR << "[resetSessionKey]Failed to process the event [" << event << "]";
+            KETO_LOG_ERROR << "[resetSessionKey]The cause is : " << ex.what();
+            activeSessionCount=0;
+        } catch (...) {
+            KETO_LOG_ERROR << "[resetSessionKey]Failed to process the event [" << event << "]";
+            activeSessionCount=0;
+        }
+    }
     this->sessionHash = keto::crypto::SecureVector();
     this->activeSessionCount = 0;
     this->accepted = false;

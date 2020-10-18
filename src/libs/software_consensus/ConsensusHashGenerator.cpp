@@ -325,6 +325,16 @@ void ConsensusHashGenerator::registerCallBacks(const CallBacks& callBacks) {
 bool ConsensusHashGenerator::setSession(
         const keto::crypto::SecureVector& sessionKey) {
     std::unique_lock<std::mutex> guard(classMutex);
+
+    // if it is a blank session key we assume that a reset has been issued and forcebly clear the cache
+    if (sessionKey.size() == 0) {
+        // assume a reset
+        this->sessionKey = sessionKey;
+        this->currentSoftwareHash.clear();
+        return true;
+    }
+
+    // set the session key up
     if (this->sessionKey == sessionKey) {
         return false;
     } else {
