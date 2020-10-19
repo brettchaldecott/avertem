@@ -24,6 +24,7 @@
 
 #include "BlockChain.pb.h"
 
+#include "keto/transaction/Resource.hpp"
 #include "keto/crypto/KeyLoader.hpp"
 #include "keto/common/MetaInfo.hpp"
 #include "keto/event/Event.hpp"
@@ -68,7 +69,7 @@ public:
     };
     typedef std::shared_ptr<TangleFutureStateManager> TangleFutureStateManagerPtr;
 
-    class PendingTransactionsTangle {
+    class PendingTransactionsTangle : keto::transaction::Resource {
     public:
         PendingTransactionsTangle(const keto::asn1::HashHelper& tangleHash, bool existing = true);
         PendingTransactionsTangle(const PendingTransactionsTangle& orig) = delete;
@@ -81,13 +82,19 @@ public:
         std::deque<keto::transaction_common::TransactionProtoHelperPtr> takeTransactions();
         bool empty();
 
+        // commit and rollbak
+        virtual void commit();
+        virtual void rollback();
+
     private:
+        std::mutex classMutex;
         TangleFutureStateManagerPtr tangleFutureStateManagerPtr;
-        std::deque<keto::transaction_common::TransactionProtoHelperPtr> transactions;
+        std::deque<keto::transaction_common::TransactionProtoHelperPtr> activeTransactions;
+        std::deque<keto::transaction_common::TransactionProtoHelperPtr> pendingTransactions;
     };
     typedef std::shared_ptr<PendingTransactionsTangle> PendingTransactionsTanglePtr;
 
-    class PendingTransactionManager {
+    class PendingTransactionManager : keto::transaction::Resource {
     public:
         PendingTransactionManager();
         PendingTransactionManager(const PendingTransactionManager& orig) = delete;
@@ -97,6 +104,10 @@ public:
         std::deque<PendingTransactionsTanglePtr> takeTransactions();
         bool empty();
         void clear();
+
+        // commit and rollbak
+        virtual void commit();
+        virtual void rollback();
 
     private:
         std::mutex classMutex;

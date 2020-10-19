@@ -131,25 +131,45 @@ BlockProducer::PendingTransactionsTangle::~PendingTransactionsTangle() {
 
 
 BlockProducer::TangleFutureStateManagerPtr BlockProducer::PendingTransactionsTangle::getTangle() {
+    std::lock_guard<std::mutex> uniqueLock(this->classMutex);
     return this->tangleFutureStateManagerPtr;
 }
 
 void BlockProducer::PendingTransactionsTangle::addTransaction(const keto::transaction_common::TransactionProtoHelperPtr& transactionProtoHelperPtr) {
-    this->transactions.push_back(transactionProtoHelperPtr);
+    std::lock_guard<std::mutex> uniqueLock(this->classMutex);
+    this->pendingTransactions.push_back(transactionProtoHelperPtr);
 }
 
 std::deque<keto::transaction_common::TransactionProtoHelperPtr> BlockProducer::PendingTransactionsTangle::getTransactions() {
-    return this->transactions;
+    std::lock_guard<std::mutex> uniqueLock(this->classMutex);
+    return this->pendingTransactions;
 }
 
 std::deque<keto::transaction_common::TransactionProtoHelperPtr> BlockProducer::PendingTransactionsTangle::takeTransactions() {
-    std::deque<keto::transaction_common::TransactionProtoHelperPtr> transactions(this->transactions);
-    this->transactions.clear();
+    std::lock_guard<std::mutex> uniqueLock(this->classMutex);
+    keto::server_common::enlistResource(*this);
+    std::deque<keto::transaction_common::TransactionProtoHelperPtr> transactions(this->pendingTransactions);
+    this->activeTransactions = transactions;
+    this->pendingTransactions.clear();
     return transactions;
 }
 
+// commit and rollbak
+void BlockProducer::PendingTransactionsTangle::commit() {
+    std::lock_guard<std::mutex> uniqueLock(this->classMutex);
+    this->activeTransactions.clear();
+}
+
+void BlockProducer::PendingTransactionsTangle::rollback() {
+    std::lock_guard<std::mutex> uniqueLock(this->classMutex);
+    std::deque<keto::transaction_common::TransactionProtoHelperPtr> transactions(this->activeTransactions);
+    transactions.insert(transactions.end(),this->pendingTransactions.begin(),this->pendingTransactions.end());
+    this->pendingTransactions = transactions;
+    this->activeTransactions.clear();
+}
+
 bool BlockProducer::PendingTransactionsTangle::empty() {
-    return !this->transactions.size();
+    return !this->pendingTransactions.size();
 }
 
 BlockProducer::PendingTransactionManager::PendingTransactionManager() : _empty(true) {
@@ -177,6 +197,7 @@ void BlockProducer::PendingTransactionManager::addTransaction(const keto::transa
 
 std::deque<BlockProducer::PendingTransactionsTanglePtr> BlockProducer::PendingTransactionManager::takeTransactions() {
     std::lock_guard<std::mutex> uniqueLock(this->classMutex);
+    keto::server_common::enlistResource(*this);
     std::deque<BlockProducer::PendingTransactionsTanglePtr> result(this->pendingTransactions);
     this->_empty = true;
     return result;
@@ -191,6 +212,16 @@ void BlockProducer::PendingTransactionManager::clear() {
     this->pendingTransactions.clear();
     this->growTanglePtr.reset();
     this->tangleTransactions.clear();
+}
+
+
+// commit and rollbak
+void BlockProducer::PendingTransactionManager::commit() {
+
+}
+
+void BlockProducer::PendingTransactionManager::rollback() {
+
 }
 
 BlockProducer::PendingTransactionsTanglePtr BlockProducer::PendingTransactionManager::getPendingTransactionTangle(
@@ -622,6 +653,9 @@ BlockProducer::State BlockProducer::checkState() {
 
 
 void BlockProducer::processTransactions() {
+    if (keto::software_consensus::ConsensusStateManager::getInstance()->getState() != keto::software_consensus::ConsensusStateManager::State::ACCEPTED) {
+        return;
+    }
     BlockProducer::ProducerScopeLockPtr producerScopeLockPtr = this->producerLockPtr->aquireBlockLock();
 
     // clear the account cache
@@ -635,14 +669,13 @@ void BlockProducer::processTransactions() {
             keto::server_common::ServerInfo::getInstance()->getAccountHash());
     signedBlockWrapperMessageProtoHelper.setTangles(keto::block_db::BlockChainStore::getInstance()->getActiveTangles());
     signedBlockWrapperMessageProtoHelper.setProducerEnding(getProducerState()==BlockProducer::ProducerState::ending);
-    std::deque<BlockProducer::PendingTransactionsTanglePtr> transactions = this->pendingTransactionManagerPtr->takeTransactions();
+    // create a new transaction
 
     // loop through and attemp to create transactions
     do {
+        keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
         try {
-            // create a new transaction
-            keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
-
+            std::deque<BlockProducer::PendingTransactionsTanglePtr> transactions = this->pendingTransactionManagerPtr->takeTransactions();
             for (BlockProducer::PendingTransactionsTanglePtr pendingTransactionTanglePtr : transactions) {
                 keto::block_db::BlockChainStore::getInstance()->setCurrentTangle(
                         pendingTransactionTanglePtr->getTangle()->getTangleHash());
@@ -674,13 +707,21 @@ void BlockProducer::processTransactions() {
         } catch (keto::common::Exception &ex) {
             KETO_LOG_ERROR << "[BlockProducer::processTransactions]Failed to create a new block: " << ex.what();
             KETO_LOG_ERROR << "[BlockProducer::processTransactions]Cause: " << boost::diagnostic_information(ex, true);
+            transactionPtr->rollback();
+            return;
         } catch (boost::exception &ex) {
             KETO_LOG_ERROR << "[BlockProducer::processTransactions]Failed to create a new block: "
                            << boost::diagnostic_information(ex, true);
+            transactionPtr->rollback();
+            return;
         } catch (std::exception &ex) {
             KETO_LOG_ERROR << "[BlockProducer::processTransactions]Failed to create a new block: " << ex.what();
+            transactionPtr->rollback();
+            return;
         } catch (...) {
             KETO_LOG_ERROR << "[BlockProducer::processTransactions]Failed to create a new block: unknown cause";
+            transactionPtr->rollback();
+            return;
         }
     } while (this->checkState() != State::terminated);
 }
