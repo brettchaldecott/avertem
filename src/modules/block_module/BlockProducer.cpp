@@ -698,8 +698,7 @@ void BlockProducer::processTransactions() {
                                 keto::common::StringEncoding::HEX);
                     _setProducerState(BlockProducer::ProducerState::complete, true);
                     // clear the active tangles
-                    keto::block_db::BlockChainStore::getInstance()->setActiveTangles(
-                            std::vector<keto::asn1::HashHelper>());
+                    keto::block_db::BlockChainStore::getInstance()->clearActiveTangles();
                     _setState(BlockProducer::State::sync_blocks);
                 }
             }
