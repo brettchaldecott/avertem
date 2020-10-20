@@ -917,6 +917,7 @@ std::string RpcSession::handleRequestNetworkSessionKeys(const std::string& comma
 }
 
 std::string RpcSession::handleRequestNetworkSessionKeysResponse(const std::string& command, const std::string& message) {
+    std::unique_lock<std::recursive_mutex> uniqueLock(keto::software_consensus::ConsensusSessionManager::getInstance()->getMutex());
     KETO_LOG_INFO << "[RpcSession::handleRequestNetworkSessionKeysResponse] set the network session keys";
     keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(
             Botan::hex_decode(message));
@@ -934,10 +935,11 @@ std::string RpcSession::handleRequestNetworkSessionKeysResponse(const std::strin
 
 
 std::string RpcSession::handleRequestNetworkMasterKeyResponse(const std::string& command, const std::string& message) {
+    std::unique_lock<std::recursive_mutex> uniqueLock(keto::software_consensus::ConsensusSessionManager::getInstance()->getMutex());
+    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkMasterKeyResponse] Set the master keys";
     keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(
             Botan::hex_decode(message));
 
-    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkMasterKeyResponse] Set the master keys";
     keto::proto::NetworkKeysWrapper networkKeysWrapper = networkKeysWrapperHelper;
     networkKeysWrapper = keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(
             keto::server_common::processEvent(
@@ -950,10 +952,11 @@ std::string RpcSession::handleRequestNetworkMasterKeyResponse(const std::string&
 }
 
 std::string RpcSession::handleRequestNetworkKeysResponse(const std::string& command, const std::string& message) {
+    std::unique_lock<std::recursive_mutex> uniqueLock(keto::software_consensus::ConsensusSessionManager::getInstance()->getMutex());
+    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkKeysResponse] Set the network keys";
     keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(
             Botan::hex_decode(message));
 
-    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkKeysResponse] Set the network keys";
     keto::proto::NetworkKeysWrapper networkKeysWrapper = networkKeysWrapperHelper;
     networkKeysWrapper = keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(
             keto::server_common::processEvent(
@@ -1009,7 +1012,7 @@ std::string RpcSession::handleInternalException(const std::string& command, cons
         // force the session
         KETO_LOG_INFO << "[RpcSession::handleInternalException][" << this->getPeer().getHost() << "][" << command << "] reconnect to the server";
         if (cause == "Invalid Session exception." || cause == "Invalid password exception." || cause == "The key data supplied is invalid." || cause.find("Index out of bounds") != std::string::npos) {
-            KETO_LOG_INFO << "[RpcSession::handleInternalException][" << this->getPeer().getHost() << "][" << command << "] force a reset of the session as it is currently invalid";
+            KETO_LOG_INFO << "[RpcSession::handleInternalException][" << this->getPeer().getHost() << "][" << command << "] force a reset of the session as it is curretly invalid";
             keto::software_consensus::ConsensusSessionManager::getInstance()->resetSessionKey();
         }
 

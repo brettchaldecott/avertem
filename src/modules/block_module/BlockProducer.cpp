@@ -633,14 +633,15 @@ BlockProducer::State BlockProducer::checkState() {
             delay = 0;
             return this->currentState;
         }
-        if (monitorStatus == std::cv_status::no_timeout && this->currentState == BlockProducer::State::block_producer_wait) {
+        if (this->currentState == BlockProducer::State::block_producer_wait) {
             return this->currentState;
         }
-        if (monitorStatus == std::cv_status::timeout && this->currentState == BlockProducer::State::block_producer_wait) {
+        // removed the force resync this is now handled by the delay in shut down at the end of an election period.
+        /*if (monitorStatus == std::cv_status::timeout && this->currentState == BlockProducer::State::block_producer_wait) {
             delay  = 0;
             BlockSyncManager::getInstance()->forceResync();
             return this->currentState;
-        }
+        }*/
     } else {
         this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(Constants::BLOCK_TIME));
     }
