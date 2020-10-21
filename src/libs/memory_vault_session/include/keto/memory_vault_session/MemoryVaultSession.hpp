@@ -59,11 +59,12 @@ public:
 
 protected:
     keto::memory_vault_session::PasswordCachePtr generatePassword();
-    keto::crypto::SecureVector processPassword(const keto::memory_vault_session::PasswordCachePtr& passwordCachePtr);
+    keto::crypto::SecureVector processPassword(const keto::memory_vault_session::PasswordCachePtr _passwordCachePtr);
     std::string getVaultName();
     uint8_t getSlot();
 
 private:
+    std::recursive_mutex classMutex;
     keto::memory_vault_session::PasswordCachePtr passwordCachePtr;
     keto::software_consensus::ConsensusHashGeneratorPtr consensusHashGenerator;
     std::string vaultName;

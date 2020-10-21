@@ -52,6 +52,7 @@ MemoryVaultSessionPtr MemoryVaultSession::getInstance() {
 
 void MemoryVaultSession::initSession() {
     // setup a new password for this session
+    std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
     this->passwordCachePtr = generatePassword();
 
     // setup the vault information
@@ -71,12 +72,14 @@ void MemoryVaultSession::initSession() {
 }
 
 void MemoryVaultSession::clearSession() {
+    std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
     this->sessionEntries.clear();
     this->passwordCachePtr.reset();
 }
 
 // entry management methods
 MemoryVaultSessionEntryPtr MemoryVaultSession::createEntry(const std::string& name) {
+    std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
     if (this->sessionEntries.count(name)) {
         //BOOST_THROW_EXCEPTION(DuplicateMemoryVaultSessionException());
         // return the session entry
@@ -90,6 +93,7 @@ MemoryVaultSessionEntryPtr MemoryVaultSession::createEntry(const std::string& na
 }
 
 MemoryVaultSessionEntryPtr MemoryVaultSession::createEntry(const std::string& name, const keto::crypto::SecureVector& value) {
+    std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
     if (this->sessionEntries.count(name)) {
         //BOOST_THROW_EXCEPTION(DuplicateMemoryVaultSessionException());
         // return the session entry
@@ -103,6 +107,7 @@ MemoryVaultSessionEntryPtr MemoryVaultSession::createEntry(const std::string& na
 }
 
 MemoryVaultSessionEntryPtr MemoryVaultSession::getEntry(const std::string& name) {
+    std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
     if (!this->sessionEntries.count(name)) {
         BOOST_THROW_EXCEPTION(UnknownMemoryVaultSessionException());
     }
@@ -110,6 +115,7 @@ MemoryVaultSessionEntryPtr MemoryVaultSession::getEntry(const std::string& name)
 }
 
 void MemoryVaultSession::removeEntry(const std::string& name) {
+    std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
     if (!this->sessionEntries.count(name)) {
         //BOOST_THROW_EXCEPTION(UnknownMemoryVaultSessionException());
         // ignore if the entry is not found
@@ -127,18 +133,25 @@ keto::memory_vault_session::PasswordCachePtr MemoryVaultSession::generatePasswor
 }
 
 keto::crypto::SecureVector MemoryVaultSession::processPassword() {
+    std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
     return this->passwordPipeLinePtr->generatePassword(passwordCachePtr->getSeedHash());
 }
 
-keto::crypto::SecureVector MemoryVaultSession::processPassword(const keto::memory_vault_session::PasswordCachePtr& passwordCachePtr) {
-    return this->passwordPipeLinePtr->generatePassword(passwordCachePtr->getSeedHash());
+keto::crypto::SecureVector MemoryVaultSession::processPassword(const keto::memory_vault_session::PasswordCachePtr _passwordCachePtr) {
+    std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
+    if (!_passwordCachePtr) {
+        BOOST_THROW_EXCEPTION(UnknownMemoryVaultSessionException());
+    }
+    return this->passwordPipeLinePtr->generatePassword(_passwordCachePtr->getSeedHash());
 }
 
 std::string MemoryVaultSession::getVaultName() {
+    std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
     return this->vaultName;
 }
 
 uint8_t MemoryVaultSession::getSlot() {
+    std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
     return this->slot;
 }
 

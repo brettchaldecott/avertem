@@ -28,6 +28,7 @@ KETO_DECLARE_EXCEPTION( MemoryVaultSessionException, "The memory vault session" 
 // the keto module derived exception
 KETO_DECLARE_DERIVED_EXCEPTION (MemoryVaultSessionException, DuplicateMemoryVaultSessionException , "Duplicate Memory Vault Session exception.");
 KETO_DECLARE_DERIVED_EXCEPTION (MemoryVaultSessionException, UnknownMemoryVaultSessionException , "Unknown Memory Vault Session exception.");
+KETO_DECLARE_DERIVED_EXCEPTION (MemoryVaultSessionException, PasswordCacheNotIntialized , "Password cache not initialized.");
 
 }
 }
