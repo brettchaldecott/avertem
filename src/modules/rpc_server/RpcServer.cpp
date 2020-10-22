@@ -1579,6 +1579,7 @@ public:
     void
     terminate() {
         acceptor_.cancel();
+        acceptor_.close();
     }
 
 };
