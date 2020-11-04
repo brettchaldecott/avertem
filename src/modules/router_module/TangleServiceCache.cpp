@@ -160,14 +160,17 @@ void TangleServiceCache::confirmation(const keto::election_common::ElectionConfi
         KETO_LOG_ERROR << "[TangleServiceCache::confirmation]Failed to find the account [" << electionConfirmationHelper.getAccount().getHash(keto::common::StringEncoding::HEX) << "]";
         return;
     }
+    // copy the session accounts that need to be copied
+    std::map<std::string,AccountTanglePtr> sessionAccounts;
     for (std::map<std::string, AccountTanglePtr>::iterator iter = this->sessionAccounts.begin(); iter != this->sessionAccounts.end(); iter++) {
-        if (iter->second->containsTangle(accountTanglePtr->getFirstTangleHash())) {
+        if (iter->second && !iter->second->containsTangle(accountTanglePtr->getFirstTangleHash())) {
             KETO_LOG_INFO << "[TangleServiceCache::confirmation] Found previous tangle manager[" << iter->second->getAccountHash().getHash(keto::common::StringEncoding::HEX)
                           << "] removing it";
-            this->sessionAccounts.erase(iter);
+            sessionAccounts[iter->first] = iter->second;
         }
     }
-    this->sessionAccounts[electionConfirmationHelper.getAccount()] = accountTanglePtr;
+    sessionAccounts[electionConfirmationHelper.getAccount()] = accountTanglePtr;
+    this->sessionAccounts = sessionAccounts;
     this->nextSessionAccounts.erase(electionConfirmationHelper.getAccount());
     KETO_LOG_INFO << "[TangleServiceCache::confirmation] Added the account [" << electionConfirmationHelper.getAccount().getHash(keto::common::StringEncoding::HEX)
         << "] to the tangle cache list";

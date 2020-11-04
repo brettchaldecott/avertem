@@ -58,10 +58,10 @@ ModuleManager::ModuleManager() {
         }
     }
 
-    for  (auto& entry : boost::filesystem::directory_iterator(this->tmpDir)) {
+    //for  (auto& entry : boost::filesystem::directory_iterator(this->tmpDir)) {
         // remove  the contents of the directory file by file
-        boost::filesystem::remove(entry.path());
-    }
+        //boost::filesystem::remove(entry.path());
+    //}
 }
 
 ModuleManager::~ModuleManager() {
