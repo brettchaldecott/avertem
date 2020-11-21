@@ -67,6 +67,7 @@ private:
     void internalConsensusInit(const keto::crypto::SecureVector& initHash);
     void internalConsensusProtocolCheck(const keto::crypto::SecureVector& initHash);
     void initNetworkHeartbeat();
+    bool validHeartbeatConjunction();
     void reschedule();
 
     bool isBlockSyncComplete();

@@ -172,7 +172,7 @@ void ConsensusServer::process() {
                 std::chrono::duration_cast<std::chrono::minutes>(currentTime - this->networkPoint));
         std::chrono::seconds heartbeatDiff(
                 std::chrono::duration_cast<std::chrono::seconds>(currentTime - this->networkHeartbeatPoint));
-        if ((this->currentPos == -1) || (diff.count() > this->netwokSessionLength)) {
+        if ((this->currentPos == -1) || ((diff.count() > this->netwokSessionLength) && validHeartbeatConjunction())) {
 
             KETO_LOG_INFO << "[ConsensusServer::process] Release a new session key [" << this->currentPos << "]["
             << diff.count() << "][" << this->netwokSessionLength << "]";
@@ -188,7 +188,7 @@ void ConsensusServer::process() {
             this->networkHeartbeatCurrentSlot = 0;
             KETO_LOG_INFO << "[ConsensusServer::process] After enabling the session [" << this->currentPos << "]["
                           << diff.count() << "][" << this->netwokSessionLength << "]";
-        } else if (networkDiff.count() > this->netwokProtocolDelay) {
+        } else if (networkDiff.count() > this->netwokProtocolDelay && validHeartbeatConjunction()) {
                 KETO_LOG_INFO << "[ConsensusServer::process] Time to retest the network [" << networkDiff.count() << "]["
                 << this->netwokProtocolDelay << "]";
             keto::crypto::SecureVector initVector = Botan::hex_decode_locked(
@@ -288,6 +288,10 @@ void ConsensusServer::initNetworkHeartbeat() {
     keto::software_consensus::ConsensusSessionManager::getInstance()->initNetworkHeartbeat(
             this->networkHeartbeatCurrentSlot++, this->networkHeartbeatElectionSlot, this->networkHeartbeatElectionPublishSlot, this->networkHeartbeatConfirmationSlot);
     transactionPtr->commit();
+}
+
+bool ConsensusServer::validHeartbeatConjunction() {
+    return this->networkHeartbeatCurrentSlot > (this->networkHeartbeatConfirmationSlot + 3);
 }
 
 void ConsensusServer::reschedule() {
