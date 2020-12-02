@@ -232,10 +232,10 @@ public:
             try {
                 ChildWrapper().childMain(argc, argv);
                 KETO_LOG_ERROR << "[fork_process] Exit the process";
-                return exit(0);
+                return _exit(0);
             } catch (...) {
                 KETO_LOG_ERROR << "[fork_process] failed execute correctly unexpected exception. Child is terminating";
-                return exit(-1);
+                return _exit(-1);
             }
 
         }
