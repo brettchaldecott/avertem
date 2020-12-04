@@ -57,7 +57,7 @@ MemoryVaultManager::MemoryVaultSlot::MemoryVaultSlot(const uint8_t& slot, const 
 }
 
 MemoryVaultManager::MemoryVaultSlot::~MemoryVaultSlot() {
-    //KETO_LOG_ERROR << "[MemoryVaultManager::MemoryVaultSlot::~MemoryVaultSlot] The slot destructor : " << (int)slot;
+    KETO_LOG_INFO << "[MemoryVaultManager::MemoryVaultSlot::~MemoryVaultSlot] The slot destructor : " << (int)slot;
 }
 
 
@@ -140,14 +140,14 @@ void MemoryVaultManager::createSession(
     std::lock_guard<std::mutex> guard(classMutex);
     if (!currentMemoryVaultSlotPtr) {
         uint8_t slotId = nextSlot();
-        //KETO_LOG_ERROR << "[MemoryVaultManager::createSession] Add a new slot : " << (int)slotId;
+        KETO_LOG_INFO << "[MemoryVaultManager::createSession] Add a new slot : " << (int)slotId;
         MemoryVaultSlotPtr memoryVaultSlotPtr(new MemoryVaultSlot(slotId, this->memoryVaultEncryptorPtr, sessions));
         this->slots.push_front(memoryVaultSlotPtr);
         this->slotIndex[slotId] = memoryVaultSlotPtr;
         this->currentMemoryVaultSlotPtr = memoryVaultSlotPtr;
     } else {
         // add sessions
-        //KETO_LOG_ERROR << "[MemoryVaultManager::createSession] Add a new session : " << sessions.size();
+        KETO_LOG_INFO << "[MemoryVaultManager::createSession] Add a new session : " << sessions.size();
         this->currentMemoryVaultSlotPtr->addSessions(sessions);
     }
 }
@@ -155,13 +155,11 @@ void MemoryVaultManager::createSession(
 void MemoryVaultManager::clearSession() {
     std::lock_guard<std::mutex> guard(classMutex);
     currentMemoryVaultSlotPtr.reset();
-    //KETO_LOG_ERROR << "[MemoryVaultManager::clearSession] clear the session for the manager : " <<
-                                                                             this->slots.size();
+    KETO_LOG_INFO << "[MemoryVaultManager::clearSession] clear the session for the manager : " << this->slots.size();
     if (this->slots.size() <= 3) {
         return;
     }
-    //KETO_LOG_ERROR << "[MemoryVaultManager::clearSession] Clear the slot : " <<
-    //    this->slots.back()->getSlot();
+    KETO_LOG_INFO << "[MemoryVaultManager::clearSession] Clear the slot : " << this->slots.back()->getSlot();
     this->slotIndex.erase(this->slots.back()->getSlot());
     this->slots.pop_back();
 }
@@ -184,7 +182,7 @@ MemoryVaultPtr MemoryVaultManager::getVault(const uint8_t& slot, const std::stri
     }
 
     std::stringstream ss;
-    ss << "Unknown vault [" << slot << "][" << name << "] cannot retrieve it.";
+    ss << "Unknown vault [" << (int)slot << "][" << name << "] cannot retrieve it.";
     BOOST_THROW_EXCEPTION(UnknownVaultException(ss.str()));
 }
 

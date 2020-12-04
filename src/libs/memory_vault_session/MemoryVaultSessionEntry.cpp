@@ -31,6 +31,7 @@ MemoryVaultSessionEntry::MemoryVaultSessionEntry(MemoryVaultSession* memoryVault
 
 MemoryVaultSessionEntry::~MemoryVaultSessionEntry() {
     try {
+        KETO_LOG_INFO << "[MemoryVaultSessionEntry::~MemoryVaultSessionEntry] Remove the slot : " << this->slotId;
         if (valueIsSet) {
             keto::proto::MemoryVaultRemoveEntryRequest request;
             request.set_vault(memoryVaultSession->getVaultName());

@@ -227,7 +227,7 @@ void NetworkSessionKeyManager::setSession(const keto::proto::NetworkKeysWrapper&
     popSlot();
 
     networkSessionConfigured = true;
-    KETO_LOG_INFO << "[NetworkSessionKeyManager::setSession] the time stamp is old [" <<
+    KETO_LOG_INFO << "[NetworkSessionKeyManager::setSession] updated the time stamp [" <<
                   networkSessionSlotPtr->getTimeStamp() << "][" <<
                   networkKeysHelper.getTimeStamp() << "]";
 }
