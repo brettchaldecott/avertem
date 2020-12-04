@@ -51,6 +51,7 @@ bool MemoryVaultManager::MemoryVaultWrapper::validPassword(const keto::crypto::S
 
 MemoryVaultManager::MemoryVaultSlot::MemoryVaultSlot(const uint8_t& slot, const MemoryVaultEncryptorPtr& memoryVaultEncryptorPtr, const vectorOfSecureVectors& sessions) :
     slot(slot),  memoryVaultEncryptorPtr(memoryVaultEncryptorPtr) {
+    KETO_LOG_INFO << "[MemoryVaultManager::MemoryVaultSlot::MemoryVaultSlot] Create the new slot : " << (int)slot;
     for (keto::crypto::SecureVector vector : sessions) {
         this->sessions.insert(std::pair<keto::crypto::SecureVector,MemoryVaultWrapperPtr>(vector,MemoryVaultWrapperPtr()));
     }

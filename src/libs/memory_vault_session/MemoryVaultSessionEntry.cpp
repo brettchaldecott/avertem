@@ -22,10 +22,12 @@ std::string MemoryVaultSessionEntry::getSourceVersion() {
 
 MemoryVaultSessionEntry::MemoryVaultSessionEntry(MemoryVaultSession* memoryVaultSession, const keto::crypto::SecureVector& entryId, const keto::memory_vault_session::PasswordCachePtr& passwordCachePtr) :
                         valueIsSet(false), memoryVaultSession(memoryVaultSession), entryId(entryId), passwordCachePtr(passwordCachePtr), slotId(memoryVaultSession->getSlot())  {
+    KETO_LOG_INFO << "[MemoryVaultSessionEntry::MemoryVaultSessionEntry] Create the new session entry : " << this->slotId;
 }
 
 MemoryVaultSessionEntry::MemoryVaultSessionEntry(MemoryVaultSession* memoryVaultSession, const keto::crypto::SecureVector& entryId, const keto::crypto::SecureVector& value, const keto::memory_vault_session::PasswordCachePtr& passwordCachePtr) :
         valueIsSet(false), memoryVaultSession(memoryVaultSession), entryId(entryId), passwordCachePtr(passwordCachePtr), slotId(memoryVaultSession->getSlot())   {
+    KETO_LOG_INFO << "[MemoryVaultSessionEntry::MemoryVaultSessionEntry] Create the new session entry : " << this->slotId;
     setValue(value);
 }
 
