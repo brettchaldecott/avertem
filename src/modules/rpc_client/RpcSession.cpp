@@ -389,6 +389,8 @@ RpcSession::on_read(
     keto::server_common::StringVector stringVector;
     std::string command;
 
+    boost::ignore_unused(bytes_transferred);
+
     if (this->isClosed()) {
         readQueuePtr->deactivate();
         return;
@@ -404,8 +406,6 @@ RpcSession::on_read(
         RpcSessionManager::getInstance()->reconnect(rpcPeer);
         return fail(ec, "read");
     }
-
-    boost::ignore_unused(bytes_transferred);
 
     // parse the input
     std::stringstream ss;
@@ -1284,8 +1284,8 @@ RpcSession::sendMessage(std::shared_ptr<std::string> ss) {
 void
 RpcSession::sendFirstQueueMessage() {
     // Send the message
-    std::string message = *queue_.front();
-    if (message == keto::server_common::Constants::RPC_COMMANDS::CLOSE) {
+    std::shared_ptr<std::string> message = queue_.front();
+    if (*message == keto::server_common::Constants::RPC_COMMANDS::CLOSE) {
         do_close();
     } else {
         ws_.async_write(

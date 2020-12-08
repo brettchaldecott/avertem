@@ -305,12 +305,13 @@ keto::event::Event MasterKeyManager::SlaveSession::setMasterKey(const keto::even
     keto::proto::NetworkKeysWrapper networkKeysWrapper =
             keto::server_common::fromEvent<keto::proto::NetworkKeysWrapper>(event);
     if (this->slaveMaster) {
-        std::string newValue = networkKeysWrapper.SerializeAsString();
-        std::string currentValue = this->slaveMasterKeys.SerializeAsString();
-        if (newValue == currentValue) {
-            // no resert of values required
-            return event;
-        }
+        //std::string newValue = networkKeysWrapper.SerializeAsString();
+        //std::string currentValue = this->slaveMasterKeys.SerializeAsString();
+        //if (newValue == currentValue) {
+        // no resert of values required
+        KETO_LOG_INFO << "Master key has been set ignore this request";
+        return event;
+        //}
     }
     keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(networkKeysWrapper);
     keto::crypto::SecureVector bytes =

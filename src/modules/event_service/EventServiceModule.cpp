@@ -47,8 +47,7 @@ const std::string EventServiceModule::getVersion() const {
 
 void EventServiceModule::triggerEvent(const Event& event) {
     EventServiceModule::Signal signal =this->getEventHandler(event.getName());
-            
-    (*signal.get())(event);
+    boost::optional<Event> option = (*signal.get())(event);
 }
 
 
