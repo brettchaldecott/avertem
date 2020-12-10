@@ -28,32 +28,29 @@ dbManagerPtr(dbManagerPtr) {
 
 BlockResource::~BlockResource() {
     // rollback all changes as we can assume the resource is not getting cleared correctly
-    for(std::map<std::string,rocksdb::Transaction*>::iterator iter = 
+    for(std::map<std::string,std::shared_ptr<rocksdb::Transaction>>::iterator iter =
             transactionMap.begin(); iter != transactionMap.end(); iter++)
     {
         iter->second->Rollback();
-        delete iter->second;
     }
     transactionMap.clear();
 }
 
 void BlockResource::commit() {
-    for(std::map<std::string,rocksdb::Transaction*>::iterator iter = 
+    for(std::map<std::string,std::shared_ptr<rocksdb::Transaction>>::iterator iter =
             transactionMap.begin(); iter != transactionMap.end(); iter++)
     {
         iter->second->Commit();
-        delete iter->second;
     }
     transactionMap.clear();
 }
 
 void BlockResource::rollback() {
     // rollback all changes as we can assume the resource is not getting cleared correctly
-    for(std::map<std::string,rocksdb::Transaction*>::iterator iter = 
+    for(std::map<std::string,std::shared_ptr<rocksdb::Transaction>>::iterator iter =
             transactionMap.begin(); iter != transactionMap.end(); iter++)
     {
         iter->second->Rollback();
-        delete iter->second;
     }
     transactionMap.clear();
 }
@@ -64,11 +61,11 @@ rocksdb::Transaction* BlockResource::getTransaction(const std::string& name) {
         keto::rocks_db::DBConnectorPtr dbConnectionPtr = 
                 dbManagerPtr->getConnection(name);
         rocksdb::WriteOptions write_options;
-        transactionMap[name] = dbConnectionPtr->getDB()->BeginTransaction(
-                write_options);
+        transactionMap[name] = std::shared_ptr<rocksdb::Transaction>(dbConnectionPtr->getDB()->BeginTransaction(
+                write_options));
         
     }
-    return transactionMap[name];
+    return transactionMap[name].get();
 }
 
 

@@ -26,10 +26,10 @@ std::string DBConnector::getSourceVersion() {
 }
 
 
-DBConnector::DBConnector(const std::string& path) : db(NULL) {
+DBConnector::DBConnector(const std::string& path) : db(NULL)     {
     options.create_if_missing = true;
-    
-    rocksdb::Status status = rocksdb::TransactionDB::Open(options, 
+
+    rocksdb::Status status = rocksdb::TransactionDB::Open(options,
             txn_db_options,path, &db);
     if (!status.ok()) {
         std::stringstream ss;

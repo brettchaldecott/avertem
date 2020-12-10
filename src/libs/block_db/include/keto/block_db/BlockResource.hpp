@@ -55,7 +55,7 @@ public:
     
 private:
     std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr;
-    std::map<std::string,rocksdb::Transaction*> transactionMap;
+    std::map<std::string,std::shared_ptr<rocksdb::Transaction>> transactionMap;
     
 };
 
