@@ -67,6 +67,46 @@ public:
     };
     typedef std::shared_ptr<Elector> ElectorPtr;
 
+    class Window {
+    public:
+        Window(const std::vector<keto::asn1::HashHelper>& tangles);
+        Window(const Window& orig) = delete;
+        virtual ~Window();
+
+        std::vector<keto::asn1::HashHelper> getTangles();
+        void addTangle(const keto::asn1::HashHelper& tangle);
+        bool isGrowing();
+        bool equals(const std::vector<keto::asn1::HashHelper>& tangles);
+    private:
+        std::vector<keto::asn1::HashHelper> tangles;
+        bool growing;
+    };
+    typedef std::shared_ptr<Window> WindowPtr;
+
+    class WindowManager {
+    public:
+        WindowManager();
+        WindowManager(const WindowManager& orig) = delete;
+        virtual ~WindowManager();
+
+        void addWindow(const std::vector<keto::asn1::HashHelper>& tangles);
+        bool hasNewWindows();
+        std::vector<keto::asn1::HashHelper> getAllTangles();
+        void mergeActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles);
+        void activate();
+        void election();
+        void clear();
+
+        std::vector<WindowPtr> getWindows();
+
+    private:
+        std::vector<WindowPtr> newWindow;
+        std::vector<WindowPtr> currentWindow;
+
+        void insertTangles(std::vector<keto::asn1::HashHelper>& targetTangles, const std::vector<keto::asn1::HashHelper>& tangles);
+    };
+    typedef std::shared_ptr<WindowManager> WindowManagerPtr;
+
     ElectionManager();
     ElectionManager(const ElectionManager& orig) = delete;
     virtual ~ElectionManager();
@@ -88,7 +128,9 @@ private:
     keto::asn1::HashHelper faucetAccount;
     std::map<std::vector<uint8_t>,ElectorPtr> accountElectionResult;
     int responseCount;
-    std::vector<keto::asn1::HashHelper> nextWindow;
+    WindowManagerPtr windowManagerPtr;
+    //std::vector<keto::asn1::HashHelper> nextWindow;
+    //std::vector<keto::asn1::HashHelper> currentWindow;
     std::set<std::vector<uint8_t>> electedAccounts;
 
     void invokeElection(const std::string& event, const std::string& type);

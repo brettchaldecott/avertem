@@ -229,7 +229,7 @@ RpcSession::RpcSession(
 
     this->readQueuePtr = ReadQueuePtr(new RpcSession::ReadQueue(this));
     RpcSessionManager::getInstance()->incrementSessionCount();
-    KETO_LOG_INFO << "[RpcSession::RpcSession] New session created for host : " << rpcPeer.getHost();
+        KETO_LOG_INFO << "[RpcSession::RpcSession] New session created for host : " << rpcPeer.getHost();
 }
 
 RpcSession::~RpcSession() {
@@ -1286,8 +1286,8 @@ RpcSession::sendMessage(std::shared_ptr<std::string> ss) {
 void
 RpcSession::sendFirstQueueMessage() {
     // Send the message
-    std::string message = *queue_.front();
-    if (message == keto::server_common::Constants::RPC_COMMANDS::CLOSE) {
+    std::shared_ptr<std::string> message = queue_.front();
+    if (*message == keto::server_common::Constants::RPC_COMMANDS::CLOSE) {
         do_close();
     } else {
         ws_.text(ws_.got_text());
