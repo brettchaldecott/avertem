@@ -397,7 +397,8 @@ RpcSession::on_read(
         readQueuePtr->deactivate();
         return;
     } else if (ec && !ws_.is_open()) {
-        readQueuePtr->deactivate();
+        // handle the close
+        send(keto::server_common::Constants::RPC_COMMANDS::CLOSE);
         this->setClosed(true);
         RpcSessionManager::getInstance()->removeSession(this->rpcPeer, this->accountHash);
         RpcSessionManager::getInstance()->reconnect(rpcPeer);
