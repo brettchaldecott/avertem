@@ -118,7 +118,7 @@ keto::proto::SignedBlockBatchMessage  BlockSyncManager::requestBlocks(const keto
     try {
         return keto::block_db::BlockChainStore::getInstance()->requestBlocks(tangledHashes);
     } catch (...) {
-        this->forceResync();
+        //this->forceResync();
         throw;
     }
 }

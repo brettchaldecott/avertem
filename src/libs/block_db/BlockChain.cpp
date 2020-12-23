@@ -593,7 +593,18 @@ keto::proto::SignedBlockBatchMessage BlockChain::requestBlocks(const std::vector
 
 
     for (keto::asn1::HashHelper hash : tangledHashes) {
-        *result.add_tangle_batches() = getBlockBatch(hash, resource);
+        try {
+            *result.add_tangle_batches() = getBlockBatch(hash, resource);
+        } catch (keto::common::Exception& ex) {
+            KETO_LOG_ERROR << "[BlockChain::requestBlocks]: Failed to request the block sync : " << boost::diagnostic_information(ex,true);
+            KETO_LOG_ERROR << "[BlockChain::requestBlocks]: cause : " << ex.what();
+        } catch (boost::exception& ex) {
+            KETO_LOG_ERROR << "[BlockChain::requestBlocks]: Failed to request the block sync : " << boost::diagnostic_information(ex,true);
+        } catch (std::exception& ex) {
+            KETO_LOG_ERROR << "[BlockChain::requestBlocks]: Failed to request the block sync : " << ex.what();
+        } catch (...) {
+            KETO_LOG_ERROR << "[BlockChain::requestBlocks]: Failed to request the block sync : " << std::endl;
+        }
     }
 
     return result;
