@@ -116,16 +116,24 @@ keto::proto::SignedBlockBatchMessage  BlockSyncManager::requestBlocks(const keto
     }
 
     try {
-        return keto::block_db::BlockChainStore::getInstance()->requestBlocks(tangledHashes);
+        keto::proto::SignedBlockBatchMessage signedBlockBatchMessage;
+        signedBlockBatchMessage.set_partial_result(false);
+        if (!keto::block_db::BlockChainStore::getInstance()->requestBlocks(tangledHashes,signedBlockBatchMessage)) {
+            KETO_LOG_INFO << "A partial result was found and we need to force a resync";
+            signedBlockBatchMessage.set_partial_result(true);
+            this->forceResync();
+        }
+        return signedBlockBatchMessage;
     } catch (...) {
-        //this->forceResync();
+        KETO_LOG_INFO << "Unexpected exception force the resync";
+        this->forceResync();
         throw;
     }
 }
 
 keto::proto::MessageWrapperResponse  BlockSyncManager::processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage) {
     keto::proto::MessageWrapperResponse response;
-    if (keto::block_db::BlockChainStore::getInstance()->processBlockSyncResponse(signedBlockBatchMessage,BlockChainCallbackImpl())) {
+    if (keto::block_db::BlockChainStore::getInstance()->processBlockSyncResponse(signedBlockBatchMessage,BlockChainCallbackImpl()) && !signedBlockBatchMessage.partial_result()) {
         response.set_result("complete");
         {
             std::unique_lock<std::mutex> uniqueLock(this->classMutex);

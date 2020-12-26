@@ -63,6 +63,7 @@ message SignedBlockBatch {
 
 message SignedBlockBatchMessage {
     repeated SignedBlockBatch tangle_batches = 1;
+    bool partial_result = 2;
 }
 
 

@@ -108,7 +108,7 @@ std::vector<keto::asn1::HashHelper> BlockChainStore::getLastBlockHashs() {
     return this->masterChain->getLastBlockHashs();
 }
 
-keto::proto::SignedBlockBatchMessage BlockChainStore::requestBlocks(const std::vector<keto::asn1::HashHelper>& tangledHashes) {
+bool BlockChainStore::requestBlocks(const std::vector<keto::asn1::HashHelper>& tangledHashes, keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage) {
     std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (!masterChain) {
         BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
@@ -124,7 +124,7 @@ keto::proto::SignedBlockBatchMessage BlockChainStore::requestBlocks(const std::v
         }
 
     }
-    return this->masterChain->requestBlocks(hashes);
+    return this->masterChain->requestBlocks(hashes,signedBlockBatchMessage);
 }
 
 bool BlockChainStore::processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage, const BlockChainCallback& callback) {

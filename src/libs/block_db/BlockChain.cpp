@@ -582,32 +582,35 @@ bool BlockChain::processProducerEnding(const keto::block_db::SignedBlockWrapperM
     return false;
 }
 
-keto::proto::SignedBlockBatchMessage BlockChain::requestBlocks(const std::vector<keto::asn1::HashHelper>& tangledHashes) {
+bool BlockChain::requestBlocks(const std::vector<keto::asn1::HashHelper>& tangledHashes, keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage) {
     //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
-
-    keto::proto::SignedBlockBatchMessage result;
 
     BlockResourcePtr resource = blockResourceManagerPtr->getResource();
 
     //rocksdb::Transaction* blockTransaction = resource->getTransaction(Constants::BLOCKS_INDEX);
+    bool successfull = true;
 
 
     for (keto::asn1::HashHelper hash : tangledHashes) {
         try {
-            *result.add_tangle_batches() = getBlockBatch(hash, resource);
+            *signedBlockBatchMessage.add_tangle_batches() = getBlockBatch(hash, resource);
         } catch (keto::common::Exception& ex) {
             KETO_LOG_ERROR << "[BlockChain::requestBlocks]: Failed to request the block sync : " << boost::diagnostic_information(ex,true);
             KETO_LOG_ERROR << "[BlockChain::requestBlocks]: cause : " << ex.what();
+            successfull = false;
         } catch (boost::exception& ex) {
             KETO_LOG_ERROR << "[BlockChain::requestBlocks]: Failed to request the block sync : " << boost::diagnostic_information(ex,true);
+            successfull = false;
         } catch (std::exception& ex) {
             KETO_LOG_ERROR << "[BlockChain::requestBlocks]: Failed to request the block sync : " << ex.what();
+            successfull = false;
         } catch (...) {
             KETO_LOG_ERROR << "[BlockChain::requestBlocks]: Failed to request the block sync : " << std::endl;
+            successfull = false;
         }
     }
 
-    return result;
+    return successfull;
 }
 
 bool BlockChain::processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage, const BlockChainCallback& callback) {
