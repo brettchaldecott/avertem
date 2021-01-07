@@ -33,11 +33,16 @@ vercomp () {
 
 
 VERSION=`cat ${KETO_HOME}/config/avertem_version`
+if [ -z "$VERSION" ] ; then
+    VERSION="1.0.0"
+fi
 SERVER_VERSION=`wget -qO- https://s3-eu-west-1.amazonaws.com/avertem/linux/ubuntu/18.04/latest_version.txt`
 CURRENT_DIR=`pwd`
-VERSION_RESULLT=$(vercomp $VERSION $SERVER_VERSION)
 
-if [ "$VERSION_RESULT" -eq "0" ] || [ "$VERSION_RESULT" -eq "1" ] ; then
+vercomp "${VERSION}" "${SERVER_VERSION}"
+VERSION_RESULT=$?
+
+if (( $VERSION_RESULT <= 1 )) ; then
     echo "Versions are the same nothing to be done"
     exit 0
 fi
