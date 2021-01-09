@@ -134,6 +134,7 @@ private:
     bool registeredAccounts();
 
     void waitForSessionEnd();
+    int getSessionCount(bool waitForTimeout);
 };
 
 

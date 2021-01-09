@@ -109,12 +109,12 @@ void RpcSessionManager::setPeers(const std::vector<std::string>& peers, bool pee
 }
 
 void RpcSessionManager::reconnect(RpcPeer& rpcPeer) {
-    if (isTerminated()) {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+    if (this->terminated) {
         KETO_LOG_INFO << "The session manager is terminated ignoring the peer " << rpcPeer.getPeer();
         return;
     }
     rpcPeer.incrementReconnectCount();
-    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     this->sessionMap.erase((std::string)rpcPeer);
     if (rpcPeer.getReconnectCount() >= Constants::SESSION::MAX_RETRY_COUNT) {
         // force a reconnect to the peers
@@ -211,38 +211,40 @@ int RpcSessionManager::decrementSessionCount() {
 }
 
 void RpcSessionManager::waitForSessionEnd() {
-    std::unique_lock<std::mutex> unique_lock(this->sessionClassMutex);
     KETO_LOG_ERROR << "[RpcSessionManager::waitForSessionEnd] waitForSessionEnd : " << this->sessionCount;
 
-    std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
-    std::chrono::system_clock::time_point runTime = startTime;
-    while(this->sessionCount) {
-        if (runTime == startTime ||
-                (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - runTime).count() > 1500)) {
-            KETO_LOG_ERROR << "[RpcSessionManager::waitForSessionEnd] stop the peers";
-            for (RpcSessionPtr rpcSessionPtr : getPeers()) {
-                if (rpcSessionPtr) {
-                    try {
-                        rpcSessionPtr->closeSession();
-                    } catch (keto::common::Exception &ex) {
-                        KETO_LOG_ERROR << "[RpcSessionManager::preStop] Failed to close the session : " << ex.what();
-                        KETO_LOG_ERROR << "[RpcSessionManager::preStop] Cause : "
-                                       << boost::diagnostic_information(ex, true);
-                    } catch (boost::exception &ex) {
-                        KETO_LOG_ERROR << "[RpcSessionManager::preStop] Failed to close the session : "
-                                       << boost::diagnostic_information(ex, true);
-                    } catch (std::exception &ex) {
-                        KETO_LOG_ERROR << "[RpcSessionManager::preStop] Failed to close the session : " << ex.what();
-                    } catch (...) {
-                        KETO_LOG_ERROR << "[RpcSessionManager::preStop] Failed to close the session : unknown cause";
-                    }
+    bool waitForTimeout = false;
+    while(getSessionCount(waitForTimeout)) {
+        KETO_LOG_ERROR << "[RpcSessionManager::waitForSessionEnd] stop the peers";
+        for (RpcSessionPtr rpcSessionPtr : getPeers()) {
+            if (rpcSessionPtr) {
+                try {
+                    rpcSessionPtr->closeSession();
+                } catch (keto::common::Exception &ex) {
+                    KETO_LOG_ERROR << "[RpcSessionManager::preStop] Failed to close the session : " << ex.what();
+                    KETO_LOG_ERROR << "[RpcSessionManager::preStop] Cause : "
+                                   << boost::diagnostic_information(ex, true);
+                } catch (boost::exception &ex) {
+                    KETO_LOG_ERROR << "[RpcSessionManager::preStop] Failed to close the session : "
+                                   << boost::diagnostic_information(ex, true);
+                } catch (std::exception &ex) {
+                    KETO_LOG_ERROR << "[RpcSessionManager::preStop] Failed to close the session : " << ex.what();
+                } catch (...) {
+                    KETO_LOG_ERROR << "[RpcSessionManager::preStop] Failed to close the session : unknown cause";
                 }
             }
         }
-
-        this->stateCondition.wait_for(unique_lock,std::chrono::milliseconds(1000));
-        KETO_LOG_ERROR << "[RpcSessionManager::waitForSessionEnd] waitForSessionEnd : " << this->sessionCount;
+        waitForTimeout = true;
+        KETO_LOG_ERROR << "[RpcSessionManager::waitForSessionEnd] waitForSessionEnd";
     }
+}
+
+int RpcSessionManager::getSessionCount(bool waitForTimeout) {
+    std::unique_lock<std::mutex> unique_lock(this->sessionClassMutex);
+    if (waitForTimeout) {
+        this->stateCondition.wait_for(unique_lock, std::chrono::milliseconds(1000));
+    }
+    return this->sessionCount;
 }
 
 bool RpcSessionManager::hasNetworkState() {

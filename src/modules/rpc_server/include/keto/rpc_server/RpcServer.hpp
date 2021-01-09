@@ -140,6 +140,7 @@ private:
 
 
     void waitForSessionEnd();
+    int getSessionCount(bool waitForTimeout);
 };
 
 }

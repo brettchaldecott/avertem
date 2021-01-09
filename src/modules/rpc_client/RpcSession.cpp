@@ -609,7 +609,7 @@ std::string RpcSession::buildMessage(const std::string& command, const std::vect
 
 void RpcSession::closeResponse(const std::string& command, const std::string& message) {
 
-    KETO_LOG_INFO << "Server closing connection because [" << message << "]";
+    KETO_LOG_INFO << "Client sending close to server [" << message << "]";
     send(keto::server_common::Constants::RPC_COMMANDS::CLOSE);
     this->setClosed(true);
     RpcSessionManager::getInstance()->removeSession(this->rpcPeer, this->accountHash);
