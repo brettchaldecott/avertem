@@ -109,20 +109,23 @@ std::vector<keto::asn1::HashHelper> BlockChainStore::getLastBlockHashs() {
 }
 
 bool BlockChainStore::requestBlocks(const std::vector<keto::asn1::HashHelper>& tangledHashes, keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage) {
-    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (!masterChain) {
         BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
     }
     // if the tangled hases size is zero we have to start from the genesis block
     std::vector<keto::asn1::HashHelper> hashes = tangledHashes;
-    if (!hashes.size()) {
-        for (int index = 0; index < this->masterChain->getBlockChainMeta()->tangleCount(); index++) {
-            keto::asn1::HashHelper tangleHash = this->masterChain->getBlockChainMeta()->getTangleEntry(index)->getHash();
-            //KETO_LOG_DEBUG<< "[BlockChainStore::requestBlocks][" << index << "] Client is requesting the complete chain using the starting point of :  " <<
-            //              tangleHash.getHash(keto::common::StringEncoding::HEX);
-            hashes.push_back(tangleHash);
-        }
+    {
+        std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+        if (!hashes.size()) {
+            for (int index = 0; index < this->masterChain->getBlockChainMeta()->tangleCount(); index++) {
+                keto::asn1::HashHelper tangleHash = this->masterChain->getBlockChainMeta()->getTangleEntry(
+                        index)->getHash();
+                //KETO_LOG_DEBUG<< "[BlockChainStore::requestBlocks][" << index << "] Client is requesting the complete chain using the starting point of :  " <<
+                //              tangleHash.getHash(keto::common::StringEncoding::HEX);
+                hashes.push_back(tangleHash);
+            }
 
+        }
     }
     return this->masterChain->requestBlocks(hashes,signedBlockBatchMessage);
 }

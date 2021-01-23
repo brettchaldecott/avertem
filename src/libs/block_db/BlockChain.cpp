@@ -585,7 +585,6 @@ bool BlockChain::processProducerEnding(const keto::block_db::SignedBlockWrapperM
 bool BlockChain::requestBlocks(const std::vector<keto::asn1::HashHelper>& tangledHashes, keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage) {
     //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
 
-    BlockResourcePtr resource = blockResourceManagerPtr->getResource();
 
     //rocksdb::Transaction* blockTransaction = resource->getTransaction(Constants::BLOCKS_INDEX);
     bool successfull = true;
@@ -593,7 +592,10 @@ bool BlockChain::requestBlocks(const std::vector<keto::asn1::HashHelper>& tangle
 
     for (keto::asn1::HashHelper hash : tangledHashes) {
         try {
+            keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
+            BlockResourcePtr resource = blockResourceManagerPtr->getResource();
             *signedBlockBatchMessage.add_tangle_batches() = getBlockBatch(hash, resource);
+            transactionPtr->commit();
         } catch (keto::common::Exception& ex) {
             KETO_LOG_ERROR << "[BlockChain::requestBlocks]: Failed to request the block sync : " << boost::diagnostic_information(ex,true);
             KETO_LOG_ERROR << "[BlockChain::requestBlocks]: cause : " << ex.what();

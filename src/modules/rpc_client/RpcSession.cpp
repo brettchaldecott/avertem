@@ -441,79 +441,84 @@ void RpcSession::processQueueEntry(const ReadQueueEntryPtr& readQueueEntryPtr) {
     keto::server_common::StringVector stringVector = readQueueEntryPtr->getStringVector();
     std::string message;
     try {
-        keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
-
-        // Close the WebSocket connection
-        if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS) == 0) {
-            message = helloConsensusResponse(command, stringVector[1], stringVector[2]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::GO_AWAY) == 0) {
-            //closeResponse(keto::server_common::Constants::RPC_COMMANDS::CLOSE, stringVector[1]);
-            handleRetryResponse(keto::server_common::Constants::RPC_COMMANDS::GO_AWAY);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ACCEPTED) == 0) {
-            message = helloAcceptedResponse(keto::server_common::Constants::RPC_COMMANDS::ACCEPTED,stringVector[1]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PEERS) == 0) {
-            // peer response requires this session is shut down
-            handlePeerResponse(command, stringVector[1]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REGISTER) == 0) {
-            message = handleRegisterResponse(command, stringVector[1]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ACTIVATE) == 0) {
-            handleActivatePeer(command, stringVector[1]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
-            message = handleTransaction(command, stringVector[1]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED) == 0) {
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK) == 0) {
-            message = handleBlock(command, stringVector[1]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK_PROCESSED) == 0) {
-            // do nothing
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS_SESSION) == 0) {
-            message = consensusSessionResponse(command, stringVector[1]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS) == 0) {
-            message = consensusResponse(command, stringVector[1]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_SESSION_KEYS) ==
-                   0) {
-            message = handleRequestNetworkSessionKeysResponse(command, stringVector[1]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_MASTER_NETWORK_KEYS) ==
-                   0) {
-            message = handleRequestNetworkMasterKeyResponse(command, stringVector[1]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_KEYS) == 0) {
-            message = handleRequestNetworkKeysResponse(command, stringVector[1]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_FEES) == 0) {
-            message = handleRequestNetworkFeesResponse(command, stringVector[1]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLOSE) == 0) {
-            closeResponse(command, stringVector[1]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_RETRY) == 0) {
-            message = handleRetryResponse(stringVector[1]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST) == 0) {
+        if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST) == 0) {
             message = handleBlockSyncRequest(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST,
                                              stringVector[1]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_RESPONSE) == 0) {
-            message = handleBlockSyncResponse(command, stringVector[1]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_REQUEST) == 0) {
-            message = handleProtocolCheckRequest(command, stringVector[1]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_ACCEPT) == 0) {
-            handleProtocolCheckAccept(command, stringVector[1]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_HEARTBEAT) == 0) {
-            handleProtocolHeartbeat(command, stringVector[1]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_REQUEST) == 0) {
-            message = handleElectionRequest(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_REQUEST,
+        } else {
+            // transaction scoped methods
+            keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
+
+            // Close the WebSocket connection
+            if (command.compare(keto::server_common::Constants::RPC_COMMANDS::HELLO_CONSENSUS) == 0) {
+                message = helloConsensusResponse(command, stringVector[1], stringVector[2]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::GO_AWAY) == 0) {
+                //closeResponse(keto::server_common::Constants::RPC_COMMANDS::CLOSE, stringVector[1]);
+                handleRetryResponse(keto::server_common::Constants::RPC_COMMANDS::GO_AWAY);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ACCEPTED) == 0) {
+                message = helloAcceptedResponse(keto::server_common::Constants::RPC_COMMANDS::ACCEPTED,
+                                                stringVector[1]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PEERS) == 0) {
+                // peer response requires this session is shut down
+                handlePeerResponse(command, stringVector[1]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REGISTER) == 0) {
+                message = handleRegisterResponse(command, stringVector[1]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ACTIVATE) == 0) {
+                handleActivatePeer(command, stringVector[1]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION) == 0) {
+                message = handleTransaction(command, stringVector[1]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED) == 0) {
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK) == 0) {
+                message = handleBlock(command, stringVector[1]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK_PROCESSED) == 0) {
+                // do nothing
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS_SESSION) == 0) {
+                message = consensusSessionResponse(command, stringVector[1]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CONSENSUS) == 0) {
+                message = consensusResponse(command, stringVector[1]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_SESSION_KEYS) ==
+                       0) {
+                message = handleRequestNetworkSessionKeysResponse(command, stringVector[1]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_MASTER_NETWORK_KEYS) ==
+                       0) {
+                message = handleRequestNetworkMasterKeyResponse(command, stringVector[1]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_KEYS) == 0) {
+                message = handleRequestNetworkKeysResponse(command, stringVector[1]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_FEES) == 0) {
+                message = handleRequestNetworkFeesResponse(command, stringVector[1]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLOSE) == 0) {
+                closeResponse(command, stringVector[1]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_RETRY) == 0) {
+                message = handleRetryResponse(stringVector[1]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_RESPONSE) == 0) {
+                message = handleBlockSyncResponse(command, stringVector[1]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_REQUEST) == 0) {
+                message = handleProtocolCheckRequest(command, stringVector[1]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_ACCEPT) == 0) {
+                handleProtocolCheckAccept(command, stringVector[1]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_HEARTBEAT) == 0) {
+                handleProtocolHeartbeat(command, stringVector[1]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_REQUEST) == 0) {
+                message = handleElectionRequest(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_REQUEST,
+                                                stringVector[1]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE) == 0) {
+                handleElectionResponse(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE,
+                                       stringVector[1]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_PUBLISH) == 0) {
+                handleElectionPublish(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_PUBLISH,
+                                      stringVector[1]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION) == 0) {
+                handleElectionConfirmation(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION,
+                                           stringVector[1]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_STATUS) == 0) {
+                message = handleRequestNetworkStatus(
+                        keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_STATUS,
+                        stringVector[1]);
+            } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_STATUS) == 0) {
+                handleResponseNetworkStatus(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_STATUS,
                                             stringVector[1]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE) == 0) {
-            handleElectionResponse(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_RESPONSE,
-                                   stringVector[1]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_PUBLISH) == 0) {
-            handleElectionPublish(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_PUBLISH,
-                                  stringVector[1]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION) == 0) {
-            handleElectionConfirmation(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_CONFIRMATION,
-                                       stringVector[1]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_STATUS) == 0) {
-            message = handleRequestNetworkStatus(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_STATUS,
-                                       stringVector[1]);
-        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_STATUS) == 0) {
-            handleResponseNetworkStatus(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_STATUS,
-                                                 stringVector[1]);
+            }
+            transactionPtr->commit();
         }
-        transactionPtr->commit();
     } catch (keto::common::Exception &ex) {
         KETO_LOG_ERROR << "[RPCSession::processQueueEntry][" << this->sessionNumber << "]" << command
                        << " : Failed to process because : " << boost::diagnostic_information_what(ex, true);
