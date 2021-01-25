@@ -47,7 +47,7 @@ const long Constants::SYNC_RETRY_DELAY_MIN  = 60;
 
 
 
-const long Constants::SYNC_EXPIRY_TIME  = 120;
+const long Constants::SYNC_EXPIRY_TIME  = 100;
 
 
 // tangle configuration

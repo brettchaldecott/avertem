@@ -64,13 +64,14 @@ public:
     keto::event::Event isBlockSyncComplete(const keto::event::Event& event);
 private:
     std::mutex classMutex;
+    std::condition_variable stateCondition;
     bool enabled;
     Status status;
     std::time_t startTime;
     std::vector<keto::asn1::HashHelper> tangleHashes;
 
 
-    bool isExpired();
+    bool waitForExpired();
 
     void
     notifyPeers();

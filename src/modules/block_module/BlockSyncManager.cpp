@@ -55,7 +55,7 @@ std::time_t BlockSyncManager::getStartTime() {
 void BlockSyncManager::sync() {
     Status status = getStatus();
     KETO_LOG_INFO << "[BlockSyncManager::sync] start of the sync : " << status;
-    if (!isExpired()) {
+    if (!waitForExpired()) {
         KETO_LOG_INFO << "[BlockSyncManager::sync] the timeout has not been reached yet [" << this->getStartTime() << "][" <<
             time(0) << "]";
         return;
@@ -157,6 +157,7 @@ keto::proto::MessageWrapperResponse  BlockSyncManager::processBlockSyncResponse(
         {
             std::unique_lock<std::mutex> uniqueLock(this->classMutex);
             this->startTime = 0;
+            this->stateCondition.notify_all();
         }
     }
     response.set_success(true);
@@ -170,8 +171,8 @@ BlockSyncManager::processRequestBlockSyncRetry() {
     //KETO_LOG_DEBUG << "[BlockSyncManager::processRequestBlockSyncRetry] trigger the retry by resetting the start time";
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
     // reschedule to run in a minutes time
-    //this->startTime = time(0) + Constants::SYNC_RETRY_DELAY_MIN;
     this->startTime = 0;
+    this->stateCondition.notify_all();
 }
 
 void
@@ -189,7 +190,7 @@ BlockSyncManager::notifyPeers(Status status) {
         std::unique_lock<std::mutex> uniqueLock(this->classMutex);
         this->startTime = 0;
         this->status = status;
-
+        this->stateCondition.notify_all();
     }
     // as this node is not enabled we will not notify our
     // peers of the fact that the synchronization has been completed.
@@ -253,10 +254,16 @@ keto::event::Event BlockSyncManager::isBlockSyncComplete(const keto::event::Even
     return keto::server_common::toEvent<keto::proto::IsBlockSyncComplete>(isBlockSyncCompleteProto);
 }
 
-bool BlockSyncManager::isExpired() {
+bool BlockSyncManager::waitForExpired() {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
     std::time_t now = time(0);
-    return now > (this->startTime + Constants::SYNC_EXPIRY_TIME);
+
+    std::time_t calculatedExpiryTime = this->startTime + Constants::SYNC_EXPIRY_TIME;
+    if (now >= calculatedExpiryTime) {
+        return true;
+    }
+    this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(calculatedExpiryTime - now));
+    return false;
 }
 
 

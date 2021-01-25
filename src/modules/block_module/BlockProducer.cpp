@@ -832,7 +832,6 @@ void BlockProducer::sync() {
         while (this->getState() != BlockProducer::State::terminated &&
                 this->getState() == BlockProducer::State::sync_blocks &&
             BlockSyncManager::getInstance()->getStatus() != BlockSyncManager::COMPLETE) {
-            std::this_thread::sleep_for(std::chrono::seconds(2));
             keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
             BlockService::getInstance()->sync();
             transactionPtr->commit();
