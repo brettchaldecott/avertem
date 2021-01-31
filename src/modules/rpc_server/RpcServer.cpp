@@ -2100,8 +2100,10 @@ int RpcServer::decrementSessionCount() {
 void RpcServer::waitForSessionEnd() {
     KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerPublish] waitForSessionEnd : " << this->sessionCount;
     bool waitForTimeout = false;
-    while(getSessionCount(waitForTimeout))  {
+    int sessionCount = 0;
+    while(sessionCount = getSessionCount(waitForTimeout))  {
         // get the list of sessions
+        int count = 0;
         for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
             try {
                 //KETO_LOG_DEBUG << "[RpcServer::pushBlock] push block to node [" << Botan::hex_encode((const uint8_t*)account.c_str(),account.size(),true) << "]";
@@ -2109,6 +2111,7 @@ void RpcServer::waitForSessionEnd() {
                         account);
                 if (sessionPtr_) {
                     sessionPtr_->closeSession();
+                    count++;
                 }
             } catch (keto::common::Exception &ex) {
                 KETO_LOG_ERROR << "[RpcServer::pushBlock]Failed to push the block : " << ex.what();
@@ -2123,7 +2126,12 @@ void RpcServer::waitForSessionEnd() {
             }
         }
         waitForTimeout = true;
-        KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerPublish] waitForSessionEnd ";
+        KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerPublish] waitForSessionEnd [" << sessionCount
+            << "][" << count << "]";
+        if (!count) {
+            KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerPublish] breaking the count";
+            break;
+        }
     }
 }
 

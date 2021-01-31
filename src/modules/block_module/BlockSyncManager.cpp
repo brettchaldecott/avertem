@@ -262,6 +262,8 @@ bool BlockSyncManager::waitForExpired() {
     if (now >= calculatedExpiryTime) {
         return true;
     }
+    KETO_LOG_INFO << "[BlockSyncManager::waitForExpired] Wait for expiry [" << calculatedExpiryTime << "][" <<
+                  now << "] difference [" << calculatedExpiryTime - now << "]";
     this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(calculatedExpiryTime - now));
     return false;
 }
