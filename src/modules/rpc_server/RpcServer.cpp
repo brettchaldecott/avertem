@@ -1579,6 +1579,10 @@ public:
     {
         if(ec) {
             return fail(ec, "accept");
+        } else if (rpcServer->isTerminated()) {
+            KETO_LOG_ERROR << "Server is terminated cannot accept anymore connections";
+            socket.close();
+            return;
         } else {
             // Create the session and run it
             std::make_shared<session>(std::move(socket), *ctx_, rpcServer)->run();
@@ -2126,12 +2130,8 @@ void RpcServer::waitForSessionEnd() {
             }
         }
         waitForTimeout = true;
-        KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerPublish] waitForSessionEnd [" << sessionCount
+        KETO_LOG_ERROR << "[RpcServer::waitForSessionEnd] waitForSessionEnd [" << sessionCount
             << "][" << count << "]";
-        if (!count) {
-            KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerPublish] breaking the count";
-            break;
-        }
     }
 }
 
