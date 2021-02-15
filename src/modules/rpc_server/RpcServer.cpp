@@ -1083,7 +1083,10 @@ public:
         }
         std::vector<std::string> peers = RpcServerSession::getInstance()->handlePeers(this->serverHelloProtoHelperPtr->getAccountHash(),str.str());
         if (peers.size() < Constants::MIN_PEERS) {
-            peers.push_back(this->rpcServer->getExternalPeerInfo());
+            // exclude external peers that match this one
+            if (this->rpcServer->getExternalPeerInfo() != str.str()) {
+                peers.push_back(this->rpcServer->getExternalPeerInfo());
+            }
         }
         peerResponseHelper.addPeers(peers);
 

@@ -53,13 +53,12 @@ std::time_t BlockSyncManager::getStartTime() {
 }
 
 void BlockSyncManager::sync() {
-    Status status = getStatus();
     KETO_LOG_INFO << "[BlockSyncManager::sync] start of the sync : " << status;
     if (!waitForExpired()) {
         KETO_LOG_INFO << "[BlockSyncManager::sync] the timeout has not been reached yet [" << this->getStartTime() << "][" <<
             time(0) << "]";
         return;
-    } else if (status == COMPLETE) {
+    } else if (getStatus() == COMPLETE) {
         KETO_LOG_INFO << "[BlockSyncManager::sync] the processing is now complete ignore further sync requests";
         return;
     }
@@ -133,13 +132,19 @@ keto::proto::SignedBlockBatchMessage  BlockSyncManager::requestBlocks(const keto
 
 keto::proto::MessageWrapperResponse  BlockSyncManager::processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage) {
     keto::proto::MessageWrapperResponse response;
-    if (keto::block_db::BlockChainStore::getInstance()->processBlockSyncResponse(signedBlockBatchMessage,BlockChainCallbackImpl()) && !signedBlockBatchMessage.partial_result()) {
+    bool blockWriteResponse = false;
+    {
+        std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+        blockWriteResponse = keto::block_db::BlockChainStore::getInstance()->processBlockSyncResponse(signedBlockBatchMessage,
+                                                                                 BlockChainCallbackImpl());
+    }
+    if (blockWriteResponse && !signedBlockBatchMessage.partial_result()) {
         response.set_result("complete");
         {
             std::unique_lock<std::mutex> uniqueLock(this->classMutex);
             this->startTime = 0;
             this->status = COMPLETE;
-
+            this->stateCondition.notify_all();
         }
         KETO_LOG_INFO << "[BlockSyncManager::processBlockSyncResponse]" << " ########################################################";
         KETO_LOG_INFO << "[BlockSyncManager::processBlockSyncResponse]" << " ######## Synchronization has now been completed ########";
@@ -226,6 +231,9 @@ BlockSyncManager::forceResync() {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
     KETO_LOG_INFO << "[BlockSyncManager::forceResync] force the resync : " << this->status;
     this->status = INIT;
+    this->startTime = 0;
+    this->stateCondition.notify_all();
+
 }
 
 void BlockSyncManager::broadcastBlock(const keto::block_db::SignedBlockWrapperMessageProtoHelper& signedBlockWrapperMessageProtoHelper) {
