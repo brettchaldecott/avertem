@@ -741,6 +741,11 @@ std::string RpcSession::handleTransaction(const std::string& command, const std:
 }
 
 std::string RpcSession::handleBlock(const std::string& command, const std::string& message) {
+
+    // if this method is called the peer knows it is active and we can thus use it for further synchronization
+    if (!isActive()) {
+        setActive(true);
+    }
     keto::proto::SignedBlockWrapperMessage signedBlockWrapperMessage;
     signedBlockWrapperMessage.ParseFromString(keto::server_common::VectorUtils().copyVectorToString(
             Botan::hex_decode(message)));

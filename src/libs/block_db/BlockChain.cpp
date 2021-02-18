@@ -294,7 +294,7 @@ BlockChain::BlockChain(std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr,
 bool BlockChain::writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage, const BlockChainCallback& callback) {
     //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     SignedBlockWrapperMessageProtoHelper signedBlockWrapperMessageProtoHelper(signedBlockWrapperMessage);
-
+    
     bool result = true;
     for (int index = 0; index < signedBlockWrapperMessageProtoHelper.size(); index++) {
         SignedBlockWrapperProtoHelperPtr signedBlockWrapperProtoHelperPtr =

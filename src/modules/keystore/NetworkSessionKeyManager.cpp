@@ -181,17 +181,27 @@ void NetworkSessionKeyManager::setSession(const keto::proto::NetworkKeysWrapper&
     // check if the slot is registered
     if (this->sessionSlots.count(networkKeysHelper.getSlot())) {
         NetworkSessionSlotPtr networkSessionSlotPtr = this->sessionSlots[networkKeysHelper.getSlot()];
-        if (networkSessionSlotPtr->getTimeStamp() >= networkKeysHelper.getTimeStamp()) {
-            // the network timestamp is less than the current timestamp ignore
-            KETO_LOG_INFO << "[NetworkSessionKeyManager::setSession] the time stamp is old [" <<
-                networkSessionSlotPtr->getTimeStamp() << "][" <<
-                networkKeysHelper.getTimeStamp() << "]";
-            return;
-        }
-        if (networkSessionSlotPtr->checkHashIndex(networkKeyHelpers)) {
+        if (networkSessionConfigured && networkSessionSlotPtr->checkHashIndex(networkKeyHelpers)) {
             // found match and will now ignore
             KETO_LOG_INFO << "[NetworkSessionKeyManager::setSession] The hashes were set.";
             return;
+        } else if (networkSessionConfigured && networkSessionSlotPtr->getTimeStamp() >= networkKeysHelper.getTimeStamp()) {
+            // the network timestamp is less than the current timestamp ignore
+            KETO_LOG_INFO << "[NetworkSessionKeyManager::setSession] the time stamp is old [" <<
+                          networkSessionSlotPtr->getTimeStamp() << "][" <<
+                          networkKeysHelper.getTimeStamp() << "]";
+            return;
+        }
+    } else if (this->sessionSlots.count(this->slot)) {
+        // do not override this slot if the current slot has a newer timestamp
+        NetworkSessionSlotPtr networkSessionSlotPtr = this->sessionSlots[this->slot];
+        if (networkSessionSlotPtr->getTimeStamp() >= networkKeysHelper.getTimeStamp()) {
+            // the network timestamp is less than the current timestamp ignore
+            KETO_LOG_INFO << "[NetworkSessionKeyManager::setSession] the time stamp is old [" <<
+                          networkSessionSlotPtr->getTimeStamp() << "][" <<
+                          networkKeysHelper.getTimeStamp() << "]";
+            BOOST_THROW_EXCEPTION(keto::keystore::InvalidNetworkSessionSlotExcption(
+                                          "The current session is newer than the one being propergated and it must be ignored."));
         }
     }
 

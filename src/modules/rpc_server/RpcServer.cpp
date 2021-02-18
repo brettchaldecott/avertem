@@ -411,6 +411,10 @@ public:
         return this->active;
     }
 
+    bool setActive(bool active) {
+        return this->active = active;
+    }
+
     // Start the asynchronous operation
     void
     run()
@@ -867,7 +871,7 @@ public:
         if (this->closed) {
             return false;
         }
-        if (this->isActive()) {
+        if (!this->isActive()) {
             return false;
         }
         keto::election_common::ElectionPeerMessageProtoHelper electionPeerMessageProtoHelper;
@@ -1347,6 +1351,9 @@ public:
 
     void handleBlockPush(const std::string& command, const std::string& payload) {
         //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleBlockPush] handle block push";
+        if (!isActive()) {
+            setActive(true);
+        }
         keto::proto::SignedBlockWrapperMessage signedBlockWrapperMessage;
         signedBlockWrapperMessage.ParseFromString(keto::server_common::VectorUtils().copyVectorToString(
                 Botan::hex_decode(payload)));

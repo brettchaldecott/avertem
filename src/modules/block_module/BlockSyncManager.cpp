@@ -53,12 +53,10 @@ std::time_t BlockSyncManager::getStartTime() {
 }
 
 void BlockSyncManager::sync() {
-    KETO_LOG_INFO << "[BlockSyncManager::sync] start of the sync : " << status;
-    if (!waitForExpired()) {
-        KETO_LOG_INFO << "[BlockSyncManager::sync] the timeout has not been reached yet [" << this->getStartTime() << "][" <<
-            time(0) << "]";
-        return;
-    } else if (getStatus() == COMPLETE) {
+    KETO_LOG_INFO << "[BlockSyncManager::sync] start of the sync : " << getStatus();
+    waitForExpired();
+    KETO_LOG_INFO << "[BlockSyncManager::sync] After expired : " << getStatus();
+    if (getStatus() == COMPLETE) {
         KETO_LOG_INFO << "[BlockSyncManager::sync] the processing is now complete ignore further sync requests";
         return;
     }
@@ -156,6 +154,10 @@ keto::proto::MessageWrapperResponse  BlockSyncManager::processBlockSyncResponse(
             notifyPeers();
         }
 
+    } else if (signedBlockBatchMessage.partial_result()) {
+        KETO_LOG_INFO << "[BlockSyncManager::processBlockSyncResponse] Server is not in sync, will need to back off.";
+        response.set_result("applied");
+        scheduledDelayRetry();
     } else {
         KETO_LOG_INFO << "[BlockSyncManager::processBlockSyncResponse] finished applying a block need to trigger the next request.";
         response.set_result("applied");
@@ -185,7 +187,7 @@ BlockSyncManager::scheduledDelayRetry() {
     //KETO_LOG_DEBUG << "[BlockSyncManager::processRequestBlockSyncRetry] trigger the retry by resetting the start time";
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
     // reschedule to run in a minutes time
-    this->startTime = time(0) + Constants::SYNC_RETRY_DELAY_MIN;
+    this->startTime = time(0) - (Constants::SYNC_EXPIRY_TIME - Constants::SYNC_RETRY_DELAY_MIN);
 }
 
 void
@@ -229,6 +231,10 @@ BlockSyncManager::isEnabled() {
 void
 BlockSyncManager::forceResync() {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    if (this->status == INIT) {
+        KETO_LOG_INFO << "[BlockSyncManager::forceResync] Sync is already in process ignore request to force it again" << this->status;
+        return;
+    }
     KETO_LOG_INFO << "[BlockSyncManager::forceResync] force the resync : " << this->status;
     this->status = INIT;
     this->startTime = 0;
