@@ -181,16 +181,17 @@ void NetworkSessionKeyManager::setSession(const keto::proto::NetworkKeysWrapper&
     // check if the slot is registered
     if (this->sessionSlots.count(networkKeysHelper.getSlot())) {
         NetworkSessionSlotPtr networkSessionSlotPtr = this->sessionSlots[networkKeysHelper.getSlot()];
-        if (networkSessionConfigured && networkSessionSlotPtr->checkHashIndex(networkKeyHelpers)) {
+        if (networkSessionSlotPtr->checkHashIndex(networkKeyHelpers)) {
             // found match and will now ignore
             KETO_LOG_INFO << "[NetworkSessionKeyManager::setSession] The hashes were set.";
             return;
-        } else if (networkSessionConfigured && networkSessionSlotPtr->getTimeStamp() >= networkKeysHelper.getTimeStamp()) {
+        } else if (networkSessionSlotPtr->getTimeStamp() >= networkKeysHelper.getTimeStamp()) {
             // the network timestamp is less than the current timestamp ignore
             KETO_LOG_INFO << "[NetworkSessionKeyManager::setSession] the time stamp is old [" <<
                           networkSessionSlotPtr->getTimeStamp() << "][" <<
                           networkKeysHelper.getTimeStamp() << "]";
-            return;
+            BOOST_THROW_EXCEPTION(keto::keystore::InvalidNetworkSessionSlotException(
+                                          "The current session is newer than the one being propergated and it must be ignored."));
         }
     } else if (this->sessionSlots.count(this->slot)) {
         // do not override this slot if the current slot has a newer timestamp
@@ -200,7 +201,7 @@ void NetworkSessionKeyManager::setSession(const keto::proto::NetworkKeysWrapper&
             KETO_LOG_INFO << "[NetworkSessionKeyManager::setSession] the time stamp is old [" <<
                           networkSessionSlotPtr->getTimeStamp() << "][" <<
                           networkKeysHelper.getTimeStamp() << "]";
-            BOOST_THROW_EXCEPTION(keto::keystore::InvalidNetworkSessionSlotExcption(
+            BOOST_THROW_EXCEPTION(keto::keystore::InvalidNetworkSessionSlotException(
                                           "The current session is newer than the one being propergated and it must be ignored."));
         }
     }
