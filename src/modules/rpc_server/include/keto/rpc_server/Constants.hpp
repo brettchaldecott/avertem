@@ -46,6 +46,8 @@ public:
 
     static constexpr const char* EXTERNAL_HOSTNAME  = "external-hostname";
 
+    static constexpr const char* CONFIGURED_PEER_LIST = "configured-peer-list";
+
     static constexpr const int SESSION_ID_LENGTH = 32;
 
     static const int DEFAULT_RPC_SERVER_QUEUE_DELAY;

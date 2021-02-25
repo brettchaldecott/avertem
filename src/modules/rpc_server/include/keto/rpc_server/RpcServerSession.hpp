@@ -48,6 +48,7 @@ private:
     std::recursive_mutex classMutex;
     std::map<std::vector<uint8_t>,std::string> accountPeerCache;
     std::vector<std::string> accountPeerList;
+    std::vector<std::string> configuredPeerList;
     
 };
 

@@ -15,17 +15,28 @@
 #include <condition_variable>
 
 #include "keto/rpc_server/RpcServerSession.hpp"
-
+#include "keto/environment/EnvironmentManager.hpp"
 #include "keto/environment/LogManager.hpp"
 
 #include "keto/rpc_server/Constants.hpp"
+#include "keto/server_common/StringUtils.hpp"
 
 namespace keto {
 namespace rpc_server {
 
 static RpcServerSessionPtr singleton;
 
+namespace ketoEnv = keto::environment;
+
 RpcServerSession::RpcServerSession() {
+    // retrieve the configuration
+    std::shared_ptr<ketoEnv::Config> config = ketoEnv::EnvironmentManager::getInstance()->getConfig();
+
+    if (config->getVariablesMap().count(Constants::CONFIGURED_PEER_LIST)) {
+        this->configuredPeerList = keto::server_common::StringUtils(
+                config->getVariablesMap()[Constants::CONFIGURED_PEER_LIST].as<std::string>()).tokenize(",");
+    }
+
 }
 
 RpcServerSession::~RpcServerSession() {
@@ -47,8 +58,13 @@ void RpcServerSession::fin() {
 std::vector<std::string> RpcServerSession::handlePeers(const std::vector<uint8_t>& account,
         const std::string& host) {
     std::lock_guard<std::recursive_mutex> guard(classMutex);
-    std::vector<std::string> peers = getPeers(account);
-    addPeer(account,host);
+    std::vector<std::string> peers;
+    if (this->configuredPeerList.size()) {
+        peers = this->configuredPeerList;
+    } else {
+        peers = getPeers(account);
+    }
+    addPeer(account, host);
     return peers;
 }
 
