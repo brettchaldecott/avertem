@@ -2112,13 +2112,15 @@ int RpcServer::decrementSessionCount() {
 }
 
 void RpcServer::waitForSessionEnd() {
-    KETO_LOG_ERROR << "[RpcSessionManager::electBlockProducerPublish] waitForSessionEnd : " << this->sessionCount;
+    KETO_LOG_ERROR << "[RpcSessionManager::waitForSessionEnd] waitForSessionEnd : " << this->sessionCount;
     bool waitForTimeout = false;
     int sessionCount = 0;
-    while(sessionCount = getSessionCount(waitForTimeout))  {
+    // wait until there are no active sessions
+    std::vector<std::string> sessions;
+    while(sessionCount = getSessionCount(waitForTimeout) && (sessions = AccountSessionCache::getInstance()->getSessions()).size())  {
         // get the list of sessions
         int count = 0;
-        for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
+        for (std::string account: sessions) {
             try {
                 //KETO_LOG_DEBUG << "[RpcServer::pushBlock] push block to node [" << Botan::hex_encode((const uint8_t*)account.c_str(),account.size(),true) << "]";
                 SessionBasePtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
@@ -2141,7 +2143,7 @@ void RpcServer::waitForSessionEnd() {
         }
         waitForTimeout = true;
         KETO_LOG_ERROR << "[RpcServer::waitForSessionEnd] waitForSessionEnd [" << sessionCount
-            << "][" << count << "]";
+            << "][" << count << "][" << sessions.size() << "]";
     }
 }
 
