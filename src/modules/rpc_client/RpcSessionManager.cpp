@@ -110,12 +110,20 @@ void RpcSessionManager::setPeers(const std::vector<std::string>& peers, bool pee
 
 void RpcSessionManager::reconnect(RpcPeer& rpcPeer) {
     std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+
+    // remove the account and session mappings
+    RpcSessionPtr rpcSessionPtr = this->sessionMap[(std::string)rpcPeer];
+    if (rpcSessionPtr && !rpcSessionPtr->getAccountHash().empty()) {
+        this->accountSessionMap.erase(rpcSessionPtr->getAccountHash());
+    }
+    this->sessionMap.erase((std::string)rpcPeer);
+
+    // check if terminated
     if (this->terminated) {
         KETO_LOG_INFO << "The session manager is terminated ignoring the peer " << rpcPeer.getPeer();
         return;
     }
     rpcPeer.incrementReconnectCount();
-    this->sessionMap.erase((std::string)rpcPeer);
     if (rpcPeer.getReconnectCount() >= Constants::SESSION::MAX_RETRY_COUNT) {
         // force a reconnect to the peers
         setPeers(keto::server_common::StringUtils(
@@ -196,27 +204,29 @@ void RpcSessionManager::terminate() {
 }
 
 
-int RpcSessionManager::incrementSessionCount() {
-    std::unique_lock<std::mutex> unique_lock(this->sessionClassMutex);
-    int result = ++this->sessionCount;
-    this->stateCondition.notify_all();
-    return result;
-}
-
-int RpcSessionManager::decrementSessionCount() {
-    std::unique_lock<std::mutex> unique_lock(this->sessionClassMutex);
-    int result = --this->sessionCount;
-    this->stateCondition.notify_all();
-    return result;
-}
+//int RpcSessionManager::incrementSessionCount() {
+//    std::unique_lock<std::mutex> unique_lock(this->sessionClassMutex);
+//    int result = ++this->sessionCount;
+//    this->stateCondition.notify_all();
+//    return result;
+//}
+//
+//int RpcSessionManager::decrementSessionCount() {
+//    std::unique_lock<std::mutex> unique_lock(this->sessionClassMutex);
+//    int result = --this->sessionCount;
+//    this->stateCondition.notify_all();
+//    return result;
+//}
 
 void RpcSessionManager::waitForSessionEnd() {
     KETO_LOG_ERROR << "[RpcSessionManager::waitForSessionEnd] waitForSessionEnd : " << this->sessionCount;
 
     bool waitForTimeout = false;
-    while(getSessionCount(waitForTimeout)) {
+    int sessions = 0;
+    std::vector<std::shared_ptr<keto::rpc_client::RpcSession>> peers;
+    while((sessions = getSessionCount(waitForTimeout)) && (peers = getPeers()).size()){
         KETO_LOG_ERROR << "[RpcSessionManager::waitForSessionEnd] stop the peers";
-        for (RpcSessionPtr rpcSessionPtr : getPeers()) {
+        for (RpcSessionPtr rpcSessionPtr : peers) {
             if (rpcSessionPtr) {
                 try {
                     rpcSessionPtr->closeSession();
@@ -235,16 +245,18 @@ void RpcSessionManager::waitForSessionEnd() {
             }
         }
         waitForTimeout = true;
-        KETO_LOG_ERROR << "[RpcSessionManager::waitForSessionEnd] waitForSessionEnd";
+        KETO_LOG_ERROR << "[RpcSessionManager::waitForSessionEnd] waitForSessionEnd [" << sessions << "][" << peers.size() << "]";
     }
 }
 
 int RpcSessionManager::getSessionCount(bool waitForTimeout) {
-    std::unique_lock<std::mutex> unique_lock(this->sessionClassMutex);
-    if (waitForTimeout) {
-        this->stateCondition.wait_for(unique_lock, std::chrono::milliseconds(1000));
+    {
+        std::unique_lock<std::mutex> unique_lock(this->sessionClassMutex);
+        if (waitForTimeout) {
+            this->stateCondition.wait_for(unique_lock, std::chrono::milliseconds(1000));
+        }
     }
-    return this->sessionCount;
+    return getPeers().size();
 }
 
 bool RpcSessionManager::hasNetworkState() {
@@ -390,6 +402,7 @@ void RpcSessionManager::preStop() {
         iter->join();
     }
     this->threadsVector.clear();
+    this->ioc.reset();
 }
 
 void RpcSessionManager::stop() {

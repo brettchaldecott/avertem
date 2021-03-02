@@ -228,13 +228,11 @@ RpcSession::RpcSession(
     }
 
     this->readQueuePtr = ReadQueuePtr(new RpcSession::ReadQueue(this));
-    RpcSessionManager::getInstance()->incrementSessionCount();
-        KETO_LOG_INFO << "[RpcSession::RpcSession] New session created for host : " << rpcPeer.getHost();
+    KETO_LOG_INFO << "[RpcSession::RpcSession] New session created for host : " << rpcPeer.getHost();
 }
 
 RpcSession::~RpcSession() {
     KETO_LOG_INFO << "[RpcSession::~RpcSession] Session ending for host : " << rpcPeer.getHost();
-    RpcSessionManager::getInstance()->decrementSessionCount();
     this->readQueuePtr.reset();
     this->terminated = true;
 }
@@ -258,10 +256,10 @@ RpcSession::on_resolve(
     boost::system::error_code ec,
     tcp::resolver::results_type results)
 {
-    if (RpcSessionManager::getInstance()->isTerminated()) {
+    /*if (RpcSessionManager::getInstance()->isTerminated()) {
         RpcSessionManager::getInstance()->removeSession(this->rpcPeer, this->accountHash);
         return;
-    } else if(ec) {
+    } else*/ if(ec) {
         RpcSessionManager::getInstance()->reconnect(rpcPeer);
         return fail(ec, Constants::SESSION::RESOLVE);
     }
@@ -299,10 +297,10 @@ RpcSession::on_connect(boost::system::error_code ec,tcp::resolver::results_type:
 void
 RpcSession::on_ssl_handshake(boost::system::error_code ec)
 {
-    if (RpcSessionManager::getInstance()->isTerminated()) {
+    /*if (RpcSessionManager::getInstance()->isTerminated()) {
         RpcSessionManager::getInstance()->removeSession(this->rpcPeer, this->accountHash);
         return;
-    } else if(ec) {
+    } else*/ if(ec) {
         RpcSessionManager::getInstance()->reconnect(rpcPeer);
         return fail(ec, Constants::SESSION::SSL_HANDSHAKE);
     }
@@ -335,11 +333,11 @@ RpcSession::on_ssl_handshake(boost::system::error_code ec)
 void
 RpcSession::on_handshake(boost::system::error_code ec)
 {
-    if (RpcSessionManager::getInstance()->isTerminated()) {
+    /*if (RpcSessionManager::getInstance()->isTerminated()) {
         do_close();
         RpcSessionManager::getInstance()->removeSession(this->rpcPeer, this->accountHash);
         return;
-    } else if(ec) {
+    } else*/ if(ec) {
         do_close();
         RpcSessionManager::getInstance()->reconnect(rpcPeer);
         return fail(ec, Constants::SESSION::HANDSHAKE);
@@ -396,19 +394,18 @@ RpcSession::on_read(
     if (this->isClosed()) {
         readQueuePtr->deactivate();
         return;
-    } else if (ec && !ws_.is_open()) {
-        // handle the close
-        send(keto::server_common::Constants::RPC_COMMANDS::CLOSE);
-        this->setClosed(true);
-        RpcSessionManager::getInstance()->removeSession(this->rpcPeer, this->accountHash);
-        RpcSessionManager::getInstance()->reconnect(rpcPeer);
-        return;
     } else if (ec) {
         readQueuePtr->deactivate();
         closeResponse(keto::server_common::Constants::RPC_COMMANDS::CLOSE,keto::server_common::Constants::RPC_COMMANDS::CLOSE);
         RpcSessionManager::getInstance()->reconnect(rpcPeer);
         return fail(ec, "read");
-    }
+    }/* else if (RpcSessionManager::getInstance()->isTerminated()) {
+        // handle the close
+        send(keto::server_common::Constants::RPC_COMMANDS::CLOSE);
+        this->setClosed(true);
+        RpcSessionManager::getInstance()->removeSession(this->rpcPeer, this->accountHash);
+        return;
+    }*/
 
     // parse the input
     std::stringstream ss;
@@ -548,10 +545,10 @@ void
 RpcSession::do_close() {
 
     // Close the WebSocket connection
-    if (!ws_.is_open()) {
+    //if (!ws_.is_open()) {
         // ignore a closed connection
-        return;
-    }
+        //return;
+    //}
     ws_.async_close(websocket::close_code::normal,
                     beast::bind_front_handler(
                             &RpcSession::on_close,
@@ -573,6 +570,9 @@ RpcSession::on_close(boost::system::error_code ec)
                 keto::server_common::toEvent<keto::proto::RpcPeer>(
                         keto::server_common::Events::DEREGISTER_RPC_PEER,rpcPeerHelper));
     }
+
+    // remove the session now that it is closed
+    RpcSessionManager::getInstance()->removeSession(this->rpcPeer, this->accountHash);
 
     if(ec)
         return fail(ec, "close");
@@ -617,7 +617,7 @@ void RpcSession::closeResponse(const std::string& command, const std::string& me
     KETO_LOG_INFO << "Client sending close to server [" << message << "]";
     send(keto::server_common::Constants::RPC_COMMANDS::CLOSE);
     this->setClosed(true);
-    RpcSessionManager::getInstance()->removeSession(this->rpcPeer, this->accountHash);
+    //RpcSessionManager::getInstance()->removeSession(this->rpcPeer, this->accountHash);
 }
 
 std::string RpcSession::helloConsensusResponse(const std::string& command, const std::string& sessionKey, const std::string& initHash) {
@@ -1269,6 +1269,10 @@ bool RpcSession::isActive() {
 
 bool RpcSession::isRegistered() {
     return this->registered;
+}
+
+std::string RpcSession::getAccountHash() {
+    return this->accountHash;
 }
 
 void

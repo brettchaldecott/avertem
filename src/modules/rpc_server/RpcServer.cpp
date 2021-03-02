@@ -1606,7 +1606,7 @@ public:
     void
     fail(boost::system::error_code ec, char const* what)
     {
-        KETO_LOG_ERROR << "Failed to process because : " << what << ": " << ec.message();
+        KETO_LOG_ERROR << "Failed to accept because : " << what << ": " << ec.message();
     }
 
     void
@@ -1732,6 +1732,7 @@ void RpcServer::preStop() {
         iter->join();
     }
     this->threadsVector.clear();
+    this->ioc.reset();
 
     KETO_LOG_ERROR << "[RpcServer] clear";
     listenerPtr.reset();
@@ -2117,7 +2118,9 @@ void RpcServer::waitForSessionEnd() {
     int sessionCount = 0;
     // wait until there are no active sessions
     std::vector<std::string> sessions;
-    while(sessionCount = getSessionCount(waitForTimeout) && (sessions = AccountSessionCache::getInstance()->getSessions()).size())  {
+    while((sessionCount = getSessionCount(waitForTimeout)) && (sessions = AccountSessionCache::getInstance()->getSessions()).size())  {
+        KETO_LOG_ERROR << "[RpcServer::waitForSessionEnd] session still open close them [" << sessionCount
+                       << "][" << sessions.size() << "]";
         // get the list of sessions
         int count = 0;
         for (std::string account: sessions) {

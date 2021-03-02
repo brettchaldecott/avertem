@@ -222,6 +222,7 @@ public:
     bool isActive();
     bool isRegistered();
     //void deactivateQueue();
+    std::string getAccountHash();
     
 private:
     bool closed;

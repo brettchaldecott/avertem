@@ -95,8 +95,8 @@ public:
     bool isTerminated();
     void terminate();
 
-    int incrementSessionCount();
-    int decrementSessionCount();
+    //int incrementSessionCount();
+    //int decrementSessionCount();
 
 protected:
     void setPeers(const std::vector<std::string>& peers, bool peered = true);
