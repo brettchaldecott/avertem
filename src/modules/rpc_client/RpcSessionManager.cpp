@@ -152,6 +152,12 @@ std::vector<std::shared_ptr<keto::rpc_client::RpcSession>> RpcSessionManager::ge
     return peers;
 }
 
+void RpcSessionManager::clearSessions() {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+    this->sessionMap.clear();
+    this->accountSessionMap.clear();
+}
+
 std::vector<std::string> RpcSessionManager::listPeers() {
     std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     std::vector<std::string> keys;
@@ -247,6 +253,8 @@ void RpcSessionManager::waitForSessionEnd() {
         waitForTimeout = true;
         KETO_LOG_ERROR << "[RpcSessionManager::waitForSessionEnd] waitForSessionEnd [" << sessions << "][" << peers.size() << "]";
     }
+    // clear the sessions
+    clearSessions();
 }
 
 int RpcSessionManager::getSessionCount(bool waitForTimeout) {
@@ -406,8 +414,7 @@ void RpcSessionManager::preStop() {
 }
 
 void RpcSessionManager::stop() {
-    this->sessionMap.clear();
-    this->accountSessionMap.clear();
+
 }
 
 keto::event::Event RpcSessionManager::activatePeer(const keto::event::Event& event) {
