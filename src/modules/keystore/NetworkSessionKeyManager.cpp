@@ -178,6 +178,30 @@ void NetworkSessionKeyManager::setSession(const keto::proto::NetworkKeysWrapper&
         keto::crypto::SecureVectorUtils().copySecureToString(this->consensusHashGenerator->decrypt(networkKeysWrapperHelper.getBytes())));
     std::vector<keto::rpc_protocol::NetworkKeyHelper> networkKeyHelpers =  networkKeysHelper.getNetworkKeys();
 
+    if (networkSessionConfigured) {
+        NetworkSessionSlotPtr networkSessionSlotPtr = this->sessionSlots[this->slot];
+        if (networkSessionSlotPtr->checkHashIndex(networkKeyHelpers)) {
+            // found match and will now ignore
+            KETO_LOG_INFO << "[NetworkSessionKeyManager::setSession] The current slot is the same as the existing slot";
+            return;
+        }
+        if (networkSessionSlotPtr->getTimeStamp() >= networkKeysHelper.getTimeStamp()) {
+            // the network timestamp is less than the current timestamp ignore
+            KETO_LOG_INFO << "[NetworkSessionKeyManager::setSession] the time stamp is old [" <<
+                          networkSessionSlotPtr->getTimeStamp() << "][" <<
+                          networkKeysHelper.getTimeStamp() << "]";
+            BOOST_THROW_EXCEPTION(keto::keystore::InvalidNetworkSessionSlotException(
+                                          "The current session is newer than the one being propergated and it must be ignored."));
+        }
+        if (networkSessionSlotPtr->getTimeStamp() < networkKeysHelper.getTimeStamp()) {
+            // the network timestamp is less than the current timestamp ignore
+            KETO_LOG_INFO << "[NetworkSessionKeyManager::setSession] our timestamp is out of date [" <<
+                          networkSessionSlotPtr->getTimeStamp() << "][" <<
+                          networkKeysHelper.getTimeStamp() << "]";
+            BOOST_THROW_EXCEPTION(keto::keystore::OutOfDateNetworkSessionSlotException(
+                                          "Out of date network slot."));
+        }
+    }
     if (this->sessionSlots.count(this->slot)) {
         // do not override this slot if the current slot has a newer timestamp
         NetworkSessionSlotPtr networkSessionSlotPtr = this->sessionSlots[this->slot];

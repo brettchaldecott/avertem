@@ -158,6 +158,7 @@ typedef std::shared_ptr<ReadQueueEntry> ReadQueueEntryPtr;
 class SessionBase {
 public:
     virtual bool isActive() = 0;
+    virtual long getLastBlockTouch() = 0;
     virtual void routeTransaction(keto::proto::MessageWrapper&  messageWrapper) = 0;
     virtual void pushBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage) = 0;
     virtual void performNetworkSessionReset() = 0;
@@ -373,6 +374,7 @@ private:
     bool registered;
     bool active;
     bool closed;
+    long lastBlockTouch;
 
 public:
     // Take ownership of the socket
@@ -383,6 +385,7 @@ public:
         , registered(false)
         , active(false)
         , closed(false)
+        , lastBlockTouch(0)
     {
         ws_.auto_fragment(false);
         this->generatorPtr = std::shared_ptr<Botan::AutoSeeded_RNG>(new Botan::AutoSeeded_RNG());
@@ -409,6 +412,16 @@ public:
 
     bool isActive() {
         return this->active;
+    }
+
+    long getLastBlockTouch() {
+        std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
+        return this->lastBlockTouch;
+    }
+
+    long blockTouch() {
+        std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
+        return this->lastBlockTouch = time(0);
     }
 
     bool setActive(bool active) {
@@ -1354,6 +1367,7 @@ public:
         if (!isActive()) {
             setActive(true);
         }
+        blockTouch();
         keto::proto::SignedBlockWrapperMessage signedBlockWrapperMessage;
         signedBlockWrapperMessage.ParseFromString(keto::server_common::VectorUtils().copyVectorToString(
                 Botan::hex_decode(payload)));
@@ -2028,25 +2042,22 @@ keto::event::Event RpcServer::activateNetworkState(const keto::event::Event& eve
 keto::event::Event RpcServer::requestBlockSync(const keto::event::Event& event) {
     keto::proto::SignedBlockBatchRequest request = keto::server_common::fromEvent<keto::proto::SignedBlockBatchRequest>(event);
     std::vector<SessionBasePtr> sessionBasePtrVector = AccountSessionCache::getInstance()->getActiveSessions();
-    if (sessionBasePtrVector.size() == 0) {
+    if (!sessionBasePtrVector.size()) {
         sessionBasePtrVector = AccountSessionCache::getInstance()->getSessionPtrs();
     }
     if (sessionBasePtrVector.size()) {
         // select a random client if the session base list is greater then 1
-        int pos = 0;
+        SessionBasePtr currentSessionPtr = sessionBasePtrVector[0];
         if (sessionBasePtrVector.size()>1) {
-            std::default_random_engine stdGenerator;
-            stdGenerator.seed(std::chrono::system_clock::now().time_since_epoch().count());
-            std::uniform_int_distribution<int> distribution(0, sessionBasePtrVector.size() - 1);
-            // seed
-            distribution(stdGenerator);
-
-            // retrieve
-            pos = distribution(stdGenerator);
+            for (SessionBasePtr sessionBasePtr : sessionBasePtrVector) {
+                if (sessionBasePtr && (sessionBasePtr->getLastBlockTouch() > currentSessionPtr->getLastBlockTouch())) {
+                    currentSessionPtr = sessionBasePtr;
+                }
+            }
         }
         // request the block sync from up stream
         try {
-            sessionBasePtrVector[pos]->requestBlockSync(request);
+            currentSessionPtr->requestBlockSync(request);
         } catch (keto::common::Exception &ex) {
             KETO_LOG_ERROR << "[RpcServer::requestBlockSync] Failed to request a block sync : " << ex.what();
             KETO_LOG_ERROR << "[RpcServer::requestBlockSync] Cause : " << boost::diagnostic_information(ex, true);

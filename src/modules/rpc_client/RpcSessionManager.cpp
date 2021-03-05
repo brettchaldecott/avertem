@@ -99,12 +99,23 @@ void RpcSessionManager::setPeers(const std::vector<std::string>& peers, bool pee
     }
     for (std::vector<std::string>::const_iterator iter = peers.begin();
             iter != peers.end(); iter++) {
-        RpcPeer rpcPeer((*iter),this->peered);
-        KETO_LOG_INFO << "Connect to peered server : " << rpcPeer.getPeer();
-        this->sessionMap[(*iter)] = std::make_shared<RpcSession>(
-                this->ioc,
-                this->ctx,rpcPeer);
-        this->sessionMap[(*iter)]->run();
+        try {
+            RpcPeer rpcPeer((*iter), this->peered);
+            KETO_LOG_INFO << "Connect to peered server : " << rpcPeer.getPeer();
+            this->sessionMap[(*iter)] = std::make_shared<RpcSession>(
+                    this->ioc,
+                    this->ctx, rpcPeer);
+            this->sessionMap[(*iter)]->run();
+        } catch (keto::common::Exception &ex) {
+            KETO_LOG_ERROR << "[RpcSessionManager::setPeers] Failed to set a peer : " << boost::diagnostic_information_what(ex, true);
+            KETO_LOG_ERROR << "[RpcSessionManager::setPeers] cause : " << ex.what();
+        } catch (boost::exception &ex) {
+            KETO_LOG_ERROR << "[RpcSessionManager::setPeers] Failed to set to a peer : " << boost::diagnostic_information_what(ex, true);
+        } catch (std::exception &ex) {
+            KETO_LOG_ERROR << "[RpcSessionManager::setPeers] Failed to set to a peer : " << ex.what();
+        } catch (...) {
+            KETO_LOG_ERROR << "[RpcSessionManager::setPeers] Failed to set to a peer : unknown";
+        }
     }
 }
 
@@ -130,13 +141,24 @@ void RpcSessionManager::reconnect(RpcPeer& rpcPeer) {
                 this->configuredPeersString).tokenize(","),false);
         return;
     }
-    this->sessionMap[(std::string)rpcPeer] = std::make_shared<RpcSession>(
+    try {
+        this->sessionMap[(std::string) rpcPeer] = std::make_shared<RpcSession>(
                 this->ioc,
-                this->ctx,rpcPeer);
-    std::this_thread::sleep_for(std::chrono::milliseconds(Constants::SESSION::RETRY_COUNT_DELAY));
-    KETO_LOG_INFO << "Attempt to reconnect to : " << rpcPeer.getPeer();
-    this->sessionMap[(std::string)rpcPeer]->run();
-    KETO_LOG_INFO << "After the reconnect : " << rpcPeer.getPeer();
+                this->ctx, rpcPeer);
+        std::this_thread::sleep_for(std::chrono::milliseconds(Constants::SESSION::RETRY_COUNT_DELAY));
+        KETO_LOG_INFO << "Attempt to reconnect to : " << rpcPeer.getPeer();
+        this->sessionMap[(std::string) rpcPeer]->run();
+        KETO_LOG_INFO << "After the reconnect : " << rpcPeer.getPeer();
+    } catch (keto::common::Exception &ex) {
+        KETO_LOG_ERROR << "[RpcSessionManager::reconnect] Failed to reconnect to a peer : " << boost::diagnostic_information_what(ex, true);
+        KETO_LOG_ERROR << "[RpcSessionManager::reconnect] cause : " << ex.what();
+    } catch (boost::exception &ex) {
+        KETO_LOG_ERROR << "[RpcSessionManager::reconnect] Failed to reconnect to a peer : " << boost::diagnostic_information_what(ex, true);
+    } catch (std::exception &ex) {
+        KETO_LOG_ERROR << "[RpcSessionManager::reconnect] Failed to reconnect to a peer : " << ex.what();
+    } catch (...) {
+        KETO_LOG_ERROR << "[RpcSessionManager::reconnect] Failed to reconnect to a peer : unknown";
+    }
 }
 
 
@@ -305,7 +327,7 @@ RpcSessionPtr RpcSessionManager::getActivePeer() {
     std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     for (std::map<std::string,std::shared_ptr<keto::rpc_client::RpcSession>>::iterator iter =
             this->accountSessionMap.begin(); iter != this->accountSessionMap.end(); iter++) {
-        if (iter->second->isActive()) {
+        if (iter->second && iter->second->isActive()) {
             return iter->second;
         }
     }
@@ -317,7 +339,7 @@ std::vector<RpcSessionPtr> RpcSessionManager::getActivePeers() {
     std::vector<RpcSessionPtr> result;
     for (std::map<std::string,std::shared_ptr<keto::rpc_client::RpcSession>>::iterator iter =
             this->accountSessionMap.begin(); iter != this->accountSessionMap.end(); iter++) {
-        if (iter->second->isActive()) {
+        if (iter->second && iter->second->isActive()) {
             result.push_back(iter->second);
         }
     }
@@ -371,11 +393,22 @@ void RpcSessionManager::postStart() {
     KETO_LOG_INFO << "After retrieving the peers.";
     for (std::vector<std::string>::iterator iter = peers.begin();
          iter != peers.end(); iter++) {
-        RpcPeer rpcPeer((*iter),this->peered);
-        this->sessionMap[(*iter)] = std::make_shared<RpcSession>(
-                this->ioc,
-                this->ctx,rpcPeer);
-        this->sessionMap[(*iter)]->run();
+        try {
+            RpcPeer rpcPeer((*iter), this->peered);
+            this->sessionMap[(*iter)] = std::make_shared<RpcSession>(
+                    this->ioc,
+                    this->ctx, rpcPeer);
+            this->sessionMap[(*iter)]->run();
+        } catch (keto::common::Exception &ex) {
+            KETO_LOG_ERROR << "[RpcSessionManager::postStart] Failed to start a peer : " << boost::diagnostic_information_what(ex, true);
+            KETO_LOG_ERROR << "[RpcSessionManager::postStart] cause : " << ex.what();
+        } catch (boost::exception &ex) {
+            KETO_LOG_ERROR << "[RpcSessionManager::postStart] Failed to start a peer : " << boost::diagnostic_information_what(ex, true);
+        } catch (std::exception &ex) {
+            KETO_LOG_ERROR << "[RpcSessionManager::postStart] Failed to start a peer : " << ex.what();
+        } catch (...) {
+            KETO_LOG_ERROR << "[RpcSessionManager::postStart] Failed to start a peer : unknown";
+        }
     }
 
     this->threadsVector.reserve(this->threads);
@@ -458,26 +491,25 @@ keto::event::Event RpcSessionManager::activateNetworkState(const keto::event::Ev
 keto::event::Event RpcSessionManager::requestBlockSync(const keto::event::Event& event) {
     keto::proto::SignedBlockBatchRequest request = keto::server_common::fromEvent<keto::proto::SignedBlockBatchRequest>(event);
     std::vector<RpcSessionPtr> rcpSessionPtrs = this->getActivePeers();
-    KETO_LOG_INFO << "[RpcSessionManager::requestBlockSync] Making requet to the first active peer [" << rcpSessionPtrs.size() << "]";
-    //int usePeers = std::rand() % 2;
-    //if (!rcpSessionPtrs.size() && usePeers) {
-    //    rcpSessionPtrs = this->getAccountPeers();
-    //}
+    int usePeers = std::rand() % 2;
+    if (!rcpSessionPtrs.size() && usePeers) {
+        rcpSessionPtrs = this->getAccountPeers();
+    }
+    KETO_LOG_INFO << "[RpcSessionManager::requestBlockSync] Making request to the following peers [" << rcpSessionPtrs.size() << "]";
+
+
     if (rcpSessionPtrs.size()) {
         // select a random rpc service if there are more than one upstream providers
-        int pos = 0;
+        RpcSessionPtr currentSessionPtr = rcpSessionPtrs[0];
         if (rcpSessionPtrs.size()>1) {
-            std::default_random_engine stdGenerator;
-            stdGenerator.seed(std::chrono::system_clock::now().time_since_epoch().count());
-            std::uniform_int_distribution<int> distribution(0, rcpSessionPtrs.size() - 1);
-            // seed
-            distribution(stdGenerator);
-
-            // retrieve
-            pos = distribution(stdGenerator);
+            for (RpcSessionPtr rpcSessionPtr : rcpSessionPtrs) {
+                if (rpcSessionPtr && (rpcSessionPtr->getLastBlockTouch() > currentSessionPtr->getLastBlockTouch())) {
+                    currentSessionPtr = rpcSessionPtr;
+                }
+            }
         }
         try {
-            rcpSessionPtrs[pos]->requestBlockSync(request);
+            currentSessionPtr->requestBlockSync(request);
         } catch (keto::common::Exception &ex) {
             KETO_LOG_ERROR << "[RpcSessionManager::requestBlockSync] Failed to request a block sync : "
                            << ex.what();

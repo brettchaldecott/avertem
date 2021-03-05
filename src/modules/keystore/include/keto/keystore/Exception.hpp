@@ -37,6 +37,7 @@ KETO_DECLARE_DERIVED_EXCEPTION (KeyStoreModuleException, EmptyDataToDecryptExcep
 KETO_DECLARE_DERIVED_EXCEPTION (KeyStoreModuleException, CorruptedEncryptedValueException , "Corrupted encrypted value");
 KETO_DECLARE_DERIVED_EXCEPTION (KeyStoreModuleException, DerivedKeyNotConfigured , "The derived key is not configured");
 KETO_DECLARE_DERIVED_EXCEPTION (KeyStoreModuleException, InvalidNetworkSessionSlotException , "The session being supplied is invalid");
+KETO_DECLARE_DERIVED_EXCEPTION (KeyStoreModuleException, OutOfDateNetworkSessionSlotException , "Our current network slot is out of date");
 
 
 }

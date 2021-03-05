@@ -223,7 +223,8 @@ public:
     bool isRegistered();
     //void deactivateQueue();
     std::string getAccountHash();
-    
+    long getLastBlockTouch();
+
 private:
     bool closed;
     bool active;
@@ -236,6 +237,7 @@ private:
     ReadQueuePtr readQueuePtr;
     std::deque<std::shared_ptr<std::string>> queue_;
     int retryCount;
+    long lastBlockTouch;
 
     //bool peered;
     RpcPeer rpcPeer;
@@ -302,6 +304,9 @@ private:
     // set active
     void deactivate();
     void setActive(bool active);
+
+    // block touch methods
+    long blockTouch();
 
     // terminated methods
     void terminate();

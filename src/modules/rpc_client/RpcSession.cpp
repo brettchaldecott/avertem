@@ -199,7 +199,8 @@ RpcSession::RpcSession(
         resolver(net::make_strand(*ioc)),
         ws_(net::make_strand(*ioc), *ctx),
         rpcPeer(rpcPeer),
-        retryCount(0){
+        retryCount(0),
+        lastBlockTouch(0) {
     this->sessionNumber = sessionIndex++;
     ws_.auto_fragment(false);
     // setup the key loader
@@ -393,6 +394,10 @@ RpcSession::on_read(
 
     if (this->isClosed()) {
         readQueuePtr->deactivate();
+        return;
+    } else if (ec && !ws_.is_open()) {
+        this->setClosed(true);
+        RpcSessionManager::getInstance()->reconnect(rpcPeer);
         return;
     } else if (ec) {
         readQueuePtr->deactivate();
@@ -746,6 +751,7 @@ std::string RpcSession::handleBlock(const std::string& command, const std::strin
     if (!isActive()) {
         setActive(true);
     }
+    blockTouch();
     keto::proto::SignedBlockWrapperMessage signedBlockWrapperMessage;
     signedBlockWrapperMessage.ParseFromString(keto::server_common::VectorUtils().copyVectorToString(
             Botan::hex_decode(message)));
@@ -1024,7 +1030,11 @@ std::string RpcSession::handleInternalException(const std::string& command, cons
 
         // force the session
         KETO_LOG_INFO << "[RpcSession::handleInternalException][" << this->getPeer().getHost() << "][" << command << "] reconnect to the server";
-        if (cause == "Invalid Session exception." || cause == "Invalid password exception." || cause == "The key data supplied is invalid." || cause.find("Index out of bounds") != std::string::npos) {
+        if (cause == "Invalid Session exception."
+        || cause == "Invalid password exception."
+        || cause == "Out of date network slot."
+        || cause == "The key data supplied is invalid."
+        || cause.find("Index out of bounds") != std::string::npos) {
             KETO_LOG_INFO << "[RpcSession::handleInternalException][" << this->getPeer().getHost() << "][" << command << "] force a reset of the session as it is curretly invalid";
             keto::software_consensus::ConsensusSessionManager::getInstance()->resetSessionKey();
         }
@@ -1329,6 +1339,17 @@ void RpcSession::deactivate() {
 void RpcSession::setActive(bool active) {
     std::unique_lock<std::recursive_mutex> uniqueLock(classMutex);
     this->active = active;
+}
+
+
+long RpcSession::blockTouch() {
+    std::unique_lock<std::recursive_mutex> uniqueLock(classMutex);
+    return this->lastBlockTouch = time(0);
+}
+
+long RpcSession::getLastBlockTouch() {
+    std::unique_lock<std::recursive_mutex> uniqueLock(classMutex);
+    return this->lastBlockTouch;
 }
 
 
