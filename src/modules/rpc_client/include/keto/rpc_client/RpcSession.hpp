@@ -307,6 +307,7 @@ private:
 
     // block touch methods
     long blockTouch();
+    long resetTouch();
 
     // terminated methods
     void terminate();

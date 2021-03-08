@@ -1114,6 +1114,9 @@ std::string RpcSession::handleRetryResponse(const std::string& command) {
         // need to use an alternative and mark this one as inactive until it is activated.
         KETO_LOG_INFO << "[RpcSession::handleRetryResponse][" << this->getPeer().getHost() << "] Block sync requires a retry reschedule";
 
+        // reset the touch time to remove this node as the most likely.
+        resetTouch();
+
         // reschedule the block sync retry
         keto::proto::MessageWrapper messageWrapper;
         keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
@@ -1345,6 +1348,11 @@ void RpcSession::setActive(bool active) {
 long RpcSession::blockTouch() {
     std::unique_lock<std::recursive_mutex> uniqueLock(classMutex);
     return this->lastBlockTouch = time(0);
+}
+
+long RpcSession::resetTouch() {
+    std::unique_lock<std::recursive_mutex> uniqueLock(classMutex);
+    return this->lastBlockTouch = 0;
 }
 
 long RpcSession::getLastBlockTouch() {

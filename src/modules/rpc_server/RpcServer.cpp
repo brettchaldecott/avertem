@@ -424,6 +424,11 @@ public:
         return this->lastBlockTouch = time(0);
     }
 
+    long resetTouch() {
+        std::unique_lock<std::recursive_mutex> uniqueLock(this->classMutex);
+        return this->lastBlockTouch = 0;
+    }
+
     bool setActive(bool active) {
         return this->active = active;
     }
