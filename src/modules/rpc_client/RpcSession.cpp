@@ -142,6 +142,7 @@ void RpcSession::ReadQueue::deactivate() {
             return;
         }
         this->active = false;
+        this->readQueue.clear();
         stateCondition.notify_all();
     }
     queueThreadPtr->join();

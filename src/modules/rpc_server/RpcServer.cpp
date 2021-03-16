@@ -289,8 +289,28 @@ public:
 
     void pushEntry(const std::string& command, const std::string& payload) {
         std::unique_lock<std::mutex> guard(classMutex);
+        if (!this->active) {
+            return;
+        }
         this->readQueue.push_back(ReadQueueEntryPtr(new ReadQueueEntry(command,payload)));
         stateCondition.notify_all();
+    }
+
+    void deactivate() {
+        {
+            std::unique_lock<std::mutex> guard(classMutex);
+            KETO_LOG_ERROR << "[RpcServer][ReadQueue][deactivate] deactivating the status and notify";
+            if (!this->active) {
+                return;
+            }
+            this->active = false;
+            this->readQueue.clear();
+            stateCondition.notify_all();
+        }
+        KETO_LOG_ERROR << "[RpcServer][ReadQueue][deactivate] wait for thread";
+        queueThreadPtr->join();
+        queueThreadPtr.reset();
+        KETO_LOG_ERROR << "[RpcServer][ReadQueue][deactivate] finish";
     }
 
 private:
@@ -303,6 +323,9 @@ private:
 
     ReadQueueEntryPtr popEntry() {
         std::unique_lock<std::mutex> uniqueLock(classMutex);
+        if (!this->active) {
+            return ReadQueueEntryPtr();
+        }
         if (!this->readQueue.empty()) {
             ReadQueueEntryPtr result = this->readQueue.front();
             this->readQueue.pop_front();
@@ -316,19 +339,6 @@ private:
     bool isActive() {
         std::unique_lock<std::mutex> guard(classMutex);
         return this->active;
-    }
-
-    void deactivate() {
-        {
-            std::unique_lock<std::mutex> guard(classMutex);
-            KETO_LOG_ERROR << "[RpcServer][ReadQueue][deactivate] deactivating the status and notify";
-            this->active = false;
-            stateCondition.notify_all();
-        }
-        KETO_LOG_ERROR << "[RpcServer][ReadQueue][deactivate] wait for thread";
-        queueThreadPtr->join();
-        queueThreadPtr.reset();
-        KETO_LOG_ERROR << "[RpcServer][ReadQueue][deactivate] finish";
     }
 
     void run() {
@@ -400,6 +410,7 @@ public:
     virtual ~session() {
         KETO_LOG_ERROR << "[RpcServer][session] shutting down the session";
         //removeFromCache();
+        this->readQueuePtr->deactivate();
         this->readQueuePtr.reset();
         // increment the session count
         RpcServer::getInstance()->decrementSessionCount();
@@ -1483,6 +1494,7 @@ public:
     void
     close() {
         std::unique_lock<std::recursive_mutex> uniqueLock(classMutex);
+        this->readQueuePtr->deactivate();
         this->closed = true;
     }
 
