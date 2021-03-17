@@ -85,8 +85,14 @@ BlockProducer::TangleFutureStateManager::TangleFutureStateManager(const keto::as
     if (existing) {
         keto::block_db::BlockChainTangleMetaPtr blockChainTangleMetaPtr =
                 keto::block_db::BlockChainStore::getInstance()->getTangleInfo(tangleHash);
-        this->lastBlockHash = blockChainTangleMetaPtr->getLastBlockHash();
-        this->numberOfAccounts = blockChainTangleMetaPtr->getNumberOfAccounts();
+        // deal with a situation where the tangle has to be created in the tangle future state
+        if (blockChainTangleMetaPtr) {
+            this->lastBlockHash = blockChainTangleMetaPtr->getLastBlockHash();
+            this->numberOfAccounts = blockChainTangleMetaPtr->getNumberOfAccounts();
+        } else {
+            this->lastBlockHash = tangleHash;
+            this->existing = false;
+        }
     } else {
         this->lastBlockHash = tangleHash;
     }
