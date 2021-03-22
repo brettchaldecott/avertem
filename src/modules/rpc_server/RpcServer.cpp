@@ -741,7 +741,7 @@ public:
 
         // send a message
         //KETO_LOG_INFO << "[RpcServer] Finished processing : " << message;
-        if (!message.empty()) {
+        if (!message.empty() && !isClosed()) {
             send(message);
         }
 
@@ -1021,6 +1021,10 @@ public:
         //KETO_LOG_DEBUG << "[RpcServer] Sent the server request : " << command;
     }
 
+    bool isClosed() {
+        std::unique_lock<std::recursive_mutex> uniqueLock(classMutex);
+        return this->closed;
+    }
 
     void closeSession() {
         close();
