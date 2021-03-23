@@ -1022,7 +1022,6 @@ public:
     }
 
     bool isClosed() {
-        std::unique_lock<std::recursive_mutex> uniqueLock(classMutex);
         return this->closed;
     }
 
