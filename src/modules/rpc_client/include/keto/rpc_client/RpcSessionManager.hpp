@@ -66,7 +66,7 @@ public:
     static RpcSessionManagerPtr getInstance();
     
     // the list of peers
-    std::vector<std::shared_ptr<keto::rpc_client::RpcSession>> getPeers();
+    std::vector<keto::rpc_client::RpcSessionWrapperPtr> getPeers();
     std::vector<std::string> listPeers();
     std::vector<std::string> listAccountPeers();
     
@@ -101,15 +101,15 @@ public:
 protected:
     void setPeers(const std::vector<std::string>& peers, bool peered = true);
     void reconnect(RpcPeer& rpcPeer);
-    void setAccountSessionMapping(const std::string& account,
-            const RpcSessionPtr& rpcSessionPtr);
+    void setAccountSessionMapping(const std::string& peer, const std::string& account);
     void removeSession(const RpcPeer& rpcPeer, const std::string& account);
 private:
+    int sessionSequence;
     std::recursive_mutex classMutex;
     std::mutex sessionClassMutex;
     std::condition_variable stateCondition;
-    std::map<std::string,RpcSessionPtr> sessionMap;
-    std::map<std::string,RpcSessionPtr> accountSessionMap;
+    std::map<std::string,RpcSessionWrapperPtr> sessionMap;
+    std::map<std::string,RpcSessionWrapperPtr> accountSessionMap;
     // The io_context is required for all I/O
     std::shared_ptr<net::io_context> ioc;
     // The SSL context is required, and holds certificates
@@ -126,16 +126,17 @@ private:
 
 
     bool hasAccountSessionMapping(const std::string& account);
-    RpcSessionPtr getAccountSessionMapping(const std::string& account);
-    RpcSessionPtr getDefaultPeer();
-    RpcSessionPtr getActivePeer();
-    std::vector<RpcSessionPtr> getActivePeers();
-    std::vector<RpcSessionPtr> getAccountPeers();
+    RpcSessionWrapperPtr getAccountSessionMapping(const std::string& account);
+    RpcSessionWrapperPtr getDefaultPeer();
+    RpcSessionWrapperPtr getActivePeer();
+    std::vector<RpcSessionWrapperPtr> getActivePeers();
+    std::vector<RpcSessionWrapperPtr> getAccountPeers();
     bool registeredAccounts();
 
     void waitForSessionEnd();
     int getSessionCount(bool waitForTimeout);
     void clearSessions();
+    int getNextSessionId();
 };
 
 

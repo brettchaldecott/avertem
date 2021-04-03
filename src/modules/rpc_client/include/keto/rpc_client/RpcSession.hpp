@@ -75,6 +75,7 @@ typedef std::shared_ptr<RpcSession> RpcSessionPtr;
 typedef std::shared_ptr<boost::beast::flat_buffer> FlatBufferPtr;
 typedef std::shared_ptr<std::lock_guard<std::mutex>> LockGuardPtr;
 
+
 class RpcSession : public std::enable_shared_from_this<RpcSession> {
 public:
     class BufferCache {
@@ -149,6 +150,7 @@ public:
     static std::string getSourceVersion();
 
     RpcSession(
+            int sessionId,
             std::shared_ptr<net::io_context> ioc,
             std::shared_ptr<sslBeast::context> ctx,
             const RpcPeer& rpcPeer);
@@ -225,7 +227,12 @@ public:
     std::string getAccountHash();
     long getLastBlockTouch();
 
+    void deactivateQueue();
+
+    std::shared_ptr<RpcSession> _shared_from_this();
+
 private:
+    int sessionId;
     bool closed;
     bool active;
     bool registered;
@@ -314,6 +321,48 @@ private:
     bool isTerminated();
 };
 
+class RpcSessionWrapperPtr : public RpcSessionPtr {
+public:
+    RpcSessionWrapperPtr() : RpcSessionPtr() {}
+    RpcSessionWrapperPtr(RpcSession* rpcSession) : RpcSessionPtr(rpcSession) {}
+    RpcSessionWrapperPtr(std::weak_ptr<RpcSession> session) : RpcSessionPtr(session) {}
+    RpcSessionWrapperPtr(const RpcSessionPtr& session) : RpcSessionPtr(session) {}
+
+    virtual ~RpcSessionWrapperPtr() {
+        //KETO_LOG_INFO << "The destructor of the session [" << this->use_count() << "]";
+        if (this->get() && this->use_count() == 1) {
+            KETO_LOG_INFO << "Deactivate the queue [" << this->use_count() << "]";
+            this->get()->deactivateQueue();
+        }
+    }
+};
+
+
+/*
+class
+RpcSessionWrapper;
+
+typedef std::shared_ptr<RpcSessionWrapper> RpcSessionWrapperPtr;
+
+class
+RpcSessionWrapper : public std::enable_shared_from_this<RpcSessionWrapper> {
+public:
+    RpcSessionWrapper(int sessionId,
+                      std::shared_ptr<net::io_context>& ioc,
+                      std::shared_ptr<sslBeast::context>& ctx,
+                      const RpcPeer& rpcPeer);
+
+    virtual ~RpcSessionWrapper();
+
+    RpcSessionPtr getSession();
+
+    int getSessionId();
+
+private:
+    int sessionId;
+    RpcSessionPtr rpcSessionPtr;
+};
+*/
 
 }
 }

@@ -153,26 +153,8 @@ private:
 };
 typedef std::shared_ptr<ReadQueueEntry> ReadQueueEntryPtr;
 
-
-
-class SessionBase {
-public:
-    virtual bool isActive() = 0;
-    virtual long getLastBlockTouch() = 0;
-    virtual void routeTransaction(keto::proto::MessageWrapper&  messageWrapper) = 0;
-    virtual void pushBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage) = 0;
-    virtual void performNetworkSessionReset() = 0;
-    virtual void performProtocolCheck() = 0;
-    virtual void activatePeer(const keto::router_utils::RpcPeerHelper& rpcPeerHelper) = 0;
-    virtual void performNetworkHeartbeat(const keto::proto::ProtocolHeartbeatMessage& protocolHeartbeatMessage) = 0;
-    virtual bool electBlockProducer() = 0;
-    virtual void electBlockProducerPublish(const keto::election_common::ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper) = 0;
-    virtual void electBlockProducerConfirmation(const keto::election_common::ElectionConfirmationHelper& electionConfirmationHelper) = 0;
-    virtual void requestBlockSync(const keto::proto::SignedBlockBatchRequest& request) = 0;
-    virtual void processQueueEntry(const ReadQueueEntryPtr& readQueueEntryPtr) = 0;
-    virtual void closeSession() = 0;
-};
-typedef std::shared_ptr<SessionBase> SessionBasePtr;
+class Session;
+typedef std::shared_ptr<Session> SessionPtr;
 
 class AccountSessionCache;
 typedef std::shared_ptr<AccountSessionCache> AccountSessionCachePtr;
@@ -182,7 +164,7 @@ static AccountSessionCachePtr accountSessionSingleton;
 class AccountSessionCache {
 private:
     std::recursive_mutex classMutex;
-    std::map<std::string,SessionBasePtr> accountSessionMap;
+    std::map<std::string,SessionPtr> accountSessionMap;
 
 public:
     AccountSessionCache() {
@@ -207,12 +189,12 @@ public:
     }
     
     void addAccount(const std::string& account, 
-            const SessionBasePtr sessionRef) {
+            const SessionPtr sessionRef) {
         std::lock_guard<std::recursive_mutex> guard(classMutex);
         accountSessionMap[account] = sessionRef;
     }
     
-    void removeAccount(const std::string& account,const SessionBase* session) {
+    void removeAccount(const std::string& account) {
         std::lock_guard<std::recursive_mutex> guard(classMutex);
         if (!accountSessionMap.count(account)) {
             return;
@@ -232,39 +214,29 @@ public:
         return false;
     }
 
-    SessionBasePtr getSession(const std::string& account) {
+    SessionPtr getSession(const std::string& account) {
         std::lock_guard<std::recursive_mutex> guard(this->classMutex);
         if (this->accountSessionMap.count(account)) {
             return this->accountSessionMap[account];
         }
-        return SessionBasePtr();
+        return SessionPtr();
     }
 
     std::vector<std::string> getSessions() {
         std::lock_guard<std::recursive_mutex> guard(classMutex);
         std::vector<std::string> keys;
-        for(std::map<std::string,SessionBasePtr>::iterator it = this->accountSessionMap.begin();
+        for(std::map<std::string,SessionPtr>::iterator it = this->accountSessionMap.begin();
             it != this->accountSessionMap.end(); ++it) {
             keys.push_back(it->first);
         }
         return keys;
     }
 
-    std::vector<SessionBasePtr> getActiveSessions() {
-        std::vector<SessionBasePtr> result;
-        for(std::map<std::string,SessionBasePtr>::iterator it = this->accountSessionMap.begin();
-            it != this->accountSessionMap.end(); ++it) {
-            SessionBasePtr _sessionPtr = it->second;
-            if (_sessionPtr->isActive()) {
-                result.push_back(_sessionPtr);
-            }
-        }
-        return result;
-    }
+    std::vector<SessionPtr> getActiveSessions();
 
-    std::vector<SessionBasePtr> getSessionPtrs() {
-        std::vector<SessionBasePtr> result;
-        for(std::map<std::string,SessionBasePtr>::iterator it = this->accountSessionMap.begin();
+    std::vector<SessionPtr> getSessionPtrs() {
+        std::vector<SessionPtr> result;
+        for(std::map<std::string,SessionPtr>::iterator it = this->accountSessionMap.begin();
             it != this->accountSessionMap.end(); ++it) {
             result.push_back(it->second);
         }
@@ -275,7 +247,7 @@ public:
 
 class ReadQueue {
 public:
-    ReadQueue(SessionBase* session) : session(session), active(true) {
+    ReadQueue(Session* session) : session(session), active(true) {
         queueThreadPtr = std::shared_ptr<std::thread>(new std::thread(
                 [this]
                 {
@@ -314,7 +286,7 @@ public:
     }
 
 private:
-    SessionBase* session;
+    Session* session;
     bool active;
     std::mutex classMutex;
     std::condition_variable stateCondition;
@@ -341,26 +313,25 @@ private:
         return this->active;
     }
 
-    void run() {
-        KETO_LOG_ERROR << "[RpcServer][ReadQueue][run] beginning of run";
-        while(this->isActive()) {
-            ReadQueueEntryPtr entry = popEntry();
-            if (entry) {
-                this->session->processQueueEntry(entry);
-            }
-        }
-        KETO_LOG_ERROR << "[RpcServer][ReadQueue][run] queue runner finished exiting";
-    }
-
-
+    void run();
 
 };
 
 typedef std::shared_ptr<ReadQueue> ReadQueuePtr;
 
+class SessionWrapperPtr : public SessionPtr {
+public:
+    SessionWrapperPtr() : SessionPtr() {}
+    SessionWrapperPtr(Session* session) : SessionPtr(session) {}
+    SessionWrapperPtr(std::weak_ptr<Session> session) : SessionPtr(session) {}
+    SessionWrapperPtr(const SessionPtr& session) : SessionPtr(session) {}
+
+    virtual ~SessionWrapperPtr();
+
+};
 
 // Echoes back all received WebSocket messages
-class session : public SessionBase, public std::enable_shared_from_this<session>
+class Session : public std::enable_shared_from_this<Session>
 {
 private:
     std::recursive_mutex classMutex;
@@ -386,9 +357,11 @@ private:
     bool closed;
     long lastBlockTouch;
 
+    std::shared_ptr<Session> _shared_from_this();
+
 public:
     // Take ownership of the socket
-    session(tcp::socket&& socket, sslBeast::context& ctx, RpcServer* rpcServer)
+    Session(tcp::socket&& socket, sslBeast::context& ctx, RpcServer* rpcServer)
         :
             ws_(std::move(socket), ctx)
         , rpcServer(rpcServer)
@@ -401,17 +374,15 @@ public:
         this->generatorPtr = std::shared_ptr<Botan::AutoSeeded_RNG>(new Botan::AutoSeeded_RNG());
 
         // setup the session read queue
-        this->readQueuePtr = ReadQueuePtr(new ReadQueue((SessionBase*)this));
+        this->readQueuePtr = ReadQueuePtr(new ReadQueue(this));
 
         // increment the session count
         RpcServer::getInstance()->incrementSessionCount();
     }
         
-    virtual ~session() {
+    virtual ~Session() {
         KETO_LOG_ERROR << "[RpcServer][session] shutting down the session";
         //removeFromCache();
-        this->readQueuePtr->deactivate();
-        this->readQueuePtr.reset();
         // increment the session count
         RpcServer::getInstance()->decrementSessionCount();
         KETO_LOG_ERROR << "[RpcServer][session] end of destructor";
@@ -455,8 +426,8 @@ public:
         ws_.next_layer().async_handshake(
                 sslBeast::stream_base::server,
                 beast::bind_front_handler(
-                        &session::on_handshake,
-                        shared_from_this()));
+                        &Session::on_handshake,
+                        _shared_from_this()));
     }
 
     void
@@ -488,8 +459,8 @@ public:
         // Accept the websocket handshake
         ws_.async_accept(
                 beast::bind_front_handler(
-                        &session::on_accept,
-                        shared_from_this()));
+                        &Session::on_accept,
+                        _shared_from_this()));
 
     }
 
@@ -544,8 +515,8 @@ public:
         ws_.async_read(
                 sessionBuffer,
                 beast::bind_front_handler(
-                        &session::on_read,
-                        shared_from_this()));
+                        &Session::on_read,
+                        _shared_from_this()));
     }
 
     void
@@ -562,7 +533,7 @@ public:
                     serverHelloProtoHelperPtr->getAccountHash());
             //KETO_LOG_DEBUG << "End of server session remove it from the account session cache : " <<
             //    Botan::hex_encode(serverHelloProtoHelperPtr->getAccountHash());
-            AccountSessionCache::getInstance()->removeAccount(accountHash,this);
+            AccountSessionCache::getInstance()->removeAccount(accountHash);
         }
 
     }
@@ -1142,7 +1113,7 @@ public:
         AccountSessionCache::getInstance()->addAccount(
             keto::server_common::VectorUtils().copyVectorToString(    
             serverHelloProtoHelperPtr->getAccountHash()),
-                shared_from_this());
+                _shared_from_this());
 
         // split and extract the peer information to be added
         keto::server_common::StringVector parts = keto::server_common::StringUtils(payload).tokenize("#");
@@ -1464,8 +1435,8 @@ public:
         net::post(
             ws_.get_executor(),
             beast::bind_front_handler(
-                &session::sendMessage,
-                shared_from_this(),
+                &Session::sendMessage,
+                _shared_from_this(),
                 std::make_shared<std::string>(message)));
     }
 
@@ -1497,7 +1468,6 @@ public:
     void
     close() {
         std::unique_lock<std::recursive_mutex> uniqueLock(classMutex);
-        this->readQueuePtr->deactivate();
         this->closed = true;
     }
 
@@ -1514,21 +1484,24 @@ public:
         } else if (message == keto::server_common::Constants::RPC_COMMANDS::CLOSE) {
             ws_.async_close(websocket::close_code::normal,
                             beast::bind_front_handler(
-                                    &session::on_close,
-                                    shared_from_this()));
+                                    &Session::on_close,
+                                    _shared_from_this()));
         } else {
             ws_.text(ws_.got_text());
             ws_.async_write(
                     boost::asio::buffer(*queue_.front()),
                     beast::bind_front_handler(
-                            &session::on_write,
-                            shared_from_this()));
+                            &Session::on_write,
+                            _shared_from_this()));
         }
 
 
         //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][sendFirstQueueMessage] after sending the message";
     }
 
+    void deactivateQueue() {
+        this->readQueuePtr->deactivate();
+    }
 
 private:
     // Report a failure
@@ -1540,6 +1513,44 @@ private:
     }
 
 };
+
+SessionWrapperPtr::~SessionWrapperPtr() {
+    //KETO_LOG_INFO << "The destructor of the session [" << this->use_count() << "]";
+    if (this->get() && this->use_count() == 1) {
+        KETO_LOG_INFO << "Deactivate the queue [" << this->use_count() << "]";
+        this->get()->deactivateQueue();
+    }
+}
+
+std::shared_ptr<Session> Session::_shared_from_this() {
+    return SessionWrapperPtr(shared_from_this());
+}
+
+// implementation of account cache methods
+
+std::vector<SessionPtr> AccountSessionCache::getActiveSessions() {
+    std::vector<SessionPtr> result;
+    for(std::map<std::string,SessionPtr>::iterator it = this->accountSessionMap.begin();
+        it != this->accountSessionMap.end(); ++it) {
+        SessionPtr _sessionPtr = it->second;
+        if (_sessionPtr->isActive()) {
+            result.push_back(_sessionPtr);
+        }
+    }
+    return result;
+}
+
+void ReadQueue::run() {
+    KETO_LOG_ERROR << "[RpcServer][ReadQueue][run] beginning of run";
+    while(this->isActive()) {
+        ReadQueueEntryPtr entry = popEntry();
+        if (entry) {
+            this->session->processQueueEntry(entry);
+        }
+    }
+    KETO_LOG_ERROR << "[RpcServer][ReadQueue][run] queue runner finished exiting";
+}
+
 
 //------------------------------------------------------------------------------
 
@@ -1629,7 +1640,7 @@ public:
             return;
         } else {
             // Create the session and run it
-            std::make_shared<session>(std::move(socket), *ctx_, rpcServer)->run();
+            SessionWrapperPtr(new Session(std::move(socket), *ctx_, rpcServer))->run();
         }
 
         // Accept another connection
@@ -1854,7 +1865,7 @@ keto::event::Event RpcServer::pushBlock(const keto::event::Event& event) {
     for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
         try {
             //KETO_LOG_DEBUG << "[RpcServer::pushBlock] push block to node [" << Botan::hex_encode((const uint8_t*)account.c_str(),account.size(),true) << "]";
-            SessionBasePtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
+            SessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
                             account);
             if (sessionPtr_) {
                 sessionPtr_->pushBlock(keto::server_common::fromEvent<keto::proto::SignedBlockWrapperMessage>(event));
@@ -1883,7 +1894,7 @@ keto::event::Event RpcServer::pushBlock(const keto::event::Event& event) {
 keto::event::Event RpcServer::performNetworkSessionReset(const keto::event::Event& event) {
     for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
         try {
-            SessionBasePtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
+            SessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
                     account);
             if (sessionPtr_) {
                 sessionPtr_->performNetworkSessionReset();
@@ -1913,7 +1924,7 @@ keto::event::Event RpcServer::performNetworkSessionReset(const keto::event::Even
 keto::event::Event RpcServer::performProtocoCheck(const keto::event::Event& event) {
     for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
         try {
-            SessionBasePtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
+            SessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
                     account);
             if (sessionPtr_) {
                 sessionPtr_->performProtocolCheck();
@@ -1943,7 +1954,7 @@ keto::event::Event RpcServer::performConsensusHeartbeat(const keto::event::Event
     for (std::string account: AccountSessionCache::getInstance()->getSessions()) {
         try {
             //KETO_LOG_DEBUG << "[RpcServer::performConsensusHeartbeat] perform consensus heart beat on [" << Botan::hex_encode((const uint8_t*)account.c_str(),account.size(),true) << "]";
-            SessionBasePtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
+            SessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
                     account);
             if (sessionPtr_) {
                 sessionPtr_->performNetworkHeartbeat(
@@ -1992,7 +2003,7 @@ keto::event::Event RpcServer::electBlockProducer(const keto::event::Event& event
             accounts.clear();
         }
 
-        SessionBasePtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
+        SessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
                 account);
         //KETO_LOG_DEBUG << "[RpcServer::electBlockProducer] elect an account ["
         //    << keto::asn1::HashHelper(account).getHash(keto::common::StringEncoding::HEX) << "][" << sessionPtr_->isActive() << "]";
@@ -2025,7 +2036,7 @@ keto::event::Event RpcServer::activatePeers(const keto::event::Event& event) {
     std::vector<std::string> peers = AccountSessionCache::getInstance()->getSessions();
     for (std::string peer : peers)
     {
-        SessionBasePtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
+        SessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
                 peer);
         if (sessionPtr_) {
             try {
@@ -2061,15 +2072,15 @@ keto::event::Event RpcServer::activateNetworkState(const keto::event::Event& eve
 
 keto::event::Event RpcServer::requestBlockSync(const keto::event::Event& event) {
     keto::proto::SignedBlockBatchRequest request = keto::server_common::fromEvent<keto::proto::SignedBlockBatchRequest>(event);
-    std::vector<SessionBasePtr> sessionBasePtrVector = AccountSessionCache::getInstance()->getActiveSessions();
+    std::vector<SessionPtr> sessionBasePtrVector = AccountSessionCache::getInstance()->getActiveSessions();
     if (!sessionBasePtrVector.size()) {
         sessionBasePtrVector = AccountSessionCache::getInstance()->getSessionPtrs();
     }
     if (sessionBasePtrVector.size()) {
         // select a random client if the session base list is greater then 1
-        SessionBasePtr currentSessionPtr = sessionBasePtrVector[0];
+        SessionPtr currentSessionPtr = sessionBasePtrVector[0];
         if (sessionBasePtrVector.size()>1) {
-            for (SessionBasePtr sessionBasePtr : sessionBasePtrVector) {
+            for (SessionPtr sessionBasePtr : sessionBasePtrVector) {
                 if (sessionBasePtr && (sessionBasePtr->getLastBlockTouch() > currentSessionPtr->getLastBlockTouch())) {
                     currentSessionPtr = sessionBasePtr;
                 }
@@ -2157,7 +2168,7 @@ void RpcServer::waitForSessionEnd() {
         for (std::string account: sessions) {
             try {
                 //KETO_LOG_DEBUG << "[RpcServer::pushBlock] push block to node [" << Botan::hex_encode((const uint8_t*)account.c_str(),account.size(),true) << "]";
-                SessionBasePtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
+                SessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
                         account);
                 if (sessionPtr_) {
                     sessionPtr_->closeSession();
@@ -2198,7 +2209,7 @@ keto::event::Event RpcServer::electBlockProducerPublish(const keto::event::Event
     for (std::string peer : peers) {
 
         // get the account
-        SessionBasePtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(peer);
+        SessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(peer);
         if (sessionPtr_) {
             try {
                 sessionPtr_->electBlockProducerPublish(electionPublishTangleAccountProtoHelper);
@@ -2226,7 +2237,7 @@ keto::event::Event RpcServer::electBlockProducerConfirmation(const keto::event::
     for (std::string peer : peers) {
 
         // get the account
-        SessionBasePtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(peer);
+        SessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(peer);
         if (sessionPtr_) {
             try {
                 sessionPtr_->electBlockProducerConfirmation(electionConfirmationHelper);

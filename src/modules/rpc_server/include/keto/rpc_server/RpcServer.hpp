@@ -62,7 +62,7 @@ typedef std::shared_ptr<std::lock_guard<std::mutex>> LockGuardPtr;
     
 class RpcServer {
 public:
-    friend class session;
+    friend class Session;
     
     static std::string getHeaderVersion() {
         return OBFUSCATED("$Id$");
