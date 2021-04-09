@@ -712,7 +712,7 @@ public:
 
         // send a message
         //KETO_LOG_INFO << "[RpcServer] Finished processing : " << message;
-        if (!message.empty() && !isClosed() &&  && !RpcSessionManager::getInstance()->isTerminated()) {
+        if (!message.empty() && !isClosed() &&  && !RpcServer::getInstance()->isTerminated()) {
             send(message);
         }
 
