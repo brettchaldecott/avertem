@@ -484,7 +484,7 @@ keto::event::Event RpcSessionManager::activatePeer(const keto::event::Event& eve
 }
 
 keto::event::Event RpcSessionManager::requestNetworkState(const keto::event::Event& event) {
-    KETO_LOG_INFO << "[RpcSessionManager::requestBlockSync] The client request network state has been set.";
+    KETO_LOG_INFO << "[RpcSessionManager::requestNetworkState] The client request network state has been set.";
     this->networkState = false;
     return event;
 }

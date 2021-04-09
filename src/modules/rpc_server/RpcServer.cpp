@@ -712,7 +712,7 @@ public:
 
         // send a message
         //KETO_LOG_INFO << "[RpcServer] Finished processing : " << message;
-        if (!message.empty() && !isClosed()) {
+        if (!message.empty() && !isClosed() &&  && !RpcSessionManager::getInstance()->isTerminated()) {
             send(message);
         }
 
@@ -807,6 +807,7 @@ public:
         if (this->closed) {
             return;
         }
+        KETO_LOG_INFO << "[RpcServer::pushBlock] " << getAccount() << " push block to server";
         std::string messageWrapperStr;
         signedBlockWrapperMessage.SerializeToString(&messageWrapperStr);
         clientRequest(keto::server_common::Constants::RPC_COMMANDS::BLOCK,
@@ -1361,7 +1362,7 @@ public:
         keto::proto::SignedBlockWrapperMessage signedBlockWrapperMessage;
         signedBlockWrapperMessage.ParseFromString(keto::server_common::VectorUtils().copyVectorToString(
                 Botan::hex_decode(payload)));
-
+        KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleBlockPush] persist bock";
         keto::proto::MessageWrapperResponse messageWrapperResponse =
                 keto::server_common::fromEvent<keto::proto::MessageWrapperResponse>(
                         keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SignedBlockWrapperMessage>(
@@ -1380,7 +1381,6 @@ public:
         std::string rpcVector = keto::server_common::VectorUtils().copyVectorToString(
                 Botan::hex_decode(payload));
         signedBlockBatchRequest.ParseFromString(rpcVector);
-
         keto::proto::SignedBlockBatchMessage signedBlockBatchMessage;
         signedBlockBatchMessage =
                 keto::server_common::fromEvent<keto::proto::SignedBlockBatchMessage>(
@@ -1401,7 +1401,9 @@ public:
         keto::proto::SignedBlockBatchMessage signedBlockBatchMessage;
         signedBlockBatchMessage.ParseFromString(keto::server_common::VectorUtils().copyVectorToString(
                 Botan::hex_decode(payload)));
-
+        if (signedBlockBatchMessage.partial_result()) {
+            setActive(false);
+        }
         keto::proto::MessageWrapperResponse messageWrapperResponse =
                 keto::server_common::fromEvent<keto::proto::MessageWrapperResponse>(
                         keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SignedBlockBatchMessage>(

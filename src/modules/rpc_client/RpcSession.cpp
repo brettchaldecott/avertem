@@ -540,7 +540,7 @@ void RpcSession::processQueueEntry(const ReadQueueEntryPtr& readQueueEntryPtr) {
         message = handleInternalException(command);
     }
 
-    if (!message.empty() && !this->isClosed()) {
+    if (!message.empty() && !this->isClosed() && !RpcSessionManager::getInstance()->isTerminated()) {
         send(message);
     }
 }
@@ -754,7 +754,7 @@ std::string RpcSession::handleBlock(const std::string& command, const std::strin
     keto::proto::SignedBlockWrapperMessage signedBlockWrapperMessage;
     signedBlockWrapperMessage.ParseFromString(keto::server_common::VectorUtils().copyVectorToString(
             Botan::hex_decode(message)));
-
+    KETO_LOG_INFO << "[RpcSession][" << this->sessionNumber << "][handleBlock] persist bock";
     keto::proto::MessageWrapperResponse messageWrapperResponse =
             keto::server_common::fromEvent<keto::proto::MessageWrapperResponse>(
                     keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SignedBlockWrapperMessage>(
@@ -786,7 +786,9 @@ std::string RpcSession::handleBlockSyncResponse(const std::string& command, cons
     keto::proto::SignedBlockBatchMessage signedBlockBatchMessage;
     signedBlockBatchMessage.ParseFromString(keto::server_common::VectorUtils().copyVectorToString(
             Botan::hex_decode(message)));
-
+    if (signedBlockBatchMessage.partial_result()) {
+        setActive(false);
+    }
     keto::proto::MessageWrapperResponse messageWrapperResponse =
             keto::server_common::fromEvent<keto::proto::MessageWrapperResponse>(
                     keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SignedBlockBatchMessage>(
@@ -1182,6 +1184,7 @@ void RpcSession::pushBlock(const keto::proto::SignedBlockWrapperMessage& signedB
     if (this->closed) {
         return;
     }
+    KETO_LOG_INFO << "[RpcSession::requestBlockSync] " << this->sessionNumber << " push block to server";
     std::string messageWrapperStr;
     signedBlockWrapperMessage.SerializeToString(&messageWrapperStr);
     send(serverRequest(keto::server_common::Constants::RPC_COMMANDS::BLOCK,
