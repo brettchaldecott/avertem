@@ -58,6 +58,10 @@ public:
     isEnabled();
     void
     forceResync();
+    void
+    forceResync(std::time_t timestamp);
+    void
+    forceResyncServer(std::time_t timestamp);
 
     void broadcastBlock(const keto::block_db::SignedBlockWrapperMessageProtoHelper& signedBlockWrapperProtoHelper);
 
@@ -68,6 +72,8 @@ private:
     bool enabled;
     Status status;
     std::time_t startTime;
+    std::time_t lastClientBlockTimestamp;
+    std::time_t lastServerBlockTimestamp;
     std::vector<keto::asn1::HashHelper> tangleHashes;
 
 
@@ -75,6 +81,9 @@ private:
 
     void
     notifyPeers();
+
+    bool
+    requestFromServer();
 
 
 };

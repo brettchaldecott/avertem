@@ -76,6 +76,7 @@ const char* Events::BALANCER_MESSAGE    = "BALANCER_MESSAGE";
 // block message
 const char* Events::BLOCK_MESSAGE       = "BLOCK_MESSAGE";
 const char* Events::BLOCK_PERSIST_MESSAGE = "BLOCK_PERSIST_MESSAGE";
+const char* Events::BLOCK_PERSIST_MESSAGE_SERVER = "BLOCK_PERSIST_MESSAGE_SERVER";
 
 const char* Events::ENABLE_BLOCK_PRODUCER = "ENABLE_BLOCK_PRODUCER";
 

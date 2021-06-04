@@ -179,13 +179,16 @@ void NetworkSessionKeyManager::setSession(const keto::proto::NetworkKeysWrapper&
     std::vector<keto::rpc_protocol::NetworkKeyHelper> networkKeyHelpers =  networkKeysHelper.getNetworkKeys();
 
     if (networkSessionConfigured) {
+        KETO_LOG_INFO << "[NetworkSessionKeyManager::setSession] Validate the current slot [" << this->slot << "]["
+            << networkKeysHelper.getSlot() << "]";
         NetworkSessionSlotPtr networkSessionSlotPtr = this->sessionSlots[this->slot];
-        if (networkSessionSlotPtr->checkHashIndex(networkKeyHelpers)) {
+        if (networkSessionSlotPtr->checkHashIndex(networkKeyHelpers) ||
+                networkSessionSlotPtr->getTimeStamp() == networkKeysHelper.getTimeStamp()) {
             // found match and will now ignore
-            KETO_LOG_INFO << "[NetworkSessionKeyManager::setSession] The current slot is the same as the existing slot";
+            KETO_LOG_INFO << "[NetworkSessionKeyManager::setSession] The current slot is the same as the existing slot [" << this->slot << "]";
             return;
         }
-        if (networkSessionSlotPtr->getTimeStamp() >= networkKeysHelper.getTimeStamp()) {
+        if (networkSessionSlotPtr->getTimeStamp() > networkKeysHelper.getTimeStamp()) {
             // the network timestamp is less than the current timestamp ignore
             KETO_LOG_INFO << "[NetworkSessionKeyManager::setSession] the time stamp is old [" <<
                           networkSessionSlotPtr->getTimeStamp() << "][" <<
@@ -202,6 +205,7 @@ void NetworkSessionKeyManager::setSession(const keto::proto::NetworkKeysWrapper&
                                           "Out of date network slot."));
         }
     }
+    // check if the slot was previously configured
     if (this->sessionSlots.count(this->slot)) {
         // do not override this slot if the current slot has a newer timestamp
         NetworkSessionSlotPtr networkSessionSlotPtr = this->sessionSlots[this->slot];
@@ -255,7 +259,7 @@ void NetworkSessionKeyManager::setSession(const keto::proto::NetworkKeysWrapper&
     networkSessionConfigured = true;
     KETO_LOG_INFO << "[NetworkSessionKeyManager::setSession] updated the time stamp [" <<
                   networkSessionSlotPtr->getTimeStamp() << "][" <<
-                  networkKeysHelper.getTimeStamp() << "]";
+                  networkKeysHelper.getTimeStamp() << "][" << this->slot << "]";
 }
 
 keto::proto::NetworkKeysWrapper NetworkSessionKeyManager::getSession() {

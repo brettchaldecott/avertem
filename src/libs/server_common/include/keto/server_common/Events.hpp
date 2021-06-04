@@ -87,6 +87,7 @@ public:
     // balancer
     static const char* BLOCK_MESSAGE;
     static const char* BLOCK_PERSIST_MESSAGE;
+    static const char* BLOCK_PERSIST_MESSAGE_SERVER;
 
     // block producer
     static const char* ENABLE_BLOCK_PRODUCER;

@@ -75,6 +75,32 @@ typedef std::shared_ptr<RpcSession> RpcSessionPtr;
 typedef std::shared_ptr<boost::beast::flat_buffer> FlatBufferPtr;
 typedef std::shared_ptr<std::lock_guard<std::mutex>> LockGuardPtr;
 
+/*
+class RpcSessionWrapperPtr : public RpcSessionPtr {
+public:
+    RpcSessionWrapperPtr() : RpcSessionPtr() {}
+    RpcSessionWrapperPtr(RpcSession* rpcSession) : RpcSessionPtr(rpcSession) {
+        //int* ptr = (int*)this->get();
+        //KETO_LOG_INFO << "[RpcSessionWrapperPtr]Constructor [" << this->use_count() << "][" << ptr << "]";
+    }
+    RpcSessionWrapperPtr(std::weak_ptr<RpcSession>& session) : RpcSessionPtr(session) {
+        int* ptr = (int*)this->get();
+        KETO_LOG_INFO << "[RpcSessionWrapperPtr]RcpSession weak Constructor [" << this->use_count() << "][" << ptr << "]";
+    }
+    RpcSessionWrapperPtr(const RpcSessionPtr& session) : RpcSessionPtr(session) {
+        //int* ptr = (int*)this->get();
+        //KETO_LOG_INFO << "[RpcSessionWrapperPtr]RcpSessionPtr Constructor [" << this->use_count() << "][" << ptr << "]";
+    }
+    RpcSessionWrapperPtr(const RpcSessionWrapperPtr& session) : RpcSessionPtr(session) {
+        //int* ptr = (int*)this->get();
+        //KETO_LOG_INFO << "[RpcSessionWrapperPtr]Copy Constructor [" << this->use_count() << "][" << ptr << "]";
+    }
+
+    virtual ~RpcSessionWrapperPtr();
+};
+*/
+
+
 
 class RpcSession : public std::enable_shared_from_this<RpcSession> {
 public:
@@ -121,14 +147,14 @@ public:
 
     class ReadQueue {
     public:
-        ReadQueue(RpcSession* session);
+        ReadQueue(const RpcSessionPtr& rpcSessionPtr);
         ReadQueue(const ReadQueue& orig) = delete;
         virtual ~ReadQueue();
         void pushEntry(const std::string& command, const keto::server_common::StringVector& stringVector);
         void deactivate();
 
     private:
-        RpcSession* session;
+        RpcSessionPtr rpcSessionPtr;
         bool active;
         std::mutex classMutex;
         std::condition_variable stateCondition;
@@ -142,6 +168,36 @@ public:
     };
     typedef std::shared_ptr<ReadQueue> ReadQueuePtr;
 
+    class RpcSessionLifeCycleManager;
+    typedef std::shared_ptr<RpcSessionLifeCycleManager> RpcSessionLifeCycleManagerPtr;
+    class RpcSessionLifeCycleManager {
+    public:
+        virtual ~RpcSessionLifeCycleManager();
+
+        static void init();
+        static RpcSessionLifeCycleManagerPtr getInstance();
+        static void fin();
+        void terminate();
+        bool isTerminated();
+
+        void registerStartSession(const RpcSessionPtr& rpcSessionPtr);
+        void registerFinishedSession(const RpcSessionPtr& rpcSessionPtr);
+
+    private:
+        bool active;
+        std::shared_ptr<std::thread> managerThreadPtr;
+        std::deque<RpcSessionPtr> activeSessions;
+        std::deque<RpcSessionPtr> finishedSessions;
+        std::mutex classMutex;
+        std::condition_variable stateCondition;
+
+
+        RpcSessionLifeCycleManager();
+        void run();
+        RpcSessionPtr popEntry();
+        bool isActive();
+        void removeActiveSession(const RpcSessionPtr& rpcSessionPtr);
+    };
 
     static std::string getHeaderVersion() {
         return OBFUSCATED("$Id$");
@@ -228,8 +284,9 @@ public:
     long getLastBlockTouch();
 
     void deactivateQueue();
+    void joinQueue();
 
-    std::shared_ptr<RpcSession> _shared_from_this();
+    RpcSessionPtr _shared_from_this();
 
 private:
     int sessionId;
@@ -238,6 +295,7 @@ private:
     bool registered;
     bool terminated;
     std::recursive_mutex classMutex;
+    std::recursive_mutex readQueueMutex;
     tcp::resolver resolver;
     websocket::stream<beast::ssl_stream<beast::tcp_stream>> ws_;
     boost::beast::flat_buffer buffer_;
@@ -321,21 +379,6 @@ private:
     bool isTerminated();
 };
 
-class RpcSessionWrapperPtr : public RpcSessionPtr {
-public:
-    RpcSessionWrapperPtr() : RpcSessionPtr() {}
-    RpcSessionWrapperPtr(RpcSession* rpcSession) : RpcSessionPtr(rpcSession) {}
-    RpcSessionWrapperPtr(std::weak_ptr<RpcSession> session) : RpcSessionPtr(session) {}
-    RpcSessionWrapperPtr(const RpcSessionPtr& session) : RpcSessionPtr(session) {}
-
-    virtual ~RpcSessionWrapperPtr() {
-        //KETO_LOG_INFO << "The destructor of the session [" << this->use_count() << "]";
-        if (this->get() && this->use_count() == 1) {
-            KETO_LOG_INFO << "Deactivate the queue [" << this->use_count() << "]";
-            this->get()->deactivateQueue();
-        }
-    }
-};
 
 
 /*

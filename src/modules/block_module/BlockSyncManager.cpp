@@ -22,7 +22,8 @@ namespace block {
 
     static BlockSyncManagerPtr singleton;
 
-BlockSyncManager::BlockSyncManager(bool enabled) : enabled(enabled), status(INIT), startTime(0) {
+BlockSyncManager::BlockSyncManager(bool enabled) : enabled(enabled), status(INIT), startTime(0),
+    lastClientBlockTimestamp(0), lastServerBlockTimestamp(0) {
 
 }
 
@@ -72,9 +73,15 @@ void BlockSyncManager::sync() {
     }
 
     try {
-        KETO_LOG_INFO << "[BlockSyncManager::sync] make the block sync request";
-        keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::SignedBlockBatchRequest>(
-                keto::server_common::Events::RPC_CLIENT_REQUEST_BLOCK_SYNC, signedBlockBatchRequestProtoHelper));
+        if (requestFromServer()) {
+            KETO_LOG_INFO << "[BlockSyncManager::sync] make the block sync request to the server";
+            keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::SignedBlockBatchRequest>(
+                    keto::server_common::Events::RPC_SERVER_REQUEST_BLOCK_SYNC, signedBlockBatchRequestProtoHelper));
+        } else {
+            KETO_LOG_INFO << "[BlockSyncManager::sync] make the block sync request to the client first";
+            keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::SignedBlockBatchRequest>(
+                    keto::server_common::Events::RPC_CLIENT_REQUEST_BLOCK_SYNC, signedBlockBatchRequestProtoHelper));
+        }
 
         //KETO_LOG_DEBUG << "[BlockSyncManager::sync] reset the start time for the sync";
         {
@@ -228,6 +235,16 @@ BlockSyncManager::isEnabled() {
     return this->enabled;
 }
 
+bool
+BlockSyncManager::requestFromServer() {
+    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    if (this->lastServerBlockTimestamp != 0 &&
+        this->lastServerBlockTimestamp > this->lastClientBlockTimestamp) {
+        return true;
+    }
+    return false;
+}
+
 void
 BlockSyncManager::forceResync() {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
@@ -239,7 +256,34 @@ BlockSyncManager::forceResync() {
     this->status = INIT;
     this->startTime = 0;
     this->stateCondition.notify_all();
+}
 
+void
+BlockSyncManager::forceResync(std::time_t timestamp) {
+    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    if (this->status == INIT) {
+        KETO_LOG_INFO << "[BlockSyncManager::forceResync] Sync is already in process ignore request to force it again" << this->status;
+        return;
+    }
+    KETO_LOG_INFO << "[BlockSyncManager::forceResync] force the resync : " << this->status;
+    this->status = INIT;
+    this->startTime = 0;
+    this->stateCondition.notify_all();
+    this->lastClientBlockTimestamp = timestamp;
+}
+
+void
+BlockSyncManager::forceResyncServer(std::time_t timestamp) {
+    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    if (this->status == INIT) {
+        KETO_LOG_INFO << "[BlockSyncManager::forceResync] Sync is already in process ignore request to force it again" << this->status;
+        return;
+    }
+    KETO_LOG_INFO << "[BlockSyncManager::forceResync] force the resync : " << this->status;
+    this->status = INIT;
+    this->startTime = 0;
+    this->stateCondition.notify_all();
+    this->lastServerBlockTimestamp = timestamp;
 }
 
 void BlockSyncManager::broadcastBlock(const keto::block_db::SignedBlockWrapperMessageProtoHelper& signedBlockWrapperMessageProtoHelper) {

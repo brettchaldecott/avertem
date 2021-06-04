@@ -48,6 +48,9 @@ void EventRegistry::registerEventHandlers() {
             keto::server_common::Events::BLOCK_PERSIST_MESSAGE,
             &keto::block::EventRegistry::persistBlockMessage);
     keto::server_common::registerEventHandler (
+            keto::server_common::Events::BLOCK_PERSIST_MESSAGE_SERVER,
+            &keto::block::EventRegistry::persistServerBlockMessage);
+    keto::server_common::registerEventHandler (
             keto::server_common::Events::CONSENSUS::BLOCK,
             &keto::block::EventRegistry::generateSoftwareHash);
     keto::server_common::registerEventHandler (
@@ -151,6 +154,8 @@ void EventRegistry::deregisterEventHandlers() {
             keto::server_common::Events::NETWORK_FEE_INFO::SET_NETWORK_FEE);
 
     keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::BLOCK_PERSIST_MESSAGE_SERVER);
+    keto::server_common::deregisterEventHandler (
             keto::server_common::Events::BLOCK_PERSIST_MESSAGE);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::CONSENSUS::BLOCK);
@@ -183,10 +188,13 @@ keto::event::Event EventRegistry::persistBlockMessage(const keto::event::Event& 
     return BlockService::getInstance()->persistBlockMessage(event);
 }
 
+keto::event::Event EventRegistry::persistServerBlockMessage(const keto::event::Event& event) {
+    return BlockService::getInstance()->persistServerBlockMessage(event);
+}
+
 keto::event::Event EventRegistry::blockMessage(const keto::event::Event& event) {
     return BlockService::getInstance()->blockMessage(event);
 }
-
 
 keto::event::Event EventRegistry::generateSoftwareHash(const keto::event::Event& event) {
     return ConsensusService::getInstance()->generateSoftwareHash(event);

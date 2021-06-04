@@ -62,6 +62,7 @@ public:
     void sync();
 
     keto::event::Event persistBlockMessage(const keto::event::Event& event);
+    keto::event::Event persistServerBlockMessage(const keto::event::Event& event);
     keto::event::Event blockMessage(const keto::event::Event& event);
     keto::event::Event requestBlockSync(const keto::event::Event& event);
     keto::event::Event processBlockSyncResponse(const keto::event::Event& event);

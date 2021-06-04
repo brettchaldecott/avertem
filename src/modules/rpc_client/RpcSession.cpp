@@ -118,16 +118,22 @@ RpcSession::BufferScope::~BufferScope() {
     bufferCachePtr->remove(buffer);
 }
 
-RpcSession::ReadQueue::ReadQueue(RpcSession* session) : session(session), active(true) {
+RpcSession::ReadQueue::ReadQueue(const RpcSessionPtr& rpcSessionPtr) : rpcSessionPtr(rpcSessionPtr), active(true) {
     queueThreadPtr = std::shared_ptr<std::thread>(new std::thread(
             [this]
             {
+                RpcSession::RpcSessionLifeCycleManager::getInstance()->registerStartSession(this->rpcSessionPtr);
                 this->run();
+                RpcSession::RpcSessionLifeCycleManager::getInstance()->registerFinishedSession(this->rpcSessionPtr);
+                this->rpcSessionPtr.reset();
             }));
 }
 
 RpcSession::ReadQueue::~ReadQueue() {
-    deactivate();
+    if (queueThreadPtr) {
+        queueThreadPtr->join();
+        queueThreadPtr.reset();
+    }
 }
 
 bool RpcSession::ReadQueue::isActive() {
@@ -136,17 +142,13 @@ bool RpcSession::ReadQueue::isActive() {
 }
 
 void RpcSession::ReadQueue::deactivate() {
-    {
-        std::unique_lock<std::mutex> guard(classMutex);
-        if (!this->active) {
-            return;
-        }
-        this->active = false;
-        this->readQueue.clear();
-        stateCondition.notify_all();
+    std::unique_lock<std::mutex> guard(classMutex);
+    if (!this->active) {
+        return;
     }
-    queueThreadPtr->join();
-    queueThreadPtr.reset();
+    this->active = false;
+    this->readQueue.clear();
+    stateCondition.notify_all();
 }
 
 void RpcSession::ReadQueue::pushEntry(const std::string& command, const keto::server_common::StringVector& stringVector) {
@@ -160,21 +162,130 @@ void RpcSession::ReadQueue::pushEntry(const std::string& command, const keto::se
 
 RpcSession::ReadQueueEntryPtr RpcSession::ReadQueue::popEntry() {
     std::unique_lock<std::mutex> uniqueLock(classMutex);
-    if (!this->readQueue.empty()) {
-        ReadQueueEntryPtr result = this->readQueue.front();
-        this->readQueue.pop_front();
-        return result;
+    ReadQueueEntryPtr readQueueEntryPtr;
+    while (this->active) {
+        if (!this->readQueue.empty()) {
+            ReadQueueEntryPtr result = this->readQueue.front();
+            this->readQueue.pop_front();
+            return result;
+        }
+        this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(
+                Constants::DEFAULT_RPC_CLIENT_QUEUE_DELAY));
     }
-    this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(
-            Constants::DEFAULT_RPC_CLIENT_QUEUE_DELAY));
     return RpcSession::ReadQueueEntryPtr();
 }
 
 void RpcSession::ReadQueue::run() {
-    while(this->isActive()) {
-        RpcSession::ReadQueueEntryPtr entry = popEntry();
-        if (entry) {
-            this->session->processQueueEntry(entry);
+    //KETO_LOG_INFO << "[RpcSession::ReadQueue::run]Beginning of the run method";
+
+    try {
+        RpcSession::ReadQueueEntryPtr entry;
+        while(entry = popEntry()) {
+            this->rpcSessionPtr->processQueueEntry(entry);
+        }
+    } catch (...) {
+        // ignore
+    }
+    //KETO_LOG_INFO << "[RpcSession::ReadQueue::run]Before releasing the session wrapper";
+    //this->rpcSessionPtr.reset();
+    //KETO_LOG_INFO << "[RpcSession::ReadQueue::run]End of the run method";
+}
+
+static RpcSession::RpcSessionLifeCycleManagerPtr rpcSessionLifeCycleManagerSingleton;
+
+RpcSession::RpcSessionLifeCycleManager::~RpcSessionLifeCycleManager() {
+
+}
+
+void RpcSession::RpcSessionLifeCycleManager::init() {
+    if (!rpcSessionLifeCycleManagerSingleton) {
+        rpcSessionLifeCycleManagerSingleton = RpcSession::RpcSessionLifeCycleManagerPtr(new RpcSession::RpcSessionLifeCycleManager());
+    }
+}
+
+RpcSession::RpcSessionLifeCycleManagerPtr RpcSession::RpcSessionLifeCycleManager::getInstance() {
+    return rpcSessionLifeCycleManagerSingleton;
+}
+
+void RpcSession::RpcSessionLifeCycleManager::fin() {
+    if (rpcSessionLifeCycleManagerSingleton) {
+        rpcSessionLifeCycleManagerSingleton->terminate();
+        rpcSessionLifeCycleManagerSingleton.reset();
+    }
+}
+
+void RpcSession::RpcSessionLifeCycleManager::registerStartSession(const RpcSessionPtr& rpcSessionPtr) {
+    std::unique_lock<std::mutex> uniqueLock(classMutex);
+    this->activeSessions.push_back(rpcSessionPtr);
+}
+
+void RpcSession::RpcSessionLifeCycleManager::registerFinishedSession(const RpcSessionPtr& rpcSessionPtr) {
+    std::unique_lock<std::mutex> uniqueLock(classMutex);
+    this->finishedSessions.push_back(rpcSessionPtr);
+    this->removeActiveSession(rpcSessionPtr);
+    stateCondition.notify_all();
+}
+
+RpcSession::RpcSessionLifeCycleManager::RpcSessionLifeCycleManager() : active(true) {
+    managerThreadPtr = std::shared_ptr<std::thread>(new std::thread(
+            [this]
+            {
+                this->run();
+            }));
+}
+
+void RpcSession::RpcSessionLifeCycleManager::run() {
+    //KETO_LOG_INFO << "[RpcSession::RpcSessionLifeCycleManager::run]Beginning of the run method";
+    try {
+        RpcSessionPtr entry;
+        while (entry = popEntry()) {
+            //KETO_LOG_INFO << "[RpcSession::RpcSessionLifeCycleManager::run]Join entry and wait";
+            entry->joinQueue();
+        }
+    } catch (...) {
+        // ignore
+    }
+    //KETO_LOG_INFO << "[RpcSession::ReadQueue::run]End of the run method";
+}
+
+RpcSessionPtr RpcSession::RpcSessionLifeCycleManager::popEntry() {
+    std::unique_lock<std::mutex> uniqueLock(classMutex);
+    while(!this->activeSessions.empty() || !this->finishedSessions.empty() || this->active) {
+        if (!this->finishedSessions.empty()) {
+            RpcSessionPtr result = this->finishedSessions.front();
+            this->finishedSessions.pop_front();
+            return result;
+        }
+        this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(
+                Constants::DEFAULT_RPC_CLIENT_QUEUE_DELAY));
+    }
+
+    return NULL;
+}
+
+bool RpcSession::RpcSessionLifeCycleManager::isActive() {
+    std::unique_lock<std::mutex> uniqueLock(classMutex);
+    return this->active || !this->finishedSessions.empty() || !this->activeSessions.empty();
+}
+
+void RpcSession::RpcSessionLifeCycleManager::terminate() {
+    std::unique_lock<std::mutex> uniqueLock(classMutex);
+    this->active = false;
+    stateCondition.notify_all();
+}
+
+bool RpcSession::RpcSessionLifeCycleManager::isTerminated() {
+    std::unique_lock<std::mutex> uniqueLock(classMutex);
+    return this->activeSessions.empty() && this->finishedSessions.empty() && !this->active;
+}
+
+void RpcSession::RpcSessionLifeCycleManager::removeActiveSession(const RpcSessionPtr& rpcSessionPtr) {
+    for (std::deque<RpcSessionPtr>::iterator iter = this->activeSessions.begin();
+        iter!= this->activeSessions.end(); iter++) {
+        if (iter->get() == rpcSessionPtr.get()) {
+            //KETO_LOG_INFO << "[RpcSession::ReadQueue::run] Remove the active session";
+            this->activeSessions.erase(iter);
+            break;
         }
     }
 }
@@ -182,7 +293,8 @@ void RpcSession::ReadQueue::run() {
 // Report a failure
 void
 RpcSession::fail(boost::system::error_code ec, const std::string& what) {
-    KETO_LOG_ERROR << "Failed processing : [" << rpcPeer.getHost() << "][" << isClosed() <<  "][" << what << ": " << ec.message();
+    KETO_LOG_ERROR << "Failed processing : [" << rpcPeer.getHost() << "][" << isClosed() <<  "][" << what << "] : " << ec.message();
+    deactivateQueue();
 }
 
 std::string RpcSession::getSourceVersion() {
@@ -204,6 +316,7 @@ RpcSession::RpcSession(
         retryCount(0),
         rpcPeer(rpcPeer),
         lastBlockTouch(0) {
+    KETO_LOG_INFO << "[RpcSession::RpcSession] Start a new session for : " << rpcPeer.getHost();
     this->sessionNumber = sessionIndex++;
     ws_.auto_fragment(false);
     // setup the key loader
@@ -230,13 +343,11 @@ RpcSession::RpcSession(
     } else {
         this->externalHostname = boost::asio::ip::host_name();
     }
-
-    this->readQueuePtr = ReadQueuePtr(new RpcSession::ReadQueue(this));
     KETO_LOG_INFO << "[RpcSession::RpcSession] New session created for host : " << rpcPeer.getHost();
 }
 
 RpcSession::~RpcSession() {
-    KETO_LOG_INFO << "[RpcSession::~RpcSession] Session ending for host : " << rpcPeer.getHost();
+    KETO_LOG_INFO << "[RpcSession::~RpcSession] Session ending for host [" << rpcPeer.getHost() << "][" << this << "]";
     this->readQueuePtr.reset();
     this->terminated = true;
 }
@@ -245,6 +356,9 @@ RpcSession::~RpcSession() {
 void
 RpcSession::run()
 {
+    KETO_LOG_INFO << "[RpcSession::run] Start running : " << rpcPeer.getHost();
+    // setup the queue reference here as up until this point the shared ptr cannot be used
+    this->readQueuePtr = ReadQueuePtr(new RpcSession::ReadQueue(_shared_from_this()));
 
     // Look up the domain name
     this->resolver.async_resolve(
@@ -253,6 +367,8 @@ RpcSession::run()
             beast::bind_front_handler(
                     &RpcSession::on_resolve,
                     _shared_from_this()));
+
+    KETO_LOG_INFO << "[RpcSession::run] The running has started : " << rpcPeer.getHost();
 }
 
 void
@@ -265,7 +381,7 @@ RpcSession::on_resolve(
         return fail(ec, Constants::SESSION::RESOLVE);
     } else if (RpcSessionManager::getInstance()->isTerminated()) {
         RpcSessionManager::getInstance()->removeSession(this->rpcPeer, this->accountHash);
-        return;
+        return deactivateQueue();
     }
 
         // Set a timeout on the operation
@@ -286,6 +402,7 @@ RpcSession::on_connect(boost::system::error_code ec,tcp::resolver::results_type:
         RpcSessionManager::getInstance()->reconnect(rpcPeer);
         return fail(ec, Constants::SESSION::CONNECT);
     }
+    KETO_LOG_INFO << "[RpcSession::on_connect] connecting to host : " << rpcPeer.getHost();
 
     // Set a timeout on the operation
     beast::get_lowest_layer(ws_).expires_after(std::chrono::seconds(60));
@@ -307,7 +424,7 @@ RpcSession::on_ssl_handshake(boost::system::error_code ec)
     } else if (RpcSessionManager::getInstance()->isTerminated()) {
         do_close();
         RpcSessionManager::getInstance()->removeSession(this->rpcPeer, this->accountHash);
-        return;
+        return deactivateQueue();
     }
 
     // Turn off the timeout on the tcp_stream, because
@@ -344,10 +461,11 @@ RpcSession::on_handshake(boost::system::error_code ec)
     } else if (RpcSessionManager::getInstance()->isTerminated()) {
         do_close();
         RpcSessionManager::getInstance()->removeSession(this->rpcPeer, this->accountHash);
-        return;
+        return deactivateQueue();
     }
 
-        // Send the message
+    KETO_LOG_INFO << "[RpcSession::on_handshake] connection complete start protocol : " << rpcPeer.getHost();
+    // Send the message
     std::stringstream ss;
     ss <<
             buildMessage(keto::server_common::Constants::RPC_COMMANDS::HELLO,buildHeloMessage());
@@ -367,6 +485,8 @@ RpcSession::on_write(
     queue_.pop_front();
 
     if(ec) {
+        // clear the queue
+        queue_.clear();
         return fail(ec, "write");
     }
 
@@ -395,11 +515,11 @@ RpcSession::on_read(
     boost::ignore_unused(bytes_transferred);
 
     if (this->isClosed()) {
-        return;
+        return deactivateQueue();
     } else if (ec && !ws_.is_open()) {
         this->setClosed(true);
         RpcSessionManager::getInstance()->reconnect(rpcPeer);
-        return;
+        return deactivateQueue();
     } else if (ec) {
         closeResponse(keto::server_common::Constants::RPC_COMMANDS::CLOSE,keto::server_common::Constants::RPC_COMMANDS::CLOSE);
         RpcSessionManager::getInstance()->reconnect(rpcPeer);
@@ -424,11 +544,16 @@ RpcSession::on_read(
     // Clear the buffer
     buffer_.consume(buffer_.size());
 
-    this->readQueuePtr->pushEntry(command,stringVector);
+    {
+        std::unique_lock<std::recursive_mutex> uniqueLock(readQueueMutex);
+        if (this->readQueuePtr) {
+            this->readQueuePtr->pushEntry(command, stringVector);
+        }
+    }
 
     if (this->isClosed()) {
         KETO_LOG_INFO << this->sessionNumber << " Closing the session";
-        return;
+        return deactivateQueue();
     } else {
         do_read();
     }
@@ -575,11 +700,15 @@ RpcSession::on_close(boost::system::error_code ec)
                         keto::server_common::Events::DEREGISTER_RPC_PEER,rpcPeerHelper));
     }
 
-    // remove the session now that it is closed
-    RpcSessionManager::getInstance()->removeSession(this->rpcPeer, this->accountHash);
+    // remove the session if it is terminated. This prevents the reconnecting session from being removed.
+    if (RpcSessionManager::getInstance()->isTerminated()) {
+        RpcSessionManager::getInstance()->removeSession(this->rpcPeer, this->accountHash);
+    }
 
     if(ec)
         return fail(ec, "close");
+
+    deactivateQueue();
 
     KETO_LOG_INFO << this->sessionNumber << ": Close the connection";
 }
@@ -653,7 +782,7 @@ std::string RpcSession::helloAcceptedResponse(const std::string& command, const 
     }
 
     // notify the accepted inorder to set the network keys
-    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkSessionKeysResponse] handle network session accepted";
+    KETO_LOG_INFO << "[RpcSession::helloAcceptedResponse] handle network session accepted";
     keto::software_consensus::ConsensusSessionManager::getInstance()->notifyAccepted();
 
     if (this->isRegistered()) {
@@ -937,7 +1066,7 @@ std::string RpcSession::handleRequestNetworkSessionKeys(const std::string& comma
 
 std::string RpcSession::handleRequestNetworkSessionKeysResponse(const std::string& command, const std::string& message) {
     std::unique_lock<std::recursive_mutex> uniqueLock(keto::software_consensus::ConsensusSessionManager::getInstance()->getMutex());
-    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkSessionKeysResponse] set the network session keys";
+    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkSessionKeysResponse][" << this->getPeer().getHost() << "] set the network session keys";
     keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(
             Botan::hex_decode(message));
 
@@ -947,7 +1076,7 @@ std::string RpcSession::handleRequestNetworkSessionKeysResponse(const std::strin
                     keto::server_common::toEvent<keto::proto::NetworkKeysWrapper>(
                             keto::server_common::Events::SET_NETWORK_SESSION_KEYS,networkKeysWrapper)));
 
-    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkSessionKeysResponse] request the master network keys";
+    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkSessionKeysResponse][" << this->getPeer().getHost() << "] request the master network keys";
     return serverRequest(keto::server_common::Constants::RPC_COMMANDS::REQUEST_MASTER_NETWORK_KEYS,
                   keto::server_common::Constants::RPC_COMMANDS::REQUEST_MASTER_NETWORK_KEYS);
 }
@@ -955,7 +1084,7 @@ std::string RpcSession::handleRequestNetworkSessionKeysResponse(const std::strin
 
 std::string RpcSession::handleRequestNetworkMasterKeyResponse(const std::string& command, const std::string& message) {
     std::unique_lock<std::recursive_mutex> uniqueLock(keto::software_consensus::ConsensusSessionManager::getInstance()->getMutex());
-    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkMasterKeyResponse] Set the master keys";
+    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkMasterKeyResponse][" << this->getPeer().getHost() << "] Set the master keys";
     keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(
             Botan::hex_decode(message));
 
@@ -965,14 +1094,14 @@ std::string RpcSession::handleRequestNetworkMasterKeyResponse(const std::string&
                     keto::server_common::toEvent<keto::proto::NetworkKeysWrapper>(
                             keto::server_common::Events::SET_MASTER_NETWORK_KEYS,networkKeysWrapper)));
 
-    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkMasterKeyResponse] After setting the master keys";
+    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkMasterKeyResponse][" << this->getPeer().getHost() << "] After setting the master keys";
     return serverRequest(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS,
                   keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS);
 }
 
 std::string RpcSession::handleRequestNetworkKeysResponse(const std::string& command, const std::string& message) {
     std::unique_lock<std::recursive_mutex> uniqueLock(keto::software_consensus::ConsensusSessionManager::getInstance()->getMutex());
-    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkKeysResponse] Set the network keys";
+    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkKeysResponse][" << this->getPeer().getHost() << "] Set the network keys";
     keto::rpc_protocol::NetworkKeysWrapperHelper networkKeysWrapperHelper(
             Botan::hex_decode(message));
 
@@ -982,7 +1111,7 @@ std::string RpcSession::handleRequestNetworkKeysResponse(const std::string& comm
                     keto::server_common::toEvent<keto::proto::NetworkKeysWrapper>(
                             keto::server_common::Events::SET_NETWORK_KEYS,networkKeysWrapper)));
 
-    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkKeysResponse] After setting the network keys";
+    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkKeysResponse][" << this->getPeer().getHost() << "] After setting the network keys";
     return serverRequest(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES,
                   keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES);
 }
@@ -1010,7 +1139,7 @@ std::string RpcSession::handleRequestNetworkFeesResponse(const std::string& comm
 std::string RpcSession::handleInternalException(const std::string& command, const std::string& cause) {
 
     std::string result;
-    KETO_LOG_INFO << "[RpcSession::handleInternalException] Processing failed for the command : " << command;
+    KETO_LOG_INFO << "[RpcSession::handleInternalException][" << this->getPeer().getHost() << "] Processing failed for the command : " << command;
     if (command == keto::server_common::Constants::RPC_COMMANDS::ACCEPTED) {
         KETO_LOG_INFO << "[RpcSession::handleInternalException][" << this->getPeer().getHost() << "][" << command << "] reconnect to the server";
 
@@ -1081,7 +1210,7 @@ std::string RpcSession::handleRetryResponse(const std::string& command) {
     std::string result;
     KETO_LOG_INFO << "[RpcSession::handleRetryResponse] Processing failed for the command : " << command;
     if (command == keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS ||
-               command == keto::server_common::Constants::RPC_COMMANDS::REQUEST_MASTER_NETWORK_KEYS  ||
+                   command == keto::server_common::Constants::RPC_COMMANDS::REQUEST_MASTER_NETWORK_KEYS  ||
                command == keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_KEYS ||
                command == keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES ||
                command == keto::server_common::Constants::RPC_COMMANDS::HELLO ||
@@ -1181,10 +1310,11 @@ void RpcSession::requestBlockSync(const keto::proto::SignedBlockBatchRequest& si
 
 void RpcSession::pushBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage) {
     std::unique_lock<std::recursive_mutex> uniqueLock(classMutex);
+    KETO_LOG_INFO << "[RpcSession::pushBlock][" << getPeer().getHost() << "][" << this->sessionNumber << "] handle the push request : " << this->closed;
     if (this->closed) {
         return;
     }
-    KETO_LOG_INFO << "[RpcSession::requestBlockSync] " << this->sessionNumber << " push block to server";
+    KETO_LOG_INFO << "[RpcSession::pushBlock][" << getPeer().getHost() << "][" << this->sessionNumber << "] push block to server";
     std::string messageWrapperStr;
     signedBlockWrapperMessage.SerializeToString(&messageWrapperStr);
     send(serverRequest(keto::server_common::Constants::RPC_COMMANDS::BLOCK,
@@ -1361,9 +1491,15 @@ long RpcSession::getLastBlockTouch() {
 }
 
 void RpcSession::deactivateQueue() {
-
+    std::unique_lock<std::recursive_mutex> uniqueLock(readQueueMutex);
     if (this->readQueuePtr) {
         this->readQueuePtr->deactivate();
+    }
+}
+
+void RpcSession::joinQueue() {
+    std::unique_lock<std::recursive_mutex> uniqueLock(readQueueMutex);
+    if (this->readQueuePtr) {
         this->readQueuePtr.reset();
     }
 }
@@ -1376,9 +1512,24 @@ bool RpcSession::isTerminated() {
     return this->terminated;
 }
 
-std::shared_ptr<RpcSession> RpcSession::_shared_from_this() {
-    return RpcSessionWrapperPtr(shared_from_this());
+RpcSessionPtr RpcSession::_shared_from_this() {
+    return RpcSessionPtr(shared_from_this());
 }
+
+/*
+RpcSessionWrapperPtr::~RpcSessionWrapperPtr() {
+    int* ptr = (int*)this->get();
+    //KETO_LOG_INFO << "[~RpcSessionWrapperPtr]Destructor [" << this->use_count() << "][" << ptr << "]";
+    //if (this->get() && this->use_count() == 3) {
+        //KETO_LOG_INFO << "[~RpcSessionWrapperPtr]Deactivate the queue [" << this->use_count() << "][" << ptr << "]";
+        //this->get()->deactivateQueue();
+    //} else if (this->get()) {
+        //KETO_LOG_INFO << "[~RpcSessionWrapperPtr]The destructor of the session [" << this->use_count() << "][" << ptr << "]";
+    //} else if (this->use_count() == 1) {
+        //KETO_LOG_INFO << "[~RpcSessionWrapperPtr]The usage count is [" << this->use_count() << "][" << ptr << "]";
+    //}
+}*/
+
 
 /*
 RpcSessionWrapper::RpcSessionWrapper(int sessionId,

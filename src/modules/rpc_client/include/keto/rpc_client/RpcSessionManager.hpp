@@ -66,9 +66,11 @@ public:
     static RpcSessionManagerPtr getInstance();
     
     // the list of peers
-    std::vector<keto::rpc_client::RpcSessionWrapperPtr> getPeers();
+    std::vector<keto::rpc_client::RpcSessionPtr> getPeers();
+    std::vector<keto::rpc_client::RpcSessionPtr> getRegisteredPeers();
     std::vector<std::string> listPeers();
     std::vector<std::string> listAccountPeers();
+    std::vector<std::string> listActiveAccountPeers();
     
     void start();
     void postStart();
@@ -108,8 +110,8 @@ private:
     std::recursive_mutex classMutex;
     std::mutex sessionClassMutex;
     std::condition_variable stateCondition;
-    std::map<std::string,RpcSessionWrapperPtr> sessionMap;
-    std::map<std::string,RpcSessionWrapperPtr> accountSessionMap;
+    std::map<std::string,RpcSessionPtr> sessionMap;
+    std::map<std::string,RpcSessionPtr> accountSessionMap;
     // The io_context is required for all I/O
     std::shared_ptr<net::io_context> ioc;
     // The SSL context is required, and holds certificates
@@ -126,11 +128,11 @@ private:
 
 
     bool hasAccountSessionMapping(const std::string& account);
-    RpcSessionWrapperPtr getAccountSessionMapping(const std::string& account);
-    RpcSessionWrapperPtr getDefaultPeer();
-    RpcSessionWrapperPtr getActivePeer();
-    std::vector<RpcSessionWrapperPtr> getActivePeers();
-    std::vector<RpcSessionWrapperPtr> getAccountPeers();
+    RpcSessionPtr getAccountSessionMapping(const std::string& account);
+    RpcSessionPtr getDefaultPeer();
+    RpcSessionPtr getActivePeer();
+    std::vector<RpcSessionPtr> getActivePeers();
+    std::vector<RpcSessionPtr> getAccountPeers();
     bool registeredAccounts();
 
     void waitForSessionEnd();
