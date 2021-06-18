@@ -274,6 +274,7 @@ public:
     static SessionLifeCycleManagerPtr getInstance();
     static void fin();
     void terminate();
+    void join();
     bool isTerminated();
 
     void registerStartSession(const SessionPtr& sessionPtr);
@@ -364,6 +365,7 @@ class Session : public std::enable_shared_from_this<Session>
 private:
     std::recursive_mutex classMutex;
     std::recursive_mutex readQueueMutex;
+    std::recursive_mutex writeMutex;
     websocket::stream<
             beast::ssl_stream<beast::tcp_stream>> ws_;
 
@@ -1048,15 +1050,19 @@ public:
         boost::system::error_code ec,
         std::size_t bytes_transferred)
     {
-        boost::ignore_unused(bytes_transferred);
-        queue_.pop_front();
+        {
+            std::unique_lock<std::recursive_mutex> uniqueLock(writeMutex);
+            boost::ignore_unused(bytes_transferred);
+            queue_.pop_front();
 
-        if(ec)
-            return fail(ec, "write");
+            if (ec)
+                return fail(ec, "write");
 
-        if (queue_.size()) {
-            sendFirstQueueMessage();
+            if (!queue_.size()) {
+                return;
+            }
         }
+        sendFirstQueueMessage();
     }
     
     std::string buildMessage(const std::string& command, const std::string& message) {
@@ -1486,15 +1492,16 @@ public:
     void
     sendMessage(std::shared_ptr<std::string> ss) {
         //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][sendMessage] : push an entry into the queue";
+        {
+            std::unique_lock<std::recursive_mutex> uniqueLock(writeMutex);
+            // Always add to queue
+            queue_.push_back(ss);
 
-        // Always add to queue
-        queue_.push_back(ss);
-
-        // Are we already writing?
-        if (queue_.size() > 1) {
-            return;
+            // Are we already writing?
+            if (queue_.size() > 1) {
+                return;
+            }
         }
-
         sendFirstQueueMessage();
         //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][sendMessage] : send a message";
     }
@@ -1610,7 +1617,10 @@ ReadQueue::ReadQueue(const SessionPtr& sessionPtr) : sessionPtr(sessionPtr), act
 }
 
 ReadQueue::~ReadQueue() {
-    queueThreadPtr.reset();
+    if (queueThreadPtr) {
+        queueThreadPtr->join();
+        queueThreadPtr.reset();
+    }
 }
 
 void ReadQueue::run() {
@@ -1643,13 +1653,23 @@ SessionLifeCycleManagerPtr SessionLifeCycleManager::getInstance() {
 }
 
 void SessionLifeCycleManager::fin() {
-    sessionLifeCycleManagerPtrSingleton.reset();
+    if (sessionLifeCycleManagerPtrSingleton) {
+        sessionLifeCycleManagerPtrSingleton->terminate();
+        sessionLifeCycleManagerPtrSingleton->join();
+        sessionLifeCycleManagerPtrSingleton.reset();
+    }
 }
 
 void SessionLifeCycleManager::terminate() {
     std::unique_lock<std::mutex> uniqueLock(classMutex);
     this->active = false;
     stateCondition.notify_all();
+}
+
+void SessionLifeCycleManager::join() {
+    if (this->managerThreadPtr) {
+        this->managerThreadPtr->join();
+    }
 }
 
 bool SessionLifeCycleManager::isTerminated() {
@@ -1669,7 +1689,7 @@ void SessionLifeCycleManager::registerFinishedSession(const SessionPtr& sessionP
     stateCondition.notify_all();
 }
 
-SessionLifeCycleManager::SessionLifeCycleManager() {
+SessionLifeCycleManager::SessionLifeCycleManager() : active(true) {
     managerThreadPtr = std::shared_ptr<std::thread>(new std::thread(
             [this]
             {
@@ -2324,7 +2344,7 @@ void RpcServer::waitForSessionEnd() {
     std::vector<std::string> sessions;
     SessionLifeCycleManager::getInstance()->terminate();
     while((sessionCount = getSessionCount(waitForTimeout)) && (sessions = AccountSessionCache::getInstance()->getSessions()).size() ||
-        SessionLifeCycleManager::getInstance()->isTerminated())  {
+        !SessionLifeCycleManager::getInstance()->isTerminated())  {
         KETO_LOG_ERROR << "[RpcServer::waitForSessionEnd] session still open close them [" << sessionCount
                        << "][" << sessions.size() << "]";
         // get the list of sessions

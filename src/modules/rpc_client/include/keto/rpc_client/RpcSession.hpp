@@ -178,6 +178,7 @@ public:
         static RpcSessionLifeCycleManagerPtr getInstance();
         static void fin();
         void terminate();
+        void join();
         bool isTerminated();
 
         void registerStartSession(const RpcSessionPtr& rpcSessionPtr);
@@ -286,7 +287,7 @@ public:
     void deactivateQueue();
     void joinQueue();
 
-    RpcSessionPtr _shared_from_this();
+    //RpcSessionPtr _shared_from_this();
 
 private:
     int sessionId;
@@ -296,6 +297,7 @@ private:
     bool terminated;
     std::recursive_mutex classMutex;
     std::recursive_mutex readQueueMutex;
+    std::recursive_mutex writeMutex;
     tcp::resolver resolver;
     websocket::stream<beast::ssl_stream<beast::tcp_stream>> ws_;
     boost::beast::flat_buffer buffer_;
@@ -328,7 +330,7 @@ private:
     std::string serverRequest(const std::string& command, const std::vector<uint8_t>& message);
     std::string serverRequest(const std::string& command, const std::string& message);
     std::string handlePeerRequest(const std::string& command, const std::string& message);
-    void handlePeerResponse(const std::string& command, const std::string& message);
+    std::string handlePeerResponse(const std::string& command, const std::string& message);
 
     // protocol methods
     std::string handleProtocolCheckRequest(const std::string& command, const std::string& message);

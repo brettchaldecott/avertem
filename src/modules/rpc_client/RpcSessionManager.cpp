@@ -71,7 +71,7 @@ RpcSessionManager::RpcSessionManager() : sessionSequence(0), peered(true), activ
 
     threads = Constants::DEFAULT_RPC_CLIENT_THREADS;
     if (config->getVariablesMap().count(Constants::RPC_CLIENT_THREADS)) {
-        threads = std::max<int>(1,atoi(config->getVariablesMap()[Constants::RPC_CLIENT_THREADS].as<std::string>().c_str()));
+        threads = std::max<int>(Constants::DEFAULT_RPC_CLIENT_THREADS,atoi(config->getVariablesMap()[Constants::RPC_CLIENT_THREADS].as<std::string>().c_str()));
     }
 
     // setup the ioc threads
@@ -94,22 +94,32 @@ RpcSessionManager::~RpcSessionManager() {
 
 void RpcSessionManager::setPeers(const std::vector<std::string>& peers, bool peered) {
     std::lock_guard<std::recursive_mutex> guard(this->classMutex);
-    this->peered = peered;
-    if (this->peered) {
-        PeerStore::getInstance()->setPeers(peers);
-        this->sessionMap.clear();
+
+    // check if terminated
+    if (this->terminated) {
+        KETO_LOG_INFO << "The session manager is terminated ignoring the peer";
+        return;
     }
+
+    // remove the account and session mappings
+    this->peered = peered;
+    PeerStore::getInstance()->setPeers(peers);
+    this->accountSessionMap.clear();
+    this->sessionMap.clear();
+
+    // delay the connection by 10 seconds
     for (std::vector<std::string>::const_iterator iter = peers.begin();
             iter != peers.end(); iter++) {
         try {
             RpcPeer rpcPeer((*iter), this->peered);
             KETO_LOG_INFO << "Connect to peered server : " << rpcPeer.getPeer();
-            RpcSessionPtr rpcSessionPtr(new RpcSession(
+            RpcSessionPtr rpcSessionPtr = std::make_shared<RpcSession>(
                     getNextSessionId(),
                     this->ioc,
-                    this->ctx, rpcPeer));
+                    this->ctx, rpcPeer);
             rpcSessionPtr->run();
             this->sessionMap[(*iter)] = rpcSessionPtr;
+            KETO_LOG_INFO << "Started the new session : " << rpcPeer.getPeer();
         } catch (keto::common::Exception &ex) {
             KETO_LOG_ERROR << "[RpcSessionManager::setPeers] Failed to set a peer : " << boost::diagnostic_information_what(ex, true);
             KETO_LOG_ERROR << "[RpcSessionManager::setPeers] cause : " << ex.what();
@@ -149,10 +159,10 @@ void RpcSessionManager::reconnect(RpcPeer& rpcPeer) {
     try {
         std::this_thread::sleep_for(std::chrono::milliseconds(Constants::SESSION::RETRY_COUNT_DELAY));
         KETO_LOG_INFO << "Attempt to reconnect to : " << rpcPeer.getPeer();
-        RpcSessionPtr rpcSessionPtr(new RpcSession(
+        RpcSessionPtr rpcSessionPtr = std::make_shared<RpcSession>(
                 getNextSessionId(),
                 this->ioc,
-                this->ctx, rpcPeer));
+                this->ctx, rpcPeer);
         rpcSessionPtr->run();
         this->sessionMap[(std::string) rpcPeer] = rpcSessionPtr;
         KETO_LOG_INFO << "After the reconnect : " << rpcPeer.getPeer();
@@ -431,10 +441,10 @@ void RpcSessionManager::postStart() {
         try {
             KETO_LOG_INFO << "Connect to peer : " << (*iter);
             RpcPeer rpcPeer((*iter), this->peered);
-            RpcSessionPtr rpcSessionPtr(new RpcSession(
+            RpcSessionPtr rpcSessionPtr = std::make_shared<RpcSession>(
                     getNextSessionId(),
                     this->ioc,
-                    this->ctx, rpcPeer));
+                    this->ctx, rpcPeer);
             rpcSessionPtr->run();
             this->sessionMap[(std::string) rpcPeer] = rpcSessionPtr;
             KETO_LOG_INFO << "Added peer connection : " << (*iter);
@@ -456,6 +466,7 @@ void RpcSessionManager::postStart() {
         [this]
         {
             this->ioc->run();
+            KETO_LOG_INFO << "[RpcSessionManager::postStart] IOC thread has completed : " << this->ioc->stopped();
         });
     }
     KETO_LOG_INFO << "[RpcSessionManager::postStart] All the threads have been started : " << this->threads;

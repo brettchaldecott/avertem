@@ -122,9 +122,13 @@ RpcSession::ReadQueue::ReadQueue(const RpcSessionPtr& rpcSessionPtr) : rpcSessio
     queueThreadPtr = std::shared_ptr<std::thread>(new std::thread(
             [this]
             {
+                KETO_LOG_INFO << "[ReadQueue::run] register start : " << this->rpcSessionPtr->getPeer().getHost();
                 RpcSession::RpcSessionLifeCycleManager::getInstance()->registerStartSession(this->rpcSessionPtr);
+                KETO_LOG_INFO << "[ReadQueue::run] run : " << this->rpcSessionPtr->getPeer().getHost();
                 this->run();
+                KETO_LOG_INFO << "[ReadQueue::run] register finished : " << this->rpcSessionPtr->getPeer().getHost();
                 RpcSession::RpcSessionLifeCycleManager::getInstance()->registerFinishedSession(this->rpcSessionPtr);
+                KETO_LOG_INFO << "[ReadQueue::run] reset : " << this->rpcSessionPtr->getPeer().getHost();
                 this->rpcSessionPtr.reset();
             }));
 }
@@ -210,6 +214,7 @@ RpcSession::RpcSessionLifeCycleManagerPtr RpcSession::RpcSessionLifeCycleManager
 void RpcSession::RpcSessionLifeCycleManager::fin() {
     if (rpcSessionLifeCycleManagerSingleton) {
         rpcSessionLifeCycleManagerSingleton->terminate();
+        rpcSessionLifeCycleManagerSingleton->join();
         rpcSessionLifeCycleManagerSingleton.reset();
     }
 }
@@ -239,13 +244,14 @@ void RpcSession::RpcSessionLifeCycleManager::run() {
     try {
         RpcSessionPtr entry;
         while (entry = popEntry()) {
-            //KETO_LOG_INFO << "[RpcSession::RpcSessionLifeCycleManager::run]Join entry and wait";
+            KETO_LOG_INFO << "[RpcSession::RpcSessionLifeCycleManager::run] Join entry and wait : " << entry;
             entry->joinQueue();
+            KETO_LOG_INFO << "[RpcSession::RpcSessionLifeCycleManager::run] After waiting";
         }
     } catch (...) {
         // ignore
     }
-    //KETO_LOG_INFO << "[RpcSession::ReadQueue::run]End of the run method";
+    KETO_LOG_INFO << "[RpcSession::ReadQueue::run]End of the run method";
 }
 
 RpcSessionPtr RpcSession::RpcSessionLifeCycleManager::popEntry() {
@@ -272,6 +278,13 @@ void RpcSession::RpcSessionLifeCycleManager::terminate() {
     std::unique_lock<std::mutex> uniqueLock(classMutex);
     this->active = false;
     stateCondition.notify_all();
+}
+
+void RpcSession::RpcSessionLifeCycleManager::join() {
+    std::unique_lock<std::mutex> uniqueLock(classMutex);
+    if (this->managerThreadPtr) {
+        this->managerThreadPtr->join();
+    }
 }
 
 bool RpcSession::RpcSessionLifeCycleManager::isTerminated() {
@@ -350,6 +363,7 @@ RpcSession::~RpcSession() {
     KETO_LOG_INFO << "[RpcSession::~RpcSession] Session ending for host [" << rpcPeer.getHost() << "][" << this << "]";
     this->readQueuePtr.reset();
     this->terminated = true;
+    KETO_LOG_INFO << "[RpcSession::~RpcSession] After the  hosts [" << rpcPeer.getHost() << "][" << this << "]";
 }
 
 // Start the asynchronous operation
@@ -358,7 +372,7 @@ RpcSession::run()
 {
     KETO_LOG_INFO << "[RpcSession::run] Start running : " << rpcPeer.getHost();
     // setup the queue reference here as up until this point the shared ptr cannot be used
-    this->readQueuePtr = ReadQueuePtr(new RpcSession::ReadQueue(_shared_from_this()));
+    this->readQueuePtr = ReadQueuePtr(new RpcSession::ReadQueue(shared_from_this()));
 
     // Look up the domain name
     this->resolver.async_resolve(
@@ -366,7 +380,7 @@ RpcSession::run()
             this->rpcPeer.getPort().c_str(),
             beast::bind_front_handler(
                     &RpcSession::on_resolve,
-                    _shared_from_this()));
+                    shared_from_this()));
 
     KETO_LOG_INFO << "[RpcSession::run] The running has started : " << rpcPeer.getHost();
 }
@@ -376,6 +390,7 @@ RpcSession::on_resolve(
     boost::system::error_code ec,
     tcp::resolver::results_type results)
 {
+    KETO_LOG_INFO << "[RpcSession::on_resolve] The resolve method : " << rpcPeer.getHost();
     if(ec) {
         RpcSessionManager::getInstance()->reconnect(rpcPeer);
         return fail(ec, Constants::SESSION::RESOLVE);
@@ -392,7 +407,7 @@ RpcSession::on_resolve(
             results,
             beast::bind_front_handler(
                     &RpcSession::on_connect,
-                    _shared_from_this()));
+                    shared_from_this()));
 }
 
 void
@@ -412,7 +427,7 @@ RpcSession::on_connect(boost::system::error_code ec,tcp::resolver::results_type:
             sslBeast::stream_base::client,
             beast::bind_front_handler(
                     &RpcSession::on_ssl_handshake,
-                    _shared_from_this()));
+                    shared_from_this()));
 }
 
 void
@@ -449,7 +464,7 @@ RpcSession::on_ssl_handshake(boost::system::error_code ec)
     ws_.async_handshake(rpcPeer.getHost(), "/",
                         beast::bind_front_handler(
                                 &RpcSession::on_handshake,
-                                _shared_from_this()));
+                                shared_from_this()));
 }
 
 void
@@ -481,18 +496,24 @@ RpcSession::on_write(
     boost::system::error_code ec,
     std::size_t bytes_transferred)
 {
-    boost::ignore_unused(bytes_transferred);
-    queue_.pop_front();
+    // manage the queue within a scope lock as there could be multiple threads accessing the write queue
+    // resulting in a race condition
+    {
+        std::unique_lock<std::recursive_mutex> uniqueLock(writeMutex);
+        boost::ignore_unused(bytes_transferred);
+        queue_.pop_front();
 
-    if(ec) {
-        // clear the queue
-        queue_.clear();
-        return fail(ec, "write");
-    }
+        if(ec) {
+            // clear the queue
+            queue_.clear();
+            return fail(ec, "write");
+        }
 
-    if (queue_.size()) {
-        sendFirstQueueMessage();
+        if (!queue_.size()) {
+            return;
+        }
     }
+    sendFirstQueueMessage();
 }
 
 void
@@ -502,7 +523,7 @@ RpcSession::do_read() {
             buffer_,
             beast::bind_front_handler(
                     &RpcSession::on_read,
-                    _shared_from_this()));
+                    shared_from_this()));
 }
 
 void
@@ -521,8 +542,8 @@ RpcSession::on_read(
         RpcSessionManager::getInstance()->reconnect(rpcPeer);
         return deactivateQueue();
     } else if (ec) {
-        closeResponse(keto::server_common::Constants::RPC_COMMANDS::CLOSE,keto::server_common::Constants::RPC_COMMANDS::CLOSE);
         RpcSessionManager::getInstance()->reconnect(rpcPeer);
+        closeResponse(keto::server_common::Constants::RPC_COMMANDS::CLOSE,keto::server_common::Constants::RPC_COMMANDS::CLOSE);
         return fail(ec, "read");
     }/* else if (RpcSessionManager::getInstance()->isTerminated()) {
         // handle the close
@@ -586,7 +607,7 @@ void RpcSession::processQueueEntry(const ReadQueueEntryPtr& readQueueEntryPtr) {
                                                 stringVector[1]);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::PEERS) == 0) {
                 // peer response requires this session is shut down
-                handlePeerResponse(command, stringVector[1]);
+                message = handlePeerResponse(command, stringVector[1]);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::REGISTER) == 0) {
                 message = handleRegisterResponse(command, stringVector[1]);
             } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::ACTIVATE) == 0) {
@@ -682,7 +703,7 @@ RpcSession::do_close() {
     ws_.async_close(websocket::close_code::normal,
                     beast::bind_front_handler(
                             &RpcSession::on_close,
-                            _shared_from_this()));
+                            shared_from_this()));
 }
 
 void
@@ -749,6 +770,8 @@ void RpcSession::closeResponse(const std::string& command, const std::string& me
 
     KETO_LOG_INFO << "Client sending close to server [" << message << "]";
     this->setClosed(true);
+    // deactivate the queue
+    deactivateQueue();
     send(keto::server_common::Constants::RPC_COMMANDS::CLOSE);
     //RpcSessionManager::getInstance()->removeSession(this->rpcPeer, this->accountHash);
 }
@@ -816,16 +839,17 @@ std::string RpcSession::handlePeerRequest(const std::string& command, const std:
     return serverRequest(keto::server_common::Constants::RPC_COMMANDS::PEERS, Botan::hex_encode((uint8_t*)peerRequestValue.data(),peerRequestValue.size(),true));
 }
 
-void RpcSession::handlePeerResponse(const std::string& command, const std::string& message) {
+std::string RpcSession::handlePeerResponse(const std::string& command, const std::string& message) {
     std::string response = keto::server_common::VectorUtils().copyVectorToString(
         Botan::hex_decode(message,true));
     keto::rpc_protocol::PeerResponseHelper peerResponseHelper(response);
 
     // Read a message into our buffer
-    closeResponse(command,command);
     RpcSessionManager::getInstance()->setPeers(peerResponseHelper.getPeers(),true);
+    closeResponse(command,command);
     KETO_LOG_INFO << this->sessionNumber << ": Received the list of peers will now reconnect to them : " <<
                                                                                                          peerResponseHelper.getPeers().size();
+    return keto::server_common::Constants::RPC_COMMANDS::CLOSED;
 }
 
 std::string RpcSession::handleRegisterRequest(const std::string& command, const std::string& message) {
@@ -1147,8 +1171,8 @@ std::string RpcSession::handleInternalException(const std::string& command, cons
         keto::software_consensus::ConsensusSessionManager::getInstance()->resetSessionKey();
 
         if (!RpcSessionManager::getInstance()->isTerminated()) {
-            closeResponse(command,command);
             RpcSessionManager::getInstance()->reconnect(rpcPeer);
+            closeResponse(command,command);
         }
         result = keto::server_common::Constants::RPC_COMMANDS::CLOSED;
 
@@ -1169,8 +1193,8 @@ std::string RpcSession::handleInternalException(const std::string& command, cons
         }
 
         if (!RpcSessionManager::getInstance()->isTerminated()) {
-            closeResponse(command,command);
             RpcSessionManager::getInstance()->reconnect(rpcPeer);
+            closeResponse(command,command);
         }
         result = keto::server_common::Constants::RPC_COMMANDS::CLOSED;
 
@@ -1185,8 +1209,8 @@ std::string RpcSession::handleInternalException(const std::string& command, cons
                command == keto::server_common::Constants::RPC_COMMANDS::PROTOCOL_CHECK_REQUEST) {
         KETO_LOG_INFO << "[RpcSession::handleInternalException][" << this->getPeer().getHost() << "] Attempt to reconnect";
         if (!RpcSessionManager::getInstance()->isTerminated()) {
-            closeResponse(command,command);
             RpcSessionManager::getInstance()->reconnect(rpcPeer);
+            closeResponse(command,command);
         }
         result = keto::server_common::Constants::RPC_COMMANDS::CLOSED;
     } else if (command == keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_RESPONSE) {
@@ -1226,15 +1250,15 @@ std::string RpcSession::handleRetryResponse(const std::string& command) {
                command == keto::server_common::Constants::RPC_COMMANDS::BLOCK) {
         KETO_LOG_INFO << "[RpcSession::handleRetryResponse][" << this->getPeer().getHost() << "] Attempt to reconnect";
         if (!RpcSessionManager::getInstance()->isTerminated()) {
-            closeResponse(command, command);
             RpcSessionManager::getInstance()->reconnect(rpcPeer);
+            closeResponse(command, command);
         }
         result = keto::server_common::Constants::RPC_COMMANDS::CLOSED;
     } else if  (command == keto::server_common::Constants::RPC_COMMANDS::BLOCK) {
         KETO_LOG_INFO << "[RpcSession::handleRetryResponse][" << this->getPeer().getHost() << "] Attempt to reconnect to the upstream to force a session key update";
         if (!RpcSessionManager::getInstance()->isTerminated()) {
-            closeResponse(command, command);
             RpcSessionManager::getInstance()->reconnect(rpcPeer);
+            closeResponse(command, command);
         }
         result = keto::server_common::Constants::RPC_COMMANDS::CLOSED;
     } else if (command == keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST) {
@@ -1424,18 +1448,21 @@ RpcSession::send(const std::string& message) {
         ws_.get_executor(),
         beast::bind_front_handler(
             &RpcSession::sendMessage,
-            _shared_from_this(),
+            shared_from_this(),
             std::make_shared<std::string>(message)));
 }
 
 void
 RpcSession::sendMessage(std::shared_ptr<std::string> ss) {
-    // Always add to queue
-    queue_.push_back(ss);
+    {
+        std::unique_lock<std::recursive_mutex> uniqueLock(writeMutex);
+        // Always add to queue
+        queue_.push_back(ss);
 
-    // Are we already writing?
-    if (queue_.size() > 1) {
-        return;
+        // Are we already writing?
+        if (queue_.size() > 1) {
+            return;
+        }
     }
 
     sendFirstQueueMessage();
@@ -1453,7 +1480,7 @@ RpcSession::sendFirstQueueMessage() {
                 boost::asio::buffer(*queue_.front()),
                 beast::bind_front_handler(
                         &RpcSession::on_write,
-                        _shared_from_this()));
+                        shared_from_this()));
     }
 }
 
@@ -1491,14 +1518,14 @@ long RpcSession::getLastBlockTouch() {
 }
 
 void RpcSession::deactivateQueue() {
-    std::unique_lock<std::recursive_mutex> uniqueLock(readQueueMutex);
+    //std::unique_lock<std::recursive_mutex> uniqueLock(readQueueMutex);
     if (this->readQueuePtr) {
         this->readQueuePtr->deactivate();
     }
 }
 
 void RpcSession::joinQueue() {
-    std::unique_lock<std::recursive_mutex> uniqueLock(readQueueMutex);
+    //std::unique_lock<std::recursive_mutex> uniqueLock(readQueueMutex);
     if (this->readQueuePtr) {
         this->readQueuePtr.reset();
     }
@@ -1512,9 +1539,9 @@ bool RpcSession::isTerminated() {
     return this->terminated;
 }
 
-RpcSessionPtr RpcSession::_shared_from_this() {
+/*RpcSessionPtr RpcSession::_shared_from_this() {
     return RpcSessionPtr(shared_from_this());
-}
+}*/
 
 /*
 RpcSessionWrapperPtr::~RpcSessionWrapperPtr() {
