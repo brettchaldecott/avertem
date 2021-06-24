@@ -135,46 +135,54 @@ void RpcSessionManager::setPeers(const std::vector<std::string>& peers, bool pee
 }
 
 void RpcSessionManager::reconnect(RpcPeer& rpcPeer) {
-    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+    {
+        std::lock_guard<std::recursive_mutex> guard(this->classMutex);
 
-    // remove the account and session mappings
-    RpcSessionPtr rpcSessionPtr = this->sessionMap[(std::string)rpcPeer];
-    if (rpcSessionPtr && !rpcSessionPtr->getAccountHash().empty()) {
-        this->accountSessionMap.erase(rpcSessionPtr->getAccountHash());
-    }
-    this->sessionMap.erase((std::string)rpcPeer);
+        // remove the account and session mappings
+        RpcSessionPtr rpcSessionPtr = this->sessionMap[(std::string)rpcPeer];
+        if (rpcSessionPtr && !rpcSessionPtr->getAccountHash().empty()) {
+            this->accountSessionMap.erase(rpcSessionPtr->getAccountHash());
+        }
+        this->sessionMap.erase((std::string)rpcPeer);
 
-    // check if terminated
-    if (this->terminated) {
-        KETO_LOG_INFO << "The session manager is terminated ignoring the peer " << rpcPeer.getPeer();
-        return;
+        // check if terminated
+        if (this->terminated) {
+            KETO_LOG_INFO << "The session manager is terminated ignoring the peer " << rpcPeer.getPeer();
+            return;
+        }
+        rpcPeer.incrementReconnectCount();
+        if (rpcPeer.getReconnectCount() >= Constants::SESSION::MAX_RETRY_COUNT) {
+            KETO_LOG_INFO << "Retry limit reached diconnecting from host " << rpcPeer.getPeer();
+            // force a reconnect to the peers
+            //setPeers(keto::server_common::StringUtils(
+            //        this->configuredPeersString).tokenize(","),false);
+            return;
+        }
     }
-    rpcPeer.incrementReconnectCount();
-    if (rpcPeer.getReconnectCount() >= Constants::SESSION::MAX_RETRY_COUNT) {
-        // force a reconnect to the peers
-        setPeers(keto::server_common::StringUtils(
-                this->configuredPeersString).tokenize(","),false);
-        return;
-    }
-    try {
-        std::this_thread::sleep_for(std::chrono::milliseconds(Constants::SESSION::RETRY_COUNT_DELAY));
-        KETO_LOG_INFO << "Attempt to reconnect to : " << rpcPeer.getPeer();
-        RpcSessionPtr rpcSessionPtr = std::make_shared<RpcSession>(
-                getNextSessionId(),
-                this->ioc,
-                this->ctx, rpcPeer);
-        rpcSessionPtr->run();
-        this->sessionMap[(std::string) rpcPeer] = rpcSessionPtr;
-        KETO_LOG_INFO << "After the reconnect : " << rpcPeer.getPeer();
-    } catch (keto::common::Exception &ex) {
-        KETO_LOG_ERROR << "[RpcSessionManager::reconnect] Failed to reconnect to a peer : " << boost::diagnostic_information_what(ex, true);
-        KETO_LOG_ERROR << "[RpcSessionManager::reconnect] cause : " << ex.what();
-    } catch (boost::exception &ex) {
-        KETO_LOG_ERROR << "[RpcSessionManager::reconnect] Failed to reconnect to a peer : " << boost::diagnostic_information_what(ex, true);
-    } catch (std::exception &ex) {
-        KETO_LOG_ERROR << "[RpcSessionManager::reconnect] Failed to reconnect to a peer : " << ex.what();
-    } catch (...) {
-        KETO_LOG_ERROR << "[RpcSessionManager::reconnect] Failed to reconnect to a peer : unknown";
+    std::this_thread::sleep_for(std::chrono::milliseconds(Constants::SESSION::RETRY_COUNT_DELAY));
+    {
+        std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+        try {
+            KETO_LOG_INFO << "Attempt to reconnect to : " << rpcPeer.getPeer();
+            RpcSessionPtr rpcSessionPtr = std::make_shared<RpcSession>(
+                    getNextSessionId(),
+                    this->ioc,
+                    this->ctx, rpcPeer);
+            rpcSessionPtr->run();
+            this->sessionMap[(std::string) rpcPeer] = rpcSessionPtr;
+            KETO_LOG_INFO << "After the reconnect : " << rpcPeer.getPeer();
+        } catch (keto::common::Exception &ex) {
+            KETO_LOG_ERROR << "[RpcSessionManager::reconnect] Failed to reconnect to a peer : "
+                           << boost::diagnostic_information_what(ex, true);
+            KETO_LOG_ERROR << "[RpcSessionManager::reconnect] cause : " << ex.what();
+        } catch (boost::exception &ex) {
+            KETO_LOG_ERROR << "[RpcSessionManager::reconnect] Failed to reconnect to a peer : "
+                           << boost::diagnostic_information_what(ex, true);
+        } catch (std::exception &ex) {
+            KETO_LOG_ERROR << "[RpcSessionManager::reconnect] Failed to reconnect to a peer : " << ex.what();
+        } catch (...) {
+            KETO_LOG_ERROR << "[RpcSessionManager::reconnect] Failed to reconnect to a peer : unknown";
+        }
     }
 }
 

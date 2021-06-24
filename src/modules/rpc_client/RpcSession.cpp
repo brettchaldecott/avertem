@@ -251,7 +251,7 @@ void RpcSession::RpcSessionLifeCycleManager::run() {
     } catch (...) {
         // ignore
     }
-    KETO_LOG_INFO << "[RpcSession::ReadQueue::run]End of the run method";
+    KETO_LOG_INFO << "[RpcSession::RpcSessionLifeCycleManager::run] End of the run method";
 }
 
 RpcSessionPtr RpcSession::RpcSessionLifeCycleManager::popEntry() {
@@ -276,12 +276,19 @@ bool RpcSession::RpcSessionLifeCycleManager::isActive() {
 
 void RpcSession::RpcSessionLifeCycleManager::terminate() {
     std::unique_lock<std::mutex> uniqueLock(classMutex);
+    KETO_LOG_INFO << "[RpcSession::ReadQueue::run] [" << this->activeSessions.empty() << "]["
+        << this->finishedSessions.empty() << "][" << this->active << "]";
+    if (!this->active) {
+        // already terminated
+        return;
+    }
+
     this->active = false;
     stateCondition.notify_all();
 }
 
 void RpcSession::RpcSessionLifeCycleManager::join() {
-    std::unique_lock<std::mutex> uniqueLock(classMutex);
+    //std::unique_lock<std::mutex> uniqueLock(classMutex);
     if (this->managerThreadPtr) {
         this->managerThreadPtr->join();
     }
