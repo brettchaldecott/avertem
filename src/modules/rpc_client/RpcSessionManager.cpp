@@ -161,7 +161,12 @@ void RpcSessionManager::reconnect(RpcPeer& rpcPeer) {
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(Constants::SESSION::RETRY_COUNT_DELAY));
     {
+        // relock the guard and re-check the terminate flag after the 10 second delay time
         std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+        if (this->terminated) {
+            KETO_LOG_INFO << "The session manager is terminated ignoring the peer " << rpcPeer.getPeer();
+            return;
+        }
         try {
             KETO_LOG_INFO << "Attempt to reconnect to : " << rpcPeer.getPeer();
             RpcSessionPtr rpcSessionPtr = std::make_shared<RpcSession>(
