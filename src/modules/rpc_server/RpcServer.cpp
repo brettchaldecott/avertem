@@ -1737,14 +1737,16 @@ bool SessionLifeCycleManager::isActive() {
 }
 
 void SessionLifeCycleManager::removeActiveSession(const SessionPtr& sessionPtr) {
+    std::deque<SessionPtr> currentSessions;
     for (std::deque<SessionPtr>::iterator iter = this->activeSessions.begin();
          iter!= this->activeSessions.end(); iter++) {
-        if ((*iter)->getSessionIdNumber() == sessionPtr->getSessionIdNumber()) {
-            KETO_LOG_INFO << "[SessionLifeCycleManager::removeActiveSession] " <<
-                             "Remove the active session ptr : " << sessionPtr->getSessionIdNumber();
-            this->activeSessions.erase(iter);
+        if ((*iter)->getSessionIdNumber() != sessionPtr->getSessionIdNumber()) {
+            KETO_LOG_INFO << "[RpcSession::RpcSessionLifeCycleManager::removeActiveSession] " <<
+                          "Copy session : " << (*iter)->getSessionIdNumber();
+            currentSessions.push_back((*iter));
         }
     }
+    this->activeSessions = currentSessions;
 }
 
 

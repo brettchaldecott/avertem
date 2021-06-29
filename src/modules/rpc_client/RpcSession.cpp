@@ -300,14 +300,16 @@ bool RpcSession::RpcSessionLifeCycleManager::isTerminated() {
 }
 
 void RpcSession::RpcSessionLifeCycleManager::removeActiveSession(const RpcSessionPtr& rpcSessionPtr) {
+    std::deque<RpcSessionPtr> currentSessions;
     for (std::deque<RpcSessionPtr>::iterator iter = this->activeSessions.begin();
         iter!= this->activeSessions.end(); iter++) {
-        if ((*iter)->getSessionId() == rpcSessionPtr->getSessionId()) {
+        if ((*iter)->getSessionId() != rpcSessionPtr->getSessionId()) {
             KETO_LOG_INFO << "[RpcSession::RpcSessionLifeCycleManager::removeActiveSession] " <<
-                             "Remove the active session : " << rpcSessionPtr->getSessionId();
-            this->activeSessions.erase(iter);
+                             "Copy session : " << (*iter)->getSessionId();
+            currentSessions.push_back((*iter));
         }
     }
+    this->activeSessions = currentSessions;
 }
 
 // Report a failure
