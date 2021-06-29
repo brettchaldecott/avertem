@@ -286,6 +286,7 @@ public:
 
     void deactivateQueue();
     void joinQueue();
+    int getSessionId();
 
     //RpcSessionPtr _shared_from_this();
 

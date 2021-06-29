@@ -276,8 +276,8 @@ bool RpcSession::RpcSessionLifeCycleManager::isActive() {
 
 void RpcSession::RpcSessionLifeCycleManager::terminate() {
     std::unique_lock<std::mutex> uniqueLock(classMutex);
-    KETO_LOG_INFO << "[RpcSession::ReadQueue::run] [" << this->activeSessions.empty() << "]["
-        << this->finishedSessions.empty() << "][" << this->active << "]";
+    KETO_LOG_INFO << "[RpcSession::RpcSessionLifeCycleManager::terminate] terminate running session [" << this->activeSessions.size() << "]["
+        << this->finishedSessions.size() << "][" << this->active << "]";
     if (!this->active) {
         // already terminated
         return;
@@ -302,10 +302,10 @@ bool RpcSession::RpcSessionLifeCycleManager::isTerminated() {
 void RpcSession::RpcSessionLifeCycleManager::removeActiveSession(const RpcSessionPtr& rpcSessionPtr) {
     for (std::deque<RpcSessionPtr>::iterator iter = this->activeSessions.begin();
         iter!= this->activeSessions.end(); iter++) {
-        if (iter->get() == rpcSessionPtr.get()) {
-            //KETO_LOG_INFO << "[RpcSession::ReadQueue::run] Remove the active session";
+        if ((*iter)->getSessionId() == rpcSessionPtr->getSessionId()) {
+            KETO_LOG_INFO << "[RpcSession::RpcSessionLifeCycleManager::removeActiveSession] " <<
+                             "Remove the active session : " << rpcSessionPtr->getSessionId();
             this->activeSessions.erase(iter);
-            break;
         }
     }
 }
@@ -1536,6 +1536,10 @@ void RpcSession::joinQueue() {
     if (this->readQueuePtr) {
         this->readQueuePtr.reset();
     }
+}
+
+int RpcSession::getSessionId(){
+    return this->sessionId;
 }
 
 void RpcSession::terminate() {

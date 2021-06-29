@@ -363,6 +363,7 @@ typedef std::shared_ptr<ReadQueue> ReadQueuePtr;
 class Session : public std::enable_shared_from_this<Session>
 {
 private:
+    int sessionIdNumber;
     std::recursive_mutex classMutex;
     std::recursive_mutex readQueueMutex;
     std::recursive_mutex writeMutex;
@@ -392,9 +393,10 @@ private:
 
 public:
     // Take ownership of the socket
-    Session(tcp::socket&& socket, sslBeast::context& ctx, RpcServer* rpcServer)
+    Session(int sessionIdNumber,tcp::socket&& socket, sslBeast::context& ctx, RpcServer* rpcServer)
         :
-            ws_(std::move(socket), ctx)
+        sessionIdNumber(sessionIdNumber)
+        , ws_(std::move(socket), ctx)
         , rpcServer(rpcServer)
         , registered(false)
         , active(false)
@@ -416,6 +418,10 @@ public:
         // increment the session count
         //RpcServer::getInstance()->decrementSessionCount();
         //KETO_LOG_ERROR << "[RpcServer][session] end of destructor";
+    }
+
+    int getSessionIdNumber() {
+        return this->sessionIdNumber;
     }
 
     keto::crypto::SecureVector getSessionId() {
@@ -1733,9 +1739,10 @@ bool SessionLifeCycleManager::isActive() {
 void SessionLifeCycleManager::removeActiveSession(const SessionPtr& sessionPtr) {
     for (std::deque<SessionPtr>::iterator iter = this->activeSessions.begin();
          iter!= this->activeSessions.end(); iter++) {
-        if (iter->get() == sessionPtr.get()) {
+        if ((*iter)->getSessionIdNumber() == sessionPtr->getSessionIdNumber()) {
+            KETO_LOG_INFO << "[SessionLifeCycleManager::removeActiveSession] " <<
+                             "Remove the active session ptr : " << sessionPtr->getSessionIdNumber();
             this->activeSessions.erase(iter);
-            break;
         }
     }
 }
@@ -1751,6 +1758,8 @@ class listener : public std::enable_shared_from_this<listener>
     std::shared_ptr<sslBeast::context> ctx_;
     tcp::acceptor acceptor_;
     RpcServer* rpcServer;
+    std::recursive_mutex classMutex;
+    int sessionSequence;
 
 public:
     listener(
@@ -1762,6 +1771,7 @@ public:
         , ctx_(ctx)
         , acceptor_(net::make_strand(*ioc))
         , rpcServer(rpcServer)
+        , sessionSequence(0)
     {
         boost::system::error_code ec;
 
@@ -1819,6 +1829,11 @@ public:
                         shared_from_this()));
     }
 
+    int getNextSessionId() {
+        std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+        return ++sessionSequence;
+    }
+
     void
     on_accept(boost::system::error_code ec, tcp::socket socket)
     {
@@ -1830,7 +1845,7 @@ public:
             return;
         } else {
             // Create the session and run it
-            SessionPtr sessionPtr(new Session(std::move(socket), *ctx_, rpcServer));
+            SessionPtr sessionPtr(new Session(getNextSessionId(),std::move(socket), *ctx_, rpcServer));
             sessionPtr->run();
         }
 
