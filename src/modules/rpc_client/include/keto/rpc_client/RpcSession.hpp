@@ -198,6 +198,7 @@ public:
         RpcSessionPtr popEntry();
         bool isActive();
         void removeActiveSession(const RpcSessionPtr& rpcSessionPtr);
+        std::string retriveSessionInfo(const std::deque<RpcSessionPtr>& finishedSessions);
     };
 
     static std::string getHeaderVersion() {

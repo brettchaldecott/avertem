@@ -296,7 +296,18 @@ void RpcSession::RpcSessionLifeCycleManager::join() {
 
 bool RpcSession::RpcSessionLifeCycleManager::isTerminated() {
     std::unique_lock<std::mutex> uniqueLock(classMutex);
+    KETO_LOG_INFO << "[RpcSession::RpcSessionLifeCycleManager::isTerminated] terminate running session ["
+        << this->activeSessions.size() << "][" << retriveSessionInfo(this->activeSessions) << "]["
+        << this->finishedSessions.size() << "][" << "[" << retriveSessionInfo(this->finishedSessions) << "][" << this->active << "]";
     return this->activeSessions.empty() && this->finishedSessions.empty() && !this->active;
+}
+
+std::string RpcSession::RpcSessionLifeCycleManager::retriveSessionInfo(const std::deque<RpcSessionPtr>& sessions) {
+    std::stringstream str;
+    for (RpcSessionPtr rpcSessionPtr : sessions) {
+        str << rpcSessionPtr->getSessionId() << ":" << rpcSessionPtr->getPeer().getHost() << ",";
+    }
+    return str.str();
 }
 
 void RpcSession::RpcSessionLifeCycleManager::removeActiveSession(const RpcSessionPtr& rpcSessionPtr) {

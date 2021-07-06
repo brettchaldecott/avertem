@@ -215,10 +215,12 @@ public:
         }
         // remove the account if the ptrs match
         if (accountSessionMap[account].get() == sessionRef.get()) {
-            KETO_LOG_INFO << "[AccountSessionCache::removeAccount] remove the account [" << account << "] ["
+            KETO_LOG_INFO << "[AccountSessionCache::removeAccount] remove the account [" <<
+            Botan::hex_encode((uint8_t*)account.data(),account.size()) << "] ["
                         << accountSessionMap.size() << "]";
             accountSessionMap.erase(account);
-            KETO_LOG_INFO << "[AccountSessionCache::removeAccount] removed the account [" << account << "] ["
+            KETO_LOG_INFO << "[AccountSessionCache::removeAccount] removed the account [" <<
+            Botan::hex_encode((uint8_t*)account.data(),account.size()) << "] ["
                           << accountSessionMap.size() << "]";
         }
     }
@@ -294,6 +296,7 @@ private:
     SessionPtr popEntry();
     bool isActive();
     void removeActiveSession(const SessionPtr& sessionPtr);
+    std::string retriveSessionInfo(const std::deque<SessionPtr>& finishedSessions);
 };
 
 class ReadQueue {
@@ -1680,7 +1683,18 @@ void SessionLifeCycleManager::join() {
 
 bool SessionLifeCycleManager::isTerminated() {
     std::unique_lock<std::mutex> uniqueLock(classMutex);
+    KETO_LOG_INFO << "[SessionLifeCycleManager::isTerminated] terminate running session ["
+                  << this->activeSessions.size() << "][" << retriveSessionInfo(this->activeSessions) << "]["
+                  << this->finishedSessions.size() << "][" << retriveSessionInfo(this->finishedSessions) << "][" << this->active << "]";
     return this->activeSessions.empty() && this->finishedSessions.empty() && !this->active;
+}
+
+std::string SessionLifeCycleManager::retriveSessionInfo(const std::deque<SessionPtr>& sessions) {
+    std::stringstream str;
+    for (SessionPtr sessionPtr : sessions) {
+        str << sessionPtr->getSessionIdNumber() << ":" << sessionPtr->getAccount() << ",";
+    }
+    return str.str();
 }
 
 void SessionLifeCycleManager::registerStartSession(const SessionPtr& sessionPtr) {
@@ -1865,6 +1879,10 @@ public:
     void
     terminate() {
         acceptor_.cancel();
+    }
+
+    void
+    close() {
         acceptor_.close();
     }
 
@@ -1979,6 +1997,7 @@ void RpcServer::preStop() {
     this->waitForSessionEnd();
 
     KETO_LOG_ERROR << "[RpcServer] ioc stop";
+    listenerPtr->close();
     this->ioc->stop();
 
     KETO_LOG_ERROR << "[RpcServer] terminate threads";
