@@ -298,7 +298,7 @@ void RpcSessionManager::waitForSessionEnd() {
     int sessions = 0;
     std::vector<keto::rpc_client::RpcSessionPtr> peers;
     RpcSession::RpcSessionLifeCycleManager::getInstance()->terminate();
-    while ( ((sessions = getSessionCount(waitForTimeout)) && (peers = getActivePeers()).size()) ||
+    while ( ((sessions = getSessionCount(waitForTimeout)) && (peers = getRegisteredPeers()).size()) ||
         !RpcSession::RpcSessionLifeCycleManager::getInstance()->isTerminated()) {
         KETO_LOG_ERROR << "[RpcSessionManager::waitForSessionEnd] stop the peers";
         for (RpcSessionPtr rpcSessionPtr : peers) {

@@ -350,7 +350,7 @@ RpcSession::RpcSession(
         rpcPeer(rpcPeer),
         lastBlockTouch(0) {
     KETO_LOG_INFO << "[RpcSession::RpcSession] Start a new session for : " << rpcPeer.getHost();
-    this->sessionNumber = sessionIndex++;
+    //this->sessionNumber = sessionIndex++;
     ws_.auto_fragment(false);
     // setup the key loader
     std::shared_ptr<keto::environment::Config> config = 
@@ -593,7 +593,7 @@ RpcSession::on_read(
     }
 
     if (this->isClosed()) {
-        KETO_LOG_INFO << this->sessionNumber << " Closing the session";
+        KETO_LOG_INFO << this->getSessionId() << " Closing the session";
         return deactivateQueue();
     } else {
         do_read();
@@ -688,20 +688,20 @@ void RpcSession::processQueueEntry(const ReadQueueEntryPtr& readQueueEntryPtr) {
             transactionPtr->commit();
         }
     } catch (keto::common::Exception &ex) {
-        KETO_LOG_ERROR << "[RPCSession::processQueueEntry][" << this->sessionNumber << "]" << command
+        KETO_LOG_ERROR << "[RPCSession::processQueueEntry][" << this->getSessionId() << "]" << command
                        << " : Failed to process because : " << boost::diagnostic_information_what(ex, true);
         KETO_LOG_ERROR << "[RPCSession::processQueueEntry] cause : " << ex.what();
         message = handleInternalException(command,ex.what());
     } catch (boost::exception &ex) {
-        KETO_LOG_ERROR << "[RPCSession::processQueueEntry][" << this->sessionNumber << "]" << command
+        KETO_LOG_ERROR << "[RPCSession::processQueueEntry][" << this->getSessionId() << "]" << command
                        << " : Failed to process because : " << boost::diagnostic_information_what(ex, true);
         message = handleInternalException(command);
     } catch (std::exception &ex) {
-        KETO_LOG_ERROR << "[RPCSession::processQueueEntry][" << this->sessionNumber << "]" << command
+        KETO_LOG_ERROR << "[RPCSession::processQueueEntry][" << this->getSessionId() << "]" << command
                        << " : Failed process the request : " << ex.what();
         message = handleInternalException(command);
     } catch (...) {
-        KETO_LOG_ERROR << "[RPCSession::processQueueEntry][" << this->sessionNumber << "]" << command
+        KETO_LOG_ERROR << "[RPCSession::processQueueEntry][" << this->getSessionId() << "]" << command
                        << " : Failed process the request" << std::endl;
         message = handleInternalException(command);
     }
@@ -730,7 +730,7 @@ void
 RpcSession::on_close(boost::system::error_code ec)
 {
     // deactivate the queue
-    KETO_LOG_INFO << this->sessionNumber << ": closing the connection";
+    KETO_LOG_INFO << this->getSessionId() << ": closing the connection";
 
     // remove from the peered list
     if (this->rpcPeer.getPeered()) {
@@ -751,7 +751,7 @@ RpcSession::on_close(boost::system::error_code ec)
 
     deactivateQueue();
 
-    KETO_LOG_INFO << this->sessionNumber << ": Close the connection";
+    KETO_LOG_INFO << this->getSessionId() << ": Close the connection";
 }
 
 std::vector<uint8_t> RpcSession::buildHeloMessage() {
@@ -867,7 +867,7 @@ std::string RpcSession::handlePeerResponse(const std::string& command, const std
     // Read a message into our buffer
     RpcSessionManager::getInstance()->setPeers(peerResponseHelper.getPeers(),true);
     closeResponse(command,command);
-    KETO_LOG_INFO << this->sessionNumber << ": Received the list of peers will now reconnect to them : " <<
+    KETO_LOG_INFO << this->getSessionId() << ": Received the list of peers will now reconnect to them : " <<
                                                                                                          peerResponseHelper.getPeers().size();
     return keto::server_common::Constants::RPC_COMMANDS::CLOSED;
 }
@@ -927,7 +927,7 @@ std::string RpcSession::handleBlock(const std::string& command, const std::strin
     keto::proto::SignedBlockWrapperMessage signedBlockWrapperMessage;
     signedBlockWrapperMessage.ParseFromString(keto::server_common::VectorUtils().copyVectorToString(
             Botan::hex_decode(message)));
-    KETO_LOG_INFO << "[RpcSession][" << this->sessionNumber << "][handleBlock] persist bock";
+    KETO_LOG_INFO << "[RpcSession][" << this->getSessionId() << "][handleBlock] persist bock";
     keto::proto::MessageWrapperResponse messageWrapperResponse =
             keto::server_common::fromEvent<keto::proto::MessageWrapperResponse>(
                     keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SignedBlockWrapperMessage>(
@@ -1155,7 +1155,7 @@ std::string RpcSession::handleRequestNetworkKeysResponse(const std::string& comm
                     keto::server_common::toEvent<keto::proto::NetworkKeysWrapper>(
                             keto::server_common::Events::SET_NETWORK_KEYS,networkKeysWrapper)));
 
-    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkKeysResponse][" << this->getPeer().getHost() << "] After setting the network keys";
+        KETO_LOG_INFO << "[RpcSession::handleRequestNetworkKeysResponse][" << this->getPeer().getHost() << "] After setting the network keys";
     return serverRequest(keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES,
                   keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_FEES);
 }
@@ -1170,9 +1170,9 @@ std::string RpcSession::handleRequestNetworkFeesResponse(const std::string& comm
                     keto::server_common::toEvent<keto::proto::FeeInfoMsg>(
                             keto::server_common::Events::NETWORK_FEE_INFO::SET_NETWORK_FEE,feeInfoMsg)));
 
-    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkFeesResponse][" << this->getPeer().getHost() << "][" << this->sessionNumber << "] #######################################################";
-    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkFeesResponse][" << this->getPeer().getHost() << "][" << this->sessionNumber << "] ######## Network intialization is now complete ########";
-    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkFeesResponse][" << this->getPeer().getHost() << "][" << this->sessionNumber << "] #######################################################";
+    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkFeesResponse][" << this->getPeer().getHost() << "][" << this->getSessionId() << "] #######################################################";
+    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkFeesResponse][" << this->getPeer().getHost() << "][" << this->getSessionId() << "] ######## Network intialization is now complete ########";
+    KETO_LOG_INFO << "[RpcSession::handleRequestNetworkFeesResponse][" << this->getPeer().getHost() << "][" << this->getSessionId() << "] #######################################################";
 
 
     return serverRequest(keto::server_common::Constants::RPC_COMMANDS::CLIENT_NETWORK_COMPLETE,
@@ -1243,7 +1243,7 @@ std::string RpcSession::handleInternalException(const std::string& command, cons
                 keto::server_common::Events::BLOCK_DB_REQUEST_BLOCK_SYNC_RETRY,messageWrapper));
     } else {
         KETO_LOG_INFO << "[RpcSession::handleInternalException] Ignore as no retry is required";
-        KETO_LOG_INFO << this->sessionNumber << ": Setup connection for read : " << command << std::endl;
+        KETO_LOG_INFO << this->getSessionId() << ": Setup connection for read : " << command << std::endl;
     }
 
     return result;
@@ -1295,7 +1295,7 @@ std::string RpcSession::handleRetryResponse(const std::string& command) {
                 keto::server_common::Events::BLOCK_DB_REQUEST_BLOCK_SYNC_RETRY,messageWrapper));
     } else {
         KETO_LOG_INFO << "[RpcSession::handleRetryResponse] Ignore as no retry is required";
-        KETO_LOG_INFO << this->sessionNumber << ": Setup connection for read : " << command << std::endl;
+        KETO_LOG_INFO << this->getSessionId() << ": Setup connection for read : " << command << std::endl;
     }
 
     return result;
@@ -1354,11 +1354,11 @@ void RpcSession::requestBlockSync(const keto::proto::SignedBlockBatchRequest& si
 
 void RpcSession::pushBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage) {
     std::unique_lock<std::recursive_mutex> uniqueLock(classMutex);
-    KETO_LOG_INFO << "[RpcSession::pushBlock][" << getPeer().getHost() << "][" << this->sessionNumber << "] handle the push request : " << this->closed;
+    KETO_LOG_INFO << "[RpcSession::pushBlock][" << getPeer().getHost() << "][" << this->getSessionId() << "] handle the push request : " << this->closed;
     if (this->closed) {
         return;
     }
-    KETO_LOG_INFO << "[RpcSession::pushBlock][" << getPeer().getHost() << "][" << this->sessionNumber << "] push block to server";
+    KETO_LOG_INFO << "[RpcSession::pushBlock][" << getPeer().getHost() << "][" << this->getSessionId() << "] push block to server";
     std::string messageWrapperStr;
     signedBlockWrapperMessage.SerializeToString(&messageWrapperStr);
     send(serverRequest(keto::server_common::Constants::RPC_COMMANDS::BLOCK,
