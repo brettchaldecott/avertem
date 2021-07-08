@@ -201,7 +201,7 @@ public:
         return accountSessionSingleton;
     }
     
-    void addAccount(const std::string& account, 
+    void addAccount(const std::string& account,
             const SessionPtr& sessionRef) {
         std::lock_guard<std::recursive_mutex> guard(classMutex);
         KETO_LOG_INFO << "[AccountSessionCache::addAccount] add the account : " <<
@@ -690,7 +690,8 @@ public:
                     } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLOSE) == 0) {
                         // implement
                         //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] close the session";
-                        return removeFromCache();
+                        removeFromCache();
+                        return deactivateQueue();
                     } else if (command.compare(
                             keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS) ==
                                0) {
