@@ -276,21 +276,6 @@ void RpcSessionManager::terminate() {
     this->terminated = true;
 }
 
-
-//int RpcSessionManager::incrementSessionCount() {
-//    std::unique_lock<std::mutex> unique_lock(this->sessionClassMutex);
-//    int result = ++this->sessionCount;
-//    this->stateCondition.notify_all();
-//    return result;
-//}
-//
-//int RpcSessionManager::decrementSessionCount() {
-//    std::unique_lock<std::mutex> unique_lock(this->sessionClassMutex);
-//    int result = --this->sessionCount;
-//    this->stateCondition.notify_all();
-//    return result;
-//}
-
 void RpcSessionManager::waitForSessionEnd() {
     KETO_LOG_ERROR << "[RpcSessionManager::waitForSessionEnd] waitForSessionEnd : " << this->sessionCount;
 
@@ -298,7 +283,7 @@ void RpcSessionManager::waitForSessionEnd() {
     int sessions = 0;
     std::vector<keto::rpc_client::RpcSessionPtr> peers;
     RpcSession::RpcSessionLifeCycleManager::getInstance()->terminate();
-    while ( ((sessions = getSessionCount(waitForTimeout)) && (peers = getRegisteredPeers()).size()) ||
+    while ( (peers = getRegisteredPeers()).size() ||
         !RpcSession::RpcSessionLifeCycleManager::getInstance()->isTerminated()) {
         KETO_LOG_ERROR << "[RpcSessionManager::waitForSessionEnd] stop the peers";
         for (RpcSessionPtr rpcSessionPtr : peers) {
@@ -320,7 +305,7 @@ void RpcSessionManager::waitForSessionEnd() {
             }
         }
         waitForTimeout = true;
-        KETO_LOG_ERROR << "[RpcSessionManager::waitForSessionEnd] waitForSessionEnd [" << sessions << "][" << peers.size() << "]";
+        KETO_LOG_ERROR << "[RpcSessionManager::waitForSessionEnd] waitForSessionEnd [" << peers.size() << "]";
     }
     // clear the sessions
     clearSessions();
@@ -518,11 +503,9 @@ void RpcSessionManager::stop() {
 keto::event::Event RpcSessionManager::activatePeer(const keto::event::Event& event) {
     keto::router_utils::RpcPeerHelper rpcPeerHelper(
             keto::server_common::fromEvent<keto::proto::RpcPeer>(event));
-    std::vector<std::string> peers = this->listAccountPeers();
     this->activated = rpcPeerHelper.isActive();
-    for (std::string peer : peers)
+    for (RpcSessionPtr rpcSessionPtr : getRegisteredPeers())
     {
-        RpcSessionPtr rpcSessionPtr = getAccountSessionMapping(peer);
         if (rpcSessionPtr) {
             try {
                 rpcSessionPtr->activatePeer(rpcPeerHelper);
@@ -556,10 +539,6 @@ keto::event::Event RpcSessionManager::activateNetworkState(const keto::event::Ev
 keto::event::Event RpcSessionManager::requestBlockSync(const keto::event::Event& event) {
     keto::proto::SignedBlockBatchRequest request = keto::server_common::fromEvent<keto::proto::SignedBlockBatchRequest>(event);
     std::vector<RpcSessionPtr> rcpSessionPtrs = this->getActivePeers();
-    //int usePeers = std::rand() % 2;
-    //if (!rcpSessionPtrs.size() && usePeers) {
-    //    rcpSessionPtrs = this->getAccountPeers();
-    //}
     KETO_LOG_INFO << "[RpcSessionManager::requestBlockSync] Making request to the following peers [" << rcpSessionPtrs.size() << "]";
 
 
@@ -618,7 +597,6 @@ keto::event::Event RpcSessionManager::pushBlock(const keto::event::Event& event)
             }
         }
     }
-
     return event;
 }
 
@@ -719,11 +697,9 @@ keto::event::Event RpcSessionManager::electBlockProducerPublish(const keto::even
     keto::election_common::ElectionPublishTangleAccountProtoHelper electionPublishTangleAccountProtoHelper(
             keto::server_common::fromEvent<keto::proto::ElectionPublishTangleAccount>(event));
 
-    std::vector<std::string> peers = this->listAccountPeers();
-    for (std::string peer : peers) {
+    for (RpcSessionPtr rpcSessionPtr : getRegisteredPeers()) {
 
         // get the account
-        RpcSessionPtr rpcSessionPtr = getAccountSessionMapping(peer);
         if (rpcSessionPtr) {
             try {
                 rpcSessionPtr->electBlockProducerPublish(electionPublishTangleAccountProtoHelper);
@@ -747,11 +723,10 @@ keto::event::Event RpcSessionManager::electBlockProducerPublish(const keto::even
 keto::event::Event RpcSessionManager::electBlockProducerConfirmation(const keto::event::Event& event) {
     keto::election_common::ElectionConfirmationHelper electionConfirmationHelper(
             keto::server_common::fromEvent<keto::proto::ElectionConfirmation>(event));
-    std::vector<std::string> peers = this->listAccountPeers();
-    for (std::string peer : peers) {
+
+    for (RpcSessionPtr rpcSessionPtr : getRegisteredPeers()) {
 
         // get the account
-        RpcSessionPtr rpcSessionPtr = getAccountSessionMapping(peer);
         if (rpcSessionPtr) {
             try {
                 rpcSessionPtr->electBlockProducerConfirmation(electionConfirmationHelper);
@@ -775,11 +750,9 @@ keto::event::Event RpcSessionManager::electBlockProducerConfirmation(const keto:
 keto::event::Event RpcSessionManager::pushRpcPeer(const keto::event::Event& event) {
     keto::router_utils::RpcPeerHelper rpcPeerHelper(
             keto::server_common::fromEvent<keto::proto::RpcPeer>(event));
-    std::vector<std::string> peers = this->listAccountPeers();
-    for (std::string peer : peers) {
+    for (RpcSessionPtr rpcSessionPtr : getRegisteredPeers()) {
 
         // get the account
-        RpcSessionPtr rpcSessionPtr = getAccountSessionMapping(peer);
         if (rpcSessionPtr) {
             try {
                 rpcSessionPtr->pushRpcPeer(rpcPeerHelper);

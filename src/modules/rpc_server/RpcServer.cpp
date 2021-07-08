@@ -204,7 +204,8 @@ public:
     void addAccount(const std::string& account, 
             const SessionPtr& sessionRef) {
         std::lock_guard<std::recursive_mutex> guard(classMutex);
-        KETO_LOG_INFO << "[AccountSessionCache::addAccount] add the account : " << account;
+        KETO_LOG_INFO << "[AccountSessionCache::addAccount] add the account : " <<
+                Botan::hex_encode((uint8_t*)account.data(),account.size());
         accountSessionMap[account] = sessionRef;
     }
     
@@ -216,8 +217,8 @@ public:
         // remove the account if the ptrs match
         if (accountSessionMap[account].get() == sessionRef.get()) {
             KETO_LOG_INFO << "[AccountSessionCache::removeAccount] remove the account [" <<
-            Botan::hex_encode((uint8_t*)account.data(),account.size()) << "] ["
-                        << accountSessionMap.size() << "]";
+                Botan::hex_encode((uint8_t*)account.data(),account.size()) << "] ["
+                << accountSessionMap.size() << "]";
             accountSessionMap.erase(account);
             KETO_LOG_INFO << "[AccountSessionCache::removeAccount] removed the account [" <<
             Botan::hex_encode((uint8_t*)account.data(),account.size()) << "] ["
