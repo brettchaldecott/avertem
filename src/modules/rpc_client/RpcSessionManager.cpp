@@ -304,7 +304,12 @@ void RpcSessionManager::waitForSessionEnd() {
                 }
             }
         }
-        waitForTimeout = true;
+        // wait for a second
+        KETO_LOG_ERROR << "[RpcSessionManager::waitForSessionEnd] wait until notified or timeout occurs";
+        {
+            std::unique_lock<std::mutex> unique_lock(this->sessionClassMutex);
+            this->stateCondition.wait_for(unique_lock, std::chrono::milliseconds(1000));
+        }
         KETO_LOG_ERROR << "[RpcSessionManager::waitForSessionEnd] waitForSessionEnd [" << peers.size() << "]";
     }
     // clear the sessions
@@ -494,6 +499,7 @@ void RpcSessionManager::preStop() {
     KETO_LOG_ERROR << "[RpcSessionManager::preStop] clear buffers";
     this->threadsVector.clear();
     this->ioc.reset();
+    KETO_LOG_ERROR << "[RpcSessionManager::preStop] complete";
 }
 
 void RpcSessionManager::stop() {

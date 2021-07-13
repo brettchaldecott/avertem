@@ -2408,7 +2408,11 @@ void RpcServer::waitForSessionEnd() {
                 KETO_LOG_ERROR << "[RpcServer::pushBlock]Failed to push the block : unknown cause";
             }
         }
-        waitForTimeout = true;
+        KETO_LOG_ERROR << "[RpcServer::waitForSessionEnd] waitForSessionEnd wait for a second";
+        {
+            std::unique_lock<std::mutex> unique_lock(this->classMutex);
+            this->stateCondition.wait_for(unique_lock, std::chrono::milliseconds(1000));
+        }
         KETO_LOG_ERROR << "[RpcServer::waitForSessionEnd] waitForSessionEnd [" << sessionCount
             << "][" << count << "][" << sessions.size() << "]";
     }
