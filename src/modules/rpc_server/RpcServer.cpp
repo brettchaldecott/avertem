@@ -554,8 +554,7 @@ public:
     {
         if (RpcServer::getInstance()->isTerminated()) {
             close();
-            removeFromCache();
-            return deactivateQueue();
+            return removeFromCache();
         }
         // Read a message into our buffer
         ws_.async_read(
@@ -581,7 +580,8 @@ public:
             //    Botan::hex_encode(serverHelloProtoHelperPtr->getAccountHash());
             AccountSessionCache::getInstance()->removeAccount(accountHash,_shared_from_this());
         }
-
+        // deactivate queue
+        deactivateQueue();
     }
 
     std::string
@@ -604,13 +604,11 @@ public:
         // This indicates that the session was closed
         if (ec == websocket::error::closed || !ws_.is_open()) {
             close();
-            removeFromCache();
-            return deactivateQueue();
+            return removeFromCache();
         }
         if (RpcServer::getInstance()->isTerminated()) {
             close();
-            removeFromCache();
-            return deactivateQueue();
+            return removeFromCache();
         }
         if (ec) {
             return fail(ec, "read");
@@ -690,8 +688,7 @@ public:
                     } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::CLOSE) == 0) {
                         // implement
                         //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "] close the session";
-                        removeFromCache();
-                        return deactivateQueue();
+                        return removeFromCache();
                     } else if (command.compare(
                             keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS) ==
                                0) {
@@ -1542,8 +1539,9 @@ public:
         std::string message = *queue_.front();
         if (!ws_.is_open()) {
             // is not open cannot send
-            return;
-        } else if (message == keto::server_common::Constants::RPC_COMMANDS::CLOSE) {
+            return removeFromCache();
+        } else if ((message == keto::server_common::Constants::RPC_COMMANDS::CLOSE) ||
+            this->isClosed()) {
             ws_.async_close(websocket::close_code::normal,
                             beast::bind_front_handler(
                                     &Session::on_close,
@@ -1581,7 +1579,6 @@ private:
     fail(boost::system::error_code ec, char const* what)
     {
         removeFromCache();
-        deactivateQueue();
         KETO_LOG_ERROR << "Failed to process because : " << what << ": " << ec.message();
     }
 
@@ -1635,7 +1632,7 @@ ReadQueue::~ReadQueue() {
 }
 
 void ReadQueue::run() {
-    KETO_LOG_ERROR << "[RpcServer][ReadQueue][run] beginning of run";
+    KETO_LOG_ERROR << "[RpcServer][ReadQueue][run] beginning of run [" << this->sessionPtr->getAccount() << "]";
     try {
         ReadQueueEntryPtr entry;
         while(entry = popEntry()) {
@@ -1644,7 +1641,8 @@ void ReadQueue::run() {
     } catch(...) {
         // ignore
     }
-    KETO_LOG_ERROR << "[RpcServer][ReadQueue][run] queue runner finished exiting";
+    KETO_LOG_ERROR << "[RpcServer][ReadQueue][run] queue runner finished exiting ["
+        << this->sessionPtr->getAccount() << "]";
 }
 
 static SessionLifeCycleManagerPtr sessionLifeCycleManagerPtrSingleton;
@@ -2376,22 +2374,17 @@ int RpcServer::decrementSessionCount() {
 
 void RpcServer::waitForSessionEnd() {
     KETO_LOG_ERROR << "[RpcSessionManager::waitForSessionEnd] waitForSessionEnd : " << this->sessionCount;
-    bool waitForTimeout = false;
-    int sessionCount = 0;
     // wait until there are no active sessions
-    std::vector<std::string> sessions;
+    std::vector<SessionPtr> sessions;
     SessionLifeCycleManager::getInstance()->terminate();
-    while((sessionCount = getSessionCount(waitForTimeout)) && (sessions = AccountSessionCache::getInstance()->getSessions()).size() ||
+    while( (sessions = AccountSessionCache::getInstance()->getSessionPtrs()).size() ||
         !SessionLifeCycleManager::getInstance()->isTerminated())  {
-        KETO_LOG_ERROR << "[RpcServer::waitForSessionEnd] session still open close them [" << sessionCount
+        KETO_LOG_ERROR << "[RpcServer::waitForSessionEnd] session still open close them [" << this->sessionCount
                        << "][" << sessions.size() << "]";
         // get the list of sessions
         int count = 0;
-        for (std::string account: sessions) {
+        for (SessionPtr sessionPtr_: sessions) {
             try {
-                //KETO_LOG_DEBUG << "[RpcServer::pushBlock] push block to node [" << Botan::hex_encode((const uint8_t*)account.c_str(),account.size(),true) << "]";
-                SessionPtr sessionPtr_ = AccountSessionCache::getInstance()->getSession(
-                        account);
                 if (sessionPtr_) {
                     sessionPtr_->closeSession();
                     count++;
@@ -2413,7 +2406,7 @@ void RpcServer::waitForSessionEnd() {
             std::unique_lock<std::mutex> unique_lock(this->classMutex);
             this->stateCondition.wait_for(unique_lock, std::chrono::milliseconds(1000));
         }
-        KETO_LOG_ERROR << "[RpcServer::waitForSessionEnd] waitForSessionEnd [" << sessionCount
+        KETO_LOG_ERROR << "[RpcServer::waitForSessionEnd] waitForSessionEnd [" << this->sessionCount
             << "][" << count << "][" << sessions.size() << "]";
     }
 }
