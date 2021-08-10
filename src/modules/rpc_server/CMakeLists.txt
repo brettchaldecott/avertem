@@ -25,6 +25,14 @@ add_library( 0030_keto_rpc_server_module
             ConsensusService.cpp
             Constants.cpp
 
+            RpcSession.cpp
+            RpcSessionManager.cpp
+            RpcSessionSocket.cpp
+            RpcServerProtocol.cpp
+            RpcSendQueue.cpp
+            RpcReceiveQueue.cpp
+            RpcListener.cpp
+
              ${HEADERS}
            )
 

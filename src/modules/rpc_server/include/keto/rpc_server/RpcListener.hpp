@@ -33,7 +33,7 @@
 
 #include "keto/event/Event.hpp"
 
-#include "keto/rpc_server/RpcSessionManager.hpp
+#include "keto/rpc_server/RpcSessionManager.hpp"
 
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
@@ -66,14 +66,20 @@ public:
     RpcListener(const RpcListener& orig) = delete;
     virtual ~RpcListener();
 
-
+    void start();
+    void stop();
 
 
 private:
+    bool active;
     std::shared_ptr<boost::asio::io_context> ioc_;
     std::shared_ptr<sslBeast::context> ctx_;
     tcp::acceptor acceptor_;
 
+    void run();
+    void do_accept();
+    void on_accept(boost::system::error_code ec, tcp::socket socket);
+    void fail(boost::system::error_code ec, char const* what);
 };
 
 }

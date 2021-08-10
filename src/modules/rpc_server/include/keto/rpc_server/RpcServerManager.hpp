@@ -33,6 +33,8 @@
 
 #include "keto/event/Event.hpp"
 
+#include "keto/rpc_server/RpcSessionManager.hpp"
+#include "keto/rpc_server/RpcListener.hpp"
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
@@ -63,6 +65,11 @@ public:
     static RpcServerManagerPtr init();
     static void fin();
     static RpcServerManagerPtr getInstance();
+
+
+    void start();
+    void preStop();
+    void stop();
 
     keto::event::Event routeTransaction(const keto::event::Event& event);
     keto::event::Event pushBlock(const keto::event::Event& event);

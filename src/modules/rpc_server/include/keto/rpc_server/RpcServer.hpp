@@ -42,6 +42,10 @@
 
 #include "keto/event/Event.hpp"
 
+// server includes
+#include "keto/rpc_server/RpcListener.hpp"
+#include "keto/rpc_server/RpcSessionManager.hpp"
+
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
@@ -108,7 +112,6 @@ public:
 
     int getSessionCount();
 
-protected:
     keto::crypto::SecureVector getSecret();
     void setExternalIp(
             const boost::asio::ip::address& ipAddress);
@@ -117,10 +120,6 @@ protected:
     bool hasNetworkState();
     void enableNetworkState();
 
-    // session count
-    int incrementSessionCount();
-    int decrementSessionCount();
-    
 private:
     std::mutex classMutex;
     std::condition_variable stateCondition;
@@ -129,18 +128,17 @@ private:
     std::string externalHostname;
     unsigned short serverPort;
     int threads;
-    int sessionCount;
     std::shared_ptr<sslBeast::context> contextPtr;
     std::shared_ptr<net::io_context> ioc;
     std::vector<std::thread> threadsVector;
     keto::crypto::SecureVector secret;
+    RpcListenerPtr rpcListenerPtr;
     bool serverActive;
     bool networkState;
     bool terminated;
 
 
-    void waitForSessionEnd();
-    int getSessionCount(bool waitForTimeout);
+
 };
 
 }

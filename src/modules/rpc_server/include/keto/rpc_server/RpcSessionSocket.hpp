@@ -1,9 +1,9 @@
 //
-// Created by Brett Chaldecott on 2021/07/19.
+// Created by Brett Chaldecott on 2021/07/24.
 //
 
-#ifndef KETO_RPCSERVERPROTOCOL_HPP
-#define KETO_RPCSERVERPROTOCOL_HPP
+#ifndef KETO_RPCSESSIONSOCKET_HPP
+#define KETO_RPCSESSIONSOCKET_HPP
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
@@ -34,11 +34,6 @@
 #include "keto/event/Event.hpp"
 
 
-#include "keto/rpc_server/RpcSessionSocket.hpp"
-#include "keto/rpc_server/RpcReceiveQueue.hpp"
-#include "keto/rpc_server/RpcSendQueue.hpp"
-
-
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
 namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
@@ -46,48 +41,63 @@ namespace net = boost::asio;            // from <boost/asio.hpp>
 namespace sslBeast = boost::asio::ssl;       // from <boost/asio/ssl.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
-
 namespace keto {
 namespace rpc_server {
+
+class RpcSessionSocket;
+typedef std::shared_ptr<RpcSessionSocket> RpcSessionSocketPtr;
 
 class RpcServerProtocol;
 typedef std::shared_ptr<RpcServerProtocol> RpcServerProtocolPtr;
 
-class RpcServerProtocol : public std::enable_shared_from_this<RpcServerProtocol> {
+class RpcSessionSocket : public std::enable_shared_from_this<RpcSessionSocket> {
 public:
-    // hearder version
     static std::string getHeaderVersion() {
         return OBFUSCATED("$Id$");
     };
+
     static std::string getSourceVersion();
 
+    friend class RpcSendQueue;
 
-    // the rpc sever protocl starter
-    RpcServerProtocol(int sessionId);
-    RpcServerProtocol(const RpcServerProtocol& orig) = delete;
-    virtual ~RpcServerProtocol();
+    RpcSessionSocket(int sessionId,tcp::socket&& socket, sslBeast::context& ctx);
+    RpcSessionSocket(const RpcSessionSocket& orig) = delete;
+    virtual ~RpcSessionSocket();
 
-    void start(const RpcSessionSocketPtr& rpcSessionSocket);
-    void preStop();
+    void start(const RpcServerProtocolPtr& rpcServerProtocolPtr);
+    bool isActive();
     void stop();
-    void abort();
     void join();
-    bool isStarted();
-
-    RpcReceiveQueuePtr getReceiveQueue();
-    RpcSendQueuePtr getSendQueue();
+    void send(const std::string& message);
 
 private:
-    std::mutex classMutex;
     int sessionId;
-    bool started;
-    RpcReceiveQueuePtr rpcReceiveQueuePtr;
-    RpcSendQueuePtr rpcSendQueuePtr;
+    bool active;
+    std::mutex classMutex;
+    std::condition_variable stateCondition;
+    websocket::stream<
+        beast::ssl_stream<beast::tcp_stream>> ws_;
+    boost::beast::flat_buffer sessionBuffer;
+    std::string outMessage;
+    RpcServerProtocolPtr rpcServerProtocolPtr;
 
+    void deactivate();
+
+    void run();
+    void on_handshake(boost::system::error_code ec);
+    void on_accept(boost::system::error_code ec);
+    void do_read();
+    void on_read(
+            boost::system::error_code ec,
+            std::size_t bytes_transferred);
+    void sendMessage();
+    void on_write(beast::error_code ec, std::size_t bytes_transferred);
+    void on_close(boost::system::error_code ec);
+    void fail(boost::system::error_code ec, char const* what);
 
 };
 
 }
 }
 
-#endif //KETO_RPCSERVERPROTOCOL_HPP
+#endif //KETO_RPCSESSIONSOCKET_HPP

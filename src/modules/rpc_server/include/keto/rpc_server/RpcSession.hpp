@@ -33,6 +33,10 @@
 
 #include "keto/event/Event.hpp"
 
+#include "keto/rpc_server/RpcSessionSocket.hpp"
+#include "keto/rpc_server/RpcServerProtocol.hpp"
+#include "keto/router_utils/RpcPeerHelper.hpp"
+
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
@@ -48,7 +52,7 @@ namespace rpc_server {
 class RpcSession;
 typedef std::shared_ptr<RpcSession> RpcSessionPtr;
 
-class RpcSession : public std::enable_shared_from_this<RpcSession> {
+class RpcSession {
 public:
     static std::string getHeaderVersion() {
         return OBFUSCATED("$Id$");
@@ -56,14 +60,36 @@ public:
 
     static std::string getSourceVersion();
 
-    RpcSession(int sessionId,tcp::socket&& socket, sslBeast::context& ctx);
+    RpcSession(int sessionId, boost::asio::ip::tcp::socket&& socket, sslBeast::context& ctx);
     RpcSession(const RpcSession& orig) = delete;
     virtual ~RpcSession();
 
+    void start();
+    void stop();
+    int getSessionId();
+    std::string getAccount();
+    void join();
+
+    bool isActive();
+    bool isRegistered();
+    time_t getLastBlockTouch();
+
+    void routeTransaction(keto::proto::MessageWrapper&  messageWrapper);
+    void pushBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage);
+    void performNetworkSessionReset();
+    void performProtocolCheck();
+    void performNetworkHeartbeat(const keto::proto::ProtocolHeartbeatMessage& protocolHeartbeatMessage);
+    bool electBlockProducer();
+    void activatePeer(const keto::router_utils::RpcPeerHelper& rpcPeerHelper);
+    void requestBlockSync(const keto::proto::SignedBlockBatchRequest& signedBlockBatchRequest);
+    void electBlockProducerPublish(const keto::election_common::ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper);
+    void electBlockProducerConfirmation(const keto::election_common::ElectionConfirmationHelper& electionConfirmationHelper);
 
 
 private:
     int sessionId;
+    RpcSessionSocketPtr rpcSessionSocketPtr;
+    RpcServerProtocolPtr rpcServerProtocolPtr;
 
 
 };

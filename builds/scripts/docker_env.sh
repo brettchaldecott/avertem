@@ -14,13 +14,13 @@ docker_start_build_container_env() {
     if [ -n "${BUILD_STATUS}" ] ;
     then
         echo "Start docker"
-        cd $(lib_dir)/../../docker/compose-build && docker-sync start && docker-compose up -d && cd -
+        cd $(lib_dir)/../../docker/compose-build start && docker-compose up -d && cd -
     fi
 }
 
 docker_stop_build_container_env() {
     echo "Stop docker"
-    cd $(lib_dir)/../../docker/compose-build && docker-compose stop && docker-sync stop && cd -
+    cd $(lib_dir)/../../docker/compose-build && docker-compose stop && cd -
 }
 
 docker_execute_command() {
@@ -45,5 +45,5 @@ docker_stop_build_container() {
 docker_clean_build_container() {
     echo "Clean docker"
     docker_stop_build_container_env
-    cd $(lib_dir)/../../docker/compose-build && docker-compose down && docker-sync clean && cd -
+    cd $(lib_dir)/../../docker/compose-build && docker-compose down && cd -
 }

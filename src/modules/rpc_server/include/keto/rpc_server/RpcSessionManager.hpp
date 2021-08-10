@@ -33,7 +33,7 @@
 
 #include "keto/event/Event.hpp"
 
-#include "keto/rpc_server/RpcSession.hpp
+#include "keto/rpc_server/RpcSession.hpp"
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
@@ -48,6 +48,7 @@ namespace rpc_server {
 
 class RpcSessionManager;
 typedef std::shared_ptr<RpcSessionManager> RpcSessionManagerPtr;
+
 class RpcSessionManager {
 public:
     static std::string getHeaderVersion() {
@@ -56,6 +57,7 @@ public:
 
     static std::string getSourceVersion();
 
+    friend class RpcSession;
 
     RpcSessionManager();
     RpcSessionManager(const RpcSessionManager& orig) = delete;
@@ -66,12 +68,34 @@ public:
     static void fin();
     static RpcSessionManagerPtr getInstance();
 
-    RpcSessionPtr addSession(tcp::socket&& socket, sslBeast::context& ctx);
+    void start();
+    void stop();
+
+    RpcSessionPtr addSession(boost::asio::ip::tcp::socket&& socket, sslBeast::context& _ctx);
     RpcSessionPtr getSession(int sessionId);
+    RpcSessionPtr getSession(const std::string& account);
+    void markAsEndedSession(int sessionId);
     std::vector<RpcSessionPtr> getSessions();
+    std::vector<RpcSessionPtr> getRegisteredSessions();
+    std::vector<RpcSessionPtr> getActiveSessions();
+
 
 private:
-    std::map<int,RpcSessionPtr> SessionMap;
+    bool active;
+    bool serverActive;
+    bool networkState;
+    std::mutex classMutex;
+    std::condition_variable stateCondition;
+    int sessionSequence;
+    std::map<int,RpcSessionPtr> sessionMap;
+    std::deque<RpcSessionPtr> garbageDeque;
+    std::shared_ptr<std::thread> sessionManagerThreadPtr;
+
+    void run();
+    RpcSessionPtr popGarbageSession();
+    void deactivate();
+
+
 
 };
 

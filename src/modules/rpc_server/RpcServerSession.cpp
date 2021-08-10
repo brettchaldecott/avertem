@@ -14,6 +14,7 @@
 #include <iostream>
 #include <condition_variable>
 
+#include "keto/rpc_server/RpcSessionSocket.hpp"
 #include "keto/rpc_server/RpcServerSession.hpp"
 #include "keto/environment/EnvironmentManager.hpp"
 #include "keto/environment/LogManager.hpp"
