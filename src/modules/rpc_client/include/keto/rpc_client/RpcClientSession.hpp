@@ -1,41 +1,57 @@
 //
-// Created by Brett Chaldecott on 2021/07/19.
+// Created by Brett Chaldecott on 2021/08/11.
 //
 
-#ifndef KETO_RPCSESSION_HPP
-#define KETO_RPCSESSION_HPP
+#ifndef KETO_RPCCLIENTSESSION_H
+#define KETO_RPCCLIENTSESSION_H
 
+#include <memory>
+#include <queue>
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/beast/websocket/ssl.hpp>
+#include <boost/asio/connect.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ssl/stream.hpp>
 #include <boost/beast/ssl.hpp>
-#include <boost/beast/websocket.hpp>
-#include <boost/beast/websocket/ssl.hpp>
-#include <boost/asio/strand.hpp>
 
-#include <algorithm>
 #include <cstdlib>
 #include <functional>
 #include <iostream>
-#include <memory>
 #include <string>
+#include <set>
 #include <thread>
-#include <vector>
-#include <mutex>
 #include <condition_variable>
 
-#include "keto/common/MetaInfo.hpp"
-#include "keto/crypto/Containers.hpp"
+#include "Route.pb.h"
+#include "BlockChain.pb.h"
+#include "Protocol.pb.h"
 
 #include "keto/event/Event.hpp"
 
-#include "keto/rpc_server/RpcSessionSocket.hpp"
-#include "keto/rpc_server/RpcServerProtocol.hpp"
+
+#include "keto/rpc_client/Constants.hpp"
+#include "keto/rpc_client/RpcPeer.hpp"
+#include "keto/crypto/KeyLoader.hpp"
+
+#include "keto/asn1/HashHelper.hpp"
+
+#include "keto/software_consensus/ConsensusHashGenerator.hpp"
+
+#include "keto/election_common/ElectionPublishTangleAccountProtoHelper.hpp"
+#include "keto/election_common/ElectionConfirmationHelper.hpp"
+#include "keto/election_common/ElectionResultCache.hpp"
+#include "keto/server_common/StringUtils.hpp"
+
 #include "keto/router_utils/RpcPeerHelper.hpp"
+
+#include "keto/common/MetaInfo.hpp"
+
+#include "keto/rpc_client/RpcPeer.hpp"
+#include "keto/rpc_client/RpcClientProtocol.hpp"
+#include "keto/rpc_client/RpcSessionSocket.hpp"
 
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
@@ -47,12 +63,12 @@ using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
 
 namespace keto {
-namespace rpc_server {
+namespace rpc_client {
 
-class RpcSession;
-typedef std::shared_ptr<RpcSession> RpcSessionPtr;
+class RpcClientSession;
+typedef std::shared_ptr<RpcClientSession> RpcClientSessionPtr;
 
-class RpcSession {
+class RpcClientSession {
 public:
     static std::string getHeaderVersion() {
         return OBFUSCATED("$Id$");
@@ -60,37 +76,44 @@ public:
 
     static std::string getSourceVersion();
 
-    RpcSession(int sessionId, boost::asio::ip::tcp::socket&& socket, sslBeast::context& ctx);
-    RpcSession(const RpcSession& orig) = delete;
-    virtual ~RpcSession();
+    RpcClientSession(int sessionId,
+                     std::shared_ptr<net::io_context>& ioc,
+                     std::shared_ptr<sslBeast::context>& ctx,
+                     const RpcPeer& rpcPeer);
+    RpcClientSession(const RpcClientSession& orig) = delete;
+    virtual ~RpcClientSession();
 
     void start();
     void stop();
     int getSessionId();
     std::string getAccount();
     std::string getAccountHash();
+    std::string getHost();
     void join();
 
-    bool isActive();
+
     bool isRegistered();
+    bool isActive();
+    bool isReconnect();
+    RpcPeer getRpcPeer();
+
     time_t getLastBlockTouch();
 
+    // internal methods
     void routeTransaction(keto::proto::MessageWrapper&  messageWrapper);
-    void pushBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage);
-    void performNetworkSessionReset();
-    void performProtocolCheck();
-    void performNetworkHeartbeat(const keto::proto::ProtocolHeartbeatMessage& protocolHeartbeatMessage);
-    bool electBlockProducer();
     void activatePeer(const keto::router_utils::RpcPeerHelper& rpcPeerHelper);
     void requestBlockSync(const keto::proto::SignedBlockBatchRequest& signedBlockBatchRequest);
+    void pushBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage);
+    void electBlockProducer();
     void electBlockProducerPublish(const keto::election_common::ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper);
     void electBlockProducerConfirmation(const keto::election_common::ElectionConfirmationHelper& electionConfirmationHelper);
-
+    void pushRpcPeer(const keto::router_utils::RpcPeerHelper& rpcPeerHelper);
 
 private:
     int sessionId;
+    RpcPeer rpcPeer;
+    RpcClientProtocolPtr rpcClientProtocolPtr;
     RpcSessionSocketPtr rpcSessionSocketPtr;
-    RpcServerProtocolPtr rpcServerProtocolPtr;
 
 
 };
@@ -98,5 +121,4 @@ private:
 }
 }
 
-
-#endif //KETO_RPCSESSION_HPP
+#endif //KETO_RPCCLIENTSESSION_H

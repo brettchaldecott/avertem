@@ -234,6 +234,7 @@ keto::event::Event BlockService::persistServerBlockMessage(const keto::event::Ev
 
 keto::event::Event BlockService::blockMessage(const keto::event::Event& event) {
     // aquire a transaction lock
+    KETO_LOG_INFO << "Block message";
     BlockProducer::ProducerScopeLockPtr producerScopeLockPtr =  BlockProducer::getInstance()->aquireTransactionLock();
     keto::proto::MessageWrapper  _messageWrapper =
             keto::server_common::fromEvent<keto::proto::MessageWrapper>(event);
@@ -262,11 +263,13 @@ keto::event::Event BlockService::blockMessage(const keto::event::Event& event) {
         std::lock_guard<std::mutex> guard(getAccountLock(
                     transactionProtoHelperPtr->getActiveAccount()));
 
+        KETO_LOG_INFO << "Process the transaction";
         *transactionProtoHelperPtr =
             TransactionProcessor::getInstance()->processTransaction(
             *transactionProtoHelperPtr);
         // dirty store in the block producer
 
+        KETO_LOG_INFO << "Add the transaction to the block";
         BlockProducer::getInstance()->addTransaction(
             transactionProtoHelperPtr);
     }

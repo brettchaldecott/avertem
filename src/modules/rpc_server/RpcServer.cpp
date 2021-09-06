@@ -407,7 +407,7 @@ keto::event::Event RpcServer::electBlockProducer(const keto::event::Event& event
         }
         try {
             if (rpcSessionPtr->electBlockProducer()) {
-                electionMessageProtoHelper.addAccount(keto::asn1::HashHelper(rpcSessionPtr->getAccount()));
+                electionMessageProtoHelper.addAccount(keto::asn1::HashHelper(rpcSessionPtr->getAccountHash()));
             }
 
         } catch (keto::common::Exception& ex) {

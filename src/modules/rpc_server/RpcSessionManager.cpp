@@ -93,7 +93,7 @@ RpcSessionPtr RpcSessionManager::getSession(int sessionId) {
 
 RpcSessionPtr RpcSessionManager::getSession(const std::string& account) {
     for (RpcSessionPtr rpcSessionPtr : getSessions()) {
-        if (account == rpcSessionPtr->getAccount()) {
+        if (account == rpcSessionPtr->getAccount() || account == rpcSessionPtr->getAccountHash()) {
             return rpcSessionPtr;
         }
     }

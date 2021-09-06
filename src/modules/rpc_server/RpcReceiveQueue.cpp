@@ -185,7 +185,9 @@ void RpcReceiveQueue::processEntry(const RpcReadQueueEntryPtr& entry) {
             handleBlockSyncRequest(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST,payload);
         } else {
             keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
-            if (keto::software_consensus::ConsensusStateManager::getInstance()->getState()
+            if (command == keto::server_common::Constants::RPC_COMMANDS::CLOSE) {
+                this->rpcSendQueuePtr->pushEntry(keto::server_common::Constants::RPC_COMMANDS::CLOSE,keto::server_common::Constants::RPC_COMMANDS::CLOSE);
+            } else if (keto::software_consensus::ConsensusStateManager::getInstance()->getState()
                 != keto::software_consensus::ConsensusStateManager::State::ACCEPTED) {
                 KETO_LOG_INFO << "[RpcServer] This peer is currently not configured reconnection required : "
                               << keto::software_consensus::ConsensusStateManager::getInstance()->getState();
@@ -216,8 +218,6 @@ void RpcReceiveQueue::processEntry(const RpcReadQueueEntryPtr& entry) {
                     handleTransactionProcessed(keto::server_common::Constants::RPC_COMMANDS::TRANSACTION_PROCESSED,payload);
                 } else if (command == keto::server_common::Constants::RPC_COMMANDS::CONSENSUS) {
 
-                } else if (command == keto::server_common::Constants::RPC_COMMANDS::CLOSE) {
-                    this->rpcSendQueuePtr->pushEntry(keto::server_common::Constants::RPC_COMMANDS::CLOSE,keto::server_common::Constants::RPC_COMMANDS::CLOSE);
                 } else if (command == keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS) {
                     handleRequestNetworkSessionKeys(
                             keto::server_common::Constants::RPC_COMMANDS::REQUEST_NETWORK_SESSION_KEYS, payload);
@@ -640,6 +640,7 @@ void RpcReceiveQueue::handleElectionRequest(const std::string& command, const st
 }
 
 void RpcReceiveQueue::handleElectionResponse(const std::string& command, const std::string& payload) {
+    KETO_LOG_INFO << getAccount() << "[handleElectionResponse]: process election response";
     keto::election_common::ElectionResultMessageProtoHelper electionResultMessageProtoHelper(
             keto::server_common::VectorUtils().copyVectorToString(
                     Botan::hex_decode(payload)));
@@ -647,6 +648,7 @@ void RpcReceiveQueue::handleElectionResponse(const std::string& command, const s
     keto::server_common::triggerEvent(
             keto::server_common::toEvent<keto::proto::ElectionResultMessage>(
                     keto::server_common::Events::BLOCK_PRODUCER_ELECTION::ELECT_RPC_RESPONSE,electionResultMessageProtoHelper));
+    KETO_LOG_INFO << getAccount() << "[handleElectionResponse]: processed election response";
 }
 
 void RpcReceiveQueue::handleElectionPublish(const std::string& command, const std::string& message) {

@@ -1,31 +1,18 @@
 //
-// Created by Brett Chaldecott on 2021/07/24.
+// Created by Brett Chaldecott on 2021/08/14.
 //
 
-#include "keto/rpc_server/RpcSendQueue.hpp"
-#include "keto/rpc_server/Exception.hpp"
-#include "keto/rpc_server/RpcSessionManager.hpp"
-
-#include "keto/common/Log.hpp"
-#include "keto/server_common/ServerInfo.hpp"
+#include "keto/rpc_client/RpcSendQueue.hpp"
+#include "keto/rpc_client/RpcSessionSocket.hpp"
 #include "keto/server_common/Constants.hpp"
-#include "keto/server_common/StringUtils.hpp"
+#include "keto/rpc_client/Constants.hpp"
 
-#include "keto/rpc_server/Constants.hpp"
-
-
-namespace beast = boost::beast;         // from <boost/beast.hpp>
-namespace http = beast::http;           // from <boost/beast/http.hpp>
-namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
-namespace net = boost::asio;            // from <boost/asio.hpp>
-namespace sslBeast = boost::asio::ssl;       // from <boost/asio/ssl.hpp>
-using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
 namespace keto {
-namespace rpc_server {
+namespace rpc_client {
 
 std::string RpcSendQueue::getSourceVersion() {
-
+    return OBFUSCATED("$Id$");
 }
 
 RpcSendQueue::RpcSendQueue(int sessionId) : sessionId(sessionId), active(true), closed(false), aborted(false) {
@@ -56,7 +43,14 @@ void RpcSendQueue::preStop() {
 }
 
 void RpcSendQueue::stop() {
-
+    std::unique_lock<std::mutex> uniqueLock(classMutex);
+    if (!this->active) {
+        return;
+    }
+    this->active = false;
+    this->sendQueue.clear();
+    this->activeEntry.reset();
+    this->stateCondition.notify_all();
 }
 
 void RpcSendQueue::abort() {
@@ -65,10 +59,10 @@ void RpcSendQueue::abort() {
         return;
     }
     this->aborted = true;
+    this->sendQueue.clear();
+    this->activeEntry.reset();
     this->stateCondition.notify_all();
-
 }
-
 
 void RpcSendQueue::join() {
     this->queueThreadPtr->join();
@@ -105,9 +99,9 @@ RpcSendQueueEntryPtr RpcSendQueue::peekEntry() {
     //KETO_LOG_INFO << "[" << sessionId << "] wait for entries";
     while((activeEntry || sendQueue.empty()) && !aborted) {
         this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(
-                Constants::DEFAULT_RPC_SERVER_QUEUE_DELAY));
+                Constants::DEFAULT_RPC_CLIENT_QUEUE_DELAY));
     }
-    if (aborted) {
+    if (sendQueue.empty()) {
         return RpcSendQueueEntryPtr();
     }
     activeEntry = sendQueue.front();

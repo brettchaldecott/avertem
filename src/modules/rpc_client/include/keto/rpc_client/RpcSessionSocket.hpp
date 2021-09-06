@@ -2,8 +2,8 @@
 // Created by Brett Chaldecott on 2021/08/11.
 //
 
-#ifndef KETO_RPCSESSIONMANAGER_HPP
-#define KETO_RPCSESSIONMANAGER_HPP
+#ifndef KETO_RPCSESSIONSOCKET_H
+#define KETO_RPCSESSIONSOCKET_H
 
 #include <memory>
 #include <queue>
@@ -49,8 +49,6 @@
 
 #include "keto/common/MetaInfo.hpp"
 
-#include "keto/rpc_client/RpcPeer.hpp"
-
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
 namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
@@ -62,13 +60,13 @@ using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 namespace keto {
 namespace rpc_client {
 
-class RpcClientSession;
-typedef std::shared_ptr<RpcClientSession> RpcClientSessionPtr;
+class RpcClientProtocol;
+typedef std::shared_ptr<RpcClientProtocol> RpcClientProtocolPtr;
 
-class RpcSessionManager;
-typedef std::shared_ptr<RpcSessionManager> RpcSessionManagerPtr;
+class RpcSessionSocket;
+typedef std::shared_ptr<RpcSessionSocket> RpcSessionSocketPtr;
 
-class RpcSessionManager {
+class RpcSessionSocket : public std::enable_shared_from_this<RpcSessionSocket> {
 public:
     static std::string getHeaderVersion() {
         return OBFUSCATED("$Id$");
@@ -76,58 +74,68 @@ public:
 
     static std::string getSourceVersion();
 
+    RpcSessionSocket(int sessionId,
+                     std::shared_ptr<net::io_context>& ioc,
+                     std::shared_ptr<sslBeast::context>& ctx,
+                     const RpcPeer& rpcPeer);
+    RpcSessionSocket(const RpcSessionSocket& orig) = delete;
+    virtual ~RpcSessionSocket();
 
-    friend class RpcClientSession;
-
-    RpcSessionManager();
-    RpcSessionManager(const RpcSessionManager& orig) = delete;
-    virtual ~RpcSessionManager();
-
-    // account service management methods
-    static RpcSessionManagerPtr init();
-    static void fin();
-    static RpcSessionManagerPtr getInstance();
-
-
-    void start();
-    void postStart();
-    void stop();
-
-
-    RpcClientSessionPtr addSession(const RpcPeer& rpcPeer);
-    RpcClientSessionPtr getFirstSession();
-    RpcClientSessionPtr getSession(int sessionId);
-    RpcClientSessionPtr getSessionByAccount(const std::string& account);
-    RpcClientSessionPtr getSessionByHost(const std::string& host);
-    void markAsEndedSession(int sessionId);
-    std::vector<RpcClientSessionPtr> getSessions();
-    std::vector<RpcClientSessionPtr> getRegisteredSessions();
-    std::vector<RpcClientSessionPtr> getActiveSessions();
+    void start(const RpcClientProtocolPtr& rpcClientProtocolPtr);
     bool isActive();
+    void stop();
+    void join();
+    void send(const std::string& message);
+
+    bool isReconnect();
+    void setReconnect(bool reconnect);
 
 private:
+    int sessionId;
     bool active;
+    bool reconnect;
     std::mutex classMutex;
     std::condition_variable stateCondition;
-    int sessionSequence;
-    int threads;
-    std::vector<std::thread> threadsVector;
-    std::map<int,RpcClientSessionPtr> sessionMap;
-    std::deque<RpcClientSessionPtr> garbageDeque;
-    std::shared_ptr<std::thread> sessionManagerThreadPtr;
+    tcp::resolver resolver;
+    websocket::stream<
+        beast::ssl_stream<beast::tcp_stream>> ws_;
 
-    // The io_context is required for all I/O
-    std::shared_ptr<net::io_context> ioc;
-    // The SSL context is required, and holds certificates
-    std::shared_ptr<sslBeast::context> ctx;
+    boost::beast::flat_buffer sessionBuffer;
+    std::string outMessage;
+    RpcClientProtocolPtr rpcClientProtocolPtr;
+
+    RpcPeer rpcPeer;
+    std::shared_ptr<keto::crypto::KeyLoader> keyLoaderPtr;
+    //int sessionNumber;
+    keto::election_common::ElectionResultCache electionResultCache;
+
+
+    void deactivate();
 
     void run();
-    RpcClientSessionPtr popGarbageSession();
-    void deactivate();
+    void on_resolve(boost::system::error_code ec, tcp::resolver::results_type results);
+    void on_connect(boost::system::error_code ec, tcp::resolver::results_type::endpoint_type);
+
+    void on_ssl_handshake(boost::system::error_code ec);
+
+    void on_handshake(boost::system::error_code ec);
+
+
+    void sendMessage();
+    void on_write(boost::system::error_code ec, std::size_t bytes_transferred);
+
+    void do_read();
+
+    void on_read(boost::system::error_code ec, std::size_t bytes_transferred);
+
+    void on_close(boost::system::error_code ec);
+
+    void fail(boost::system::error_code ec,const std::string& what);
 
 };
 
 }
 }
 
-#endif //KETO_RPCSESSIONMANAGER_HPP
+
+#endif //KETO_RPCSESSIONSOCKET_H

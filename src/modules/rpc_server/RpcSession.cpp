@@ -58,6 +58,10 @@ std::string RpcSession::getAccount() {
     return this->rpcServerProtocolPtr->getReceiveQueue()->getAccountHashStr();
 }
 
+std::string RpcSession::getAccountHash() {
+    return this->rpcServerProtocolPtr->getReceiveQueue()->getAccountHash();
+}
+
 void RpcSession::join() {
     this->rpcSessionSocketPtr->join();
     this->rpcServerProtocolPtr->join();
@@ -137,7 +141,7 @@ void RpcSession::performNetworkHeartbeat(const keto::proto::ProtocolHeartbeatMes
 }
 
 bool RpcSession::electBlockProducer() {
-    //KETO_LOG_DEBUG << getAccount() << "[electBlockProducer]: elect block producer";
+    KETO_LOG_INFO << getAccount() << "[electBlockProducer]: elect block producer";
     if (!this->isActive()) {
         return false;
     }
@@ -148,8 +152,8 @@ bool RpcSession::electBlockProducer() {
             electionPeerMessageProtoHelper);
     this->rpcServerProtocolPtr->getSendQueue()->pushEntry(keto::server_common::Constants::RPC_COMMANDS::ELECT_NODE_REQUEST,
                                                           Botan::hex_encode((uint8_t*)messageBytes.data(),messageBytes.size(),true));
+    KETO_LOG_INFO << getAccount() << "[electBlockProducer]: after invoking election.";
     return true;
-    //KETO_LOG_DEBUG << getAccount() << "[electBlockProducer]: after invoking election ";
 }
 
 void RpcSession::activatePeer(const keto::router_utils::RpcPeerHelper& rpcPeerHelper) {

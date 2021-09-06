@@ -1,9 +1,9 @@
 //
-// Created by Brett Chaldecott on 2021/08/11.
+// Created by Brett Chaldecott on 2021/08/14.
 //
 
-#ifndef KETO_RPCSESSIONMANAGER_HPP
-#define KETO_RPCSESSIONMANAGER_HPP
+#ifndef KETO_RPCSENDQUEUE_HPP
+#define KETO_RPCSENDQUEUE_HPP
 
 #include <memory>
 #include <queue>
@@ -62,13 +62,30 @@ using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 namespace keto {
 namespace rpc_client {
 
-class RpcClientSession;
-typedef std::shared_ptr<RpcClientSession> RpcClientSessionPtr;
+class RpcSendQueueEntry {
+public:
+    RpcSendQueueEntry(const std::string& command, const std::string& payload) :
+    command(command),payload(payload){}
 
-class RpcSessionManager;
-typedef std::shared_ptr<RpcSessionManager> RpcSessionManagerPtr;
+    RpcSendQueueEntry(const RpcSendQueueEntry& orig) = delete;
+    virtual ~RpcSendQueueEntry() {}
 
-class RpcSessionManager {
+    std::string getCommand() {return this->command;}
+    std::string getPayload() {return this->payload;}
+
+private:
+    std::string command;
+    std::string payload;
+};
+typedef std::shared_ptr<RpcSendQueueEntry> RpcSendQueueEntryPtr;
+
+class RpcSendQueue;
+typedef std::shared_ptr<RpcSendQueue> RpcSendQueuePtr;
+
+class RpcSessionSocket;
+typedef std::shared_ptr<RpcSessionSocket> RpcSessionSocketPtr;
+
+class RpcSendQueue {
 public:
     static std::string getHeaderVersion() {
         return OBFUSCATED("$Id$");
@@ -76,58 +93,40 @@ public:
 
     static std::string getSourceVersion();
 
+    RpcSendQueue(int sessionId);
+    RpcSendQueue(const RpcSendQueue& origin) = delete;
+    virtual ~RpcSendQueue();
 
-    friend class RpcClientSession;
-
-    RpcSessionManager();
-    RpcSessionManager(const RpcSessionManager& orig) = delete;
-    virtual ~RpcSessionManager();
-
-    // account service management methods
-    static RpcSessionManagerPtr init();
-    static void fin();
-    static RpcSessionManagerPtr getInstance();
-
-
-    void start();
-    void postStart();
+    void start(const RpcSessionSocketPtr& rpcSessionSocketPtr);
+    void preStop();
     void stop();
+    void abort();
+    void join();
 
-
-    RpcClientSessionPtr addSession(const RpcPeer& rpcPeer);
-    RpcClientSessionPtr getFirstSession();
-    RpcClientSessionPtr getSession(int sessionId);
-    RpcClientSessionPtr getSessionByAccount(const std::string& account);
-    RpcClientSessionPtr getSessionByHost(const std::string& host);
-    void markAsEndedSession(int sessionId);
-    std::vector<RpcClientSessionPtr> getSessions();
-    std::vector<RpcClientSessionPtr> getRegisteredSessions();
-    std::vector<RpcClientSessionPtr> getActiveSessions();
-    bool isActive();
+    void pushEntry(const std::string& command, const std::string& payload);
+    void releaseEntry();
 
 private:
+    int sessionId;
     bool active;
+    bool closed;
+    bool aborted;
     std::mutex classMutex;
     std::condition_variable stateCondition;
-    int sessionSequence;
-    int threads;
-    std::vector<std::thread> threadsVector;
-    std::map<int,RpcClientSessionPtr> sessionMap;
-    std::deque<RpcClientSessionPtr> garbageDeque;
-    std::shared_ptr<std::thread> sessionManagerThreadPtr;
-
-    // The io_context is required for all I/O
-    std::shared_ptr<net::io_context> ioc;
-    // The SSL context is required, and holds certificates
-    std::shared_ptr<sslBeast::context> ctx;
+    RpcSessionSocketPtr rpcSessionSocketPtr;
+    std::shared_ptr<std::thread> queueThreadPtr;
+    std::deque<RpcSendQueueEntryPtr> sendQueue;
+    RpcSendQueueEntryPtr activeEntry;
 
     void run();
-    RpcClientSessionPtr popGarbageSession();
-    void deactivate();
+    RpcSendQueueEntryPtr peekEntry();
+    void _pushEntry(const std::string& command, const std::string& payload);
+    void processEntry(const RpcSendQueueEntryPtr& entry);
 
 };
 
 }
 }
 
-#endif //KETO_RPCSESSIONMANAGER_HPP
+
+#endif //KETO_RPCSENDQUEUE_HPP

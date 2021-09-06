@@ -16,8 +16,6 @@ add_library( 0060_keto_rpc_client_module
 
             RpcClientModuleManager.cpp
             RpcClientModule.cpp
-            RpcSession.cpp
-            RpcSessionManager.cpp
             EventRegistry.cpp
             ConsensusService.cpp
             Constants.cpp
@@ -25,6 +23,14 @@ add_library( 0060_keto_rpc_client_module
             PeerResource.cpp
             PeerResourceManager.cpp
             PeerStore.cpp
+
+            RpcClient.cpp
+            RpcClientProtocol.cpp
+            RpcClientSession.cpp
+            RpcSessionManager.cpp
+            RpcSessionSocket.cpp
+            RpcSendQueue.cpp
+            RpcReceiveQueue.cpp
 
              ${HEADERS}
            )

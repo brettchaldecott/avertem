@@ -342,12 +342,12 @@ keto::event::Event ElectionManager::electRpcResponse(const keto::event::Event& e
             new keto::election_common::ElectionResultMessageProtoHelper(
                     keto::server_common::fromEvent<keto::proto::ElectionResultMessage>(event)));
     if (!this->accountElectionResult.count(electionResultMessageProtoHelperPtr->getSourceAccountHash())) {
-        //KETO_LOG_DEBUG << "[ElectionManager::electRpcResponse] The account hash is unknown [" <<
-        //    electionResultMessageProtoHelperPtr->getSourceAccountHash().getHash(keto::common::StringEncoding::HEX) << "]";
+        KETO_LOG_INFO << "[ElectionManager::electRpcResponse] The account hash is unknown [" <<
+            electionResultMessageProtoHelperPtr->getSourceAccountHash().getHash(keto::common::StringEncoding::HEX) << "]";
         return event;
     }
-    //KETO_LOG_DEBUG << "[ElectionManager::electRpcResponse] Add a result for the account [" <<
-    //               electionResultMessageProtoHelperPtr->getSourceAccountHash().getHash(keto::common::StringEncoding::HEX) << "]";
+    KETO_LOG_DEBUG << "[ElectionManager::electRpcResponse] Add a result for the account [" <<
+                   electionResultMessageProtoHelperPtr->getSourceAccountHash().getHash(keto::common::StringEncoding::HEX) << "]";
     this->accountElectionResult[electionResultMessageProtoHelperPtr->getSourceAccountHash()]->setElectionResult(electionResultMessageProtoHelperPtr);
     this->responseCount++;
     return event;

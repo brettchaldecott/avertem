@@ -26,6 +26,7 @@
 #include "keto/rpc_client/RpcClientModuleManager.hpp"
 #include "keto/rpc_client/RpcClientModuleManagerMisc.hpp"
 #include "keto/rpc_client/RpcSessionManager.hpp"
+#include "keto/rpc_client/RpcClient.hpp"
 #include "keto/rpc_client/EventRegistry.hpp"
 #include "keto/common/MetaInfo.hpp"
 #include "include/keto/rpc_client/ConsensusService.hpp"
@@ -62,15 +63,16 @@ void RpcClientModuleManager::start() {
     modules["RpcClientModule"] = std::make_shared<RpcClientModule>();
     keto::software_consensus::ConsensusSessionManager::init();
     EventRegistry::registerEventHandlers();
+    RpcClient::init();
     RpcSessionManager::init();
     ConsensusService::init(getConsensusHash());
-    RpcSessionManager::getInstance()->start();
+    RpcClient::getInstance()->start();
     KETO_LOG_INFO << "[RpcClientModuleManager] Started the RpcClientModuleManager";
 }
 
 void RpcClientModuleManager::postStart() {
     keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
-    RpcSessionManager::getInstance()->postStart();
+    RpcClient::getInstance()->postStart();
     transactionPtr->commit();
 
     KETO_LOG_INFO << "[RpcClientModuleManager] Post Started the RpcClientModuleManager";
@@ -78,16 +80,18 @@ void RpcClientModuleManager::postStart() {
 
 void RpcClientModuleManager::preStop() {
     KETO_LOG_INFO << "[RpcClientModuleManager] Pre Stop the RpcClientModuleManager";
-    RpcSessionManager::getInstance()->preStop();
+    RpcClient::getInstance()->preStop();
     KETO_LOG_INFO << "[RpcClientModuleManager] Pre Stop the RpcClientModuleManager";
 }
 
 void RpcClientModuleManager::stop() {
     KETO_LOG_INFO << "[RpcClientModuleManager] The RpcClientModuleManager is stopping";
-    if (RpcSessionManager::getInstance()) {
-        RpcSessionManager::getInstance()->stop();
-    }
+    //if (RpcSessionManager::getInstance()) {
+    //    RpcSessionManager::getInstance()->stop();
+    //}
+    RpcClient::getInstance()->stop();
     RpcSessionManager::fin();
+    RpcClient::fin();
     keto::software_consensus::ConsensusSessionManager::fin();
     ConsensusService::fin();
     EventRegistry::deregisterEventHandlers();

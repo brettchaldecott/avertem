@@ -86,6 +86,7 @@ TransactionProcessorPtr TransactionProcessor::getInstance() {
 
 keto::proto::Transaction TransactionProcessor::processTransaction(const keto::proto::Transaction& transaction) {
     keto::transaction_common::TransactionProtoHelper transactionProtoHelper(transaction);
+    KETO_LOG_INFO << "Processing the transaction";
 
     // calculate the available time based
     TransactionTrackerPtr transactionTrackerPtr;
@@ -107,7 +108,7 @@ keto::proto::Transaction TransactionProcessor::processTransaction(const keto::pr
 
     transactionProtoHelper = processTransaction(transactionProtoHelper,true,transactionTracker);
 
-    //KETO_LOG_DEBUG << "Return the resulting transactions";
+    KETO_LOG_INFO << "Return the resulting transactions";
 
     return transactionProtoHelper;
 }

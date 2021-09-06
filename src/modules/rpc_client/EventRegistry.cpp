@@ -18,7 +18,7 @@
 #include "keto/server_common/Events.hpp"
 #include "keto/server_common/EventServiceHelpers.hpp"
 #include "keto/rpc_client/ConsensusService.hpp"
-#include "keto/rpc_client/RpcSessionManager.hpp"
+#include "keto/rpc_client/RpcClient.hpp"
 
 
 namespace keto {
@@ -44,27 +44,27 @@ keto::event::Event EventRegistry::setModuleSession(const keto::event::Event& eve
 }
 
 keto::event::Event EventRegistry::routeTransaction(const keto::event::Event& event) {
-    return RpcSessionManager::getInstance()->routeTransaction(event);
+    return RpcClient::getInstance()->routeTransaction(event);
 }
 
 keto::event::Event EventRegistry::activatePeer(const keto::event::Event& event) {
-    return RpcSessionManager::getInstance()->activatePeer(event);
+    return RpcClient::getInstance()->activatePeer(event);
 }
 
 keto::event::Event EventRegistry::requestNetworkState(const keto::event::Event& event) {
-    return RpcSessionManager::getInstance()->requestNetworkState(event);
+    return RpcClient::getInstance()->requestNetworkState(event);
 }
 
 keto::event::Event EventRegistry::activateNetworkState(const keto::event::Event& event) {
-    return RpcSessionManager::getInstance()->activateNetworkState(event);
+    return RpcClient::getInstance()->activateNetworkState(event);
 }
 
 keto::event::Event EventRegistry::requestBlockSync(const keto::event::Event& event) {
-    return RpcSessionManager::getInstance()->requestBlockSync(event);
+    return RpcClient::getInstance()->requestBlockSync(event);
 }
 
 keto::event::Event EventRegistry::pushBlock(const keto::event::Event& event) {
-    return RpcSessionManager::getInstance()->pushBlock(event);
+    return RpcClient::getInstance()->pushBlock(event);
 }
 
 keto::event::Event EventRegistry::consensusSessionAccepted(const keto::event::Event& event) {
@@ -85,21 +85,20 @@ keto::event::Event EventRegistry::consensusHeartbeat(const keto::event::Event& e
 }
 
 keto::event::Event EventRegistry::electBlockProducer(const keto::event::Event& event) {
-    return RpcSessionManager::getInstance()->electBlockProducer(event);
+    return RpcClient::getInstance()->electBlockProducer(event);
 }
 
 keto::event::Event EventRegistry::electBlockProducerPublish(const keto::event::Event& event) {
-    return RpcSessionManager::getInstance()->electBlockProducerPublish(event);
+    return RpcClient::getInstance()->electBlockProducerPublish(event);
 }
 
 keto::event::Event EventRegistry::electBlockProducerConfirmation(const keto::event::Event& event) {
-    return RpcSessionManager::getInstance()->electBlockProducerConfirmation(event);
+    return RpcClient::getInstance()->electBlockProducerConfirmation(event);
 }
 
 keto::event::Event EventRegistry::pushRpcPeer(const keto::event::Event& event) {
-    return RpcSessionManager::getInstance()->pushRpcPeer(event);
+    return RpcClient::getInstance()->pushRpcPeer(event);
 }
-
 
 void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
