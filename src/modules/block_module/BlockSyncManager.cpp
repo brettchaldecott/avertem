@@ -104,10 +104,10 @@ void BlockSyncManager::sync() {
 
 keto::proto::SignedBlockBatchMessage  BlockSyncManager::requestBlocks(const keto::proto::SignedBlockBatchRequest& signedBlockBatchRequest) {
     //std::unique_lock<std::mutex> uniqueLock(this->classMutex);
-    //if (!keto::server_common::ServerInfo::getInstance()->isMaster() && this->getStatus() != COMPLETE) {
-    //    KETO_LOG_DEBUG << "[BlockSyncManager::requestBlocks] This node is not synced and cannot return blocks";
-    //    BOOST_THROW_EXCEPTION(keto::block::UnsyncedStateCannotProvideDate());
-    //}
+    if (this->getStatus() == INIT) {
+        KETO_LOG_DEBUG << "[BlockSyncManager::requestBlocks] This node is currently not unsyncronized and cannot provide data";
+        BOOST_THROW_EXCEPTION(keto::block::UnsyncedStateCannotProvideDate());
+    }
 
     // pull the block sync information
     keto::block_db::SignedBlockBatchRequestProtoHelper signedBlockBatchRequestProtoHelper(signedBlockBatchRequest);

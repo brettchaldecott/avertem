@@ -517,7 +517,7 @@ void RpcReceiveQueue::handleBlock(const std::string& command, const std::string&
     keto::proto::SignedBlockWrapperMessage signedBlockWrapperMessage;
     signedBlockWrapperMessage.ParseFromString(keto::server_common::VectorUtils().copyVectorToString(
             Botan::hex_decode(payload)));
-    //KETO_LOG_INFO << "[RpcSession][" << getHost() << "][handleBlock] persist bock";
+    KETO_LOG_INFO << "[RpcSession][" << getHost() << "][handleBlock] persist bock";
     keto::proto::MessageWrapperResponse messageWrapperResponse =
             keto::server_common::fromEvent<keto::proto::MessageWrapperResponse>(
                     keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SignedBlockWrapperMessage>(

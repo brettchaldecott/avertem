@@ -207,7 +207,7 @@ keto::event::Event RpcClient::activateNetworkState(const keto::event::Event& eve
 
 keto::event::Event RpcClient::requestBlockSync(const keto::event::Event& event) {
     keto::proto::SignedBlockBatchRequest request = keto::server_common::fromEvent<keto::proto::SignedBlockBatchRequest>(event);
-    std::vector<RpcClientSessionPtr> rcpClientSessionPtrs = RpcSessionManager::getInstance()->getRegisteredSessions();
+    std::vector<RpcClientSessionPtr> rcpClientSessionPtrs = RpcSessionManager::getInstance()->getActiveSessions();
     KETO_LOG_INFO << "[RpcSessionManager::requestBlockSync] Making request to the following peers [" << rcpClientSessionPtrs.size() << "]";
 
 

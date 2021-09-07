@@ -61,13 +61,18 @@ void RpcSessionManager::start() {
 }
 
 void RpcSessionManager::stop() {
+    KETO_LOG_INFO << "[RpcSessionManager] Deactivate";
     deactivate();
+    KETO_LOG_INFO << "[RpcSessionManager] Stop the sessions";
     std::vector<RpcSessionPtr> rpcSessionPtrVectors;
     while((rpcSessionPtrVectors = getSessions()).size()) {
+        KETO_LOG_INFO << "[RpcSessionManager] Stop the session : " <<  rpcSessionPtrVectors.size();
         for (RpcSessionPtr rpcSessionPtr : rpcSessionPtrVectors) {
+            KETO_LOG_INFO << "[RpcSessionManager] Stop the session : " <<  rpcSessionPtr->getAccountHash();
             rpcSessionPtr->stop();
         }
     }
+    KETO_LOG_INFO << "[RpcSessionManager] Join and wait for the thread to stop";
     sessionManagerThreadPtr->join();
 }
 
