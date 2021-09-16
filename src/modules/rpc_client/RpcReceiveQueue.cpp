@@ -618,7 +618,7 @@ void RpcReceiveQueue::handleRequestNetworkFeesResponse(const std::string& comman
 
 void RpcReceiveQueue::closeResponse(const std::string& command, const std::string& payload) {
 
-    KETO_LOG_INFO << "Client sending close to server [" << payload << "]";
+    //KETO_LOG_INFO << "Client sending close to server [" << payload << "]";
     this->rpcSendQueuePtr->pushEntry(keto::server_common::Constants::RPC_COMMANDS::CLOSE,keto::server_common::Constants::RPC_COMMANDS::CLOSE);
 }
 

@@ -155,21 +155,21 @@ std::vector<RpcSessionPtr> RpcSessionManager::getActiveSessions() {
 
 void RpcSessionManager::run() {
     RpcSessionPtr entry;
-    KETO_LOG_INFO << "[RpcSessionManager::run] process sessions";
+    //KETO_LOG_INFO << "[RpcSessionManager::run] process sessions";
     while(entry = popGarbageSession()) {
-        KETO_LOG_INFO << "[RpcSessionManager::run] wait for an entry to terminate";
+        //KETO_LOG_INFO << "[RpcSessionManager::run] wait for an entry to terminate";
         entry->join();
-        KETO_LOG_INFO << "[RpcSessionManager::run] waiting complete";
+        //KETO_LOG_INFO << "[RpcSessionManager::run] waiting complete";
     }
-    KETO_LOG_INFO << "[RpcSessionManager::run] session manager thread completed";
+    //KETO_LOG_INFO << "[RpcSessionManager::run] session manager thread completed";
 }
 
 RpcSessionPtr RpcSessionManager::popGarbageSession() {
     std::unique_lock<std::mutex> uniqueLock(classMutex);
     while(this->active || !this->sessionMap.empty() || !this->garbageDeque.empty()) {
         if (!this->garbageDeque.empty()) {
-            KETO_LOG_INFO << "[RpcSessionManager::popGarbageSession] pop garbage session [" << this->active
-                << "][" << this->sessionMap.size() << "][" << this->garbageDeque.size() << "]";
+            //KETO_LOG_INFO << "[RpcSessionManager::popGarbageSession] pop garbage session [" << this->active
+            //    << "][" << this->sessionMap.size() << "][" << this->garbageDeque.size() << "]";
             RpcSessionPtr result = this->garbageDeque.front();
             this->garbageDeque.pop_front();
             return result;

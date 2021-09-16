@@ -107,19 +107,19 @@ void RpcSendQueue::releaseEntry() {
 
 void RpcSendQueue::run() {
     RpcSendQueueEntryPtr rpcSendQueueEntryPtr;
-    KETO_LOG_INFO << "[" << sessionId << "] while loop";
+    //KETO_LOG_INFO << "[" << sessionId << "] while loop";
     while(rpcSendQueueEntryPtr = peekEntry()) {
-        KETO_LOG_INFO << "[" << sessionId << "] before processing";
+        //KETO_LOG_INFO << "[" << sessionId << "] before processing";
         processEntry(rpcSendQueueEntryPtr);
-        KETO_LOG_INFO << "[" << sessionId << "] after processing";
+        //KETO_LOG_INFO << "[" << sessionId << "] after processing";
     }
-    KETO_LOG_INFO << "[" << sessionId << "] end of loop";
+    //KETO_LOG_INFO << "[" << sessionId << "] end of loop";
 }
 
 RpcSendQueueEntryPtr RpcSendQueue::peekEntry() {
     std::unique_lock<std::mutex> uniqueLock(classMutex);
-    KETO_LOG_INFO << "[" << sessionId << "] wait for entries [" << active << "][" << aborted << "]["
-        << activeEntry << "][" << sendQueue.size() << "]";
+    //KETO_LOG_INFO << "[" << sessionId << "] wait for entries [" << active << "][" << aborted << "]["
+    //    << activeEntry << "][" << sendQueue.size() << "]";
     while((active && !aborted) || (activeEntry || !sendQueue.empty())) {
         //KETO_LOG_INFO << "[" << sessionId << "] wait for entries [" << active << "][" << aborted << "]["
         //<< activeEntry << "][" << sendQueue.size() << "]";
@@ -132,7 +132,7 @@ RpcSendQueueEntryPtr RpcSendQueue::peekEntry() {
                 Constants::DEFAULT_RPC_SERVER_QUEUE_DELAY));
     }
 
-    KETO_LOG_INFO << "[" << sessionId << "] After waiting for the entry";
+    //KETO_LOG_INFO << "[" << sessionId << "] After waiting for the entry";
     return RpcSendQueueEntryPtr();
 }
 
