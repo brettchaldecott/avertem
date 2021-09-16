@@ -14,7 +14,7 @@ docker_start_build_container_env() {
     if [ -n "${BUILD_STATUS}" ] ;
     then
         echo "Start docker"
-        cd $(lib_dir)/../../docker/compose-build start && docker-compose up -d && cd -
+        cd $(lib_dir)/../../docker/compose-build && docker-compose up -d && cd -
     fi
 }
 
