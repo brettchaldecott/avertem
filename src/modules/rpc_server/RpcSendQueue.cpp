@@ -46,6 +46,7 @@ void RpcSendQueue::start(const RpcSessionSocketPtr& rpcSessionSocketPtr) {
 }
 
 void RpcSendQueue::preStop() {
+    KETO_LOG_INFO << "[RpcSendQueue::preStop][" << sessionId << "] begin pre stop";
     std::unique_lock<std::mutex> uniqueLock(classMutex);
     if (!this->active) {
         return;
@@ -53,25 +54,36 @@ void RpcSendQueue::preStop() {
     _pushEntry(keto::server_common::Constants::RPC_COMMANDS::CLOSE, keto::server_common::Constants::RPC_COMMANDS::CLOSE);
     this->active = false;
     this->stateCondition.notify_all();
+    KETO_LOG_INFO << "[RpcSendQueue::preStop][" << sessionId << "] end pre stop";
 }
 
 void RpcSendQueue::stop() {
-
+    KETO_LOG_INFO << "[RpcSendQueue::stop][" << sessionId << "] the stop";
+    std::unique_lock<std::mutex> uniqueLock(classMutex);
+    this->sendQueue.clear();
+    this->activeEntry.reset();
+    this->stateCondition.notify_all();
+    KETO_LOG_INFO << "[RpcSendQueue::stop][" << sessionId << "] end pre stop";
 }
 
 void RpcSendQueue::abort() {
     std::unique_lock<std::mutex> uniqueLock(classMutex);
+    KETO_LOG_INFO << "[RpcSendQueue::abort][" << sessionId << "] the stop";
     if (aborted) {
         return;
     }
     this->aborted = true;
+    this->sendQueue.clear();
+    this->activeEntry.reset();
     this->stateCondition.notify_all();
-
+    KETO_LOG_INFO << "[RpcSendQueue::abort][" << sessionId << "] the abort";
 }
 
 
 void RpcSendQueue::join() {
+    KETO_LOG_INFO << "[RpcSendQueue::join][" << sessionId << "] wait for completion";
     this->queueThreadPtr->join();
+    KETO_LOG_INFO << "[RpcSendQueue::join][" << sessionId << "] after the join";
 }
 
 void RpcSendQueue::pushEntry(const std::string& command, const std::string& payload) {
@@ -95,25 +107,33 @@ void RpcSendQueue::releaseEntry() {
 
 void RpcSendQueue::run() {
     RpcSendQueueEntryPtr rpcSendQueueEntryPtr;
+    KETO_LOG_INFO << "[" << sessionId << "] while loop";
     while(rpcSendQueueEntryPtr = peekEntry()) {
+        KETO_LOG_INFO << "[" << sessionId << "] before processing";
         processEntry(rpcSendQueueEntryPtr);
+        KETO_LOG_INFO << "[" << sessionId << "] after processing";
     }
+    KETO_LOG_INFO << "[" << sessionId << "] end of loop";
 }
 
 RpcSendQueueEntryPtr RpcSendQueue::peekEntry() {
     std::unique_lock<std::mutex> uniqueLock(classMutex);
-    //KETO_LOG_INFO << "[" << sessionId << "] wait for entries";
-    while((activeEntry || sendQueue.empty()) && !aborted) {
+    KETO_LOG_INFO << "[" << sessionId << "] wait for entries [" << active << "][" << aborted << "]["
+        << activeEntry << "][" << sendQueue.size() << "]";
+    while((active && !aborted) || (activeEntry || !sendQueue.empty())) {
+        //KETO_LOG_INFO << "[" << sessionId << "] wait for entries [" << active << "][" << aborted << "]["
+        //<< activeEntry << "][" << sendQueue.size() << "]";
+        if (!activeEntry && !sendQueue.empty()) {
+            activeEntry = sendQueue.front();
+            sendQueue.pop_front();
+            return activeEntry;
+        }
         this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(
                 Constants::DEFAULT_RPC_SERVER_QUEUE_DELAY));
     }
-    if (aborted) {
-        return RpcSendQueueEntryPtr();
-    }
-    activeEntry = sendQueue.front();
-    sendQueue.pop_front();
-    //KETO_LOG_INFO << "[" << sessionId << "] peek an entry";
-    return activeEntry;
+
+    KETO_LOG_INFO << "[" << sessionId << "] After waiting for the entry";
+    return RpcSendQueueEntryPtr();
 }
 
 void RpcSendQueue::_pushEntry(const std::string& command, const std::string& payload) {

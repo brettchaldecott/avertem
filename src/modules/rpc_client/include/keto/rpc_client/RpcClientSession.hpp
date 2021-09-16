@@ -110,7 +110,7 @@ public:
     void pushRpcPeer(const keto::router_utils::RpcPeerHelper& rpcPeerHelper);
 
 private:
-    int sessionId;
+    const int sessionId;
     RpcPeer rpcPeer;
     RpcClientProtocolPtr rpcClientProtocolPtr;
     RpcSessionSocketPtr rpcSessionSocketPtr;

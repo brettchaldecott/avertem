@@ -91,22 +91,23 @@ void RpcReceiveQueue::start(const RpcSendQueuePtr& rpcSendQueuePtr) {
 }
 
 void RpcReceiveQueue::preStop() {
+    KETO_LOG_INFO << getHost() << "[RpcReceiveQueue::preStop] pre stop begin";
     std::unique_lock<std::mutex> uniqueLock(classMutex);
     if (!active) {
         return;
     }
     active = false;
     this->stateCondition.notify_all();
+    KETO_LOG_INFO << getHost() << "[RpcReceiveQueue::preStop] pre stop end";
 }
 
 void RpcReceiveQueue::stop() {
+    KETO_LOG_INFO << getHost() << "[RpcReceiveQueue::stop] stop begin";
     std::unique_lock<std::mutex> uniqueLock(classMutex);
-    if (!active) {
-        return;
-    }
-    this->readQueue.clear();
     active = false;
+    this->readQueue.clear();
     this->stateCondition.notify_all();
+    KETO_LOG_INFO << getHost() << "[RpcReceiveQueue::stop] stop end";
 }
 
 void RpcReceiveQueue::abort() {
@@ -119,7 +120,9 @@ void RpcReceiveQueue::abort() {
 }
 
 void RpcReceiveQueue::join() {
+    KETO_LOG_INFO << getHost() << "[RpcReceiveQueue::join] wait join";
     queueThreadPtr->join();
+    KETO_LOG_INFO << getHost() << "[RpcReceiveQueue::join] join finished";
 }
 
 bool RpcReceiveQueue::clientIsActive() {

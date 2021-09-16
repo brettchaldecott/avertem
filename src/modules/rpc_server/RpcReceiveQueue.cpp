@@ -73,7 +73,9 @@ void RpcReceiveQueue::preStop() {
 }
 
 void RpcReceiveQueue::stop() {
-
+    std::unique_lock<std::mutex> uniqueLock(classMutex);
+    this->readQueue.clear();
+    this->stateCondition.notify_all();
 }
 
 void RpcReceiveQueue::abort() {
@@ -82,11 +84,14 @@ void RpcReceiveQueue::abort() {
         return;
     }
     aborted = true;
+    this->readQueue.clear();
     this->stateCondition.notify_all();
 }
 
 void RpcReceiveQueue::join() {
+    KETO_LOG_INFO << "[RpcReceiveQueue::join][" << sessionId << "] wait for join";
     queueThreadPtr->join();
+    KETO_LOG_INFO << "[RpcReceiveQueue::join][" << sessionId << "] after join";
 }
 
 bool RpcReceiveQueue::clientIsActive() {

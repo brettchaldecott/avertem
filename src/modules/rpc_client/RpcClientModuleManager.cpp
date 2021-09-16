@@ -81,7 +81,7 @@ void RpcClientModuleManager::postStart() {
 void RpcClientModuleManager::preStop() {
     KETO_LOG_INFO << "[RpcClientModuleManager] Pre Stop the RpcClientModuleManager";
     RpcClient::getInstance()->preStop();
-    KETO_LOG_INFO << "[RpcClientModuleManager] Pre Stop the RpcClientModuleManager";
+    KETO_LOG_INFO << "[RpcClientModuleManager] After Stop the RpcClientModuleManager";
 }
 
 void RpcClientModuleManager::stop() {

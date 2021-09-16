@@ -44,9 +44,6 @@ void RpcSendQueue::preStop() {
 
 void RpcSendQueue::stop() {
     std::unique_lock<std::mutex> uniqueLock(classMutex);
-    if (!this->active) {
-        return;
-    }
     this->active = false;
     this->sendQueue.clear();
     this->activeEntry.reset();
@@ -97,17 +94,18 @@ void RpcSendQueue::run() {
 RpcSendQueueEntryPtr RpcSendQueue::peekEntry() {
     std::unique_lock<std::mutex> uniqueLock(classMutex);
     //KETO_LOG_INFO << "[" << sessionId << "] wait for entries";
-    while((activeEntry || sendQueue.empty()) && !aborted) {
+    while((active && !aborted) || (activeEntry || !sendQueue.empty())) {
+        if (!activeEntry && !sendQueue.empty()) {
+            activeEntry = sendQueue.front();
+            sendQueue.pop_front();
+            return activeEntry;
+        }
         this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(
                 Constants::DEFAULT_RPC_CLIENT_QUEUE_DELAY));
     }
-    if (sendQueue.empty()) {
-        return RpcSendQueueEntryPtr();
-    }
-    activeEntry = sendQueue.front();
-    sendQueue.pop_front();
+
     //KETO_LOG_INFO << "[" << sessionId << "] peek an entry";
-    return activeEntry;
+    return RpcSendQueueEntryPtr();
 }
 
 void RpcSendQueue::_pushEntry(const std::string& command, const std::string& payload) {

@@ -91,6 +91,7 @@ public:
 
     void start();
     void postStart();
+    void preStop();
     void stop();
 
 

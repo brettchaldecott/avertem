@@ -70,9 +70,13 @@ public:
     void join();
     void send(const std::string& message);
 
+    void setClosed();
+    bool isClosed();
+
 private:
     int sessionId;
     bool active;
+    bool closed;
     std::mutex classMutex;
     std::condition_variable stateCondition;
     websocket::stream<

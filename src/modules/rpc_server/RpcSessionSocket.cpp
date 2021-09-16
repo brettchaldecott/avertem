@@ -32,6 +32,7 @@ std::string RpcSessionSocket::getSourceVersion() {
 RpcSessionSocket::RpcSessionSocket(int sessionId,tcp::socket&& socket, sslBeast::context& ctx) :
     sessionId(sessionId),
     active(true),
+    closed(false),
     ws_(std::move(socket), ctx) {
 
     ws_.auto_fragment(false);
@@ -53,8 +54,7 @@ bool RpcSessionSocket::isActive() {
 void RpcSessionSocket::stop() {
     if (this->rpcServerProtocolPtr->isStarted()) {
         this->rpcServerProtocolPtr->preStop();
-        this->rpcServerProtocolPtr->stop();
-        this->rpcServerProtocolPtr->join();
+        //this->rpcServerProtocolPtr->join();
     }
 }
 
@@ -65,6 +65,19 @@ void RpcSessionSocket::join() {
         this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(
                 Constants::DEFAULT_RPC_SERVER_QUEUE_DELAY));
     }
+}
+
+
+void RpcSessionSocket::setClosed() {
+    std::unique_lock<std::mutex> uniqueLock(classMutex);
+    this->closed = true;
+    this->active = false;
+    this->stateCondition.notify_all();
+}
+
+bool RpcSessionSocket::isClosed() {
+    std::unique_lock<std::mutex> uniqueLock(classMutex);
+    return this->closed;
 }
 
 void RpcSessionSocket::deactivate() {
@@ -169,7 +182,7 @@ void RpcSessionSocket::send(const std::string& message) {
 }
 
 void RpcSessionSocket::sendMessage() {
-    if (outMessage == keto::server_common::Constants::RPC_COMMANDS::CLOSE) {
+    if (outMessage.find(keto::server_common::Constants::RPC_COMMANDS::CLOSE,0) == 0) {
         ws_.async_close(websocket::close_code::normal,
                         beast::bind_front_handler(
                                 &RpcSessionSocket::on_close,
@@ -194,14 +207,20 @@ void RpcSessionSocket::on_write(beast::error_code ec, std::size_t bytes_transfer
 }
 
 void RpcSessionSocket::on_close(boost::system::error_code ec) {
-    if (this->rpcServerProtocolPtr->isStarted()) {
-        this->rpcServerProtocolPtr->stop();
-    }
+    setClosed();
+    KETO_LOG_INFO << "The connection is closed";
+    this->rpcServerProtocolPtr->stop();
+    KETO_LOG_INFO << this->sessionId << " : Mark this session as for removal";
     RpcSessionManager::getInstance()->markAsEndedSession(this->sessionId);
+    KETO_LOG_INFO << this->sessionId << " : After marking the session for removal";
 }
 
 void RpcSessionSocket::fail(boost::system::error_code ec, char const* what) {
-    KETO_LOG_ERROR << "Failed to process because : " << what << ": " << ec.message();
+    if (isClosed()) {
+        KETO_LOG_INFO << this->sessionId << " : Connection closed ignore read error";
+        return;
+    }
+    KETO_LOG_ERROR << this->sessionId << " : Failed to process because : " << what << ": " << ec.message();
     deactivate();
     if (this->rpcServerProtocolPtr->isStarted()) {
         this->rpcServerProtocolPtr->abort();

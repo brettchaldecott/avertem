@@ -68,12 +68,16 @@ void RpcSessionManager::stop() {
     while((rpcSessionPtrVectors = getSessions()).size()) {
         KETO_LOG_INFO << "[RpcSessionManager] Stop the session : " <<  rpcSessionPtrVectors.size();
         for (RpcSessionPtr rpcSessionPtr : rpcSessionPtrVectors) {
-            KETO_LOG_INFO << "[RpcSessionManager] Stop the session : " <<  rpcSessionPtr->getAccountHash();
+            KETO_LOG_INFO << "[RpcSessionManager] Stop the session : " <<  rpcSessionPtr->getAccount();
             rpcSessionPtr->stop();
+            KETO_LOG_INFO << "[RpcSessionManager] Stopped the session : " <<  rpcSessionPtr->getAccount();
         }
+        // delay before checking for sessions
+        std::this_thread::sleep_for(std::chrono::milliseconds(Constants::DEFAULT_RPC_SERVER_QUEUE_DELAY));
     }
     KETO_LOG_INFO << "[RpcSessionManager] Join and wait for the thread to stop";
     sessionManagerThreadPtr->join();
+    KETO_LOG_INFO << "[RpcSessionManager] Session manager is stopped";
 }
 
 RpcSessionPtr RpcSessionManager::addSession(boost::asio::ip::tcp::socket&& socket, sslBeast::context& _ctx) {
@@ -112,6 +116,7 @@ void RpcSessionManager::markAsEndedSession(int sessionId) {
     }
     this->garbageDeque.push_back(this->sessionMap[sessionId]);
     this->sessionMap.erase(sessionId);
+    this->stateCondition.notify_all();
 }
 
 std::vector<RpcSessionPtr> RpcSessionManager::getSessions() {
@@ -150,15 +155,21 @@ std::vector<RpcSessionPtr> RpcSessionManager::getActiveSessions() {
 
 void RpcSessionManager::run() {
     RpcSessionPtr entry;
+    KETO_LOG_INFO << "[RpcSessionManager::run] process sessions";
     while(entry = popGarbageSession()) {
+        KETO_LOG_INFO << "[RpcSessionManager::run] wait for an entry to terminate";
         entry->join();
+        KETO_LOG_INFO << "[RpcSessionManager::run] waiting complete";
     }
+    KETO_LOG_INFO << "[RpcSessionManager::run] session manager thread completed";
 }
 
 RpcSessionPtr RpcSessionManager::popGarbageSession() {
     std::unique_lock<std::mutex> uniqueLock(classMutex);
     while(this->active || !this->sessionMap.empty() || !this->garbageDeque.empty()) {
         if (!this->garbageDeque.empty()) {
+            KETO_LOG_INFO << "[RpcSessionManager::popGarbageSession] pop garbage session [" << this->active
+                << "][" << this->sessionMap.size() << "][" << this->garbageDeque.size() << "]";
             RpcSessionPtr result = this->garbageDeque.front();
             this->garbageDeque.pop_front();
             return result;
@@ -166,6 +177,7 @@ RpcSessionPtr RpcSessionManager::popGarbageSession() {
         this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(
                 Constants::DEFAULT_RPC_SERVER_QUEUE_DELAY));
     }
+    return RpcSessionPtr();
 }
 
 void RpcSessionManager::deactivate() {

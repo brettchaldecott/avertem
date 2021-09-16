@@ -90,10 +90,14 @@ public:
     bool isReconnect();
     void setReconnect(bool reconnect);
 
+    bool isClosed();
+    void setClosed();
+
 private:
-    int sessionId;
+    const int sessionId;
     bool active;
     bool reconnect;
+    bool closed;
     std::mutex classMutex;
     std::condition_variable stateCondition;
     tcp::resolver resolver;

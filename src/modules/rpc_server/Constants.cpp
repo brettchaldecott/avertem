@@ -9,7 +9,7 @@ namespace keto {
 namespace rpc_server {
 
 // constants
-const int Constants::DEFAULT_RPC_SERVER_QUEUE_DELAY = 1;
+const int Constants::DEFAULT_RPC_SERVER_QUEUE_DELAY = 5;
 
 }
 

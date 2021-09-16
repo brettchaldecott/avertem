@@ -89,6 +89,7 @@ void RpcClient::postStart() {
 }
 
 void RpcClient::preStop() {
+    RpcSessionManager::getInstance()->preStop();
 }
 
 void RpcClient::stop() {

@@ -48,23 +48,31 @@ void RpcServerProtocol::start(const RpcSessionSocketPtr& rpcSessionSocket) {
 }
 
 void RpcServerProtocol::preStop() {
-    rpcSendQueuePtr->preStop();
-    rpcReceiveQueuePtr->preStop();
+    if (this->isStarted()) {
+        rpcSendQueuePtr->preStop();
+        rpcReceiveQueuePtr->preStop();
+    }
 }
 
 void RpcServerProtocol::stop() {
-    rpcSendQueuePtr->stop();
-    rpcReceiveQueuePtr->stop();
+    if (this->isStarted()) {
+        rpcSendQueuePtr->stop();
+        rpcReceiveQueuePtr->stop();
+    }
 }
 
 void RpcServerProtocol::abort() {
-    rpcSendQueuePtr->stop();
-    rpcReceiveQueuePtr->stop();
+    if (this->isStarted()) {
+        rpcSendQueuePtr->abort();
+        rpcReceiveQueuePtr->abort();
+    }
 }
 
 void RpcServerProtocol::join() {
-    rpcSendQueuePtr->join();
-    rpcReceiveQueuePtr->join();
+    if (this->isStarted()) {
+        rpcSendQueuePtr->join();
+        rpcReceiveQueuePtr->join();
+    }
 }
 
 bool RpcServerProtocol::isStarted() {

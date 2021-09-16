@@ -88,7 +88,7 @@ public:
 
 
 private:
-    int sessionId;
+    const int sessionId;
     RpcSessionSocketPtr rpcSessionSocketPtr;
     RpcServerProtocolPtr rpcServerProtocolPtr;
 

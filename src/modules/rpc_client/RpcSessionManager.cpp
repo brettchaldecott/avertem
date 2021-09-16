@@ -113,25 +113,36 @@ void RpcSessionManager::postStart() {
     }
 }
 
-void RpcSessionManager::stop() {
+void RpcSessionManager::preStop() {
+    KETO_LOG_INFO << "[RpcSessionManager::preStop] Terminate the list of clients";
     deactivate();
     std::vector<RpcClientSessionPtr> rpcClientSessionPtrVectors;
     while((rpcClientSessionPtrVectors = getSessions()).size()) {
         for (RpcClientSessionPtr rpcClientSessionPtr : rpcClientSessionPtrVectors) {
+            KETO_LOG_INFO << "[RpcSessionManager::preStop] Terminate the client : " << rpcClientSessionPtr->getHost();
             rpcClientSessionPtr->stop();
+            KETO_LOG_INFO << "[RpcSessionManager::preStop] The client has been terminated : " << rpcClientSessionPtr->getHost();
         }
+
+        // delay before checking for sessions
+        std::this_thread::sleep_for(std::chrono::milliseconds(Constants::DEFAULT_RPC_CLIENT_QUEUE_DELAY));
     }
+    KETO_LOG_INFO << "[RpcSessionManager::preStop] What for threads to stop";
     sessionManagerThreadPtr->join();
 
-    KETO_LOG_INFO << "[RpcSessionManager::stop] terminate the threads";
+    KETO_LOG_INFO << "[RpcSessionManager::preStop] terminate the threads";
     for (std::vector<std::thread>::iterator iter = this->threadsVector.begin();
     iter != this->threadsVector.end(); iter++) {
         iter->join();
     }
-    KETO_LOG_INFO << "[RpcSessionManager::stop] clear buffers";
+    KETO_LOG_INFO << "[RpcSessionManager::preStop] clear buffers";
     this->threadsVector.clear();
     this->ioc.reset();
-    KETO_LOG_ERROR << "[RpcSessionManager::stop] complete";
+    KETO_LOG_ERROR << "[RpcSessionManager::preStop] complete";
+}
+
+void RpcSessionManager::stop() {
+    KETO_LOG_INFO << "[RpcSessionManager::stop] stop the session manager";
 }
 
 
@@ -191,6 +202,7 @@ void RpcSessionManager::markAsEndedSession(int sessionId) {
     }
     this->garbageDeque.push_back(this->sessionMap[sessionId]);
     this->sessionMap.erase(sessionId);
+    this->stateCondition.notify_all();
 }
 
 std::vector<RpcClientSessionPtr> RpcSessionManager::getSessions() {

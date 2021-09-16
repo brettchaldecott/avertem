@@ -26,7 +26,7 @@ std::string RpcSessionSocket::getSourceVersion() {
 RpcSessionSocket::RpcSessionSocket(int sessionId,
              std::shared_ptr<net::io_context>& ioc,
              std::shared_ptr<sslBeast::context>& ctx,
-             const RpcPeer& rpcPeer) : sessionId(sessionId), active(true), reconnect(true),
+             const RpcPeer& rpcPeer) : sessionId(sessionId), active(true), reconnect(true), closed(false),
              resolver(net::make_strand(*ioc)),
              ws_(net::make_strand(*ioc), *ctx),
              rpcPeer(rpcPeer) {
@@ -69,8 +69,7 @@ bool RpcSessionSocket::isActive() {
 void RpcSessionSocket::stop() {
     if (this->rpcClientProtocolPtr->isStarted()) {
         this->rpcClientProtocolPtr->preStop();
-        this->rpcClientProtocolPtr->stop();
-        this->rpcClientProtocolPtr->join();
+        //this->rpcClientProtocolPtr->join();
     }
 }
 
@@ -100,6 +99,16 @@ bool RpcSessionSocket::isReconnect() {
 void RpcSessionSocket::setReconnect(bool reconnect) {
     std::unique_lock<std::mutex> uniqueLock(classMutex);
     this->reconnect = reconnect;
+}
+
+bool RpcSessionSocket::isClosed() {
+    std::unique_lock<std::mutex> uniqueLock(classMutex);
+    return this->closed;
+}
+
+void RpcSessionSocket::setClosed() {
+    std::unique_lock<std::mutex> uniqueLock(classMutex);
+    this->closed = true;
 }
 
 void RpcSessionSocket::deactivate() {
@@ -272,6 +281,7 @@ void RpcSessionSocket::on_close(boost::system::error_code ec) {
         this->rpcClientProtocolPtr->stop();
     }
     KETO_LOG_INFO << "[RpcSessionSocket::on_close][" << this->sessionId << "][" << this->rpcPeer.getHost() << "] Mark close session";
+    setClosed();
     RpcSessionManager::getInstance()->markAsEndedSession(this->sessionId);
     if (isReconnect()) {
         setReconnect(false);
@@ -283,7 +293,13 @@ void RpcSessionSocket::on_close(boost::system::error_code ec) {
 }
 
 void RpcSessionSocket::fail(boost::system::error_code ec, const std::string& what) {
-    KETO_LOG_ERROR << "Failed to process because : " << what << ": " << ec.message();
+    KETO_LOG_ERROR << "[RpcSessionSocket::fail][" << this->sessionId
+        << "] Failed to process because : " << what << ": " << ec.message();
+    if (this->isClosed()) {
+        KETO_LOG_INFO << "[RpcSessionSocket::fail][" << this->sessionId
+            << "] Connection closed assuming this failure is caused by the close";
+        return;
+    }
     deactivate();
     if (this->rpcClientProtocolPtr->isStarted()) {
         this->rpcClientProtocolPtr->abort();

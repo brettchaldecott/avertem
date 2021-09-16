@@ -51,8 +51,8 @@ void RpcClientProtocol::stop() {
 
 void RpcClientProtocol::abort() {
     if (this->started) {
-        rpcSendQueuePtr->stop();
-        rpcReceiveQueuePtr->stop();
+        rpcSendQueuePtr->abort();
+        rpcReceiveQueuePtr->abort();
     }
 }
 

@@ -185,7 +185,7 @@ BlockSyncManager::processRequestBlockSyncRetry() {
     //KETO_LOG_DEBUG << "[BlockSyncManager::processRequestBlockSyncRetry] trigger the retry by resetting the start time";
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
     // reschedule to run in a minutes time
-    this->startTime = 0;
+    this->startTime = time(0);
     this->stateCondition.notify_all();
 }
 
@@ -314,16 +314,17 @@ keto::event::Event BlockSyncManager::isBlockSyncComplete(const keto::event::Even
 
 bool BlockSyncManager::waitForExpired() {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
-    std::time_t now = time(0);
-
+    std::time_t now = 0;
     std::time_t calculatedExpiryTime = this->startTime + Constants::SYNC_EXPIRY_TIME;
-    if (now >= calculatedExpiryTime) {
-        return true;
+
+    // check the expiry
+    while (BlockProducer::getInstance()->getState() != BlockProducer::State::terminated && (now = time(0)) < calculatedExpiryTime) {
+
+        KETO_LOG_INFO << "[BlockSyncManager::waitForExpired] Wait for expiry [" << calculatedExpiryTime << "][" <<
+        now << "] difference [" << calculatedExpiryTime - now << "]";
+        this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(calculatedExpiryTime - now));
     }
-    KETO_LOG_INFO << "[BlockSyncManager::waitForExpired] Wait for expiry [" << calculatedExpiryTime << "][" <<
-                  now << "] difference [" << calculatedExpiryTime - now << "]";
-    this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(calculatedExpiryTime - now));
-    return false;
+    return true;
 }
 
 
