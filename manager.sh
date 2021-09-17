@@ -15,8 +15,10 @@ then
     exit -1
 fi
 
-export UID="$(id -u)"
-export GID="$(id -g)"
+if [ -z "$GID" ] ;
+then
+    export GID="$(id -g)"
+fi
 
 
 if [ "${ACTION}" == "dev" ] ;
