@@ -376,7 +376,9 @@ void RpcReceiveQueue::handleRetryResponse(const std::string& command) {
         // this indicates the up stream server is currently out of sync and cannot be relied upon we therefore
         // need to use an alternative and mark this one as inactive until it is activated.
         KETO_LOG_INFO << "[RpcSession::handleRetryResponse][" << this->getHost() << "] Block sync requires a retry reschedule";
-
+        if (this->clientIsActive()) {
+            this->setClientActive(false);
+        }
         // reschedule the block sync retry
         keto::proto::MessageWrapper messageWrapper;
         keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(
@@ -795,6 +797,9 @@ void RpcReceiveQueue::handleInternalException(const std::string& command, const 
         // this indicates the up stream server is currently out of sync and cannot be relied upon we therefore
         // need to use an alternative and mark this one as inactive until it is activated.
         KETO_LOG_INFO << "[RpcSession::handleInternalException][" << getHost() << "] Deactive this session and re-schedule the retry";
+        if (this->clientIsActive()) {
+            this->setClientActive(false);
+        }
         // reschedule the block sync retry
         keto::proto::MessageWrapper messageWrapper;
         keto::server_common::triggerEvent(keto::server_common::toEvent<keto::proto::MessageWrapper>(

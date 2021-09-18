@@ -104,7 +104,7 @@ void BlockSyncManager::sync() {
 
 keto::proto::SignedBlockBatchMessage  BlockSyncManager::requestBlocks(const keto::proto::SignedBlockBatchRequest& signedBlockBatchRequest) {
     //std::unique_lock<std::mutex> uniqueLock(this->classMutex);
-    if (this->getStatus() == INIT) {
+    if (this->getStatus() == INIT && BlockProducer::getInstance()->getState() != BlockProducer::State::block_producer) {
         KETO_LOG_DEBUG << "[BlockSyncManager::requestBlocks] This node is currently not unsyncronized and cannot provide data";
         BOOST_THROW_EXCEPTION(keto::block::UnsyncedStateCannotProvideDate());
     }
@@ -247,6 +247,11 @@ BlockSyncManager::requestFromServer() {
 
 void
 BlockSyncManager::forceResync() {
+    if (BlockProducer::getInstance()->getState() == BlockProducer::State::block_producer) {
+        KETO_LOG_ERROR << "[BlockSyncManager::forceResync] Cannot force this node back to init as it is currently a block producer";
+        return;
+    }
+    // synchronize the check
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
     if (this->status == INIT) {
         KETO_LOG_INFO << "[BlockSyncManager::forceResync] Sync is already in process ignore request to force it again" << this->status;
@@ -260,6 +265,10 @@ BlockSyncManager::forceResync() {
 
 void
 BlockSyncManager::forceResync(std::time_t timestamp) {
+    if (BlockProducer::getInstance()->getState() == BlockProducer::State::block_producer) {
+        KETO_LOG_ERROR << "[BlockSyncManager::forceResync] Cannot force this node back to init as it is currently a block producer";
+        return;
+    }
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
     if (this->status == INIT) {
         KETO_LOG_INFO << "[BlockSyncManager::forceResync] Sync is already in process ignore request to force it again" << this->status;
@@ -274,6 +283,10 @@ BlockSyncManager::forceResync(std::time_t timestamp) {
 
 void
 BlockSyncManager::forceResyncServer(std::time_t timestamp) {
+    if (BlockProducer::getInstance()->getState() == BlockProducer::State::block_producer) {
+        KETO_LOG_ERROR << "[BlockSyncManager::forceResync] Cannot force this node back to init as it is currently a block producer";
+        return;
+    }
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
     if (this->status == INIT) {
         KETO_LOG_INFO << "[BlockSyncManager::forceResync] Sync is already in process ignore request to force it again" << this->status;
