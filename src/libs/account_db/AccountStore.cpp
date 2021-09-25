@@ -76,7 +76,7 @@ std::shared_ptr<AccountStore> AccountStore::getInstance() {
 
 bool AccountStore::getAccountInfo(const keto::asn1::HashHelper& accountHash,
             keto::proto::AccountInfo& result) {
-    //std::lock_guard<std::recursive_mutex> guard(classMutex);
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     AccountResourcePtr resource = accountResourceManagerPtr->getResource();
     rocksdb::Transaction* accountTransaction = resource->getTransaction(Constants::ACCOUNTS_MAPPING);
     keto::rocks_db::SliceHelper accountHashHelper(keto::crypto::SecureVectorUtils().copyFromSecure(
@@ -94,7 +94,7 @@ bool AccountStore::getAccountInfo(const keto::asn1::HashHelper& accountHash,
 void AccountStore::applyDirtyTransaction(
         const keto::asn1::HashHelper& chainId,
         const keto::transaction_common::TransactionWrapperHelperPtr& transactionWrapperHelperPtr) {
-    //std::lock_guard<std::recursive_mutex> guard(classMutex);
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     AccountResourcePtr resource = accountResourceManagerPtr->getResource();
     keto::proto::AccountInfo accountInfo;
     AccountRDFStatementBuilderPtr accountRDFStatementBuilder;
@@ -128,7 +128,7 @@ void AccountStore::applyDirtyTransaction(
 void AccountStore::applyTransaction(
         const keto::asn1::HashHelper& chainId,const keto::asn1::HashHelper& blockId,
         const keto::transaction_common::TransactionWrapperHelperPtr& transactionWrapperHelperPtr) {
-    //std::lock_guard<std::recursive_mutex> guard(classMutex);
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     AccountResourcePtr resource = accountResourceManagerPtr->getResource();
     keto::proto::AccountInfo accountInfo;
     AccountRDFStatementBuilderPtr accountRDFStatementBuilder;
@@ -163,7 +163,7 @@ void AccountStore::applyTransaction(
 void AccountStore::sparqlQuery(
         const keto::proto::AccountInfo& accountInfo,
         keto::proto::SparqlQuery& sparlQuery) {
-    //std::lock_guard<std::recursive_mutex> guard(classMutex);
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     AccountResourcePtr resource = accountResourceManagerPtr->getResource();
     AccountGraphSessionPtr sessionPtr = resource->getGraphSession(accountInfo.graph_name());
     sparlQuery.set_result(sessionPtr->query(sparlQuery.query(),
@@ -173,7 +173,7 @@ void AccountStore::sparqlQuery(
 keto::proto::SparqlResultSet AccountStore::sparqlQueryWithResultSet(
         const keto::proto::AccountInfo& accountInfo,
         keto::proto::SparqlResultSetQuery& sparqlResultSetQuery) {
-    //std::lock_guard<std::recursive_mutex> guard(classMutex);
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     AccountResourcePtr resource = accountResourceManagerPtr->getResource();
     AccountGraphSessionPtr sessionPtr = resource->getGraphSession(accountInfo.graph_name());
 
@@ -189,7 +189,7 @@ keto::proto::SparqlResultSet AccountStore::sparqlQueryWithResultSet(
 keto::proto::SparqlResultSet AccountStore::dirtySparqlQueryWithResultSet(
         const keto::proto::AccountInfo& accountInfo,
         keto::proto::SparqlResultSetQuery& sparqlResultSetQuery) {
-    //std::lock_guard<std::recursive_mutex> guard(classMutex);
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     AccountResourcePtr resource = accountResourceManagerPtr->getResource();
     AccountGraphSessionPtr sessionPtr = resource->getGraphSession(accountInfo.graph_name());
 
@@ -205,7 +205,7 @@ keto::proto::SparqlResultSet AccountStore::dirtySparqlQueryWithResultSet(
 void AccountStore::getContract(
         const keto::proto::AccountInfo& accountInfo,
         keto::proto::ContractMessage& contractMessage) {
-    //std::lock_guard<std::recursive_mutex> guard(classMutex);
+    std::lock_guard<std::recursive_mutex> guard(classMutex);
     AccountResourcePtr resource = accountResourceManagerPtr->getResource();
     AccountGraphSessionPtr sessionPtr = resource->getGraphSession(accountInfo.graph_name());
     std::stringstream ss;
