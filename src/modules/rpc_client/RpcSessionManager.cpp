@@ -53,7 +53,7 @@ std::string RpcSessionManager::getSourceVersion() {
 }
 
 
-RpcSessionManager::RpcSessionManager() : active(true) {
+RpcSessionManager::RpcSessionManager() : active(true), sessionSequence(0) {
     // retrieve the configuration
     std::shared_ptr<keto::environment::Config> config = keto::environment::EnvironmentManager::getInstance()->getConfig();
     threads = Constants::DEFAULT_RPC_CLIENT_THREADS;
