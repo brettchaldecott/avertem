@@ -397,7 +397,7 @@ void RpcReceiveQueue::helloAcceptedResponse(const std::string& command, const st
     }
 
     // notify the accepted inorder to set the network keys
-    //KETO_LOG_INFO << "[RpcSession::helloAcceptedResponse] handle network session accepted";
+    KETO_LOG_INFO << "[RpcSession::helloAcceptedResponse] handle network session accepted";
     keto::software_consensus::ConsensusSessionManager::getInstance()->notifyAccepted();
 
     if (this->isRegistered()) {

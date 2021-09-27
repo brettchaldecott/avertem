@@ -393,10 +393,13 @@ void BlockProducer::run() {
     BlockProducer::State currentState;
     while((currentState = this->checkState()) != State::terminated) {
         try {
-            if (currentState == BlockProducer::State::block_producer &&
-                keto::software_consensus::ConsensusStateManager::getInstance()->getState()
+            if (currentState == BlockProducer::State::block_producer) {
+                if (keto::software_consensus::ConsensusStateManager::getInstance()->getState()
                 == keto::software_consensus::ConsensusStateManager::State::ACCEPTED) {
-                processTransactions();
+                    processTransactions();
+                } else {
+                    KETO_LOG_INFO << "[BlockProducer::run] Currently configured as a block producer but unable to perform task as network is not accepted.";
+                }
             } else if (currentState == BlockProducer::State::sync_blocks &&
                        keto::software_consensus::ConsensusStateManager::getInstance()->getState()
                        == keto::software_consensus::ConsensusStateManager::State::ACCEPTED) {
