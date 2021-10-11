@@ -46,7 +46,7 @@ using namespace WAVM::Runtime;
 WAVM::Intrinsics::Module* getIntrinsicModule_global();
 WAVM::Intrinsics::Module* getIntrinsicModule_env();
 WAVM::Intrinsics::Module* getIntrinsicModule_asm2wasm();
-WAVM::Intrinsics::Module* getIntrinsicModule_emscripten_wasi_unstable();
+WAVM::Intrinsics::Module* getIntrinsicModule_emscripten_wasi_snapshot_preview1();
 
 namespace WAVM {
     namespace Emscripten {
@@ -1658,7 +1658,7 @@ namespace keto {
             process->global
                     = WAVM::Intrinsics::instantiateModule(compartment, {WAVM_INTRINSIC_MODULE_REF(global)}, "global");
             process->wasi_unstable = WAVM::Intrinsics::instantiateModule(
-                    compartment, {WAVM_INTRINSIC_MODULE_REF(emscripten_wasi_unstable)}, "wasi_unstable");
+                    compartment, {WAVM_INTRINSIC_MODULE_REF(emscripten_wasi_snapshot_preview1)}, "wasi_unstable");
 
             process->compartment = compartment;
 

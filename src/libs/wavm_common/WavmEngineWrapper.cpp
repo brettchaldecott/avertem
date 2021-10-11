@@ -152,7 +152,9 @@ void WavmEngineWrapper::execute() {
                                               //WAVM::Errors::fatalf("Runtime exception: %s",
                                               //               describeException(exception).c_str());
                                               std::stringstream ss;
-                                              ss << "\"Runtime exception: " << describeException(exception).c_str();
+                                              ss << "\"Runtime exception: " << describeException(exception).c_str()
+                                              << "\"" << std::endl;
+
                                               BOOST_THROW_EXCEPTION(
                                                       keto::wavm_common::ContractExecutionFailedException(ss.str()));
                                           });
@@ -161,6 +163,7 @@ void WavmEngineWrapper::execute() {
 
 void WavmEngineWrapper::internalExecute() {
     // place object in a scope
+    KETO_LOG_INFO << "[internalExecute] internal execute";
     WAVM::IR::FeatureSpec featureSpec{WAVM::IR::FeatureLevel::wavm};
     WAVM::Runtime::ModuleRef moduleRef;
 
@@ -173,6 +176,7 @@ void WavmEngineWrapper::internalExecute() {
     std::vector<std::string> args;
     args.insert(args.begin(), "/proc/1/exe");
 
+    KETO_LOG_INFO << "[internalExecute] emscript process";
     const WAVM::IR::Module& irModule = WAVM::Runtime::getModuleIR(moduleRef);
     emscriptenProcess
             = keto::Emscripten::createProcess(compartment,
@@ -185,10 +189,12 @@ void WavmEngineWrapper::internalExecute() {
         BOOST_THROW_EXCEPTION(keto::wavm_common::EmscriptInstanciateFailed());
     }
 
+    KETO_LOG_INFO << "[internalExecute] root resolver";
     RootResolver rootResolver(
             keto::Emscripten::getInstanceResolver(*emscriptenProcess), compartment);
     WAVM::Runtime::LinkResult linkResult = WAVM::Runtime::linkModule(irModule, rootResolver);
 
+    KETO_LOG_INFO << "[internalExecute] Link result";
     if (!linkResult.success) {
         std::stringstream ss;
         ss << "Failed to link module:";
@@ -199,7 +205,7 @@ void WavmEngineWrapper::internalExecute() {
         }
         BOOST_THROW_EXCEPTION(keto::wavm_common::LinkingFailedException(ss.str()));
     }
-
+    KETO_LOG_INFO << "[internalExecute] instantiate module";
     WAVM::Runtime::Instance* moduleInstance = WAVM::Runtime::instantiateModule(
             compartment, moduleRef, std::move(linkResult.resolvedImports),contract.c_str());
     if(!moduleInstance) {
@@ -209,6 +215,7 @@ void WavmEngineWrapper::internalExecute() {
     }
 
     // Call the module start function, if it has one.
+    KETO_LOG_INFO << "[internalExecute] Execute the start function";
     WAVM::Runtime::Function* startFunction = WAVM::Runtime::getStartFunction(moduleInstance);
     WAVM::Runtime::Context* context = WAVM::Runtime::createContext(compartment);
     if (startFunction) {
@@ -216,6 +223,7 @@ void WavmEngineWrapper::internalExecute() {
     }
 
     // Initialize the Emscripten instance.
+    KETO_LOG_INFO << "[internalExecute] Initialize process";
     if (!keto::Emscripten::initializeProcess(*emscriptenProcess, context, irModule, moduleInstance)) {
         std::stringstream ss;
         ss << "Failed to instanciate the initialze the process for contract : " << contract;
@@ -223,6 +231,7 @@ void WavmEngineWrapper::internalExecute() {
     }
 
     // Look up the function export to call.
+    KETO_LOG_INFO << "[internalExecute] Get the run time";
     WAVM::Runtime::Function* functionInstance;
     Status currentStatus = std::dynamic_pointer_cast<WavmSessionTransaction>(WavmSessionManager::getInstance()->getWavmSession())->getStatus();
     if ((currentStatus == Status_init) ||
@@ -236,6 +245,7 @@ void WavmEngineWrapper::internalExecute() {
         BOOST_THROW_EXCEPTION(keto::wavm_common::UnsupportedInvocationStatusException());
     }
 
+    KETO_LOG_INFO << "[internalExecute] Internal function check";
     if (!functionInstance) {
         functionInstance = asFunctionNullable(getInstanceExport(moduleInstance, "_main"));
     }
@@ -244,6 +254,7 @@ void WavmEngineWrapper::internalExecute() {
     }
     WAVM::IR::FunctionType invokeSig(WAVM::Runtime::getFunctionType(functionInstance));
 
+    KETO_LOG_INFO << "[internalExecute] Invoke the call";
     std::vector<WAVM::IR::UntaggedValue> untaggedInvokeArgs;
     std::vector<WAVM::IR::UntaggedValue> untaggedInvokeResults;
     untaggedInvokeResults.resize(invokeSig.results().size());
@@ -253,6 +264,7 @@ void WavmEngineWrapper::internalExecute() {
             context, functionInstance, invokeSig,untaggedInvokeArgs.data(),untaggedInvokeResults.data());
     WAVM::Timing::logTimer("Invoked function", executionTimer);
 
+    KETO_LOG_INFO << "[internalExecute] Check the results";
     if (untaggedInvokeResults.size() != 1) {
         BOOST_THROW_EXCEPTION(
                 keto::wavm_common::ContractUnsupportedResultException("Unsupported contract result format."));
@@ -293,7 +305,8 @@ void WavmEngineWrapper::executeHttp() {
                                         //WAVM::Errors::fatalf("Runtime exception: %s",
                                         //               describeException(exception).c_str());
                                         std::stringstream ss;
-                                        ss << "\"Runtime exception: " << std::endl << describeException(exception).c_str() << std::endl;
+                                        ss << "\"Runtime exception: " << std::endl << describeException(exception).c_str()
+                                        << "\"" << std::endl;
                                         BOOST_THROW_EXCEPTION(
                                                 keto::wavm_common::ContractExecutionFailedException(ss.str()));
                                     });

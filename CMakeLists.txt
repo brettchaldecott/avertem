@@ -52,7 +52,6 @@ SET(BOOST_COMPONENTS)
 #set( CMAKE_VERBOSE_MAKEFILE on )
 
 LIST(APPEND BOOST_COMPONENTS 
-                            log_setup
                             log
                              date_time
                              system

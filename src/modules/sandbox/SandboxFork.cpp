@@ -64,7 +64,9 @@ keto::event::Event SandboxFork::Child::executeActionMessage(const keto::event::E
         std::string buffer = sandboxCommandMessage.contract();
         std::string code = keto::server_common::VectorUtils().copyVectorToString(Botan::hex_decode(
                 buffer,true));
+        KETO_LOG_INFO << "[executeActionMessage] Execute the engine";
         keto::wavm_common::WavmEngineManager::getInstance()->getEngine(code,sandboxCommandMessage.contract_name())->execute();
+        KETO_LOG_INFO << "[executeActionMessage] Get the sandbox message";
         sandboxCommandMessage = std::dynamic_pointer_cast<keto::wavm_common::WavmSessionTransaction>(wavmSessionScope.getSession())->getSandboxCommandMessage();
         KETO_LOG_INFO << "[executeActionMessage] return result";
         keto::wavm_common::ParentForkGateway::returnResult(
@@ -97,13 +99,16 @@ keto::event::Event SandboxFork::Child::executeActionMessage(const keto::event::E
 
 keto::event::Event SandboxFork::Child::executeHttpActionMessage(const keto::event::Event& event) {
     try {
+        KETO_LOG_INFO << "[executeActionMessage] Retrieve the message";
         keto::proto::HttpRequestMessage httpRequestMessage =
                 keto::server_common::fromEvent<keto::proto::HttpRequestMessage>(event);
         keto::wavm_common::WavmSessionScope wavmSessionScope(httpRequestMessage);
         std::string buffer = httpRequestMessage.contract();
         std::string code = keto::server_common::VectorUtils().copyVectorToString(Botan::hex_decode(
                 buffer,true));
+        KETO_LOG_INFO << "[executeActionMessage] Execute the engine";
         keto::wavm_common::WavmEngineManager::getInstance()->getEngine(code,httpRequestMessage.contract_name())->executeHttp();
+        KETO_LOG_INFO << "[executeActionMessage] Get the resource";
         keto::wavm_common::ParentForkGateway::returnResult(keto::server_common::toEvent<keto::proto::HttpResponseMessage>(
                 std::dynamic_pointer_cast<keto::wavm_common::WavmSessionHttp>(wavmSessionScope.getSession())->getHttpResponse()));
 
