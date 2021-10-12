@@ -57,5 +57,10 @@ void StateMonitor::deactivate() {
     this->stateCondition.notify_all();
 }
 
+bool StateMonitor::isActive() {
+    std::unique_lock<std::mutex> uniqueLock(classMutex);
+    return this->active;
+}
+
 }
 }

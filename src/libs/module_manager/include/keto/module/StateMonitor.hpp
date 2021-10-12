@@ -38,6 +38,7 @@ public:
     void monitor();
     void activate();
     void deactivate();
+    bool isActive();
 
 private:
     std::mutex classMutex;

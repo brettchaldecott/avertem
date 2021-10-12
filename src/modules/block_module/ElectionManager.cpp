@@ -290,7 +290,7 @@ keto::event::Event ElectionManager::consensusHeartbeat(const keto::event::Event&
             protocolHeartbeatMessageHelper.getNetworkSlot() < (protocolHeartbeatMessageHelper.getElectionSlot() -1)) {
         // if the state is still in an elect state that means the publish and confirmation had not been successfull
         // and we need to deactivate to prevent this node from hanging indefinitly.
-        if (state != BlockProducer::State::block_producer && state != BlockProducer::State::block_producer_wait) {
+        if (state != BlockProducer::State::block_producer && state != BlockProducer::State::block_producer_wait && keto::module::StateMonitor::getInstance()->isActive()) {
             KETO_LOG_INFO << "[BlockProducer::consensusHeartbeat] Deactivate shutdown block";
             keto::module::StateMonitor::getInstance()->deactivate();
             this->state = ElectionManager::State::PROCESSING;
