@@ -402,6 +402,7 @@ keto::event::Event ElectionManager::electRpcProcessConfirmation(const keto::even
         KETO_LOG_INFO << "[ElectionManager::electRpcProcessConfirmation]######## Node is no longer a producer [" <<
                       Botan::hex_encode(keto::server_common::ServerInfo::getInstance()->getAccountHash(),true) << "] ########";
         KETO_LOG_INFO << "[ElectionManager::electRpcProcessConfirmation]####################################################################";
+        keto::module::StateMonitor::getInstance()->deactivate();
     }
 
     return event;
