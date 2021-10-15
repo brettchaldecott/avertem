@@ -65,6 +65,7 @@ BlockChainTangleMeta::operator keto::proto::BlockChainTangleMeta() {
 BlockChainTangleMeta::BlockChainTangleMeta(BlockChainMeta* blockChainMeta, const keto::asn1::HashHelper& hash) : blockChainMeta(blockChainMeta) {
     this->hash = hash;
     this->lastBlockHash = hash;
+    this->lastModified = 0;
     this->numberOfAccounts = 0;
 }
 

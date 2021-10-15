@@ -563,7 +563,11 @@ std::vector<keto::asn1::HashHelper> BlockChain::getLastBlockHashs() {
     //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     std::vector<keto::asn1::HashHelper> result;
     for (int count = 0; count < this->blockChainMetaPtr->tangleCount(); count++) {
-        result.push_back(this->blockChainMetaPtr->getTangleEntry(count)->getLastBlockHash());
+        BlockChainTangleMetaPtr blockChainTangleMetaPtr = this->blockChainMetaPtr->getTangleEntry(count);
+        // ignore requests for tangles that have no accounts
+        if (blockChainTangleMetaPtr->getNumberOfAccounts()) {
+            result.push_back(blockChainTangleMetaPtr->getLastBlockHash());
+        }
     }
 
     return result;
