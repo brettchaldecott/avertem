@@ -603,23 +603,23 @@ bool BlockChain::requestBlocks(const std::vector<keto::asn1::HashHelper>& tangle
             transactionPtr->commit();
         } catch (keto::common::Exception& ex) {
             KETO_LOG_ERROR << "[BlockChain::requestBlocks]: [" << hash.getHash(keto::common::StringEncoding::HEX)
-            << "] Block node is orphanded because : " << boost::diagnostic_information(ex,true);
+            << "] Block node is orphaned because : " << boost::diagnostic_information(ex,true);
             KETO_LOG_ERROR << "[BlockChain::requestBlocks]: cause : " << ex.what();
             successfull = currentVal | false;
             continue;
         } catch (boost::exception& ex) {
             KETO_LOG_ERROR << "[BlockChain::requestBlocks]: [" << hash.getHash(keto::common::StringEncoding::HEX)
-            << "] Block node is orphanded because : " << boost::diagnostic_information(ex,true);
+            << "] Block node is orphaned because : " << boost::diagnostic_information(ex,true);
             successfull = currentVal | false;
             continue;
         } catch (std::exception& ex) {
             KETO_LOG_ERROR << "[BlockChain::requestBlocks]: [" << hash.getHash(keto::common::StringEncoding::HEX)
-            << "] Block node is orphanded because : " << ex.what();
+            << "] Block node is orphaned because : " << ex.what();
             successfull = currentVal | false;
             continue;
         } catch (...) {
             KETO_LOG_ERROR << "[BlockChain::requestBlocks]: [" << hash.getHash(keto::common::StringEncoding::HEX)
-            << "] Block node is orphanded because : unknown" << std::endl;
+            << "] Block node is orphaned because : unknown" << std::endl;
             successfull = currentVal | false;
             continue;
         }
