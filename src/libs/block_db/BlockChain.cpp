@@ -589,9 +589,10 @@ bool BlockChain::processProducerEnding(const keto::block_db::SignedBlockWrapperM
 bool BlockChain::requestBlocks(const std::vector<keto::asn1::HashHelper>& tangledHashes, keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage) {
     //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
 
-
-    //rocksdb::Transaction* blockTransaction = resource->getTransaction(Constants::BLOCKS_INDEX);
+    // If a hash is successful for one of the blocks we assume that we are dealing with orphaned nodes. This logic
+    // promotes a stable broken chain that can be fixed by intervention rather than an unstable perfect chain
     bool successfull = true;
+    bool currentVal = false;
 
 
     for (keto::asn1::HashHelper hash : tangledHashes) {
@@ -601,19 +602,30 @@ bool BlockChain::requestBlocks(const std::vector<keto::asn1::HashHelper>& tangle
             *signedBlockBatchMessage.add_tangle_batches() = getBlockBatch(hash, resource);
             transactionPtr->commit();
         } catch (keto::common::Exception& ex) {
-            KETO_LOG_ERROR << "[BlockChain::requestBlocks]: Failed to request the block sync : " << boost::diagnostic_information(ex,true);
+            KETO_LOG_ERROR << "[BlockChain::requestBlocks]: [" << hash.getHash(keto::common::StringEncoding::HEX)
+            << "] Block node is orphanded because : " << boost::diagnostic_information(ex,true);
             KETO_LOG_ERROR << "[BlockChain::requestBlocks]: cause : " << ex.what();
-            successfull = false;
+            successfull = currentVal | false;
+            continue;
         } catch (boost::exception& ex) {
-            KETO_LOG_ERROR << "[BlockChain::requestBlocks]: Failed to request the block sync : " << boost::diagnostic_information(ex,true);
-            successfull = false;
+            KETO_LOG_ERROR << "[BlockChain::requestBlocks]: [" << hash.getHash(keto::common::StringEncoding::HEX)
+            << "] Block node is orphanded because : " << boost::diagnostic_information(ex,true);
+            successfull = currentVal | false;
+            continue;
         } catch (std::exception& ex) {
-            KETO_LOG_ERROR << "[BlockChain::requestBlocks]: Failed to request the block sync : " << ex.what();
-            successfull = false;
+            KETO_LOG_ERROR << "[BlockChain::requestBlocks]: [" << hash.getHash(keto::common::StringEncoding::HEX)
+            << "] Block node is orphanded because : " << ex.what();
+            successfull = currentVal | false;
+            continue;
         } catch (...) {
-            KETO_LOG_ERROR << "[BlockChain::requestBlocks]: Failed to request the block sync : " << std::endl;
-            successfull = false;
+            KETO_LOG_ERROR << "[BlockChain::requestBlocks]: [" << hash.getHash(keto::common::StringEncoding::HEX)
+            << "] Block node is orphanded because : unknown" << std::endl;
+            successfull = currentVal | false;
+            continue;
         }
+        // if a hash is successful for one of the blocks we assume that we are dealing with orphaned nodes.
+        // This logic promotes a stable broken chain that can be fixed by intervention over an unstable perfect chain
+        successfull = currentVal = true;
     }
 
     return successfull;
