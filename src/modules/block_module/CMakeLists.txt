@@ -28,6 +28,7 @@ add_library( 0020_keto_block_module
             NetworkFeeManager.cpp
             BlockSyncManager.cpp
             ElectionManager.cpp
+            ElectionTangleManager.cpp
 
              ${HEADERS}
            )

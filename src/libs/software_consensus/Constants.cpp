@@ -37,6 +37,7 @@ const std::vector<std::string> Constants::EVENT_ORDER = {
     keto::server_common::Events::CONSENSUS::MEMORY_VAULT_MANAGER};
 
 const std::vector<std::string> Constants::CONSENSUS_SESSION_ORDER = {
+    keto::server_common::Events::CONSENSUS_SESSION::BLOCK,
     keto::server_common::Events::CONSENSUS_SESSION::RPC_SERVER,
     keto::server_common::Events::CONSENSUS_SESSION::RPC_CLIENT,
     keto::server_common::Events::CONSENSUS_SESSION::TEST,
@@ -44,7 +45,6 @@ const std::vector<std::string> Constants::CONSENSUS_SESSION_ORDER = {
     keto::server_common::Events::CONSENSUS_SESSION::ROUTER,
     keto::server_common::Events::CONSENSUS_SESSION::HTTPD,
     keto::server_common::Events::CONSENSUS_SESSION::EVENT,
-    keto::server_common::Events::CONSENSUS_SESSION::BLOCK,
     keto::server_common::Events::CONSENSUS_SESSION::SANDBOX,
     keto::server_common::Events::CONSENSUS_SESSION::VERSION,
     keto::server_common::Events::CONSENSUS_SESSION::KEYSTORE,
@@ -59,7 +59,6 @@ const std::vector<std::string> Constants::CONSENSUS_SESSION_ACCEPTED = {
     keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::ROUTER,
     keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::HTTPD,
     keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::EVENT,
-    keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::BLOCK,
     keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::SANDBOX,
     keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::VERSION,
     keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::KEYSTORE,
@@ -68,7 +67,8 @@ const std::vector<std::string> Constants::CONSENSUS_SESSION_ACCEPTED = {
     keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::RPC_CLIENT,
     keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::RPC_SERVER,
     keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::CONSENSUS_QUERY,
-    keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::MEMORY_VAULT_MANAGER};
+    keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::MEMORY_VAULT_MANAGER,
+    keto::server_common::Events::CONSENSUS_SESSION_ACCEPTED::BLOCK};
 
 const std::vector<std::string> Constants::CONSENSUS_SESSION_CHECK = {
         keto::server_common::Events::CONSENSUS_SESSION_CHECK::TEST,
