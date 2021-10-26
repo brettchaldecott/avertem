@@ -659,6 +659,7 @@ bool BlockChain::processBlockSyncResponse(const keto::proto::SignedBlockBatch& s
     }
     //KETO_LOG_DEBUG << "[BlockChain::processBlockSyncResponse] process the tangle block : " << signedBlockBatch.tangle_batches_size();
     for (int index = 0; index < signedBlockBatch.tangle_batches_size(); index++) {
+        KETO_LOG_INFO << "[BlockChain::processBlockSyncResponse] process the tangle index : " << index;
         if (!processBlockSyncResponse(signedBlockBatch.tangle_batches(index),callback) && complete) {
             complete = false;
         }
@@ -690,14 +691,14 @@ keto::proto::SignedBlockBatch BlockChain::getBlockBatch(keto::asn1::HashHelper h
         keto::rocks_db::SliceHelper blockHashHelper((const std::vector<uint8_t>)blockHash);
         auto status = childTransaction->Get(readOptions, blockHashHelper, &value);
         found = false;
-        KETO_LOG_DEBUG << "[BlockChain::getBlockBatch]" << " get the children for [" << blockHash.getHash(keto::common::StringEncoding::HEX) << "] : " << status.ToString();
+        KETO_LOG_INFO << "[BlockChain::getBlockBatch]" << " get the children for [" << blockHash.getHash(keto::common::StringEncoding::HEX) << "] : " << status.ToString();
         if (rocksdb::Status::OK() == status && rocksdb::Status::NotFound() != status) {
             keto::proto::BlockChildren blockChildren;
             blockChildren.ParseFromString(value);
-            KETO_LOG_DEBUG << "[BlockChain::getBlockBatch]" << " loop through tangles attached to the block [" << blockHash.getHash(keto::common::StringEncoding::HEX) << "]";
+            KETO_LOG_INFO << "[BlockChain::getBlockBatch]" << " loop through tangles attached to the block [" << blockHash.getHash(keto::common::StringEncoding::HEX) << "]";
             for (int index = 1; index < blockChildren.hashes_size(); index++) {
                 keto::asn1::HashHelper childHash = blockChildren.hashes(index);
-                KETO_LOG_DEBUG << "[BlockChain::getBlockBatch]" << " get tangle block hash [" << childHash.getHash(keto::common::StringEncoding::HEX) << "]";
+                KETO_LOG_INFO << "[BlockChain::getBlockBatch]" << " get tangle block hash [" << childHash.getHash(keto::common::StringEncoding::HEX) << "]";
                 *signedBlockBatch.add_tangle_batches() = getBlockBatch(childHash,resource);
             }
             blockHash = keto::asn1::HashHelper(blockChildren.hashes(0));

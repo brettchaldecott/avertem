@@ -745,6 +745,7 @@ keto::block_db::SignedBlockBuilderPtr BlockProducer::generateBlock(const BlockPr
             KETO_LOG_INFO << "The block producer is not initialized";
             return keto::block_db::SignedBlockBuilderPtr();
         }
+        KETO_LOG_INFO << "[BlockProducer::generateBlock] parent hash : " << parentHash.getHash(keto::common::StringEncoding::HEX);
         keto::block_db::BlockBuilderPtr blockBuilderPtr =
                 std::make_shared<keto::block_db::BlockBuilder>(parentHash);
 
