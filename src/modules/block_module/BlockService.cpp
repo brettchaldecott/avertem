@@ -234,8 +234,9 @@ keto::event::Event BlockService::persistServerBlockMessage(const keto::event::Ev
 
 keto::event::Event BlockService::blockMessage(const keto::event::Event& event) {
     // aquire a transaction lock
-    KETO_LOG_INFO << "Block message";
+    KETO_LOG_INFO << "[BlockService::blockMessage] aquire a transaction lock";
     BlockProducer::ProducerScopeLockPtr producerScopeLockPtr =  BlockProducer::getInstance()->aquireTransactionLock();
+    KETO_LOG_INFO << "[BlockService::blockMessage] lock has been aquired";
     keto::proto::MessageWrapper  _messageWrapper =
             keto::server_common::fromEvent<keto::proto::MessageWrapper>(event);
     BlockProducer::State currentState = BlockProducer::getInstance()->getState();
@@ -263,21 +264,25 @@ keto::event::Event BlockService::blockMessage(const keto::event::Event& event) {
         std::lock_guard<std::mutex> guard(getAccountLock(
                     transactionProtoHelperPtr->getActiveAccount()));
 
-        KETO_LOG_INFO << "Process the transaction";
+        KETO_LOG_INFO << "[BlockService::blockMessage]Process the transaction";
         *transactionProtoHelperPtr =
             TransactionProcessor::getInstance()->processTransaction(
             *transactionProtoHelperPtr);
         // dirty store in the block producer
 
-        KETO_LOG_INFO << "Add the transaction to the block";
+        KETO_LOG_INFO << "[BlockService::blockMessage]Add the transaction to the block";
         BlockProducer::getInstance()->addTransaction(
             transactionProtoHelperPtr);
+        KETO_LOG_INFO << "[BlockService::blockMessage]After adding the transaction to the block";
     }
 
     // release the producer scope lock to prevent recursion on this flag
+    KETO_LOG_INFO << "[BlockService::blockMessage] Release lock";
     producerScopeLockPtr.reset();
+    KETO_LOG_INFO << "[BlockService::blockMessage] Released the lock";
 
     // move transaction to next phase and submit to router
+    KETO_LOG_INFO << "[BlockService::blockMessage] Continue transaction processing";
     messageWrapperProtoHelper.setTransaction(transactionProtoHelperPtr);
     decryptedMessageWrapper = messageWrapperProtoHelper.operator keto::proto::MessageWrapper();
 
@@ -294,7 +299,7 @@ keto::event::Event BlockService::blockMessage(const keto::event::Event& event) {
     keto::proto::MessageWrapperResponse response;
     response.set_success(true);
     response.set_result("balanced");
-
+    KETO_LOG_INFO << "[BlockService::blockMessage] Return response";
     return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
 }
 

@@ -136,7 +136,7 @@ keto::proto::ContractMessage TransactionProcessor::getContract(keto::proto::Cont
 keto::proto::SandboxCommandMessage TransactionProcessor::executeContract(const keto::proto::ContractMessage& contract,
         const keto::transaction_common::TransactionProtoHelper& transactionProtoHelper,
         TransactionTracker& transactionTracker) {
-
+    KETO_LOG_INFO << "[TransactionProcessor::executeContract][1] Execute the contract";
     keto::proto::SandboxCommandMessage sandboxCommandMessage;
     sandboxCommandMessage.set_contract(contract.contract());
     sandboxCommandMessage.set_contract_hash(contract.contract_hash());
@@ -151,6 +151,7 @@ keto::proto::SandboxCommandMessage TransactionProcessor::executeContract(const k
             keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SandboxCommandMessage>(
                     keto::server_common::Events::EXECUTE_ACTION_MESSAGE,sandboxCommandMessage)));
     transactionTracker.incrementElapsedTime(sandboxCommandMessage.elapsed_time() - transactionTracker.getElapsedTime());
+    KETO_LOG_INFO << "[TransactionProcessor::executeContract][1] Return the result of the processing";
     return sandboxCommandMessage;
 }
 
@@ -158,7 +159,7 @@ keto::proto::SandboxCommandMessage TransactionProcessor::executeContract(const k
         const keto::transaction_common::TransactionProtoHelper& transactionProtoHelper,
         const keto::asn1::AnyHelper& model,
         TransactionTracker& transactionTracker) {
-
+    KETO_LOG_INFO << "[TransactionProcessor::executeContract][2] Execute the contract with transaction tracking";
     keto::proto::SandboxCommandMessage sandboxCommandMessage;
     sandboxCommandMessage.set_contract(contract.contract());
     sandboxCommandMessage.set_contract_hash(contract.contract_hash());
@@ -175,6 +176,7 @@ keto::proto::SandboxCommandMessage TransactionProcessor::executeContract(const k
                     keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SandboxCommandMessage>(
                             keto::server_common::Events::EXECUTE_ACTION_MESSAGE,sandboxCommandMessage)));
     transactionTracker.incrementElapsedTime(sandboxCommandMessage.elapsed_time() - transactionTracker.getElapsedTime());
+    KETO_LOG_INFO << "[TransactionProcessor::executeContract][2] After executing the contract with transaction tracking";
     return sandboxCommandMessage;
 }
 
@@ -183,16 +185,32 @@ keto::transaction_common::TransactionProtoHelper TransactionProcessor::processTr
         bool master, TransactionTracker& transactionTracker) {
 
 
-
     // get the transaction from the account store
     //KETO_LOG_DEBUG << "The accout";
     keto::asn1::HashHelper currentAccount = transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getCurrentAccount();
     //KETO_LOG_DEBUG << "The status : " << transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getStatus();
     if ((transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getStatus() == Status_init) ||
         (transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getStatus() == Status_debit)) {
-        transactionProtoHelper.setTransaction(executeContract(
-                getContractByName(currentAccount, keto::server_common::Constants::CONTRACTS::BASE_ACCOUNT_CONTRACT),
-                transactionProtoHelper,transactionTracker).transaction());
+        try {
+            transactionProtoHelper.setTransaction(executeContract(
+                    getContractByName(currentAccount, keto::server_common::Constants::CONTRACTS::BASE_ACCOUNT_CONTRACT),
+                    transactionProtoHelper,transactionTracker).transaction());
+        } catch (keto::common::Exception &ex) {
+            KETO_LOG_ERROR << "[TransactionProcessor::processTransaction] Failed to process the contract ["
+            << keto::server_common::Constants::CONTRACTS::BASE_ACCOUNT_CONTRACT << "]: "
+            << boost::diagnostic_information(ex, true) << std::endl
+            << boost::diagnostic_information_what(ex, true);
+        } catch (boost::exception &ex) {
+            KETO_LOG_ERROR << "[TransactionProcessor::processTransaction] Failed to process the contract ["
+            << keto::server_common::Constants::CONTRACTS::BASE_ACCOUNT_CONTRACT << "]: "
+            << boost::diagnostic_information_what(ex, true);
+        } catch (std::exception &ex) {
+            KETO_LOG_ERROR << "[TransactionProcessor::processTransaction] Failed to process the contract ["
+            << keto::server_common::Constants::CONTRACTS::BASE_ACCOUNT_CONTRACT << "]: " << ex.what();
+        } catch (...) {
+            KETO_LOG_ERROR << "[TransactionProcessor::processTransaction] Failed to process the contract ["
+            << keto::server_common::Constants::CONTRACTS::BASE_ACCOUNT_CONTRACT << "]: unknown";
+        }
     }
 
 
@@ -246,58 +264,112 @@ keto::transaction_common::TransactionProtoHelper TransactionProcessor::processTr
                             << action->getContractName() << "]";
             }
         }
-
+        KETO_LOG_INFO << "[TransactionProcessor::processTransaction] Finished processing the transaction actions";
     }
 
     //KETO_LOG_DEBUG << "Nested transactions";
 
     for (keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr :
             transactionProtoHelper.getTransactionMessageHelper()->getNestedTransactions()) {
+        KETO_LOG_INFO << "[TransactionProcessor::processTransaction] Nested transaction processing";
         //KETO_LOG_DEBUG << "Loop through the nested transactions";
-        transactionMessageHelperPtr->getTransactionWrapper()->setStatus(
-                transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getStatus());
-        keto::transaction_common::TransactionProtoHelper nestedTransaction(transactionMessageHelperPtr);
-        //KETO_LOG_DEBUG << "Current the status : " << nestedTransaction.getTransactionMessageHelper()->getTransactionWrapper()->getStatus();
-        nestedTransaction = processTransaction(nestedTransaction,false,transactionTracker);
-        //KETO_LOG_DEBUG << "Copy the transaction";
-        transactionMessageHelperPtr->setTransactionWrapper(
-                nestedTransaction.getTransactionMessageHelper()->getTransactionWrapper());
+        try {
+            transactionMessageHelperPtr->getTransactionWrapper()->setStatus(
+                    transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getStatus());
+            keto::transaction_common::TransactionProtoHelper nestedTransaction(transactionMessageHelperPtr);
+            //KETO_LOG_DEBUG << "Current the status : " << nestedTransaction.getTransactionMessageHelper()->getTransactionWrapper()->getStatus();
+            nestedTransaction = processTransaction(nestedTransaction,false,transactionTracker);
+            //KETO_LOG_DEBUG << "Copy the transaction";
+            transactionMessageHelperPtr->setTransactionWrapper(
+                    nestedTransaction.getTransactionMessageHelper()->getTransactionWrapper());
 
-        //KETO_LOG_DEBUG << "Copy the any helper";
-        keto::asn1::AnyHelper anyHelper(*transactionMessageHelperPtr);
-        //KETO_LOG_DEBUG << "The process the transaction";
-        transactionProtoHelper.setTransaction(executeContract(getContractByName(currentAccount,
-                keto::server_common::Constants::CONTRACTS::NESTED_TRANSACTION_CONTRACT),
-                        transactionProtoHelper,anyHelper,transactionTracker).transaction());
-        //KETO_LOG_DEBUG << "After the transaction";
-
+            //KETO_LOG_DEBUG << "Copy the any helper";
+            keto::asn1::AnyHelper anyHelper(*transactionMessageHelperPtr);
+            //KETO_LOG_DEBUG << "The process the transaction";
+            transactionProtoHelper.setTransaction(executeContract(getContractByName(currentAccount,
+                                                                                    keto::server_common::Constants::CONTRACTS::NESTED_TRANSACTION_CONTRACT),
+                                                                  transactionProtoHelper,anyHelper,transactionTracker).transaction());
+            //KETO_LOG_DEBUG << "After the transaction";
+        } catch (keto::common::Exception &ex) {
+            KETO_LOG_ERROR << "[TransactionProcessor::processTransaction] Failed to process the contract ["
+            << keto::server_common::Constants::CONTRACTS::NESTED_TRANSACTION_CONTRACT << "]: "
+            << boost::diagnostic_information(ex, true) << std::endl
+            << boost::diagnostic_information_what(ex, true);
+        } catch (boost::exception &ex) {
+            KETO_LOG_ERROR << "[TransactionProcessor::processTransaction] Failed to process the contract ["
+            << keto::server_common::Constants::CONTRACTS::NESTED_TRANSACTION_CONTRACT << "]: "
+            << boost::diagnostic_information_what(ex, true);
+        } catch (std::exception &ex) {
+            KETO_LOG_ERROR << "[TransactionProcessor::processTransaction] Failed to process the contract ["
+            << keto::server_common::Constants::CONTRACTS::NESTED_TRANSACTION_CONTRACT << "]: " << ex.what();
+        } catch (...) {
+            KETO_LOG_ERROR << "[TransactionProcessor::processTransaction] Failed to process the contract ["
+            << keto::server_common::Constants::CONTRACTS::NESTED_TRANSACTION_CONTRACT << "]: unknown";
+        }
     }
 
     if (master) {
+        KETO_LOG_INFO << "[TransactionProcessor::processTransaction] fee processing on master";
         // set the elapsed time on the transaction using an extended process as the original code assumed that the
         // transaction message would be returned as a reference and that would remain updatable but that is not the case
-        keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr =
-                transactionProtoHelper.getTransactionMessageHelper();
-        transactionMessageHelperPtr->setElapsedTime(
-                transactionProtoHelper.getTransactionMessageHelper()->getElapsedTime() +
-                round(transactionTracker.getElapsedTime() / keto::environment::Units::TIME::MILLISECONDS));
-        transactionProtoHelper.setTransaction(transactionMessageHelperPtr);
+        try {
+            keto::transaction_common::TransactionMessageHelperPtr transactionMessageHelperPtr =
+                    transactionProtoHelper.getTransactionMessageHelper();
+            transactionMessageHelperPtr->setElapsedTime(
+                    transactionProtoHelper.getTransactionMessageHelper()->getElapsedTime() +
+                    round(transactionTracker.getElapsedTime() / keto::environment::Units::TIME::MILLISECONDS));
+            transactionProtoHelper.setTransaction(transactionMessageHelperPtr);
 
-        // set the transaction
-        transactionProtoHelper.setTransaction(executeContract(
-                getContractByName(currentAccount,
-                                  keto::server_common::Constants::CONTRACTS::FEE_PAYMENT_CONTRACT),
-                transactionProtoHelper,transactionTracker).transaction());
-
+            // set the transaction
+            transactionProtoHelper.setTransaction(executeContract(
+                    getContractByName(currentAccount,
+                                      keto::server_common::Constants::CONTRACTS::FEE_PAYMENT_CONTRACT),
+                                      transactionProtoHelper,transactionTracker).transaction());
+            KETO_LOG_INFO << "[TransactionProcessor::processTransaction] Fee processed on transaction";
+        } catch (keto::common::Exception &ex) {
+            KETO_LOG_ERROR << "[TransactionProcessor::processTransaction] Failed to process the contract ["
+            << keto::server_common::Constants::CONTRACTS::FEE_PAYMENT_CONTRACT << "]: "
+            << boost::diagnostic_information(ex, true) << std::endl
+            << boost::diagnostic_information_what(ex, true);
+        } catch (boost::exception &ex) {
+            KETO_LOG_ERROR << "[TransactionProcessor::processTransaction] Failed to process the contract ["
+            << keto::server_common::Constants::CONTRACTS::FEE_PAYMENT_CONTRACT << "]: "
+            << boost::diagnostic_information_what(ex, true);
+        } catch (std::exception &ex) {
+            KETO_LOG_ERROR << "[TransactionProcessor::processTransaction] Failed to process the contract ["
+            << keto::server_common::Constants::CONTRACTS::FEE_PAYMENT_CONTRACT << "]: " << ex.what();
+        } catch (...) {
+            KETO_LOG_ERROR << "[TransactionProcessor::processTransaction] Failed to process the contract ["
+            << keto::server_common::Constants::CONTRACTS::FEE_PAYMENT_CONTRACT << "]: unknown";
+        }
     }
 
     if (transactionProtoHelper.getTransactionMessageHelper()->getTransactionWrapper()->getStatus() == Status_credit) {
-        transactionProtoHelper.setTransaction(executeContract(
-                getContractByName(currentAccount, keto::server_common::Constants::CONTRACTS::BASE_ACCOUNT_CONTRACT),
-                transactionProtoHelper,transactionTracker).transaction());
+        try {
+            KETO_LOG_INFO << "[TransactionProcessor::processTransaction] credit the account";
+            transactionProtoHelper.setTransaction(executeContract(
+                    getContractByName(currentAccount, keto::server_common::Constants::CONTRACTS::BASE_ACCOUNT_CONTRACT),
+                    transactionProtoHelper,transactionTracker).transaction());
+            KETO_LOG_INFO << "[TransactionProcessor::processTransaction] credit processed on transaction";
+        } catch (keto::common::Exception &ex) {
+            KETO_LOG_ERROR << "[TransactionProcessor::processTransaction] Failed to process the contract ["
+            << keto::server_common::Constants::CONTRACTS::FEE_PAYMENT_CONTRACT << "]: "
+            << boost::diagnostic_information(ex, true) << std::endl
+            << boost::diagnostic_information_what(ex, true);
+        } catch (boost::exception &ex) {
+            KETO_LOG_ERROR << "[TransactionProcessor::processTransaction] Failed to process the contract ["
+            << keto::server_common::Constants::CONTRACTS::FEE_PAYMENT_CONTRACT << "]: "
+            << boost::diagnostic_information_what(ex, true);
+        } catch (std::exception &ex) {
+            KETO_LOG_ERROR << "[TransactionProcessor::processTransaction] Failed to process the contract ["
+            << keto::server_common::Constants::CONTRACTS::FEE_PAYMENT_CONTRACT << "]: " << ex.what();
+        } catch (...) {
+            KETO_LOG_ERROR << "[TransactionProcessor::processTransaction] Failed to process the contract ["
+            << keto::server_common::Constants::CONTRACTS::FEE_PAYMENT_CONTRACT << "]: unknown";
+        }
     }
 
-
+    KETO_LOG_INFO << "[TransactionProcessor::processTransaction] Transaction complete return updated transaction";
     return transactionProtoHelper;
 }
 

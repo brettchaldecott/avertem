@@ -114,6 +114,10 @@ keto::asn1::HashHelper BlockProducer::TangleFutureStateManager::getLastBlockHash
         keto::block_db::BlockChainTangleMetaPtr blockChainTangleMetaPtr =
                 keto::block_db::BlockChainStore::getInstance()->getTangleInfo(tangleHash);
         this->lastBlockHash = blockChainTangleMetaPtr->getLastBlockHash();
+    } else {
+        KETO_LOG_INFO << "[BlockProducer::TangleFutureStateManager::getLastBlockHash] Cannot find tangle hash for ["
+            << this->tangleHash.getHash(keto::common::StringEncoding::HEX) <<  "] falling back to : "
+            << this->lastBlockHash.getHash(keto::common::StringEncoding::HEX);
     }
     return this->lastBlockHash;
 }
@@ -276,25 +280,26 @@ BlockProducer::ProducerLock::~ProducerLock() {
 
 BlockProducer::ProducerScopeLockPtr BlockProducer::ProducerLock::aquireBlockLock() {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    // we can safely assume the block lock will work
     this->blockLock++;
-    while(this->transactionLock){
-        this->stateCondition.wait(uniqueLock);
-    }
+    //while(this->transactionLock){
+    //    this->stateCondition.wait(uniqueLock);
+    //}
     return BlockProducer::ProducerScopeLockPtr(new BlockProducer::ProducerScopeLock(this,false,true));
 }
 
 BlockProducer::ProducerScopeLockPtr BlockProducer::ProducerLock::aquireTransactionLock() {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
-    while(this->blockLock) {
-        this->stateCondition.wait(uniqueLock);
-    }
+    //while(this->blockLock) {
+    //    this->stateCondition.wait(uniqueLock);
+    //}
     this->transactionLock++;
     return BlockProducer::ProducerScopeLockPtr(new BlockProducer::ProducerScopeLock(this,true,false));
 }
 
 void BlockProducer::ProducerLock::release(bool _transactionLock, bool _blockLock) {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
-    KETO_LOG_DEBUG << "[BlockProducer::ProducerLock::release]Release the lock [" << this->transactionLock << "][" <<this->blockLock << "]";
+    KETO_LOG_INFO << "[BlockProducer::ProducerLock::release]Release the lock [" << this->transactionLock << "][" <<this->blockLock << "]";
     if (_transactionLock) {
         this->transactionLock--;
     } else if (_blockLock) {
@@ -302,16 +307,17 @@ void BlockProducer::ProducerLock::release(bool _transactionLock, bool _blockLock
     }
     // use notify all this is cumbersome but a lot more effective than having aquires individually release until a lock is
     // aquired
+    KETO_LOG_INFO << "[BlockProducer::ProducerLock::release] release the lock [" << this->transactionLock << "][" <<this->blockLock << "]";
     this->stateCondition.notify_all();
 }
 
 BlockProducer::ProducerScopeLock::ProducerScopeLock(BlockProducer::ProducerLock* reference, bool transactionLock, bool blockLock) :
     reference(reference),transactionLock(transactionLock), blockLock(blockLock) {
-    KETO_LOG_DEBUG << "[BlockProducer::ProducerScopeLock::ProducerScopeLock]gain the lock the lock [" << this->transactionLock << "][" <<this->blockLock << "]";
+    KETO_LOG_INFO << "[BlockProducer::ProducerScopeLock::ProducerScopeLock]gain the lock the lock [" << this->transactionLock << "][" <<this->blockLock << "]";
 }
 
 BlockProducer::ProducerScopeLock::~ProducerScopeLock() {
-    KETO_LOG_DEBUG << "[BlockProducer::ProducerScopeLock::~ProducerScopeLock]Release the lock [" << this->transactionLock << "][" <<this->blockLock << "]";
+    KETO_LOG_INFO << "[BlockProducer::ProducerScopeLock::~ProducerScopeLock]Release the lock [" << this->transactionLock << "][" <<this->blockLock << "]";
     reference->release(this->transactionLock,this->blockLock);
 }
 
@@ -666,7 +672,9 @@ void BlockProducer::processTransactions() {
     if (keto::software_consensus::ConsensusStateManager::getInstance()->getState() != keto::software_consensus::ConsensusStateManager::State::ACCEPTED) {
         return;
     }
+    KETO_LOG_INFO << "[BlockProducer::processTransactions] aquire a block lock";
     BlockProducer::ProducerScopeLockPtr producerScopeLockPtr = this->producerLockPtr->aquireBlockLock();
+    KETO_LOG_INFO << "[BlockProducer::processTransactions] aquired a block lock";
 
     // clear the account cache
     keto::proto::ClearDirtyCache clearDirtyCache;
@@ -674,7 +682,7 @@ void BlockProducer::processTransactions() {
             keto::server_common::toEvent<keto::proto::ClearDirtyCache>(
                     keto::server_common::Events::CLEAR_DIRTY_CACHE,clearDirtyCache));
 
-
+    KETO_LOG_INFO << "[BlockProducer::processTransactions] Build the blocker wrapper";
     keto::block_db::SignedBlockWrapperMessageProtoHelper signedBlockWrapperMessageProtoHelper(
             keto::server_common::ServerInfo::getInstance()->getAccountHash());
     signedBlockWrapperMessageProtoHelper.setTangles(keto::block_db::BlockChainStore::getInstance()->getActiveTangles());
@@ -686,9 +694,15 @@ void BlockProducer::processTransactions() {
         keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
         try {
             std::deque<BlockProducer::PendingTransactionsTanglePtr> transactions = this->pendingTransactionManagerPtr->takeTransactions();
+            KETO_LOG_INFO
+            << "[BlockProducer::processTransactions] Process the active transaction tangles : " << transactions.size();
+            int count = 0;
             for (BlockProducer::PendingTransactionsTanglePtr pendingTransactionTanglePtr : transactions) {
-                keto::block_db::BlockChainStore::getInstance()->setCurrentTangle(
-                        pendingTransactionTanglePtr->getTangle()->getTangleHash());
+                count++;
+                keto::asn1::HashHelper tangleHash = pendingTransactionTanglePtr->getTangle()->getTangleHash();
+                KETO_LOG_INFO << "[BlockProducer::processTransactions] Generate block for tangle [" <<  count
+                    << "][" << tangleHash.getHash(keto::common::StringEncoding::HEX) << "]";
+                keto::block_db::BlockChainStore::getInstance()->setCurrentTangle(tangleHash);
                 keto::block_db::SignedBlockBuilderPtr signedBlockBuilderPtr = generateBlock(
                         pendingTransactionTanglePtr);
                 if (signedBlockBuilderPtr) {

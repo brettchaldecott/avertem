@@ -38,6 +38,8 @@ public:
         static const char* PROCESS_EVENT;
         static const char* TRIGGER_EVENT;
         static const char* RETURN_RESULT;
+        static const std::string EXECUTE_CONFIRM;
+        static const std::string MESSAGE_CONFIRM;
     };
 
     ParentForkGateway(const PipePtr& inPipe, const PipePtr& outPipe);
@@ -51,6 +53,9 @@ public:
     static keto::event::Event processEvent(const keto::event::Event& event);
     static void triggerEvent(const keto::event::Event& event);
     static void returnResult(const keto::event::Event& event);
+    static void ping();
+    static std::shared_ptr<std::string> getCommand();
+    static keto::event::Event getRequest();
 
 private:
     boost::process::ipstream pin;
@@ -62,8 +67,13 @@ private:
     keto::event::Event _processEvent(const keto::event::Event& event);
     void _triggerEvent(const keto::event::Event& event);
     void _returnResult(const keto::event::Event& event);
+    void _ping();
+    std::shared_ptr<std::string> _getCommand();
+    keto::event::Event _getRequest();
 
     keto::wavm_common::ForkMessageWrapperHelper read();
+    std::shared_ptr<std::string> readText();
+    void write(const std::string& value);
     void write(const keto::wavm_common::ForkMessageWrapperHelper& forkMessageWrapperHelper);
 };
 

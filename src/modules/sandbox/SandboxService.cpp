@@ -21,14 +21,11 @@
 
 #include "Sandbox.pb.h"
 
-#include "keto/server_common/EventUtils.hpp"
 #include "keto/server_common/Events.hpp"
-#include "keto/server_common/EventServiceHelpers.hpp"
 
-#include "keto/common/Log.hpp"
-#include "keto/common/Exception.hpp"
 
 #include "keto/sandbox/SandboxService.hpp"
+#include "keto/sandbox/SandboxForkManager.hpp"
 #include "keto/wavm_common/WavmEngineManager.hpp"
 #include "keto/wavm_common/WavmSessionManager.hpp"
 #include "keto/wavm_common/WavmSessionScope.hpp"
@@ -69,11 +66,11 @@ SandboxServicePtr SandboxService::getInstance() {
 }
 
 keto::event::Event SandboxService::executeActionMessage(const keto::event::Event& event) {
-    return SandboxFork(event).executeActionMessage();
+    return SandboxForkManager::getInstance()->getFork()->executeActionMessage(event);
 }
 
 keto::event::Event SandboxService::executeHttpActionMessage(const keto::event::Event& event) {
-    return SandboxFork(event).executeHttpActionMessage();
+    return SandboxForkManager::getInstance()->getFork()->executeHttpActionMessage(event);
 }
 
 }

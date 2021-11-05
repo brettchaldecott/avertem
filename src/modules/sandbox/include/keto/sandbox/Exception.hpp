@@ -29,6 +29,10 @@ KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, ChildRequestException , "Pa
 KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, ChildExitedUnexpectedly , "Child exited unexpectedly.");
 KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, CloneFailedException , "Clone failed exception.");
 KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, ChildStackCreationFailedException , "Child stack creation failed exception.");
+KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, ForkException , "Failed to fork.");
+KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, ActionExecutionException , "Failed to execute the action.");
+KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, HttpExecutionException , "Failed to execute the http request.");
+KETO_DECLARE_DERIVED_EXCEPTION (WavmCommonException, MessageResponseException , "Failed to send the request message.");
 
 
 }

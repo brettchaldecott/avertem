@@ -23,6 +23,8 @@ const char* ParentForkGateway::REQUEST::RAISE_EXCEPTION = "EXCEPTION";
 const char* ParentForkGateway::REQUEST::PROCESS_EVENT   = "PROCESS";
 const char* ParentForkGateway::REQUEST::TRIGGER_EVENT   = "TRIGGER";
 const char* ParentForkGateway::REQUEST::RETURN_RESULT   = "RETURN";
+const std::string ParentForkGateway::REQUEST::EXECUTE_CONFIRM("execute_confirm");
+const std::string ParentForkGateway::REQUEST::MESSAGE_CONFIRM("message_confirm");
 
 ParentForkGateway::ParentForkGateway(const PipePtr& inPipe, const PipePtr& outPipe) : pin(*inPipe), pout(*outPipe) {
 
@@ -53,6 +55,18 @@ void ParentForkGateway::triggerEvent(const keto::event::Event& event) {
 
 void ParentForkGateway::returnResult(const keto::event::Event& event) {
     ParentForkGateway::getInstance()->_returnResult(event);
+}
+
+void ParentForkGateway::ping() {
+    ParentForkGateway::getInstance()->_ping();
+}
+
+std::shared_ptr<std::string> ParentForkGateway::getCommand() {
+    return ParentForkGateway::getInstance()->_getCommand();
+}
+
+keto::event::Event ParentForkGateway::getRequest() {
+    return ParentForkGateway::getInstance()->_getRequest();
 }
 
 ParentForkGatewayPtr ParentForkGateway::getInstance() {
@@ -111,6 +125,34 @@ void ParentForkGateway::_returnResult(const keto::event::Event& event) {
     // no need to parse the return result we just process it to make sure the parent has parsed it successfully
 }
 
+void ParentForkGateway::_ping() {
+    KETO_LOG_INFO << "[ParentForkGateway::_ping] Ping";
+    std::shared_ptr<std::string> ping = readText();
+    if (!ping) {
+        KETO_LOG_INFO << "[ParentForkGateway::_ping] ping was not read in";
+    } else {
+        KETO_LOG_INFO << "[ParentForkGateway::_ping] ping response read in : "<< *ping;
+        write(std::string("pong"));
+    }
+}
+
+std::shared_ptr<std::string> ParentForkGateway::_getCommand() {
+    std::shared_ptr<std::string> command = readText();
+    if (!command) {
+        KETO_LOG_INFO << "[ParentForkGateway::_getCommand] ping was not read in";
+    } else {
+        KETO_LOG_INFO << "[ParentForkGateway::_getCommand] ping response read in : "<< *command;
+        write(ParentForkGateway::REQUEST::EXECUTE_CONFIRM);
+    }
+    return command;
+}
+
+keto::event::Event ParentForkGateway::_getRequest() {
+    ForkMessageWrapperHelper resultMessage = read();
+    write(ParentForkGateway::REQUEST::MESSAGE_CONFIRM);
+    return keto::event::Event(resultMessage.getMessage());
+}
+
 keto::wavm_common::ForkMessageWrapperHelper ParentForkGateway::read() {
     size_t size;
     pin >> size;
@@ -139,8 +181,22 @@ keto::wavm_common::ForkMessageWrapperHelper ParentForkGateway::read() {
     }
 }
 
+std::shared_ptr<std::string> ParentForkGateway::readText() {
+    size_t size;
+    pin >> size;
+    std::vector<uint8_t> message(size);
+    pin.read((char *) message.data(), size);
+    return std::make_shared<std::string>((char*)message.data(),message.size());
+}
+
 void ParentForkGateway::write(const keto::wavm_common::ForkMessageWrapperHelper& forkMessageWrapperHelper) {
     std::vector<uint8_t> message = forkMessageWrapperHelper;
+    pout << (size_t)message.size();
+    pout.write((char*)message.data(),message.size());
+    pout.flush();
+}
+
+void ParentForkGateway::write(const std::string& message) {
     pout << (size_t)message.size();
     pout.write((char*)message.data(),message.size());
     pout.flush();

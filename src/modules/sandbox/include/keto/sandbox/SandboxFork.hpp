@@ -21,11 +21,20 @@ namespace sandbox {
 
 class SandboxFork;
 typedef std::shared_ptr<SandboxFork> SandboxForkPtr;
-    typedef std::shared_ptr<boost::process::ipstream> IpStreamPipePtr;
-    typedef std::shared_ptr<boost::process::opstream> OpStreamPipePtr;
+typedef std::shared_ptr<boost::process::ipstream> IpStreamPipePtr;
+typedef std::shared_ptr<boost::process::opstream> OpStreamPipePtr;
 
 class SandboxFork {
 public:
+    static const std::string PING;
+    static const std::string PONG;
+    static const std::string TERMINATE;
+    static const std::string EXECUTE_ACTION;
+    static const std::string EXECUTE_ACTION_MESSAGE;
+    static const std::string EXECUTE_HTTP;
+    static const std::string EXECUTE_HTTP_MESSAGE;
+
+
     static std::string getHeaderVersion() {
         return OBFUSCATED("$Id$");
     };
@@ -40,10 +49,26 @@ public:
         Child(const Child& orig) = delete;
         virtual ~Child();
 
+        void execute();
+    private:
         keto::event::Event executeActionMessage(const keto::event::Event& event);
         keto::event::Event executeHttpActionMessage(const keto::event::Event& event);
-    private:
     };
+
+    class ParentStream {
+    public:
+        ParentStream(keto::wavm_common::PipePtr inPipe, keto::wavm_common::PipePtr outPipe);
+        ParentStream(const ParentStream& orig) = delete;
+        virtual ~ParentStream();
+
+        boost::process::ipstream& getPin();
+        boost::process::opstream& getPout();
+    private:
+        boost::process::ipstream pin;
+        boost::process::opstream pout;
+    };
+    typedef std::shared_ptr<ParentStream> ParentStreamPtr;
+
 
     class Parent {
     public:
@@ -54,24 +79,35 @@ public:
 
         keto::event::Event executeActionMessage(const keto::event::Event& event);
         keto::event::Event executeHttpActionMessage(const keto::event::Event& event);
+        bool terminate();
     private:
         keto::wavm_common::PipePtr inPipe;
         keto::wavm_common::PipePtr outPipe;
         std::shared_ptr<boost::process::child> childPtr;
+        ParentStreamPtr parentStream;
 
-        keto::event::Event execute();
+        bool validateFork(boost::process::ipstream& pin, boost::process::opstream& pout);
+        keto::event::Event execute(boost::process::ipstream& pin, boost::process::opstream& pout);
         void write(boost::process::opstream& pout, const keto::wavm_common::ForkMessageWrapperHelper& forkMessageWrapperHelper);
+        void write(boost::process::opstream& pout, const std::string message);
         keto::wavm_common::ForkMessageWrapperHelper read(boost::process::ipstream& pin);
+        std::shared_ptr<std::string> readText(boost::process::ipstream& pin);
     };
 
-    SandboxFork(const keto::event::Event& event);
+
+    SandboxFork();
     SandboxFork(const SandboxFork& orig) = delete;
     virtual ~SandboxFork();
 
-    keto::event::Event executeActionMessage();
-    keto::event::Event executeHttpActionMessage();
+    int getUsageCount();
+    int incrementUsageCount();
+    keto::event::Event executeActionMessage(const keto::event::Event& event);
+    keto::event::Event executeHttpActionMessage(const keto::event::Event& event);
+    bool terminate();
 private:
-    keto::event::Event event;
+    std::mutex classMutex;
+    int usageCount;
+    Parent parent;
 
 
 };

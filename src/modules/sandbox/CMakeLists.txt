@@ -21,6 +21,7 @@ add_library( 0020_keto_sandbox_module
             SandboxService.cpp
             ConsensusService.cpp
             SandboxFork.cpp
+            SandboxForkManager.cpp
 
              ${HEADERS}
            )

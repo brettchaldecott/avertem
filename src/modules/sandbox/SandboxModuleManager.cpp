@@ -25,6 +25,7 @@
 #include "keto/sandbox/SandboxService.hpp"
 #include "keto/sandbox/ConsensusService.hpp"
 #include "keto/sandbox/EventRegistry.hpp"
+#include "keto/sandbox/SandboxForkManager.hpp"
 #include "keto/server_common/ServiceRegistryHelper.hpp"
 #include "keto/server_common/Constants.hpp"
 
@@ -63,10 +64,12 @@ void SandboxModuleManager::start() {
     keto::wavm_common::WavmEngineManager::init();
     SandboxService::init();
     EventRegistry::registerEventHandlers();
+    SandboxForkManager::init();
     KETO_LOG_INFO << "[SandboxModuleManager] Started the SandboxModuleManager";
 }
 
 void SandboxModuleManager::stop() {
+    SandboxForkManager::fin();
     EventRegistry::deregisterEventHandlers();
     ConsensusService::fin();
     SandboxService::fin();

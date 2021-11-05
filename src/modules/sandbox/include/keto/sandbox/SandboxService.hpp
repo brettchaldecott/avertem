@@ -16,6 +16,7 @@
 
 #include <string>
 #include <memory>
+#include <mutex>
 
 #include "keto/event/Event.hpp"
 #include "keto/common/MetaInfo.hpp"
@@ -45,6 +46,7 @@ public:
     keto::event::Event executeActionMessage(const keto::event::Event& event);
     keto::event::Event executeHttpActionMessage(const keto::event::Event& event);
 private:
+    std::mutex classMutex;
 };
 
 

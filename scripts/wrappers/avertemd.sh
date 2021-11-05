@@ -11,6 +11,7 @@ echo '/tmp/core.%h.%e.%t' > /proc/sys/kernel/core_pattern
 
 # up the ulimits
 ulimit -c unlimited
+ulimit -n unlimited
 ulimit -a
 
 # initialize the environment
