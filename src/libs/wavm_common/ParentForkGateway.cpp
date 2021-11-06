@@ -126,12 +126,12 @@ void ParentForkGateway::_returnResult(const keto::event::Event& event) {
 }
 
 void ParentForkGateway::_ping() {
-    KETO_LOG_INFO << "[ParentForkGateway::_ping] Ping";
+    //KETO_LOG_INFO << "[ParentForkGateway::_ping] Ping";
     std::shared_ptr<std::string> ping = readText();
     if (!ping) {
-        KETO_LOG_INFO << "[ParentForkGateway::_ping] ping was not read in";
+        //KETO_LOG_INFO << "[ParentForkGateway::_ping] ping was not read in";
     } else {
-        KETO_LOG_INFO << "[ParentForkGateway::_ping] ping response read in : "<< *ping;
+        //KETO_LOG_INFO << "[ParentForkGateway::_ping] ping response read in : "<< *ping;
         write(std::string("pong"));
     }
 }
@@ -139,9 +139,9 @@ void ParentForkGateway::_ping() {
 std::shared_ptr<std::string> ParentForkGateway::_getCommand() {
     std::shared_ptr<std::string> command = readText();
     if (!command) {
-        KETO_LOG_INFO << "[ParentForkGateway::_getCommand] ping was not read in";
+        //KETO_LOG_INFO << "[ParentForkGateway::_getCommand] ping was not read in";
     } else {
-        KETO_LOG_INFO << "[ParentForkGateway::_getCommand] ping response read in : "<< *command;
+        //KETO_LOG_INFO << "[ParentForkGateway::_getCommand] ping response read in : "<< *command;
         write(ParentForkGateway::REQUEST::EXECUTE_CONFIRM);
     }
     return command;

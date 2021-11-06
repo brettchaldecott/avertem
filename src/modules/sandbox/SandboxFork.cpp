@@ -86,21 +86,21 @@ void SandboxFork::Child::execute() {
 
 keto::event::Event SandboxFork::Child::executeActionMessage(const keto::event::Event& event) {
     try {
-        KETO_LOG_INFO << "[executeActionMessage] setup engine";
+        //KETO_LOG_INFO << "[executeActionMessage] setup engine";
         keto::proto::SandboxCommandMessage sandboxCommandMessage =
                 keto::server_common::fromEvent<keto::proto::SandboxCommandMessage>(event);
         keto::wavm_common::WavmSessionScope wavmSessionScope(sandboxCommandMessage);
         std::string buffer = sandboxCommandMessage.contract();
         std::string code = keto::server_common::VectorUtils().copyVectorToString(Botan::hex_decode(
                 buffer,true));
-        KETO_LOG_INFO << "[executeActionMessage] Execute the engine";
+        //KETO_LOG_INFO << "[executeActionMessage] Execute the engine";
         keto::wavm_common::WavmEngineManager::getInstance()->getEngine(code,sandboxCommandMessage.contract_name())->execute();
-        KETO_LOG_INFO << "[executeActionMessage] Get the sandbox message";
+        //KETO_LOG_INFO << "[executeActionMessage] Get the sandbox message";
         sandboxCommandMessage = std::dynamic_pointer_cast<keto::wavm_common::WavmSessionTransaction>(wavmSessionScope.getSession())->getSandboxCommandMessage();
-        KETO_LOG_INFO << "[executeActionMessage] return result";
+        //KETO_LOG_INFO << "[executeActionMessage] return result";
         keto::wavm_common::ParentForkGateway::returnResult(
                 keto::server_common::toEvent<keto::proto::SandboxCommandMessage>(sandboxCommandMessage));
-        KETO_LOG_INFO << "[executeActionMessage] after execution";
+        //KETO_LOG_INFO << "[executeActionMessage] after execution";
     } catch (keto::common::Exception& ex) {
         std::stringstream ss;
         ss << "[SandboxFork::Child::executeActionMessage]Failed to process the contract : " << ex.what() << std::endl;
@@ -128,16 +128,16 @@ keto::event::Event SandboxFork::Child::executeActionMessage(const keto::event::E
 
 keto::event::Event SandboxFork::Child::executeHttpActionMessage(const keto::event::Event& event) {
     try {
-        KETO_LOG_INFO << "[executeActionMessage] Retrieve the message";
+        //KETO_LOG_INFO << "[executeActionMessage] Retrieve the message";
         keto::proto::HttpRequestMessage httpRequestMessage =
                 keto::server_common::fromEvent<keto::proto::HttpRequestMessage>(event);
         keto::wavm_common::WavmSessionScope wavmSessionScope(httpRequestMessage);
         std::string buffer = httpRequestMessage.contract();
         std::string code = keto::server_common::VectorUtils().copyVectorToString(Botan::hex_decode(
                 buffer,true));
-        KETO_LOG_INFO << "[executeActionMessage] Execute the engine";
+        //KETO_LOG_INFO << "[executeActionMessage] Execute the engine";
         keto::wavm_common::WavmEngineManager::getInstance()->getEngine(code,httpRequestMessage.contract_name())->executeHttp();
-        KETO_LOG_INFO << "[executeActionMessage] Get the resource";
+        //KETO_LOG_INFO << "[executeActionMessage] Get the resource";
         keto::wavm_common::ParentForkGateway::returnResult(keto::server_common::toEvent<keto::proto::HttpResponseMessage>(
                 std::dynamic_pointer_cast<keto::wavm_common::WavmSessionHttp>(wavmSessionScope.getSession())->getHttpResponse()));
 
@@ -186,30 +186,30 @@ boost::process::opstream& SandboxFork::ParentStream::getPout() {
 SandboxFork::Parent::Parent()
     : inPipe(new boost::process::pipe()), outPipe(new boost::process::pipe()) {
     for (int count = 0; count < 5; count++) {
-        KETO_LOG_INFO << "[SandboxFork::Parent::executeActionMessage] Before fork";
+        //KETO_LOG_INFO << "[SandboxFork::Parent::executeActionMessage] Before fork";
         pid_t pid = fork();
-        KETO_LOG_INFO << "[SandboxFork::Parent::executeActionMessage] after fork : " << pid;
+        //KETO_LOG_INFO << "[SandboxFork::Parent::executeActionMessage] after fork : " << pid;
         if (pid < 0) {
-            KETO_LOG_INFO << "[SandboxFork::Parent::executeActionMessage] fork creation failed :" << pid;
+            KETO_LOG_ERROR << "[SandboxFork::Parent::executeActionMessage] fork creation failed :" << pid;
             BOOST_THROW_EXCEPTION(ForkException());
         } else if (pid == 0) {
             try {
-                KETO_LOG_ERROR << "[SandboxFork::Parent::executeActionMessage] Execute the child process";
+                //KETO_LOG_INFO << "[SandboxFork::Parent::executeActionMessage] Execute the child process";
                 SandboxFork::Child(this->inPipe, this->outPipe).execute();
-                KETO_LOG_ERROR << "[SandboxFork::Parent::executeActionMessage] Child processing complete";
+                //KETO_LOG_INFO << "[SandboxFork::Parent::executeActionMessage] Child processing complete";
             } catch (...) {
                 KETO_LOG_ERROR << "[SandboxFork::Parent::executeActionMessage] failed execute correctly unexpected exception. Child is terminating";
             }
             std::quick_exit(0);
         }
-        KETO_LOG_INFO << "[SandboxFork::Parent::executeActionMessage]Validate the fork";
+        //KETO_LOG_INFO << "[SandboxFork::Parent::executeActionMessage]Validate the fork";
         this->childPtr = std::make_shared<boost::process::child>(boost::process::detail::posix::child_handle(pid));
         this->parentStream = std::make_shared<SandboxFork::ParentStream>(this->outPipe,this->inPipe);
         if (validateFork(this->parentStream->getPin(),this->parentStream->getPout())) {
-            KETO_LOG_INFO << "[SandboxFork::Parent::executeActionMessage] The fork is running correctly";
+            KETO_LOG_ERROR << "[SandboxFork::Parent::executeActionMessage] The fork is running correctly";
             break;
         }
-        KETO_LOG_INFO << "[SandboxFork::Parent::executeActionMessage] The fork is invalid retry";
+        //KETO_LOG_INFO << "[SandboxFork::Parent::executeActionMessage] The fork is invalid retry";
         this->childPtr->terminate();
         this->inPipe = keto::wavm_common::PipePtr(new boost::process::pipe());
         this->outPipe = keto::wavm_common::PipePtr(new boost::process::pipe());
@@ -244,7 +244,7 @@ SandboxFork::Parent::~Parent() {
 }
 
 keto::event::Event SandboxFork::Parent::executeActionMessage(const keto::event::Event& event) {
-    KETO_LOG_INFO << "[SandboxFork::Parent::executeActionMessage]Execute in the fork";
+    //KETO_LOG_INFO << "[SandboxFork::Parent::executeActionMessage]Execute in the fork";
     write(parentStream->getPout(),SandboxFork::EXECUTE_ACTION);
     std::shared_ptr<std::string> actionResponse = readText(parentStream->getPin());
     if (!actionResponse && *actionResponse != keto::wavm_common::ParentForkGateway::REQUEST::EXECUTE_CONFIRM) {
@@ -262,7 +262,7 @@ keto::event::Event SandboxFork::Parent::executeActionMessage(const keto::event::
 }
 
 keto::event::Event SandboxFork::Parent::executeHttpActionMessage(const keto::event::Event& event) {
-    KETO_LOG_INFO << "[SandboxFork::Parent::executeActionMessage]Execute in the fork";
+    //KETO_LOG_INFO << "[SandboxFork::Parent::executeActionMessage]Execute in the fork";
     write(parentStream->getPout(),SandboxFork::EXECUTE_HTTP);
     std::shared_ptr<std::string> actionResponse = readText(parentStream->getPin());
     if (!actionResponse || *actionResponse != keto::wavm_common::ParentForkGateway::REQUEST::EXECUTE_CONFIRM) {
@@ -280,9 +280,9 @@ keto::event::Event SandboxFork::Parent::executeHttpActionMessage(const keto::eve
 }
 
 bool SandboxFork::Parent::terminate() {
-    KETO_LOG_INFO << "[SandboxFork::Parent::terminate] terminate the parent";
+    //KETO_LOG_INFO << "[SandboxFork::Parent::terminate] terminate the parent";
     write(parentStream->getPout(),SandboxFork::TERMINATE);
-    KETO_LOG_INFO << "[SandboxFork::Parent::terminate] read some data back from the child";
+    //KETO_LOG_INFO << "[SandboxFork::Parent::terminate] read some data back from the child";
     std::shared_ptr<std::string> terminateResponse = readText(parentStream->getPin());
     if (terminateResponse && *terminateResponse == keto::wavm_common::ParentForkGateway::REQUEST::EXECUTE_CONFIRM) {
         return true;
@@ -291,14 +291,14 @@ bool SandboxFork::Parent::terminate() {
 }
 
 bool SandboxFork::Parent::validateFork(boost::process::ipstream& pin, boost::process::opstream& pout) {
-    KETO_LOG_INFO << "[SandboxFork::Parent::validateFork] ping the child";
+    //KETO_LOG_INFO << "[SandboxFork::Parent::validateFork] ping the child";
     write(pout,"ping");
-    KETO_LOG_INFO << "[SandboxFork::Parent::validateFork] read some data back from the child";
+    //KETO_LOG_INFO << "[SandboxFork::Parent::validateFork] read some data back from the child";
     std::shared_ptr<std::string> pingResponse = readText(pin);
     if (!pingResponse) {
         return false;
     }
-    KETO_LOG_INFO << "[SandboxFork::Parent::validateFork] response is : " << *pingResponse;
+    //KETO_LOG_INFO << "[SandboxFork::Parent::validateFork] response is : " << *pingResponse;
     return true;
 }
 
@@ -467,12 +467,12 @@ std::shared_ptr<std::string> SandboxFork::Parent::readText(boost::process::ipstr
     //for (int count = 0; count < 20; count++) {
         //KETO_LOG_INFO << "[SandboxFork::Parent::readSome]Check for data";
         //if (pin.rdbuf()->in_avail()) {
-            KETO_LOG_INFO << "[SandboxFork::Parent::readSome] Read data";
+            //KETO_LOG_INFO << "[SandboxFork::Parent::readSome] Read data";
             size_t size;
             pin >> size;
             std::vector<uint8_t> message(size);
             pin.read((char *) message.data(), size);
-            KETO_LOG_INFO << "[SandboxFork::Parent::readSome] Return the data";
+            //KETO_LOG_INFO << "[SandboxFork::Parent::readSome] Return the data";
             return std::make_shared<std::string>((char*)message.data(),message.size());
         //}
         //KETO_LOG_INFO << "[SandboxFork::Parent::readSome] No data available : " << pin.rdbuf()->in_avail();

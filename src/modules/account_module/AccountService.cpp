@@ -62,7 +62,7 @@ std::shared_ptr<AccountService> AccountService::getInstance() {
 }
 
 keto::event::Event AccountService::applyDirtyTransaction(const keto::event::Event& event) {
-    KETO_LOG_INFO << "[AccountService::applyDirtyTransaction] Apply the trasaction dirty";
+    //KETO_LOG_INFO << "[AccountService::applyDirtyTransaction] Apply the trasaction dirty";
     keto::proto::AccountTransactionInfo transaction =
             keto::server_common::fromEvent<keto::proto::AccountTransactionInfo>(event);
     keto::transaction_common::AccountTransactionInfoProtoHelper accountTransactionInfoProtoHelper(transaction);
@@ -70,12 +70,12 @@ keto::event::Event AccountService::applyDirtyTransaction(const keto::event::Even
             accountTransactionInfoProtoHelper.getBlockChainId(),
             accountTransactionInfoProtoHelper.getTransaction());
 
-    KETO_LOG_INFO << "[AccountService::applyDirtyTransaction] Applied the transaction dirty";
+    //KETO_LOG_INFO << "[AccountService::applyDirtyTransaction] Applied the transaction dirty";
     return keto::server_common::toEvent<keto::proto::AccountTransactionInfo>(transaction);
 }
 
 keto::event::Event AccountService::applyTransaction(const keto::event::Event& event) {
-    KETO_LOG_INFO << "[AccountService::applyTransaction] Apply the transaction";
+    //KETO_LOG_INFO << "[AccountService::applyTransaction] Apply the transaction";
     keto::proto::AccountTransactionInfo transaction =
             keto::server_common::fromEvent<keto::proto::AccountTransactionInfo>(event);
     keto::transaction_common::AccountTransactionInfoProtoHelper accountTransactionInfoProtoHelper(transaction);
@@ -83,14 +83,14 @@ keto::event::Event AccountService::applyTransaction(const keto::event::Event& ev
         accountTransactionInfoProtoHelper.getBlockChainId(),accountTransactionInfoProtoHelper.getBlockId(),
         accountTransactionInfoProtoHelper.getTransaction());
     
-    KETO_LOG_INFO << "[AccountService::applyTransaction] Applied the transaction";
+    //KETO_LOG_INFO << "[AccountService::applyTransaction] Applied the transaction";
     return keto::server_common::toEvent<keto::proto::AccountTransactionInfo>(transaction);
 }
     
 
 // account methods
 keto::event::Event AccountService::checkAccount(const keto::event::Event& event) {
-    KETO_LOG_INFO << "[AccountService::checkAccount] Check the account";
+    //KETO_LOG_INFO << "[AccountService::checkAccount] Check the account";
     keto::proto::CheckForAccount  checkForAccount = 
             keto::server_common::fromEvent<keto::proto::CheckForAccount>(event);
     
@@ -102,13 +102,13 @@ keto::event::Event AccountService::checkAccount(const keto::event::Event& event)
     } else {
         checkForAccount.set_found(false);
     }
-    KETO_LOG_INFO << "[AccountService::checkAccount] Checked the account";
+    //KETO_LOG_INFO << "[AccountService::checkAccount] Checked the account";
     return keto::server_common::toEvent<keto::proto::CheckForAccount>(checkForAccount);
 }
 
 
 keto::event::Event AccountService::sparqlQuery(const keto::event::Event& event) {
-    KETO_LOG_INFO << "[AccountService::sparqlQuery] Perform a query";
+    //KETO_LOG_INFO << "[AccountService::sparqlQuery] Perform a query";
     keto::proto::SparqlQuery  sparqlQuery = 
             keto::server_common::fromEvent<keto::proto::SparqlQuery>(event);
     
@@ -118,12 +118,12 @@ keto::event::Event AccountService::sparqlQuery(const keto::event::Event& event) 
             accountInfo)) {
         keto::account_db::AccountStore::getInstance()->sparqlQuery(accountInfo,sparqlQuery);
     }
-    KETO_LOG_INFO << "[AccountService::sparqlQuery] After performing the query";
+    //KETO_LOG_INFO << "[AccountService::sparqlQuery] After performing the query";
     return keto::server_common::toEvent<keto::proto::SparqlQuery>(sparqlQuery);
 }
 
 keto::event::Event AccountService::sparqlQueryWithResultSet(const keto::event::Event& event) {
-    KETO_LOG_INFO << "[AccountService::sparqlQueryWithResultSet] Perform the sparql query";
+    //KETO_LOG_INFO << "[AccountService::sparqlQueryWithResultSet] Perform the sparql query";
     keto::proto::SparqlResultSetQuery  sparqlQuery =
             keto::server_common::fromEvent<keto::proto::SparqlResultSetQuery>(event);
 
@@ -138,12 +138,12 @@ keto::event::Event AccountService::sparqlQueryWithResultSet(const keto::event::E
         KETO_LOG_INFO << "[sparqlQueryWithResultSet]The account [" << accountHashHelper.getHash(keto::common::StringEncoding::HEX) << "]";
     }
 
-    KETO_LOG_INFO << "[AccountService::sparqlQueryWithResultSet] Performed the sparql query";
+    //KETO_LOG_INFO << "[AccountService::sparqlQueryWithResultSet] Performed the sparql query";
     return keto::server_common::toEvent<keto::proto::SparqlResultSet>(sparqlResultSet);
 }
 
 keto::event::Event AccountService::dirtySparqlQueryWithResultSet(const keto::event::Event& event) {
-    KETO_LOG_INFO << "[AccountService::dirtySparqlQueryWithResultSet] Perform the dirty sparql query";
+    //KETO_LOG_INFO << "[AccountService::dirtySparqlQueryWithResultSet] Perform the dirty sparql query";
     keto::proto::SparqlResultSetQuery  sparqlQuery =
             keto::server_common::fromEvent<keto::proto::SparqlResultSetQuery>(event);
 
@@ -155,12 +155,12 @@ keto::event::Event AccountService::dirtySparqlQueryWithResultSet(const keto::eve
         sparqlResultSet = keto::account_db::AccountStore::getInstance()->dirtySparqlQueryWithResultSet(accountInfo,sparqlQuery);
 
     }
-    KETO_LOG_INFO << "[AccountService::dirtySparqlQueryWithResultSet] Performed the dirty sparql query";
+    //KETO_LOG_INFO << "[AccountService::dirtySparqlQueryWithResultSet] Performed the dirty sparql query";
     return keto::server_common::toEvent<keto::proto::SparqlResultSet>(sparqlResultSet);
 }
 
 keto::event::Event AccountService::getContract(const keto::event::Event& event) {
-    KETO_LOG_INFO << "[AccountService::getContract] Get the contract";
+    //KETO_LOG_INFO << "[AccountService::getContract] Get the contract";
     keto::proto::ContractMessage  contractMessage =
             keto::server_common::fromEvent<keto::proto::ContractMessage>(event);
     keto::proto::AccountInfo accountInfo;
@@ -183,14 +183,14 @@ keto::event::Event AccountService::getContract(const keto::event::Event& event) 
     accountInfo.set_graph_name(keto::account_db::Constants::BASE_GRAPH);
     keto::account_db::AccountStore::getInstance()->getContract(accountInfo,contractMessage);
 
-    KETO_LOG_INFO << "[AccountService::getContract] Return the global contract";
+    //KETO_LOG_INFO << "[AccountService::getContract] Return the global contract";
     return keto::server_common::toEvent<keto::proto::ContractMessage>(contractMessage);
 }
 
 keto::event::Event AccountService::clearDirty(const keto::event::Event& event) {
-    KETO_LOG_INFO << "[AccountService::clearDirty] Clear the dirty session";
+    //KETO_LOG_INFO << "[AccountService::clearDirty] Clear the dirty session";
     keto::account_db::AccountGraphDirtySessionManager::getInstance()->clearSessions();
-    KETO_LOG_INFO << "[AccountService::clearDirty] Cleared the dirty session";
+    //KETO_LOG_INFO << "[AccountService::clearDirty] Cleared the dirty session";
     return event;
 }
 

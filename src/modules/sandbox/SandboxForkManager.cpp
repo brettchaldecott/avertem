@@ -30,7 +30,7 @@ keto::event::Event SandboxForkManager::SandboxForkWrapper::executeHttpActionMess
     return this->sandboxForkPtr->executeHttpActionMessage(event);
 }
 
-SandboxForkManager::SandboxForkManager() {
+SandboxForkManager::SandboxForkManager() : forkCount(0) {
 
 }
 SandboxForkManager::~SandboxForkManager() {
@@ -39,7 +39,7 @@ SandboxForkManager::~SandboxForkManager() {
 
 SandboxForkManagerPtr SandboxForkManager::init() {
     if (!singleton) {
-        singleton = SandboxForkManagerPtr(new SandboxForkManager);
+        singleton = SandboxForkManagerPtr(new SandboxForkManager());
     }
     return singleton;
 }
@@ -56,18 +56,18 @@ SandboxForkManagerPtr SandboxForkManager::getInstance() {
 }
 
 SandboxForkManager::SandboxForkWrapperPtr SandboxForkManager::getFork() {
-    KETO_LOG_INFO << "[SandboxForkManager::getFork] Get a fork";
+    //KETO_LOG_INFO << "[SandboxForkManager::getFork] Get a fork";
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
     if (!this->sandboxForkDequeu.empty()) {
         SandboxForkManager::SandboxForkWrapperPtr sandboxForkWrapperPtr(new SandboxForkWrapper(this->sandboxForkDequeu.front()));
         this->sandboxForkDequeu.pop_front();
-        KETO_LOG_INFO << "[SandboxForkManager::getFork] Return an existing fork";
+        //KETO_LOG_INFO << "[SandboxForkManager::getFork] Return an existing fork";
         return sandboxForkWrapperPtr;
     } else {
         SandboxForkManager::SandboxForkWrapperPtr sandboxForkWrapperPtr(new SandboxForkWrapper(
                 SandboxForkPtr(new SandboxFork())));
         this->forkCount++;
-        KETO_LOG_INFO << "[SandboxForkManager::getFork] Return a new fork";
+        //KETO_LOG_INFO << "[SandboxForkManager::getFork] Return a new fork";
         return sandboxForkWrapperPtr;
     }
 }

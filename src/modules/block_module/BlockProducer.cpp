@@ -299,7 +299,7 @@ BlockProducer::ProducerScopeLockPtr BlockProducer::ProducerLock::aquireTransacti
 
 void BlockProducer::ProducerLock::release(bool _transactionLock, bool _blockLock) {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
-    KETO_LOG_INFO << "[BlockProducer::ProducerLock::release]Release the lock [" << this->transactionLock << "][" <<this->blockLock << "]";
+    //KETO_LOG_INFO << "[BlockProducer::ProducerLock::release]Release the lock [" << this->transactionLock << "][" <<this->blockLock << "]";
     if (_transactionLock) {
         this->transactionLock--;
     } else if (_blockLock) {
@@ -307,17 +307,17 @@ void BlockProducer::ProducerLock::release(bool _transactionLock, bool _blockLock
     }
     // use notify all this is cumbersome but a lot more effective than having aquires individually release until a lock is
     // aquired
-    KETO_LOG_INFO << "[BlockProducer::ProducerLock::release] release the lock [" << this->transactionLock << "][" <<this->blockLock << "]";
+    //KETO_LOG_INFO << "[BlockProducer::ProducerLock::release] release the lock [" << this->transactionLock << "][" <<this->blockLock << "]";
     this->stateCondition.notify_all();
 }
 
 BlockProducer::ProducerScopeLock::ProducerScopeLock(BlockProducer::ProducerLock* reference, bool transactionLock, bool blockLock) :
     reference(reference),transactionLock(transactionLock), blockLock(blockLock) {
-    KETO_LOG_INFO << "[BlockProducer::ProducerScopeLock::ProducerScopeLock]gain the lock the lock [" << this->transactionLock << "][" <<this->blockLock << "]";
+    //KETO_LOG_INFO << "[BlockProducer::ProducerScopeLock::ProducerScopeLock]gain the lock the lock [" << this->transactionLock << "][" <<this->blockLock << "]";
 }
 
 BlockProducer::ProducerScopeLock::~ProducerScopeLock() {
-    KETO_LOG_INFO << "[BlockProducer::ProducerScopeLock::~ProducerScopeLock]Release the lock [" << this->transactionLock << "][" <<this->blockLock << "]";
+    //KETO_LOG_INFO << "[BlockProducer::ProducerScopeLock::~ProducerScopeLock]Release the lock [" << this->transactionLock << "][" <<this->blockLock << "]";
     reference->release(this->transactionLock,this->blockLock);
 }
 
@@ -672,9 +672,9 @@ void BlockProducer::processTransactions() {
     if (keto::software_consensus::ConsensusStateManager::getInstance()->getState() != keto::software_consensus::ConsensusStateManager::State::ACCEPTED) {
         return;
     }
-    KETO_LOG_INFO << "[BlockProducer::processTransactions] aquire a block lock";
+    //KETO_LOG_INFO << "[BlockProducer::processTransactions] aquire a block lock";
     BlockProducer::ProducerScopeLockPtr producerScopeLockPtr = this->producerLockPtr->aquireBlockLock();
-    KETO_LOG_INFO << "[BlockProducer::processTransactions] aquired a block lock";
+    //KETO_LOG_INFO << "[BlockProducer::processTransactions] aquired a block lock";
 
     // clear the account cache
     keto::proto::ClearDirtyCache clearDirtyCache;
