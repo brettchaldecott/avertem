@@ -59,8 +59,10 @@ public:
         keto::asn1::HashHelper getLastBlockHash();
         int getNumerOfAccounts();
         int incrementNumberOfAccounts();
+        void refreshTangle();
 
     private:
+        std::mutex classMutex;
         keto::asn1::HashHelper tangleHash;
         bool existing;
         keto::asn1::HashHelper lastBlockHash;

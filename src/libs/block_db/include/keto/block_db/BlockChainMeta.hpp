@@ -51,6 +51,7 @@ public:
     BlockChainTangleMetaPtr getTangleEntry(int id);
     BlockChainTangleMetaPtr getTangleEntry(const keto::asn1::HashHelper& id);
     BlockChainTangleMetaPtr getTangleEntryByLastBlock(const keto::asn1::HashHelper& id);
+    BlockChainTangleMetaPtr getNewGrowTangle();
     BlockChainTangleMetaPtr addTangle(const keto::asn1::HashHelper& hash);
     std::vector<BlockChainTangleMetaPtr> getTangles();
 private:

@@ -89,6 +89,11 @@ BlockChainTangleMetaPtr BlockChainMeta::getTangleEntry(const keto::asn1::HashHel
     return BlockChainTangleMetaPtr();
 }
 
+BlockChainTangleMetaPtr BlockChainMeta::getNewGrowTangle() {
+    KETO_LOG_INFO << "[BlockChainMeta::getNewGrowTangle] The number of tangles is  [" << this->tangles.size() << "]";
+    return this->tangles.back();
+}
+
 BlockChainTangleMetaPtr BlockChainMeta::getTangleEntryByLastBlock(const keto::asn1::HashHelper& id) {
     if (this->tangleMapByLastBlock.count(id)) {
         return this->tangleMapByLastBlock[id];

@@ -71,6 +71,7 @@ public:
     bool getAccountTangle(const keto::asn1::HashHelper& accountHash, keto::asn1::HashHelper& tangleHash);
     bool containsTangleInfo(const keto::asn1::HashHelper& tangleHash);
     BlockChainTangleMetaPtr getTangleInfo(const keto::asn1::HashHelper& tangleHash);
+    BlockChainTangleMetaPtr getNewGrowTangle();
 
     keto::asn1::HashHelper getParentHash();
     keto::asn1::HashHelper getParentHash(const keto::asn1::HashHelper& transactionHash);

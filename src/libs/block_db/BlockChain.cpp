@@ -893,6 +893,10 @@ BlockChainTangleMetaPtr BlockChain::getTangleInfo(const keto::asn1::HashHelper& 
     return this->blockChainMetaPtr->getTangleEntry(tangleHash);
 }
 
+BlockChainTangleMetaPtr BlockChain::getNewGrowTangle() {
+    return this->blockChainMetaPtr->getNewGrowTangle();
+}
+
 bool BlockChain::containsTangleInfo(const keto::asn1::HashHelper& tangleHash) {
     return this->blockChainMetaPtr->containsTangleInfo(tangleHash);
 }

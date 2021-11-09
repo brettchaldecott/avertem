@@ -178,6 +178,14 @@ BlockChainTangleMetaPtr  BlockChainStore::getTangleInfo(const keto::asn1::HashHe
     return this->masterChain->getTangleInfo(tangleHash);
 }
 
+BlockChainTangleMetaPtr BlockChainStore::getNewGrowTangle() {
+    std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+    if (!masterChain) {
+        BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
+    }
+    return this->masterChain->getNewGrowTangle();
+}
+
 
 keto::asn1::HashHelper BlockChainStore::getParentHash() {
     std::lock_guard<std::recursive_mutex> guard(this->classMutex);

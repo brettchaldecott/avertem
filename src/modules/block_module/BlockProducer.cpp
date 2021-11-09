@@ -110,7 +110,10 @@ keto::asn1::HashHelper BlockProducer::TangleFutureStateManager::getTangleHash() 
 }
 
 keto::asn1::HashHelper BlockProducer::TangleFutureStateManager::getLastBlockHash() {
-    if (keto::block_db::BlockChainStore::getInstance()->containsTangleInfo(this->tangleHash)) {
+    std::lock_guard<std::mutex> uniqueLock(this->classMutex);
+    if (!this->existing) {
+        return this->lastBlockHash;
+    } else if (keto::block_db::BlockChainStore::getInstance()->containsTangleInfo(this->tangleHash)) {
         keto::block_db::BlockChainTangleMetaPtr blockChainTangleMetaPtr =
                 keto::block_db::BlockChainStore::getInstance()->getTangleInfo(tangleHash);
         this->lastBlockHash = blockChainTangleMetaPtr->getLastBlockHash();
@@ -128,6 +131,15 @@ int BlockProducer::TangleFutureStateManager::getNumerOfAccounts() {
 
 int BlockProducer::TangleFutureStateManager::incrementNumberOfAccounts() {
     return this->numberOfAccounts++;
+}
+
+void BlockProducer::TangleFutureStateManager::refreshTangle() {
+    std::lock_guard<std::mutex> uniqueLock(this->classMutex);
+    keto::block_db::BlockChainTangleMetaPtr blockChainTangleMetaPtr = keto::block_db::BlockChainStore::getInstance()->getNewGrowTangle();
+    this->tangleHash = blockChainTangleMetaPtr->getHash();
+    this->numberOfAccounts = blockChainTangleMetaPtr->getNumberOfAccounts();
+    this->existing = true;
+
 }
 
 BlockProducer::PendingTransactionsTangle::PendingTransactionsTangle(const keto::asn1::HashHelper& tangleHash, bool existing) {
@@ -197,8 +209,13 @@ void BlockProducer::PendingTransactionManager::addTransaction(const keto::transa
     BlockProducer::PendingTransactionsTanglePtr pendingTransactionsTanglePtr;
     if (keto::block_db::BlockChainStore::getInstance()->getAccountTangle(
             transactionProtoHelperPtr->getTransactionMessageHelper()->getTransactionWrapper()->getCurrentAccount(),tangleHash)) {
+        KETO_LOG_INFO << "[BlockProducer::PendingTransactionManager::addTransaction] Use the pending transaction tangle [" <<
+        transactionProtoHelperPtr->getTransactionMessageHelper()->getTransactionWrapper()->getCurrentAccount().getHash(keto::common::StringEncoding::HEX) << "]["
+        << tangleHash.getHash(keto::common::StringEncoding::HEX) << "]";
         pendingTransactionsTanglePtr = getPendingTransactionTangle(tangleHash);
     } else {
+        KETO_LOG_INFO << "[BlockProducer::PendingTransactionManager::addTransaction] Use the growing pending transaction tangle [" <<
+        transactionProtoHelperPtr->getTransactionMessageHelper()->getTransactionWrapper()->getCurrentAccount().getHash(keto::common::StringEncoding::HEX) << "]";
         pendingTransactionsTanglePtr = getGrowingPendingTransactionTangle();
     }
     pendingTransactionsTanglePtr->addTransaction(transactionProtoHelperPtr);
@@ -247,13 +264,27 @@ BlockProducer::PendingTransactionsTanglePtr BlockProducer::PendingTransactionMan
 
 BlockProducer::PendingTransactionsTanglePtr BlockProducer::PendingTransactionManager::getGrowingPendingTransactionTangle() {
     if (this->growTanglePtr && !this->growTanglePtr->getTangle()->isExisting()) {
+        KETO_LOG_INFO << "[BlockProducer::PendingTransactionManager::getGrowingPendingTransactionTangle] Return the existing grow tangle ["
+        << this->growTanglePtr->getTangle()->getTangleHash().getHash(keto::common::StringEncoding::HEX)
+        << "] The last hash is ["
+        << this->growTanglePtr->getTangle()->getLastBlockHash().getHash(keto::common::StringEncoding::HEX) << "]";
         return this->growTanglePtr;
     } else if (this->growTanglePtr && this->growTanglePtr->getTangle()->getNumerOfAccounts() < Constants::MAX_TANGLE_ACCOUNTS) {
         this->growTanglePtr->getTangle()->incrementNumberOfAccounts();
+        KETO_LOG_INFO << "[BlockProducer::PendingTransactionManager::getGrowingPendingTransactionTangle] Return the existing grow tangle ["
+        << this->growTanglePtr->getTangle()->getTangleHash().getHash(keto::common::StringEncoding::HEX)
+        << "] The last hash is ["
+        << this->growTanglePtr->getTangle()->getLastBlockHash().getHash(keto::common::StringEncoding::HEX) << "]";
         return this->growTanglePtr;
     } else if (this->growTanglePtr) {
         BlockProducer::PendingTransactionsTanglePtr pendingTransactionsTanglePtr(new BlockProducer::PendingTransactionsTangle(
                 this->growTanglePtr->getTangle()->getLastBlockHash(),false));
+        KETO_LOG_INFO << "[BlockProducer::PendingTransactionManager::getGrowingPendingTransactionTangle] New grow tangle needs to be created ["
+        << this->growTanglePtr->getTangle()->getTangleHash().getHash(keto::common::StringEncoding::HEX)
+        << "] The last has his ["
+        << this->growTanglePtr->getTangle()->getLastBlockHash().getHash(keto::common::StringEncoding::HEX)
+        << "][" << pendingTransactionsTanglePtr->getTangle()->getTangleHash().getHash(keto::common::StringEncoding::HEX)
+        << "][" << pendingTransactionsTanglePtr->getTangle()->getLastBlockHash().getHash(keto::common::StringEncoding::HEX) << "]";
         this->tangleTransactions.insert(std::pair<std::vector<uint8_t>,PendingTransactionsTanglePtr>(
                 this->growTanglePtr->getTangle()->getLastBlockHash(),
                 pendingTransactionsTanglePtr));
@@ -262,6 +293,9 @@ BlockProducer::PendingTransactionsTanglePtr BlockProducer::PendingTransactionMan
     } else {
         BlockProducer::PendingTransactionsTanglePtr pendingTransactionsTanglePtr(new BlockProducer::PendingTransactionsTangle(
                 keto::block_db::BlockChainStore::getInstance()->getGrowTangle(),true));
+        KETO_LOG_INFO << "[BlockProducer::PendingTransactionManager::getGrowingPendingTransactionTangle] New grow tangle needs to be created ["
+        << pendingTransactionsTanglePtr->getTangle()->getTangleHash().getHash(keto::common::StringEncoding::HEX)
+        << "][" << pendingTransactionsTanglePtr->getTangle()->getLastBlockHash().getHash(keto::common::StringEncoding::HEX) << "]";
         this->tangleTransactions.insert(std::pair<std::vector<uint8_t>,PendingTransactionsTanglePtr>(
                 pendingTransactionsTanglePtr->getTangle()->getTangleHash(),
                 pendingTransactionsTanglePtr));
@@ -787,14 +821,19 @@ keto::block_db::SignedBlockBuilderPtr BlockProducer::generateBlock(const BlockPr
                 keyLoaderPtr));
         signedBlockBuilderPtr->sign();
 
-        KETO_LOG_INFO << "Write a block";
+        KETO_LOG_INFO << "[BlockProducer::generateBlock] Write a block [" <<
+            signedBlockBuilderPtr->getHash().getHash(keto::common::StringEncoding::HEX) << "] parent hash [" <<
+            signedBlockBuilderPtr->getParentHash().getHash(keto::common::StringEncoding::HEX) << "]";
         keto::block_db::BlockChain::clearCache();
         keto::block_db::BlockChainStore::getInstance()->writeBlock(signedBlockBuilderPtr,
                 BlockChainCallbackImpl(getProducerState() == BlockProducer::ProducerState::ending));
-        KETO_LOG_INFO << "Wrote a block [" <<
+        KETO_LOG_INFO << "[BlockProducer::generateBlock] Wrote a block [" <<
                       signedBlockBuilderPtr->getHash().getHash(keto::common::StringEncoding::HEX)
-                      << "]";
-
+                      << "] parent hash [" <<
+                      signedBlockBuilderPtr->getParentHash().getHash(keto::common::StringEncoding::HEX) << "]";
+        if (!pendingTransactionTanglePtr->getTangle()->isExisting()) {
+            pendingTransactionTanglePtr->getTangle()->refreshTangle();
+        }
         return signedBlockBuilderPtr;
     } catch (keto::common::Exception& ex) {
         KETO_LOG_ERROR << "[BlockProducer::generateBlock]Failed to create a new block: " << ex.what();
