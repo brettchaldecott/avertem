@@ -51,8 +51,8 @@ const long Constants::SYNC_EXPIRY_TIME  = 30 + (60 * 2);
 
 
 // tangle configuration
-const int Constants::MAX_TANGLE_ACCOUNTS = 200;
-const int Constants::MAX_TANGLES_TO_ACCOUNT = 10;
+const int Constants::MAX_TANGLE_ACCOUNTS = 20000;
+const int Constants::MAX_TANGLES_TO_ACCOUNT = 3;
 
 // the delay values
 const int Constants::ACTIVATE_PRODUCER_DELAY    = 60;
