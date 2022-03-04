@@ -361,7 +361,8 @@ BlockProducer::BlockProducer() :
         delay(0),
         currentState(State::unloaded),
         producerState(ProducerState::idle),
-        safe(true){
+        safe(true),
+        windowEnded(false){
     std::shared_ptr<keto::environment::Config> config =
             keto::environment::EnvironmentManager::getInstance()->getConfig();
     if (!config->getVariablesMap().count(Constants::PRIVATE_KEY)) {
@@ -531,6 +532,7 @@ void BlockProducer::_setState(const State& state) {
         BOOST_THROW_EXCEPTION(keto::block::BlockProducerNotAcceptedByNetworkException());
     }
 
+
     KETO_LOG_DEBUG << "[BlockProducer::_setState] set the state to : " << state;
     this->currentState = state;
     if (currentState != State::terminated) {
@@ -589,6 +591,20 @@ keto::crypto::KeyLoaderPtr BlockProducer::getKeyLoader() {
     return this->keyLoaderPtr;
 }
 
+// producer window flag management
+void BlockProducer::resetWindowEnded() {
+    std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    this->windowEnded = false;
+}
+
+bool BlockProducer::isWindowEnded() {
+    return this->windowEnded;
+}
+
+void BlockProducer::triggerWindowEnded() {
+    this->windowEnded = true;
+}
+
 // setup the active tangles
 std::vector<keto::asn1::HashHelper> BlockProducer::getActiveTangles() {
     return keto::block_db::BlockChainStore::getInstance()->getActiveTangles();
@@ -616,15 +632,28 @@ void BlockProducer::setActiveTangles(const std::vector<keto::asn1::HashHelper>& 
     BlockProducer::State state = _getState();
     // logic assumes the node selected for producing will receive this state update
     if (tangles.size()) {
+        KETO_LOG_INFO << "[BlockProducer::setActiveTangles]########  set the active tangles [" <<
+            tangles.size() << "] : " << state;
         keto::block_db::BlockChainStore::getInstance()->setActiveTangles(tangles);
         // there is a chance the block producer might receive this tangle update post status change
         // if this happens then the block producer enters a state it will never leave.
         if (state != BlockProducer::State::block_producer && state != BlockProducer::State::block_producer_wait) {
             _setProducerState(BlockProducer::ProducerState::producing);
-            _setState(BlockProducer::State::block_producer_wait);
-            this->delay = Constants::ACTIVATE_PRODUCER_DELAY;
+
+            // check if the previous processor window has ended
+            if (this->isWindowEnded()) {
+                _setState(BlockProducer::State::block_producer);
+                this->delay = 0;
+            } else {
+                _setState(BlockProducer::State::block_producer_wait);
+                this->delay = Constants::ACTIVATE_PRODUCER_DELAY;
+            }
+
+            KETO_LOG_INFO << "[BlockProducer::setActiveTangles]######## Start producing blocks [" <<
+            tangles.size() << "] : " << _getState();
         }
     } else if (state == BlockProducer::State::block_producer) {
+        KETO_LOG_INFO << "[BlockProducer::setActiveTangles]########  wait for the block producer to end :" << state;
         _setProducerState(BlockProducer::ProducerState::ending);
         while(_getProducerState() == BlockProducer::ProducerState::ending) {
             this->stateCondition.wait_for(uniqueLock, std::chrono::seconds(
@@ -634,6 +663,7 @@ void BlockProducer::setActiveTangles(const std::vector<keto::asn1::HashHelper>& 
         //_setState(BlockProducer::State::sync_blocks);
         _setProducerState(BlockProducer::ProducerState::idle);
     } else {
+        KETO_LOG_INFO << "[BlockProducer::setActiveTangles]########  Deactivate the active tangles";
         keto::block_db::BlockChainStore::getInstance()->setActiveTangles(tangles);
     }
 
@@ -642,17 +672,19 @@ void BlockProducer::setActiveTangles(const std::vector<keto::asn1::HashHelper>& 
 void BlockProducer::processProducerEnding(
         const keto::block_db::SignedBlockWrapperMessageProtoHelper& signedBlockWrapperMessageProtoHelper) {
     std::unique_lock<std::mutex> uniqueLock(this->classMutex);
-    KETO_LOG_DEBUG << "[BlockProducer::processProducerEnding] The processor ending has been set for : "
-                  << signedBlockWrapperMessageProtoHelper.getMessageHash().getHash(keto::common::StringEncoding::HEX);
-    if (keto::block_db::BlockChainStore::getInstance()->processProducerEnding(signedBlockWrapperMessageProtoHelper)) {
-        KETO_LOG_DEBUG << "[BlockProducer::processProducerEnding] This is the producer and needs to be triggered : "
-                      << signedBlockWrapperMessageProtoHelper.getMessageHash().getHash(keto::common::StringEncoding::HEX);
+    KETO_LOG_INFO << "[BlockProducer::processProducerEnding] The processor ending has been set for ["
+                  << signedBlockWrapperMessageProtoHelper.getMessageHash().getHash(keto::common::StringEncoding::HEX)
+                  << "] : " << _getState();
+    this->triggerWindowEnded();
+    //if (keto::block_db::BlockChainStore::getInstance()->processProducerEnding(signedBlockWrapperMessageProtoHelper)) {
+    //    KETO_LOG_DEBUG << "[BlockProducer::processProducerEnding] This is the producer and needs to be triggered : "
+    //                  << signedBlockWrapperMessageProtoHelper.getMessageHash().getHash(keto::common::StringEncoding::HEX);
         if (_getState() == BlockProducer::State::block_producer_wait) {
             KETO_LOG_INFO << "[BlockProducer::processProducerEnding] Trigger the producer : "
                           << signedBlockWrapperMessageProtoHelper.getMessageHash().getHash(keto::common::StringEncoding::HEX);
             _setState(BlockProducer::State::block_producer);
         }
-    }
+    //}
 }
 
 void BlockProducer::activateWaitingBlockProducer() {

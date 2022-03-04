@@ -64,6 +64,8 @@ public:
     static const char* RPC_CLIENT_TRANSACTION;
     static const char* RPC_CLIENT_REQUEST_BLOCK_SYNC;
     static const char* RPC_SERVER_REQUEST_BLOCK_SYNC;
+    static const char* MISSING_BLOCK_DB_REQUEST_BLOCK_SYNC;
+    static const char* MISSING_BLOCK_DB_RESPONSE_BLOCK_SYNC;
     static const char* BLOCK_DB_REQUEST_BLOCK_SYNC;
     static const char* BLOCK_DB_RESPONSE_BLOCK_SYNC;
     static const char* BLOCK_DB_REQUEST_BLOCK_SYNC_RETRY;

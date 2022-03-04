@@ -39,6 +39,7 @@ public:
     static const char* TRANSACTIONS_INDEX;
     static const char* ACCOUNTS_INDEX;
     static const char* CHILD_INDEX;
+    static const char* PARENT_INDEX;
     static const char* NESTED_INDEX;
     
     // boot constants

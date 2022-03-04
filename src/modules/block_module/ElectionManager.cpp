@@ -85,8 +85,8 @@ void ElectionManager::Elector::setElectionResult(
 }
 
 
-ElectionManager::Window::Window(const std::vector<keto::asn1::HashHelper>& tangles)
-    : tangles(tangles), growing(tangles.size() < Constants::MAX_TANGLES_TO_ACCOUNT)
+ElectionManager::Window::Window(bool growing, const std::vector<keto::asn1::HashHelper>& tangles)
+    : tangles(tangles), growing(growing)
 {
 
 }
@@ -108,7 +108,29 @@ bool ElectionManager::Window::isGrowing() {
 }
 
 bool ElectionManager::Window::equals(const std::vector<keto::asn1::HashHelper>& tangles) {
-    return this->tangles == tangles;
+    if (tangles.size() != this->tangles.size()) {
+        KETO_LOG_INFO << "[ElectionManager::Window::equals] Tangles do not match based on size : " << tangles.size();
+        return false;
+    }
+    KETO_LOG_INFO << "[ElectionManager::Window::equals] Tangles to compare : " << tangles.size();
+    for (keto::asn1::HashHelper rhTangle : tangles) {
+        bool found = false;
+        for (keto::asn1::HashHelper lhTangle : this->tangles) {
+            KETO_LOG_INFO << "[ElectionManager::Window::equals] rhTangle [" <<
+            rhTangle.getHash(keto::common::StringEncoding::HEX) << "][" << lhTangle.getHash(keto::common::StringEncoding::HEX) << "]";
+            if (rhTangle == lhTangle) {
+                KETO_LOG_INFO << "[ElectionManager::Window::equals] The tangle has been found";
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            KETO_LOG_INFO << "[ElectionManager::Window::equals] tangles are not matched";
+            return false;
+        }
+    }
+    KETO_LOG_INFO << "[ElectionManager::Window::equals] tangles are matched";
+    return true;
 }
 
 ElectionManager::WindowManager::WindowManager() {
@@ -119,7 +141,9 @@ ElectionManager::WindowManager::~WindowManager() {
 
 }
 
-void ElectionManager::WindowManager::addWindow(const std::vector<keto::asn1::HashHelper>& tangles) {
+void ElectionManager::WindowManager::addWindow(bool growing, const std::vector<keto::asn1::HashHelper>& tangles) {
+    KETO_LOG_INFO << "[ElectionManager::WindowManager::addWindow] check the tangles [" <<
+        tangles.size() << "][" << growing << "]";
     // check if the window has been registered already
     for (WindowPtr windowPtr: this->newWindow) {
         if (windowPtr->equals(tangles)) {
@@ -127,7 +151,9 @@ void ElectionManager::WindowManager::addWindow(const std::vector<keto::asn1::Has
         }
     }
     // add a new window
-    this->newWindow.push_back(WindowPtr(new Window(tangles)));
+    KETO_LOG_INFO << "[ElectionManager::WindowManager::addWindow] add tangles to this node [" <<
+        tangles.size() << "][" << growing << "]";
+    this->newWindow.push_back(WindowPtr(new Window(growing, tangles)));
 }
 
 bool ElectionManager::WindowManager::hasNewWindows() {
@@ -173,7 +199,7 @@ void ElectionManager::WindowManager::mergeActiveTangles(const std::vector<keto::
         }
     } else {
         // need to create a new entry this assumes that we are probably running in a genesis situation
-        this->currentWindow.push_back(growingWindowPtr = WindowPtr(new Window(std::vector<keto::asn1::HashHelper>())));
+        this->currentWindow.push_back(growingWindowPtr = WindowPtr(new Window(true,std::vector<keto::asn1::HashHelper>())));
     }
 
     for (const keto::asn1::HashHelper& activeTangle : activeTangles) {
@@ -208,6 +234,15 @@ std::vector<ElectionManager::WindowPtr> ElectionManager::WindowManager::getWindo
     return this->currentWindow;
 }
 
+bool ElectionManager::WindowManager::isGrowing() {
+    for (WindowPtr windowPtr : this->currentWindow) {
+        if (windowPtr->isGrowing()) {
+            return true;
+        }
+    }
+    return false;
+}
+
 ElectionManager::ElectionManager() : state(ElectionManager::State::PROCESSING) {
     std::shared_ptr<keto::environment::Config> config =
             keto::environment::EnvironmentManager::getInstance()->getConfig();
@@ -217,6 +252,10 @@ ElectionManager::ElectionManager() : state(ElectionManager::State::PROCESSING) {
     faucetAccount = keto::asn1::HashHelper(config->getVariablesMap()[Constants::FAUCET_ACCOUNT].as<std::string>(),
                                            keto::common::StringEncoding::HEX);
     this->windowManagerPtr = WindowManagerPtr(new WindowManager());
+
+    // init the election engine
+    this->electionRandomEngine.seed(std::chrono::system_clock::now().time_since_epoch().count());
+
 }
 
 ElectionManager::~ElectionManager() {
@@ -362,13 +401,17 @@ keto::event::Event ElectionManager::electRpcProcessPublish(const keto::event::Ev
     //KETO_LOG_DEBUG << "[ElectionManager::electRpcProcessPublish] confirm the election [" <<
     //    electionPublishTangleAccountProtoHelper.getAccount().getHash(keto::common::StringEncoding::HEX) << "][" <<
     //    Botan::hex_encode(keto::server_common::ServerInfo::getInstance()->getAccountHash(),true) << "]";
+    KETO_LOG_INFO << "[ElectionManager::electRpcProcessPublish] Process the election [" <<
+        electionPublishTangleAccountProtoHelper.getAccount().getHash(keto::common::StringEncoding::HEX) << "]";
     if ((std::vector<uint8_t>)electionPublishTangleAccountProtoHelper.getAccount() ==
         keto::server_common::ServerInfo::getInstance()->getAccountHash()) {
-        //KETO_LOG_DEBUG << "[ElectionManager::electRpcProcessPublish] set the active tangles to [" <<
-        //    electionPublishTangleAccountProtoHelper.getTangles().size() << "]";
-        this->windowManagerPtr->addWindow(electionPublishTangleAccountProtoHelper.getTangles());
+        KETO_LOG_INFO << "[ElectionManager::electRpcProcessPublish] set the active tangles to [" <<
+            electionPublishTangleAccountProtoHelper.getTangles().size() << "]";
+        this->windowManagerPtr->addWindow(electionPublishTangleAccountProtoHelper.isGrowing(),
+                                          electionPublishTangleAccountProtoHelper.getTangles());
     }
     this->state = ElectionManager::State::CONFIRMATION;
+    BlockProducer::getInstance()->resetWindowEnded();
     return event;
 }
 
@@ -385,6 +428,7 @@ keto::event::Event ElectionManager::electRpcProcessConfirmation(const keto::even
             this->windowManagerPtr->hasNewWindows()) {
         //KETO_LOG_DEBUG << "[ElectionManager::electRpcProcessConfirmation] this node has been elected set the active tangles [" <<
         //    this->nextWindow.size() << "]";
+        BlockProducer::getInstance()->clearActiveTangles();
         this->windowManagerPtr->activate();
         BlockProducer::getInstance()->setActiveTangles(this->windowManagerPtr->getAllTangles());
         this->state = ElectionManager::State::PROCESSING;
@@ -432,13 +476,16 @@ void ElectionManager::publishElection() {
         KETO_LOG_INFO << "[ElectionManager::publishElection] Expected [" << this->accountElectionResult.size()
             << "] got [" << this->responseCount << "]";
     }
-
-    this->windowManagerPtr->mergeActiveTangles(BlockProducer::getInstance()->getActiveTangles());
+    std::vector<keto::asn1::HashHelper> hashes = BlockProducer::getInstance()->getActiveTangles();
+    KETO_LOG_INFO << "[ElectionManager::publishElection] get the active tangle size [" << hashes.size()
+    << "] and merge";
+    this->windowManagerPtr->mergeActiveTangles(hashes);
     std::vector<std::vector<uint8_t>> accounts = this->listAccounts();
     this->electedAccounts.clear();
 
     // loop through the tangle size and attempt to send to different nodes
     // this will re-balance the nodes when max tangle count is reached.
+    bool growing = this->windowManagerPtr->isGrowing();
     for (WindowPtr windowPtr : this->windowManagerPtr->getWindows()) {
         std::vector<keto::asn1::HashHelper> tangles = windowPtr->getTangles();
         KETO_LOG_INFO << "[ElectionManager::publishElection] Process a window of tangles ["
@@ -452,31 +499,45 @@ void ElectionManager::publishElection() {
             // push to network
             KETO_LOG_INFO
                 << "[ElectionManager::publishElection] set the tangle information associated with elected node ["
-                << accountHash.getHash(keto::common::StringEncoding::HEX) << "]";
+                << accountHash.getHash(keto::common::StringEncoding::HEX) << "][" << tangles.size() << "]";
             keto::election_common::ElectionPublishTangleAccountProtoHelperPtr electionPublishTangleAccountProtoHelperPtr(
                     new keto::election_common::ElectionPublishTangleAccountProtoHelper());
             electionPublishTangleAccountProtoHelperPtr->setAccount(accountHash);
             //KETO_LOG_DEBUG << "[ElectionManager::publishElection] loop through and add the tangles [" << tangles.size() << "]";
             for (int index = 0; (index < Constants::MAX_TANGLES_TO_ACCOUNT) && (tangles.size()); index++) {
-                electionPublishTangleAccountProtoHelperPtr->addTangle(tangles[0]);
+                electionPublishTangleAccountProtoHelperPtr->addTangle(*tangles.begin());
                 tangles.erase(tangles.begin());
             }
             //KETO_LOG_DEBUG << "[ElectionManager::publishElection] set the grow flag tangles [" << tangles.size() << "]";
-            if (electionPublishTangleAccountProtoHelperPtr->size() < Constants::MAX_TANGLES_TO_ACCOUNT) {
+            if (!tangles.size() && growing) {
+                KETO_LOG_INFO << "Set the growing tangle : " << accountHash.getHash(keto::common::StringEncoding::HEX);
                 electionPublishTangleAccountProtoHelperPtr->setGrowing(true);
             }
 
             // generate transaction and push
-            //KETO_LOG_DEBUG << "[ElectionManager::publishElection] publish the results";
+            KETO_LOG_INFO << "[ElectionManager::publishElection] publish the results : " <<
+            accountHash.getHash(keto::common::StringEncoding::HEX);
             keto::election_common::ElectionUtils(keto::election_common::Constants::ELECTION_INTERNAL_PUBLISH).
                     publish(electionPublishTangleAccountProtoHelperPtr);
-            //KETO_LOG_DEBUG << "[ElectionManager::publishElection] set the elected accounts";
-            this->electedAccounts.insert(accountHash);
+            if (!checkElectedAccounts(this->electedAccounts,accountHash)) {
+                KETO_LOG_INFO << "[ElectionManager::publishElection] add the elected account : " <<
+                    accountHash.getHash(keto::common::StringEncoding::HEX);
+                this->electedAccounts.push_back(accountHash);
+            }
 
             this->generateTransaction(signedElectNodeHelperPtr, tangles);
         }
     }
 
+}
+
+bool ElectionManager::checkElectedAccounts(std::vector<keto::asn1::HashHelper> electedAccounts, keto::asn1::HashHelper account) {
+    for (keto::asn1::HashHelper electedAccount : electedAccounts) {
+        if (electedAccount == account) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void ElectionManager::confirmElection() {
@@ -485,8 +546,9 @@ void ElectionManager::confirmElection() {
         return;
     }
 
-    for (std::vector<std::uint8_t> account : this->electedAccounts) {
-        KETO_LOG_INFO << "[ElectionManager::confirmElection] send confirmation for an elected account";
+    for (keto::asn1::HashHelper account : this->electedAccounts) {
+        KETO_LOG_INFO << "[ElectionManager::confirmElection] send confirmation for an elected account : "
+        << account.getHash(keto::common::StringEncoding::HEX);
         keto::election_common::ElectionUtils(keto::election_common::Constants::ELECTION_PROCESS_CONFIRMATION).
         confirmation(account);
     }
@@ -510,14 +572,12 @@ std::vector<std::vector<uint8_t>> ElectionManager::listAccounts() {
 keto::election_common::SignedElectNodeHelperPtr ElectionManager::generateSignedElectedNode(std::vector<std::vector<uint8_t>>& accounts) {
     try {
         // setup the random number generator
-        std::default_random_engine stdGenerator;
-        stdGenerator.seed(std::chrono::system_clock::now().time_since_epoch().count());
         std::uniform_int_distribution<int> distribution(0, accounts.size() - 1);
         // seed
-        distribution(stdGenerator);
+        //distribution(stdGenerator);
 
         // retrieve
-        int pos = distribution(stdGenerator);
+        int pos = distribution(this->electionRandomEngine);
         std::vector<uint8_t> account = accounts[pos];
         // as there are a limited number of nodes on the network re-use of nodes for tasks is crucial
         // there for we don't remove a possibility from the list. At worst a node will have to perform double duety.
@@ -555,6 +615,9 @@ keto::election_common::SignedElectNodeHelperPtr ElectionManager::generateSignedE
                 new keto::election_common::SignedElectNodeHelper());
         signedElectNodeHelperPtr->setElectedNode(electNodeHelper);
         signedElectNodeHelperPtr->sign(BlockProducer::getInstance()->getKeyLoader());
+
+        KETO_LOG_INFO << "[generateSignedElectedNode] Selected an account [" << accounts.size() << "] pos [" << pos
+        << "] account [" << signedElectNodeHelperPtr->getElectedHash().getHash(keto::common::StringEncoding::HEX) << "]";
 
         return signedElectNodeHelperPtr;
     } catch (keto::common::Exception& ex) {

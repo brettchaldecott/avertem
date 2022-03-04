@@ -203,6 +203,9 @@ public:
     keto::software_consensus::ConsensusMessageHelper getAcceptedCheck();
     keto::crypto::KeyLoaderPtr getKeyLoader();
 
+    // producer window flag management
+    void resetWindowEnded();
+
     // setup the active tangles
     std::vector<keto::asn1::HashHelper> getActiveTangles();
     void clearActiveTangles();
@@ -220,6 +223,7 @@ private:
     State currentState;
     ProducerState producerState;
     bool safe;
+    bool windowEnded;
     std::condition_variable stateCondition;
     std::mutex classMutex;
     PendingTransactionManagerPtr pendingTransactionManagerPtr;
@@ -243,6 +247,10 @@ private:
     ProducerState _getProducerState();
 
     void requestNetworkState();
+
+    // private processor window management functions
+    bool isWindowEnded();
+    void triggerWindowEnded();
 };
 
 

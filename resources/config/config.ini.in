@@ -17,8 +17,9 @@ blocks=data/blocks
 transactions=data/transactions
 accounts=data/accounts
 childs=data/childs
-accounts_mapping=data/accounts_mapping
+parents=data/parents
 nested=data/nested
+accounts_mapping=data/accounts_mapping
 # key store
 key_store=data/key_store
 # graph configuration

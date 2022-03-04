@@ -21,6 +21,7 @@
 #include "keto/block_db/BlockChainCallback.hpp"
 #include "keto/block_db/SignedBlockWrapperProtoHelper.hpp"
 #include "keto/block_db/SignedBlockWrapperMessageProtoHelper.hpp"
+#include "keto/block_db/BlockWriteResponse.hpp"
 
 #include "keto/obfuscate/MetaString.hpp"
 
@@ -151,11 +152,13 @@ public:
 
     bool requireGenesis();
     void applyDirtyTransaction(keto::transaction_common::TransactionMessageHelperPtr& transactionMessageHelperPtr, const BlockChainCallback& callback);
-    bool writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockBuilder, const BlockChainCallback& callback);
-    bool writeBlock(const SignedBlockBuilderPtr& signedBlockBuilderPtr, const BlockChainCallback& callback);
+    BlockWriteResponsePtr writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockBuilder, const BlockChainCallback& callback);
+    BlockWriteResponsePtr writeBlock(const SignedBlockBuilderPtr& signedBlockBuilderPtr, const BlockChainCallback& callback);
 
     keto::asn1::HashHelper getParentHash();
     keto::asn1::HashHelper getParentHash(const keto::asn1::HashHelper& transactionHash);
+    keto::asn1::HashHelper getBlockParentHash(const keto::asn1::HashHelper& blockHash);
+    keto::asn1::HashHelper recurseParentBlockParentHash(const keto::asn1::HashHelper& blockHash, int max);
     BlockChainMetaPtr getBlockChainMeta();
 
 
@@ -168,8 +171,9 @@ public:
     std::vector<keto::asn1::HashHelper> getLastBlockHashs();
     bool processProducerEnding(const keto::block_db::SignedBlockWrapperMessageProtoHelper& signedBlockWrapperMessageProtoHelper);
     bool requestBlocks(const std::vector<keto::asn1::HashHelper>& tangledHashes, keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage);
-    bool processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage, const BlockChainCallback& callback);
-    bool processBlockSyncResponse(const keto::proto::SignedBlockBatch& signedBlockBatch, const BlockChainCallback& callback);
+    bool requestBlocksByHash(const std::vector<keto::asn1::HashHelper>& blockHashes, keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage);
+    BlockWriteResponsePtr processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage, const BlockChainCallback& callback);
+    BlockWriteResponsePtr processBlockSyncResponse(const keto::proto::SignedBlockBatch& signedBlockBatch, const BlockChainCallback& callback);
 
     keto::proto::AccountChainTangle getAccountBlockTangle(const keto::proto::AccountChainTangle& accountChainTangle);
     bool getAccountTangle(const keto::asn1::HashHelper& accountHash, keto::asn1::HashHelper& tangeHash);
@@ -218,8 +222,8 @@ private:
     BlockChainPtr getChildByTransactionId(const keto::asn1::HashHelper& parentHash);
 
 
-    bool writeBlock(const SignedBlockWrapperProtoHelperPtr& signedBlockWrapperProtoHelperPtr, const BlockChainCallback& callback);
-    bool writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock, const BlockChainCallback& callback);
+    BlockWriteResponsePtr writeBlock(const SignedBlockWrapperProtoHelperPtr& signedBlockWrapperProtoHelperPtr, const BlockChainCallback& callback);
+    BlockWriteResponsePtr writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock, const BlockChainCallback& callback);
 
 
     keto::proto::SignedBlockBatch getBlockBatch(keto::asn1::HashHelper hash, BlockResourcePtr resource);
@@ -232,7 +236,7 @@ private:
 
 
     bool duplicateCheck(rocksdb::Transaction* blockTransaction, keto::asn1::HashHelper blockHash);
-    void checkForParent(rocksdb::Transaction* blockTransaction, keto::asn1::HashHelper parentHash);
+    bool checkForParent(rocksdb::Transaction* blockTransaction, keto::asn1::HashHelper parentHash);
 };
 
 }

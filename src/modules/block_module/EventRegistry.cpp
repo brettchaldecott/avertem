@@ -85,6 +85,12 @@ void EventRegistry::registerEventHandlers() {
     keto::server_common::registerEventHandler (
             keto::server_common::Events::BLOCK_DB_REQUEST_BLOCK_SYNC_RETRY,
             &keto::block::EventRegistry::processRequestBlockSyncRetry);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::MISSING_BLOCK_DB_REQUEST_BLOCK_SYNC,
+            &keto::block::EventRegistry::processMissingBlockDbRequest);
+    keto::server_common::registerEventHandler (
+            keto::server_common::Events::MISSING_BLOCK_DB_RESPONSE_BLOCK_SYNC,
+            &keto::block::EventRegistry::processMissingBlockDbResponse);
 
     keto::server_common::registerEventHandler (
             keto::server_common::Events::GET_ACCOUNT_TANGLE,
@@ -141,6 +147,10 @@ void EventRegistry::deregisterEventHandlers() {
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::GET_ACCOUNT_TANGLE);
 
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::MISSING_BLOCK_DB_RESPONSE_BLOCK_SYNC);
+    keto::server_common::deregisterEventHandler (
+            keto::server_common::Events::MISSING_BLOCK_DB_REQUEST_BLOCK_SYNC);
     keto::server_common::deregisterEventHandler (
             keto::server_common::Events::BLOCK_DB_REQUEST_BLOCK_SYNC_RETRY);
     keto::server_common::deregisterEventHandler (
@@ -245,6 +255,15 @@ keto::event::Event EventRegistry::processBlockSyncResponse(const keto::event::Ev
 keto::event::Event EventRegistry::processRequestBlockSyncRetry(const keto::event::Event& event) {
     return BlockService::getInstance()->processRequestBlockSyncRetry(event);
 }
+
+keto::event::Event EventRegistry::processMissingBlockDbRequest(const keto::event::Event& event) {
+    return BlockService::getInstance()->processMissingBlockDbRequest(event);
+}
+
+keto::event::Event EventRegistry::processMissingBlockDbResponse(const keto::event::Event& event) {
+    return BlockService::getInstance()->processMissingBlockDbResponse(event);
+}
+
 
 keto::event::Event EventRegistry::getAccountBlockTangle(const keto::event::Event& event) {
     return BlockService::getInstance()->getAccountBlockTangle(event);

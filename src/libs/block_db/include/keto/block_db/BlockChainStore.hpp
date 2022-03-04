@@ -27,6 +27,7 @@
 #include "keto/block_db/BlockChain.hpp"
 #include "keto/block_db/SignedBlockBuilder.hpp"
 #include "keto/block_db/BlockChainCallback.hpp"
+#include "keto/block_db/BlockWriteResponse.hpp"
 #include "keto/transaction_common/TransactionMessageHelper.hpp"
 
 #include "keto/obfuscate/MetaString.hpp"
@@ -59,11 +60,12 @@ public:
     void load();
     bool requireGenesis();
     void applyDirtyTransaction(keto::transaction_common::TransactionMessageHelperPtr& transactionMessageHelperPtr, const BlockChainCallback& callback);
-    bool writeBlock(const SignedBlockBuilderPtr& signedBlock, const BlockChainCallback& callback);
-    bool writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlock, const BlockChainCallback& callback);
+    BlockWriteResponsePtr writeBlock(const SignedBlockBuilderPtr& signedBlock, const BlockChainCallback& callback);
+    BlockWriteResponsePtr writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlock, const BlockChainCallback& callback);
     std::vector<keto::asn1::HashHelper> getLastBlockHashs();
     bool requestBlocks(const std::vector<keto::asn1::HashHelper>& tangledHashes, keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage);
-    bool processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage, const BlockChainCallback& callback);
+    bool requestBlocksByHash(const std::vector<keto::asn1::HashHelper>& hashes, keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage);
+    BlockWriteResponsePtr processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage, const BlockChainCallback& callback);
     bool processProducerEnding(const keto::block_db::SignedBlockWrapperMessageProtoHelper& signedBlockWrapperMessageProtoHelper);
 
     // tangle methods

@@ -52,6 +52,8 @@ public:
     static keto::event::Event requestBlockSync(const keto::event::Event& event);
     static keto::event::Event processBlockSyncResponse(const keto::event::Event& event);
     static keto::event::Event processRequestBlockSyncRetry(const keto::event::Event& event);
+    static keto::event::Event processMissingBlockDbRequest(const keto::event::Event& event);
+    static keto::event::Event processMissingBlockDbResponse(const keto::event::Event& event);
 
     static keto::event::Event getAccountBlockTangle(const keto::event::Event& event);
 

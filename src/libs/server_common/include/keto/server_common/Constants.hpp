@@ -74,6 +74,8 @@ public:
         static const char* TRANSACTION_PROCESSED;
         static const char* BLOCK;
         static const char* BLOCK_PROCESSED;
+        static const char* MISSING_BLOCK_SYNC_REQUEST;
+        static const char* MISSING_BLOCK_SYNC_RESPONSE;
         static const char* BLOCK_REQUEST;
         static const char* BLOCK_SYNC_REQUEST;
         static const char* BLOCK_SYNC_RESPONSE;

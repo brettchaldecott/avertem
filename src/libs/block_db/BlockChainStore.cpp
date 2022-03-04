@@ -85,16 +85,16 @@ void BlockChainStore::applyDirtyTransaction(keto::transaction_common::Transactio
     return this->masterChain->applyDirtyTransaction(transactionMessageHelperPtr, callback);
 }
 
-bool BlockChainStore::writeBlock(const SignedBlockBuilderPtr& signedBlock, const BlockChainCallback& callback) {
+BlockWriteResponsePtr BlockChainStore::writeBlock(const SignedBlockBuilderPtr& signedBlock, const BlockChainCallback& callback) {
     std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     return this->masterChain->writeBlock(signedBlock,callback);
 }
 
-bool BlockChainStore::writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlock, const BlockChainCallback& callback) {
+BlockWriteResponsePtr BlockChainStore::writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlock, const BlockChainCallback& callback) {
     std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (!masterChain) {
         //KETO_LOG_DEBUG << "The block chain has not been initialized yet, ignore new blocks";
-        return false;
+        return BlockWriteResponsePtr();
     }
     return this->masterChain->writeBlock(signedBlock,callback);
 }
@@ -130,7 +130,15 @@ bool BlockChainStore::requestBlocks(const std::vector<keto::asn1::HashHelper>& t
     return this->masterChain->requestBlocks(hashes,signedBlockBatchMessage);
 }
 
-bool BlockChainStore::processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage, const BlockChainCallback& callback) {
+bool BlockChainStore::requestBlocksByHash(const std::vector<keto::asn1::HashHelper>& hashes, keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage) {
+    if (!masterChain) {
+        BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());
+    }
+
+    return this->masterChain->requestBlocksByHash(hashes,signedBlockBatchMessage);
+}
+
+BlockWriteResponsePtr BlockChainStore::processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage, const BlockChainCallback& callback) {
     std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     if (!masterChain) {
         BOOST_THROW_EXCEPTION(keto::block_db::ChainNotInitializedException());

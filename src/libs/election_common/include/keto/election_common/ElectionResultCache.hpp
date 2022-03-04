@@ -15,6 +15,7 @@
 
 #include "keto/asn1/HashHelper.hpp"
 #include "keto/software_consensus/ProtocolHeartbeatMessageHelper.hpp"
+#include "keto/election_common/ElectionPublishTangleAccountProtoHelper.hpp"
 
 namespace keto {
 namespace election_common {
@@ -34,13 +35,15 @@ public:
     virtual ~ElectionResultCache();
 
     void heartBeat(const keto::software_consensus::ProtocolHeartbeatMessageHelper& protocolHeartbeatMessageHelper);
-    bool containsPublishAccount(const keto::asn1::HashHelper& hashHelper);
+    bool containsPublishAccount(const keto::election_common::ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper);
     bool containsConfirmationAccount(const keto::asn1::HashHelper& hashHelper);
 
 private:
     std::mutex classMutex;
-    std::set<std::vector<uint8_t>> publishCache;
+    std::vector<keto::election_common::ElectionPublishTangleAccountProtoHelper> publishCache;
     std::set<std::vector<uint8_t>> confirmationCache;
+
+    bool compareVectorHashes(const std::vector<keto::asn1::HashHelper>& lhs, const std::vector<keto::asn1::HashHelper>& rhs);
 };
 
 }

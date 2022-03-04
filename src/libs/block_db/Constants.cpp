@@ -20,6 +20,7 @@ const char* Constants::BLOCKS_INDEX = "blocks";
 const char* Constants::TRANSACTIONS_INDEX = "transactions";
 const char* Constants::ACCOUNTS_INDEX = "accounts";
 const char* Constants::CHILD_INDEX = "childs";
+const char* Constants::PARENT_INDEX = "parents";
 const char* Constants::NESTED_INDEX = "nested";
 
 // is the initial block
@@ -35,7 +36,7 @@ const char* Constants::BLOCK_COUNT     = "BLOCK_COUNT";
 
 const std::vector<std::string> Constants::DB_LIST = 
     {Constants::BLOCK_META_INDEX, Constants::BLOCKS_INDEX, Constants::TRANSACTIONS_INDEX, Constants::ACCOUNTS_INDEX,
-    Constants::CHILD_INDEX,Constants::NESTED_INDEX};
+     Constants::CHILD_INDEX,Constants::PARENT_INDEX,Constants::NESTED_INDEX};
 
 const int Constants::MAX_BLOCK_REQUEST = 100;
 

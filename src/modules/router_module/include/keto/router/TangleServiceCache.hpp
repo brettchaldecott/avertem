@@ -55,11 +55,11 @@ public:
     };
     typedef std::shared_ptr<Tangle> TanglePtr;
 
-    class AccountTangle {
+    class TangleWindow {
     public:
-        AccountTangle(const keto::election_common::ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper);
-        AccountTangle(const AccountTangle& accountTangle) = delete;
-        virtual ~AccountTangle();
+        TangleWindow(const keto::election_common::ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper);
+        TangleWindow(const TangleWindow& tangleWindow) = delete;
+        virtual ~TangleWindow();
 
         keto::asn1::HashHelper getFirstTangleHash();
         keto::asn1::HashHelper getAccountHash();
@@ -69,11 +69,33 @@ public:
         bool isGrowing();
         keto::election_common::ElectionPublishTangleAccountProtoHelperPtr getElectionPublishTangleAccountProtoHelper();
 
+        bool compareWindow(const keto::election_common::ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper);
+
     private:
         keto::asn1::HashHelper accountHash;
         bool growing;
         std::vector<TanglePtr> tangleList;
         std::map<std::string,TanglePtr> tangleMap;
+    };
+    typedef std::shared_ptr<TangleWindow> TangleWindowPtr;
+
+    class AccountTangle {
+    public:
+        AccountTangle(const keto::election_common::ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper);
+        AccountTangle(const AccountTangle& accountTangle) = delete;
+        virtual ~AccountTangle();
+
+        void addElectionResults(const keto::election_common::ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper);
+        keto::asn1::HashHelper getAccountHash();
+        bool containsTangle(const keto::asn1::HashHelper& tangle);
+        TanglePtr getTangle(const keto::asn1::HashHelper& tangle);
+        std::vector<keto::asn1::HashHelper> getTangles();
+        bool isGrowing();
+        std::vector<keto::election_common::ElectionPublishTangleAccountProtoHelperPtr> getElectionPublishTangleAccountProtoHelper();
+
+    private:
+        keto::asn1::HashHelper accountHash;
+        std::vector<TangleWindowPtr> tangleWindowList;
 
     };
     typedef std::shared_ptr<AccountTangle> AccountTanglePtr;
@@ -102,6 +124,7 @@ public:
 private:
     std::mutex classMutex;
     bool activeSession;
+    time_t confirmedTime;
     std::map<std::string,AccountTanglePtr> sessionAccounts;
     std::map<std::string,AccountTanglePtr> nextSessionAccounts;
 

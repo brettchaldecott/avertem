@@ -164,6 +164,8 @@ private:
     void handleClientNetworkComplete(const std::string& command, const std::string& payload);
     void handleBlockPush(const std::string& command, const std::string& payload);
     void handleBlockSyncResponse(const std::string& command, const std::string& payload);
+    void handleMissingBlockSyncRequest(const std::string& command, const std::string& payload);
+    void handleMissingBlockSyncResponse(const std::string& command, const std::string& payload);
     void handleProtocolCheckResponse(const std::string& command, const std::string& payload);
     void handleElectionRequest(const std::string& command, const std::string& payload);
     void handleElectionResponse(const std::string& command, const std::string& payload);

@@ -12,6 +12,8 @@
 #include "keto/block/Exception.hpp"
 #include "keto/block/BlockProducer.hpp"
 
+#include "keto/transaction_common/MessageWrapperResponseHelper.hpp"
+
 #include "keto/block_db/BlockChainStore.hpp"
 #include "keto/block_db/SignedBlockBatchRequestProtoHelper.hpp"
 
@@ -112,7 +114,7 @@ keto::proto::SignedBlockBatchMessage  BlockSyncManager::requestBlocks(const keto
     // pull the block sync information
     keto::block_db::SignedBlockBatchRequestProtoHelper signedBlockBatchRequestProtoHelper(signedBlockBatchRequest);
     std::vector<keto::asn1::HashHelper> tangledHashes;
-    //KETO_LOG_DEBUG<< "[BlockSyncManager::requestBlocks]" << " Request blocks : " << signedBlockBatchRequestProtoHelper.hashCount();
+    KETO_LOG_INFO << "[BlockSyncManager::requestBlocks]" << " Request blocks : " << signedBlockBatchRequestProtoHelper.hashCount();
     for (int index = 0; index < signedBlockBatchRequestProtoHelper.hashCount(); index++) {
         KETO_LOG_INFO << "[BlockSyncManager::requestBlocks]" << " Request block sync for the following block  : " <<
             signedBlockBatchRequestProtoHelper.getHash(index).getHash(keto::common::HEX);
@@ -137,13 +139,14 @@ keto::proto::SignedBlockBatchMessage  BlockSyncManager::requestBlocks(const keto
 
 keto::proto::MessageWrapperResponse  BlockSyncManager::processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage) {
     keto::proto::MessageWrapperResponse response;
-    bool blockWriteResponse = false;
+    keto::block_db::BlockWriteResponsePtr blockWriteResponsePtr;
     {
         std::unique_lock<std::mutex> uniqueLock(this->classMutex);
-        blockWriteResponse = keto::block_db::BlockChainStore::getInstance()->processBlockSyncResponse(signedBlockBatchMessage,
+        blockWriteResponsePtr = keto::block_db::BlockChainStore::getInstance()->processBlockSyncResponse(signedBlockBatchMessage,
                                                                                  BlockChainCallbackImpl());
+
     }
-    if (blockWriteResponse && !signedBlockBatchMessage.partial_result()) {
+    if (blockWriteResponsePtr->isSuccess() && !signedBlockBatchMessage.partial_result()) {
         response.set_result("complete");
         {
             std::unique_lock<std::mutex> uniqueLock(this->classMutex);
@@ -160,7 +163,16 @@ keto::proto::MessageWrapperResponse  BlockSyncManager::processBlockSyncResponse(
             BlockProducer::getInstance()->activateWaitingBlockProducer();
             notifyPeers();
         }
-
+    } else if (!blockWriteResponsePtr->isSuccess()) {
+        keto::proto::MessageWrapperResponse response;
+        response.set_success(false);
+        response.set_result("blocks are missing sync required");
+        keto::proto::SignedBlockBatchRequest signedBlockBatchRequest =
+                (keto::proto::SignedBlockBatchRequest)*blockWriteResponsePtr->getSignedBlockBatchRequest();
+        KETO_LOG_INFO << "[BlockService::persistBlockMessage] Chain out of sync pulling missing blocks from sender : " <<
+        signedBlockBatchRequest.tangle_hashes_size();
+        response.set_msg(signedBlockBatchRequest.SerializeAsString());
+        return response;
     } else if (signedBlockBatchMessage.partial_result()) {
         KETO_LOG_INFO << "[BlockSyncManager::processBlockSyncResponse] Server is not in sync, will need to back off.";
         response.set_result("applied");
@@ -187,6 +199,96 @@ BlockSyncManager::processRequestBlockSyncRetry() {
     // reschedule to run in a minutes time
     this->startTime = time(0);
     this->stateCondition.notify_all();
+}
+
+keto::proto::SignedBlockBatchMessage  BlockSyncManager::processMissingBlockDbRequest(const keto::proto::SignedBlockBatchRequest& signedBlockBatchRequest) {
+    //std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+    KETO_LOG_INFO << "[BlockSyncManager::processMissingBlockDbRequest] process the missing block db request";
+    if (this->getStatus() == INIT && BlockProducer::getInstance()->getState() != BlockProducer::State::block_producer) {
+        KETO_LOG_DEBUG << "[BlockSyncManager::requestBlocks] This node is currently not unsyncronized and cannot provide data";
+        BOOST_THROW_EXCEPTION(keto::block::UnsyncedStateCannotProvideDate());
+    }
+
+    // pull the block sync information
+    keto::block_db::SignedBlockBatchRequestProtoHelper signedBlockBatchRequestProtoHelper(signedBlockBatchRequest);
+    std::vector<keto::asn1::HashHelper> blockHashes;
+    KETO_LOG_INFO<< "[BlockSyncManager::processMissingBlockDbRequest]" << " Request blocks : " << signedBlockBatchRequestProtoHelper.hashCount();
+    for (int index = 0; index < signedBlockBatchRequestProtoHelper.hashCount(); index++) {
+        KETO_LOG_INFO << "[BlockSyncManager::processMissingBlockDbRequest]" << " Request block sync for the following block  : " <<
+        signedBlockBatchRequestProtoHelper.getHash(index).getHash(keto::common::HEX);
+        blockHashes.push_back(signedBlockBatchRequestProtoHelper.getHash(index));
+    }
+
+    try {
+        keto::proto::SignedBlockBatchMessage signedBlockBatchMessage;
+        signedBlockBatchMessage.set_partial_result(false);
+        if (!keto::block_db::BlockChainStore::getInstance()->requestBlocksByHash(blockHashes,signedBlockBatchMessage)) {
+            KETO_LOG_INFO << "A partial result was found and we need to force a resync";
+            signedBlockBatchMessage.set_partial_result(true);
+            this->forceResync();
+        }
+        return signedBlockBatchMessage;
+    } catch (...) {
+        KETO_LOG_INFO << "Unexpected exception force the resync";
+        this->forceResync();
+        throw;
+    }
+}
+
+keto::proto::MessageWrapperResponse  BlockSyncManager::processMissingBlockDbResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage) {
+    keto::proto::MessageWrapperResponse response;
+    KETO_LOG_INFO << "[BlockSyncManager::processMissingBlockDbResponse] Process the missing block response";
+    keto::block_db::BlockWriteResponsePtr blockWriteResponsePtr;
+    {
+        std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+        blockWriteResponsePtr = keto::block_db::BlockChainStore::getInstance()->processBlockSyncResponse(signedBlockBatchMessage,
+                                                                                                      BlockChainCallbackImpl());
+    }
+    if (blockWriteResponsePtr->isSuccess() && !signedBlockBatchMessage.partial_result()) {
+        response.set_result("complete");
+        {
+            std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+            this->startTime = 0;
+            this->status = COMPLETE;
+            this->stateCondition.notify_all();
+        }
+        KETO_LOG_INFO << "[BlockSyncManager::processMissingBlockDbResponse]" << " ##########################################################################";
+        KETO_LOG_INFO << "[BlockSyncManager::processMissingBlockDbResponse]" << " ######## Synchronization via missing block has now been completed ########";
+        KETO_LOG_INFO << "[BlockSyncManager::processMissingBlockDbResponse]" << " ##########################################################################";
+        // as this node is not enabled we will not notify our
+        // peers of the fact that the synchronization has been completed.
+        if (this->isEnabled()) {
+            BlockProducer::getInstance()->activateWaitingBlockProducer();
+            notifyPeers();
+        }
+
+    } else if (!blockWriteResponsePtr->isSuccess()) {
+        keto::transaction_common::MessageWrapperResponseHelper messageWrapperResponseHelper;
+        messageWrapperResponseHelper.setSuccess(false);
+        messageWrapperResponseHelper.setResult("blocks are missing sync required");
+        keto::proto::SignedBlockBatchRequest signedBlockBatchRequest =
+                (keto::proto::SignedBlockBatchRequest)*blockWriteResponsePtr->getSignedBlockBatchRequest();
+        messageWrapperResponseHelper.setBinaryMsg(signedBlockBatchRequest.SerializeAsString());
+        KETO_LOG_INFO << "[BlockSyncManager::processMissingBlockDbResponse] Chain out of sync pulling missing blocks from sender : " <<
+        signedBlockBatchRequest.tangle_hashes_size();
+        return (keto::proto::MessageWrapperResponse)messageWrapperResponseHelper;
+    } else if (signedBlockBatchMessage.partial_result()) {
+        KETO_LOG_INFO << "[BlockSyncManager::processMissingBlockDbResponse] Server is not in sync, will need to back off.";
+        response.set_result("applied");
+        scheduledDelayRetry();
+    } else {
+        KETO_LOG_INFO << "[BlockSyncManager::processMissingBlockDbResponse] finished applying a block need to trigger the next request.";
+        response.set_result("applied");
+        {
+            std::unique_lock<std::mutex> uniqueLock(this->classMutex);
+            this->startTime = 0;
+            this->stateCondition.notify_all();
+        }
+    }
+    response.set_success(true);
+
+    return response;
+
 }
 
 void

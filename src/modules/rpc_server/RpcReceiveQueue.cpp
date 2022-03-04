@@ -14,6 +14,7 @@
 #include "keto/rpc_protocol/PeerResponseHelper.hpp"
 #include "keto/router_utils/RpcPeerHelper.hpp"
 #include "keto/transaction_common/MessageWrapperProtoHelper.hpp"
+#include "keto/transaction_common/MessageWrapperResponseHelper.hpp"
 #include "keto/election_common/PublishedElectionInformationHelper.hpp"
 #include "keto/election_common/ElectionPeerMessageProtoHelper.hpp"
 #include "keto/election_common/ElectionResultMessageProtoHelper.hpp"
@@ -188,6 +189,9 @@ void RpcReceiveQueue::processEntry(const RpcReadQueueEntryPtr& entry) {
         //KETO_LOG_INFO << "[RpcServer][" << getAccount() << "] process the command : " << command;
         if (command.compare(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST) == 0) {
             handleBlockSyncRequest(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_REQUEST,payload);
+        } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::MISSING_BLOCK_SYNC_REQUEST) == 0) {
+            // transaction bound method
+            handleMissingBlockSyncRequest(command, payload);
         } else {
             keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
             if (command == keto::server_common::Constants::RPC_COMMANDS::CLOSE) {
@@ -265,6 +269,8 @@ void RpcReceiveQueue::processEntry(const RpcReadQueueEntryPtr& entry) {
                 } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::RESPONSE_NETWORK_STATUS) ==
                            0) {
                     handleResponseNetworkStatus(command, payload);
+                } else if (command.compare(keto::server_common::Constants::RPC_COMMANDS::MISSING_BLOCK_SYNC_RESPONSE) == 0) {
+                    handleMissingBlockSyncResponse(command, payload);
                 }
             }
             transactionPtr->commit();
@@ -580,10 +586,18 @@ void RpcReceiveQueue::handleBlockPush(const std::string& command, const std::str
     signedBlockWrapperMessage.ParseFromString(keto::server_common::VectorUtils().copyVectorToString(
             Botan::hex_decode(payload)));
     KETO_LOG_INFO << "[RpcServer][" << getAccount() << "][handleBlockPush] persist bock";
-    keto::proto::MessageWrapperResponse messageWrapperResponse =
+    keto::transaction_common::MessageWrapperResponseHelper messageWrapperResponseHelper(
             keto::server_common::fromEvent<keto::proto::MessageWrapperResponse>(
                     keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SignedBlockWrapperMessage>(
-                            keto::server_common::Events::BLOCK_PERSIST_MESSAGE_SERVER,signedBlockWrapperMessage)));
+                            keto::server_common::Events::BLOCK_PERSIST_MESSAGE_SERVER,signedBlockWrapperMessage))));
+    if (!messageWrapperResponseHelper.isSuccess() && !messageWrapperResponseHelper.getMsg().empty()) {
+        keto::proto::SignedBlockBatchRequest signedBlockBatchRequest;
+        signedBlockBatchRequest.ParseFromString(messageWrapperResponseHelper.getBinaryMsg());
+        KETO_LOG_INFO << "[RpcReceiveQueue::handleBlockPush] Chain is out of sync test serialization :" <<
+            signedBlockBatchRequest.tangle_hashes_size();
+        this->rpcSendQueuePtr->pushEntry(keto::server_common::Constants::RPC_COMMANDS::MISSING_BLOCK_SYNC_REQUEST,
+                                         messageWrapperResponseHelper.getMsg());
+    }
     //KETO_LOG_DEBUG << "[RpcServer][" << getAccount() << "][handleBlockPush] pushed the block";
 
 }
@@ -604,6 +618,40 @@ void RpcReceiveQueue::handleBlockSyncResponse(const std::string& command, const 
     std::string result = messageWrapperResponse.SerializeAsString();
     this->rpcSendQueuePtr->pushEntry(keto::server_common::Constants::RPC_COMMANDS::BLOCK_SYNC_PROCESSED,
                                      Botan::hex_encode((uint8_t*)result.data(),result.size(),true));
+}
+
+void RpcReceiveQueue::handleMissingBlockSyncRequest(const std::string& command, const std::string& payload) {
+    keto::proto::SignedBlockBatchRequest signedBlockBatchRequest;
+    std::string rpcVector = keto::server_common::VectorUtils().copyVectorToString(
+            Botan::hex_decode(payload));
+    signedBlockBatchRequest.ParseFromString(rpcVector);
+
+    keto::proto::SignedBlockBatchMessage signedBlockBatchMessage;
+    signedBlockBatchMessage =
+            keto::server_common::fromEvent<keto::proto::SignedBlockBatchMessage>(
+                    keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SignedBlockBatchRequest>(
+                            keto::server_common::Events::MISSING_BLOCK_DB_REQUEST_BLOCK_SYNC,signedBlockBatchRequest)));
+
+    std::string result = signedBlockBatchMessage.SerializeAsString();
+    this->rpcSendQueuePtr->pushEntry(keto::server_common::Constants::RPC_COMMANDS::MISSING_BLOCK_SYNC_RESPONSE, Botan::hex_encode((uint8_t*)result.data(),result.size(),true));
+}
+
+void RpcReceiveQueue::handleMissingBlockSyncResponse(const std::string& command, const std::string& payload) {
+    keto::proto::SignedBlockBatchMessage signedBlockBatchMessage;
+    signedBlockBatchMessage.ParseFromString(keto::server_common::VectorUtils().copyVectorToString(
+            Botan::hex_decode(payload)));
+    if (signedBlockBatchMessage.partial_result()) {
+        setClientActive(false);
+    }
+    keto::transaction_common::MessageWrapperResponseHelper messageWrapperResponseHelper(
+            keto::server_common::fromEvent<keto::proto::MessageWrapperResponse>(
+                    keto::server_common::processEvent(keto::server_common::toEvent<keto::proto::SignedBlockBatchMessage>(
+                            keto::server_common::Events::MISSING_BLOCK_DB_RESPONSE_BLOCK_SYNC,signedBlockBatchMessage))));
+
+    if (!messageWrapperResponseHelper.isSuccess() && !messageWrapperResponseHelper.getMsg().empty()) {
+        this->rpcSendQueuePtr->pushEntry(keto::server_common::Constants::RPC_COMMANDS::MISSING_BLOCK_SYNC_REQUEST,
+                                         messageWrapperResponseHelper.getMsg());
+    }
 }
 
 void RpcReceiveQueue::handleProtocolCheckResponse(const std::string& command, const std::string& payload) {
@@ -663,7 +711,7 @@ void RpcReceiveQueue::handleElectionPublish(const std::string& command, const st
                     Botan::hex_decode(message)));
 
     // prevent echo propergation at the boundary
-    if (this->electionResultCache.containsPublishAccount(electionPublishTangleAccountProtoHelper.getAccount())) {
+    if (this->electionResultCache.containsPublishAccount(electionPublishTangleAccountProtoHelper)) {
         //KETO_LOG_DEBUG << "[handleElectionPublish] handle the election";
         return;
     }

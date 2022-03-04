@@ -69,7 +69,7 @@ public:
 
     class Window {
     public:
-        Window(const std::vector<keto::asn1::HashHelper>& tangles);
+        Window(bool growing, const std::vector<keto::asn1::HashHelper>& tangles);
         Window(const Window& orig) = delete;
         virtual ~Window();
 
@@ -89,7 +89,7 @@ public:
         WindowManager(const WindowManager& orig) = delete;
         virtual ~WindowManager();
 
-        void addWindow(const std::vector<keto::asn1::HashHelper>& tangles);
+        void addWindow(bool growing, const std::vector<keto::asn1::HashHelper>& tangles);
         bool hasNewWindows();
         std::vector<keto::asn1::HashHelper> getAllTangles();
         void mergeActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles);
@@ -98,6 +98,7 @@ public:
         void clear();
 
         std::vector<WindowPtr> getWindows();
+        bool isGrowing();
 
     private:
         std::vector<WindowPtr> newWindow;
@@ -129,9 +130,10 @@ private:
     std::map<std::vector<uint8_t>,ElectorPtr> accountElectionResult;
     int responseCount;
     WindowManagerPtr windowManagerPtr;
+    std::default_random_engine electionRandomEngine;
     //std::vector<keto::asn1::HashHelper> nextWindow;
     //std::vector<keto::asn1::HashHelper> currentWindow;
-    std::set<std::vector<uint8_t>> electedAccounts;
+    std::vector<keto::asn1::HashHelper> electedAccounts;
 
     void invokeElection(const std::string& event, const std::string& type);
     void publishElection();
@@ -146,6 +148,7 @@ private:
                                                                    const std::string& datatype,
                                                                    const std::string& value);
 
+    bool checkElectedAccounts(std::vector<keto::asn1::HashHelper> electedAccounts, keto::asn1::HashHelper account);
 };
 
 

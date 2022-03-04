@@ -41,6 +41,7 @@
 #include "keto/software_consensus/ConsensusHashGenerator.hpp"
 
 #include "keto/election_common/ElectionPublishTangleAccountProtoHelper.hpp"
+#include "keto/election_common/PublishedElectionInformationHelper.hpp"
 #include "keto/election_common/ElectionConfirmationHelper.hpp"
 #include "keto/election_common/ElectionResultCache.hpp"
 #include "keto/server_common/StringUtils.hpp"
@@ -108,7 +109,7 @@ public:
     void setClientActive(bool clientActive);
     bool isActive();
     bool isRegistered();
-    bool containsPublishAccount(const keto::asn1::HashHelper& hashHelper);
+    bool containsPublishAccount(const keto::election_common::ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper);
     bool containsConfirmationAccount(const keto::asn1::HashHelper& hashHelper);
 
     void pushEntry(const std::string& command, const std::string& payload, const std::string& misc);
@@ -174,6 +175,8 @@ private:
     void handleRequestNetworkFeesResponse(const std::string& command, const std::string& payload);
     void closeResponse(const std::string& command, const std::string& payload);
     void handleBlockSyncResponse(const std::string& command, const std::string& payload);
+    void handleMissingBlockSyncRequest(const std::string& command, const std::string& payload);
+    void handleMissingBlockSyncResponse(const std::string& command, const std::string& payload);
     void handleProtocolCheckRequest(const std::string& command, const std::string& payload);
     void handleProtocolCheckAccept(const std::string& command, const std::string& payload);
     void handleProtocolHeartbeat(const std::string& command, const std::string& payload);

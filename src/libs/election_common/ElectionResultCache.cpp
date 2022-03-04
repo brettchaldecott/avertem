@@ -28,12 +28,17 @@ void ElectionResultCache::heartBeat(const keto::software_consensus::ProtocolHear
     }
 }
 
-bool ElectionResultCache::containsPublishAccount(const keto::asn1::HashHelper& hashHelper) {
+bool ElectionResultCache::containsPublishAccount(const keto::election_common::ElectionPublishTangleAccountProtoHelper& electionPublishTangleAccountProtoHelper) {
     std::lock_guard<std::mutex> guard(classMutex);
-    if (this->publishCache.count(hashHelper)) {
-        return true;
+    for (keto::election_common::ElectionPublishTangleAccountProtoHelper cacheEntry : publishCache) {
+        if (cacheEntry.getAccount() == electionPublishTangleAccountProtoHelper.getAccount()) {
+            if (compareVectorHashes(cacheEntry.getTangles(), electionPublishTangleAccountProtoHelper.getTangles())) {
+                return true;
+            }
+        }
     }
-    this->publishCache.insert(hashHelper);
+
+    this->publishCache.push_back(electionPublishTangleAccountProtoHelper);
     return false;
 }
 
@@ -44,6 +49,26 @@ bool ElectionResultCache::containsConfirmationAccount(const keto::asn1::HashHelp
     }
     this->confirmationCache.insert(hashHelper);
     return false;
+}
+
+
+bool ElectionResultCache::compareVectorHashes(const std::vector<keto::asn1::HashHelper>& lhs, const std::vector<keto::asn1::HashHelper>& rhs) {
+    if (lhs.size() != rhs.size()) {
+        return false;
+    }
+    for (keto::asn1::HashHelper lhsHash : lhs) {
+        bool found = false;
+        for (keto::asn1::HashHelper rhsHash : rhs) {
+            if (lhsHash == rhsHash) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            return false;
+        }
+    }
+    return true;
 }
 
 }

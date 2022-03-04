@@ -22,6 +22,7 @@
 #include "keto/block/BlockService.hpp"
 #include "keto/block_db/BlockChainStore.hpp"
 #include "keto/block_db/SignedBlockWrapperMessageProtoHelper.hpp"
+#include "keto/block_db/BlockWriteResponse.hpp"
 #include "keto/block_db/Exception.hpp"
 
 #include "keto/environment/EnvironmentManager.hpp"
@@ -47,6 +48,7 @@
 
 #include "keto/server_common/StatePersistanceManager.hpp"
 
+#include "keto/transaction_common/MessageWrapperResponseHelper.hpp"
 #include "keto/chain_query_common/BlockQueryProtoHelper.hpp"
 #include "keto/chain_query_common/BlockResultSetProtoHelper.hpp"
 #include "keto/chain_query_common/TransactionQueryProtoHelper.hpp"
@@ -164,20 +166,42 @@ keto::event::Event BlockService::persistBlockMessage(const keto::event::Event& e
 
         keto::block_db::SignedBlockWrapperMessageProtoHelper signedBlockWrapperMessageProtoHelper(
                 keto::server_common::fromEvent<keto::proto::SignedBlockWrapperMessage>(event));
-        if (keto::block_db::BlockChainStore::getInstance()->writeBlock(signedBlockWrapperMessageProtoHelper,
-                                                                       BlockChainCallbackImpl()) &&
-            !this->signedBlockWrapperCachePtr->checkCache(signedBlockWrapperMessageProtoHelper.getMessageHash())) {
-            BlockSyncManager::getInstance()->broadcastBlock(signedBlockWrapperMessageProtoHelper);
-            if (signedBlockWrapperMessageProtoHelper.getProducerEnding()) {
-                BlockProducer::getInstance()->processProducerEnding(signedBlockWrapperMessageProtoHelper);
+        keto::block_db::BlockWriteResponsePtr blockWriteResponsePtr = keto::block_db::BlockChainStore::getInstance()->writeBlock(signedBlockWrapperMessageProtoHelper,
+                                                                   BlockChainCallbackImpl());
+        if (!blockWriteResponsePtr) {
+            KETO_LOG_ERROR << "[BlockService::persistBlockMessage] Failed to persist block as chain not initied correctly";
+            BlockSyncManager::getInstance()->forceResync(time(0));
+            keto::transaction_common::MessageWrapperResponseHelper messageWrapperResponseHelper;
+            messageWrapperResponseHelper.setSuccess(false);
+            messageWrapperResponseHelper.setResult("out of sync");
+
+            return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(
+                    (keto::proto::MessageWrapperResponse)messageWrapperResponseHelper);
+        } else  if (blockWriteResponsePtr->isSuccess()) {
+            if (!this->signedBlockWrapperCachePtr->checkCache(signedBlockWrapperMessageProtoHelper.getMessageHash())) {
+                BlockSyncManager::getInstance()->broadcastBlock(signedBlockWrapperMessageProtoHelper);
+                if (signedBlockWrapperMessageProtoHelper.getProducerEnding()) {
+                    BlockProducer::getInstance()->processProducerEnding(signedBlockWrapperMessageProtoHelper);
+                }
             }
+            keto::transaction_common::MessageWrapperResponseHelper messageWrapperResponseHelper;
+            messageWrapperResponseHelper.setSuccess(true);
+            messageWrapperResponseHelper.setResult("persisted");
+
+            return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(
+                    (keto::proto::MessageWrapperResponse)messageWrapperResponseHelper);
         }
+        KETO_LOG_INFO << "[BlockService::persistBlockMessage] Chain out of sync pulling missing blocks from sender : " <<
+        blockWriteResponsePtr->getSignedBlockBatchRequest()->hashCount();
+        keto::transaction_common::MessageWrapperResponseHelper messageWrapperResponseHelper;
+        messageWrapperResponseHelper.setSuccess(false);
+        messageWrapperResponseHelper.setResult("blocks are missing sync required");
+        keto::proto::SignedBlockBatchRequest signedBlockBatchRequest =
+                (keto::proto::SignedBlockBatchRequest)*blockWriteResponsePtr->getSignedBlockBatchRequest();
+        messageWrapperResponseHelper.setBinaryMsg(signedBlockBatchRequest.SerializeAsString());
+        return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(
+                (keto::proto::MessageWrapperResponse)messageWrapperResponseHelper);
 
-        keto::proto::MessageWrapperResponse response;
-        response.set_success(true);
-        response.set_result("persisted");
-
-        return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
     } catch (keto::block_db::ParentHashIdentifierNotFoundException& ex) {
         KETO_LOG_ERROR << "[BlockService::persistBlockMessage] failed to persist the block : " << ex.what();
         KETO_LOG_ERROR << "[BlockService::persistBlockMessage] cause: " << boost::diagnostic_information(ex, true);
@@ -196,30 +220,53 @@ keto::event::Event BlockService::persistServerBlockMessage(const keto::event::Ev
     try {
         if (BlockSyncManager::getInstance()->getStatus() != BlockSyncManager::COMPLETE) {
             KETO_LOG_DEBUG << "[BlockService::persistBlockMessage]" << "Block sync is not complete ignore block.";
-            keto::proto::MessageWrapperResponse response;
-            response.set_success(true);
-            response.set_result("ignored");
+            keto::transaction_common::MessageWrapperResponseHelper messageWrapperResponseHelper;
+            messageWrapperResponseHelper.setSuccess(true);
+            messageWrapperResponseHelper.setResult("ignored");
 
-            return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
+            return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(
+                    (keto::proto::MessageWrapperResponse)messageWrapperResponseHelper);
         }
 
 
         keto::block_db::SignedBlockWrapperMessageProtoHelper signedBlockWrapperMessageProtoHelper(
                 keto::server_common::fromEvent<keto::proto::SignedBlockWrapperMessage>(event));
-        if (keto::block_db::BlockChainStore::getInstance()->writeBlock(signedBlockWrapperMessageProtoHelper,
-                                                                       BlockChainCallbackImpl()) &&
-            !this->signedBlockWrapperCachePtr->checkCache(signedBlockWrapperMessageProtoHelper.getMessageHash())) {
-            BlockSyncManager::getInstance()->broadcastBlock(signedBlockWrapperMessageProtoHelper);
-            if (signedBlockWrapperMessageProtoHelper.getProducerEnding()) {
-                BlockProducer::getInstance()->processProducerEnding(signedBlockWrapperMessageProtoHelper);
+        keto::block_db::BlockWriteResponsePtr blockWriteResponsePtr = keto::block_db::BlockChainStore::getInstance()->writeBlock(signedBlockWrapperMessageProtoHelper,
+                                                                                                                                 BlockChainCallbackImpl());
+        if (!blockWriteResponsePtr) {
+            KETO_LOG_ERROR << "[BlockService::persistBlockMessage] Failed to persist block as chain not initied correctly";
+            BlockSyncManager::getInstance()->forceResync(time(0));
+            keto::transaction_common::MessageWrapperResponseHelper messageWrapperResponseHelper;
+            messageWrapperResponseHelper.setSuccess(false);
+            messageWrapperResponseHelper.setResult("out of sync");
+
+            return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(
+                    (keto::proto::MessageWrapperResponse)messageWrapperResponseHelper);
+        } else  if (blockWriteResponsePtr->isSuccess()) {
+            if (!this->signedBlockWrapperCachePtr->checkCache(signedBlockWrapperMessageProtoHelper.getMessageHash())) {
+                BlockSyncManager::getInstance()->broadcastBlock(signedBlockWrapperMessageProtoHelper);
+                if (signedBlockWrapperMessageProtoHelper.getProducerEnding()) {
+                    BlockProducer::getInstance()->processProducerEnding(signedBlockWrapperMessageProtoHelper);
+                }
             }
+            keto::transaction_common::MessageWrapperResponseHelper messageWrapperResponseHelper;
+            messageWrapperResponseHelper.setSuccess(true);
+            messageWrapperResponseHelper.setResult("persisted");
+
+            return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(
+                    (keto::proto::MessageWrapperResponse)messageWrapperResponseHelper);
         }
+        KETO_LOG_INFO << "[BlockService::persistBlockMessage] Chain out of sync pulling missing blocks from sender: " <<
+            blockWriteResponsePtr->getSignedBlockBatchRequest()->hashCount();
+        keto::transaction_common::MessageWrapperResponseHelper messageWrapperResponseHelper;
+        messageWrapperResponseHelper.setSuccess(false);
+        messageWrapperResponseHelper.setResult("blocks are missing sync required");
+        keto::proto::SignedBlockBatchRequest signedBlockBatchRequest =
+                (keto::proto::SignedBlockBatchRequest)*blockWriteResponsePtr->getSignedBlockBatchRequest();
+        messageWrapperResponseHelper.setBinaryMsg(signedBlockBatchRequest.SerializeAsString());
+        return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(
+                (keto::proto::MessageWrapperResponse)messageWrapperResponseHelper);
 
-        keto::proto::MessageWrapperResponse response;
-        response.set_success(true);
-        response.set_result("persisted");
-
-        return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
     } catch (keto::block_db::ParentHashIdentifierNotFoundException& ex) {
         KETO_LOG_ERROR << "[BlockService::persistBlockMessage] failed to persist the block : " << ex.what();
         KETO_LOG_ERROR << "[BlockService::persistBlockMessage] cause: " << boost::diagnostic_information(ex, true);
@@ -319,6 +366,18 @@ keto::event::Event BlockService::processBlockSyncResponse(const keto::event::Eve
 keto::event::Event BlockService::processRequestBlockSyncRetry(const keto::event::Event& event) {
     BlockSyncManager::getInstance()->processRequestBlockSyncRetry();
     return event;
+}
+
+keto::event::Event BlockService::processMissingBlockDbRequest(const keto::event::Event& event) {
+    return keto::server_common::toEvent<keto::proto::SignedBlockBatchMessage>(
+            BlockSyncManager::getInstance()->processMissingBlockDbRequest(
+                    keto::server_common::fromEvent<keto::proto::SignedBlockBatchRequest>(event)));
+}
+
+keto::event::Event BlockService::processMissingBlockDbResponse(const keto::event::Event& event) {
+    return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(
+            BlockSyncManager::getInstance()->processMissingBlockDbResponse(
+                    keto::server_common::fromEvent<keto::proto::SignedBlockBatchMessage>(event)));
 }
 
 keto::event::Event BlockService::getAccountBlockTangle(const keto::event::Event& event) {

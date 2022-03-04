@@ -21,6 +21,7 @@ add_library( keto_transaction_common
             FeeInfoMsgProtoHelper.cpp
             include/keto/transaction_common/Constants.hpp
             TransactionTraceHelper.cpp
+            MessageWrapperResponseHelper.cpp
 
              ${HEADERS}
            )

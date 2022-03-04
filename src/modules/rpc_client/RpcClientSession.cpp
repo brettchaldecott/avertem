@@ -177,7 +177,7 @@ void RpcClientSession::electBlockProducerPublish(const keto::election_common::El
     if (!isRegistered()) {
         return;
     }
-    if (this->rpcClientProtocolPtr->getReceiveQueue()->containsPublishAccount(electionPublishTangleAccountProtoHelper.getAccount())) {
+    if (this->rpcClientProtocolPtr->getReceiveQueue()->containsPublishAccount(electionPublishTangleAccountProtoHelper)) {
         return;
     }
 

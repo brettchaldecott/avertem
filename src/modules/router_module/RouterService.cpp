@@ -195,7 +195,15 @@ void RouterService::processQueueEntry(const RouterService::RouteQueueEntryPtr& e
     }
     KETO_LOG_INFO << "[RouterService::processQueueEntry] Transaction is being retried : " << event->getRetryCount();
     keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
-    this->routeMessage(event->getEvent(),event->getRetryCount());
+
+    // reset the account hash we are routing to
+    keto::transaction_common::MessageWrapperProtoHelper messageWrapperProtoHelper =
+            keto::server_common::fromEvent<keto::proto::MessageWrapper>(event->getEvent());
+    keto::asn1::HashHelper currentAccountHash = messageWrapperProtoHelper.getAccountHash();
+    keto::transaction_common::TransactionProtoHelperPtr transactionProtoHelperPtr = messageWrapperProtoHelper.getTransaction();
+    messageWrapperProtoHelper.setAccountHash(transactionProtoHelperPtr->getActiveAccount());
+    messageWrapperProtoHelper.setOperation(keto::proto::MessageOperation::MESSAGE_INIT);
+    this->routeMessage(keto::server_common::toEvent<keto::proto::MessageWrapper>(messageWrapperProtoHelper),event->getRetryCount());
 }
 
 keto::event::Event RouterService::queueMessage(const keto::event::Event& event) {
@@ -255,18 +263,35 @@ keto::event::Event RouterService::routeMessage(const keto::event::Event& event, 
                               << messageWrapperProtoHelper.getSourceAccountHash().getHash(
                                       keto::common::StringEncoding::HEX) << "]";
             }
+        } else {
+            KETO_LOG_INFO << "[RouterService::routeMessage] The account [" << messageWrapperProtoHelper.getAccountHash().getHash(
+                    keto::common::StringEncoding::HEX) << "] was found in tangle cache.";
         }
 
         // look to see if the message account is for this server
         if (messageWrapperProtoHelper.getAccountHash() ==
             keto::server_common::ServerInfo::getInstance()->getAccountHash()) {
-
-            routeLocal(messageWrapperProtoHelper);
-            // the result of the local routing
-            keto::proto::MessageWrapperResponse response;
-            response.set_success(true);
-            response.set_result("local");
-            return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
+            //try {
+                routeLocal(messageWrapperProtoHelper);
+                // the result of the local routing
+                keto::proto::MessageWrapperResponse response;
+                response.set_success(true);
+                response.set_result("local");
+                return keto::server_common::toEvent<keto::proto::MessageWrapperResponse>(response);
+            /*} catch (keto::common::Exception &ex) {
+                KETO_LOG_INFO << "[RouterService::routeMessage] Cannot route locally will because: "
+                << boost::diagnostic_information(ex, true) << std::endl
+                << boost::diagnostic_information_what(ex, true) << std::endl <<  " : will re-route";
+            } catch (boost::exception &ex) {
+                KETO_LOG_INFO << "[RouterService::routeMessage] Cannot route locally will because:"
+                << boost::diagnostic_information_what(ex, true) << std::endl <<  "  : will re-route";
+            } catch (std::exception &ex) {
+                KETO_LOG_INFO << "[RouterService::routeMessage] Cannot route locally will because:" << ex.what()
+                << std::endl <<  "  : will re-route";
+            } catch (...) {
+                KETO_LOG_INFO << "[RouterService::routeMessage] Cannot route locally will because: unknown error"
+                << std::endl <<  "  : will re-route";
+            }*/
         }
 
         // check if we can rout to a peer

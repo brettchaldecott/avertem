@@ -52,6 +52,10 @@ public:
     notifyPeers(Status status);
     void
     processRequestBlockSyncRetry();
+    keto::proto::SignedBlockBatchMessage
+    processMissingBlockDbRequest(const keto::proto::SignedBlockBatchRequest& signedBlockBatchRequest);
+    keto::proto::MessageWrapperResponse
+    processMissingBlockDbResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage);
     void
     scheduledDelayRetry();
     bool

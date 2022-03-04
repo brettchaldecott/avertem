@@ -119,18 +119,26 @@ void BlockChain::MasterTangleManager::addTangle(const keto::asn1::HashHelper& ta
 }
 
 std::vector<keto::asn1::HashHelper> BlockChain::MasterTangleManager::getActiveTangles() {
+    KETO_LOG_INFO << "[BlockChain::MasterTangleManager::getActiveTangles] the active tangles [" << this->activeTangleList.size()
+    << "]";
     return this->activeTangleList;
 }
 
 void BlockChain::MasterTangleManager::clearActiveTangles() {
+    KETO_LOG_INFO << "[BlockChain::MasterTangleManager::clearActiveTangles] clear the tangles [" << this->activeTangleList.size()
+    << "]";
     this->activeTangles.clear();
     this->activeTangleList.clear();
 }
 
 void BlockChain::MasterTangleManager::setActiveTangles(const std::vector<keto::asn1::HashHelper>& tangles) {
+    KETO_LOG_INFO << "[BlockChain::MasterTangleManager::setActiveTangles] new tangles [" << tangles.size()
+    << "][" << this->activeTangleList.size() << "]";
     for (keto::asn1::HashHelper tangle : tangles) {
         addTangle(tangle);
     }
+    KETO_LOG_INFO << "[BlockChain::MasterTangleManager::setActiveTangles] the active tangles [" << this->activeTangleList.size()
+    << "]";
 }
 
 keto::asn1::HashHelper BlockChain::MasterTangleManager::getParentHash() {
@@ -259,6 +267,33 @@ keto::asn1::HashHelper BlockChain::getParentHash(const keto::asn1::HashHelper& t
     return transactionMeta.block_hash();
 }
 
+keto::asn1::HashHelper BlockChain::getBlockParentHash(const keto::asn1::HashHelper& blockHash) {
+    BlockResourcePtr resource = blockResourceManagerPtr->getResource();
+    rocksdb::Transaction* parentTransaction = resource->getTransaction(Constants::PARENT_INDEX);
+
+    rocksdb::ReadOptions readOptions;
+    keto::rocks_db::SliceHelper keyHelper((const std::vector<uint8_t>)blockHash);
+    std::string value;
+    auto status = parentTransaction->Get(readOptions,keyHelper,&value);
+    if (rocksdb::Status::OK() != status || rocksdb::Status::NotFound() == status) {
+        return keto::asn1::HashHelper();
+    }
+
+    return keto::asn1::HashHelper(value);
+}
+
+keto::asn1::HashHelper BlockChain::recurseParentBlockParentHash(const keto::asn1::HashHelper& blockHash, int max) {
+    keto::asn1::HashHelper result = blockHash;
+    for (int count = 0; count < max; count++) {
+        keto::asn1::HashHelper parent = getBlockParentHash(result);
+        if (parent.empty()) {
+            break;
+        }
+        result = parent;
+    }
+    return result;
+}
+
 BlockChainMetaPtr BlockChain::getBlockChainMeta() {
     return this->blockChainMetaPtr;
 }
@@ -291,34 +326,35 @@ BlockChain::BlockChain(std::shared_ptr<keto::rocks_db::DBManager> dbManagerPtr,
     this->blockChainWriteCachePtr = BlockChain::BlockChainWriteCachePtr(new BlockChainWriteCache());
 }
 
-bool BlockChain::writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage, const BlockChainCallback& callback) {
+BlockWriteResponsePtr BlockChain::writeBlock(const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage, const BlockChainCallback& callback) {
     //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     SignedBlockWrapperMessageProtoHelper signedBlockWrapperMessageProtoHelper(signedBlockWrapperMessage);
     
-    bool result = true;
+    BlockWriteResponsePtr blockWriteResponsePtr = BlockWriteResponsePtr(new BlockWriteResponse());
     for (int index = 0; index < signedBlockWrapperMessageProtoHelper.size(); index++) {
         SignedBlockWrapperProtoHelperPtr signedBlockWrapperProtoHelperPtr =
                 signedBlockWrapperMessageProtoHelper.getSignedBlockWrapper(index);
         KETO_LOG_INFO << "[BlockChain::writeBlock] write a block : " <<
             signedBlockWrapperProtoHelperPtr->getHash().getHash(keto::common::StringEncoding::HEX);
         // write the block and broadcast it if the block was written
-        if (!writeBlock(signedBlockWrapperProtoHelperPtr, callback)) {
-            result = false;
+        BlockWriteResponsePtr writeResponse = writeBlock(signedBlockWrapperProtoHelperPtr, callback);
+        if (!writeResponse->isSuccess()) {
+            blockWriteResponsePtr->addSignedBlockBatchRequest(writeResponse->getSignedBlockBatchRequest());
         }
     }
-    return result;
+    return blockWriteResponsePtr;
 }
 
-bool BlockChain::writeBlock(const SignedBlockWrapperProtoHelperPtr& signedBlockWrapperProtoHelperPtr, const BlockChainCallback& callback) {
+BlockWriteResponsePtr BlockChain::writeBlock(const SignedBlockWrapperProtoHelperPtr& signedBlockWrapperProtoHelperPtr, const BlockChainCallback& callback) {
     //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     SignedBlock& signedBlock = *signedBlockWrapperProtoHelperPtr;
 
     BlockResourcePtr resource = blockResourceManagerPtr->getResource();
 
     // write the block
-    bool result = writeBlock(resource, signedBlock, callback);
-    if (!result) {
-        return result;
+    BlockWriteResponsePtr writeResponse = writeBlock(resource, signedBlock, callback);
+    if (!writeResponse->isSuccess()) {
+        return writeResponse;
     }
 
     rocksdb::Transaction* nestedTransaction = resource->getTransaction(Constants::NESTED_INDEX);
@@ -336,9 +372,9 @@ bool BlockChain::writeBlock(const SignedBlockWrapperProtoHelperPtr& signedBlockW
         }  else {
             childPtr = getChildPtr(signedNestedBlock->getParentHash());
         }
-        bool childResult = childPtr->writeBlock(signedNestedBlock,callback);
-        if (result) {
-            result = childResult;
+        BlockWriteResponsePtr childResponse = childPtr->writeBlock(signedNestedBlock,callback);
+        if (!childResponse->isSuccess()) {
+            writeResponse->addSignedBlockBatchRequest(childResponse->getSignedBlockBatchRequest());
         }
         *nestedBlockMeta.add_nested_hashs() = signedNestedBlock->getHash();
     }
@@ -352,17 +388,18 @@ bool BlockChain::writeBlock(const SignedBlockWrapperProtoHelperPtr& signedBlockW
     nestedTransaction->Put(blockHashHelper,nestedSliceHelper);
 
     persist();
-    return result;
+    return writeResponse;
 }
 
-bool BlockChain::writeBlock(const SignedBlockBuilderPtr& signedBlockBuilderPtr, const BlockChainCallback& callback) {
+BlockWriteResponsePtr BlockChain::writeBlock(const SignedBlockBuilderPtr& signedBlockBuilderPtr, const BlockChainCallback& callback) {
     //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
     SignedBlock& signedBlock = *signedBlockBuilderPtr;
 
     BlockResourcePtr resource = blockResourceManagerPtr->getResource();
 
-    if (!writeBlock(resource, signedBlock, callback)) {
-        return false;
+    BlockWriteResponsePtr writeResponse = writeBlock(resource, signedBlock, callback);
+    if (!writeResponse->isSuccess()) {
+        return writeResponse;
     }
 
     rocksdb::Transaction* nestedTransaction = resource->getTransaction(Constants::NESTED_INDEX);
@@ -380,8 +417,9 @@ bool BlockChain::writeBlock(const SignedBlockBuilderPtr& signedBlockBuilderPtr, 
         }  else {
             nestedPtr = getChildPtr(nestedBlock->getParentHash());
         }
-        if (!nestedPtr->writeBlock(nestedBlock,callback)) {
-            result = false;
+        BlockWriteResponsePtr nestedResponse = nestedPtr->writeBlock(nestedBlock,callback);
+        if (!nestedResponse->isSuccess()) {
+            writeResponse->addSignedBlockBatchRequest(nestedResponse->getSignedBlockBatchRequest());
         }
         *nestedBlockMeta.add_nested_hashs() = nestedBlock->getHash();
     }
@@ -396,16 +434,17 @@ bool BlockChain::writeBlock(const SignedBlockBuilderPtr& signedBlockBuilderPtr, 
 
     persist();
 
-    return result;
+    return writeResponse;
 }
 
 
-bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock, const BlockChainCallback& callback) {
+BlockWriteResponsePtr BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock, const BlockChainCallback& callback) {
     //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
-
+    BlockWriteResponsePtr blockWriteResponsePtr = BlockWriteResponsePtr(new BlockWriteResponse());
     KETO_LOG_DEBUG << "[BlockChain::writeBlock]Write a new block";
     rocksdb::Transaction* blockTransaction = resource->getTransaction(Constants::BLOCKS_INDEX);
     rocksdb::Transaction* childTransaction = resource->getTransaction(Constants::CHILD_INDEX);
+    rocksdb::Transaction* parentTransaction = resource->getTransaction(Constants::PARENT_INDEX);
     rocksdb::Transaction* transactionTransaction = resource->getTransaction(Constants::TRANSACTIONS_INDEX);
     rocksdb::Transaction* accountTransaction = resource->getTransaction(Constants::ACCOUNTS_INDEX);
 
@@ -416,7 +455,7 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
         // ignore as the block already exists
         KETO_LOG_INFO << "[BlockChain::writeBlock] The block already exists in the store ignore it : " <<
             blockHash.getHash(keto::common::StringEncoding::HEX);
-        return false;
+        return blockWriteResponsePtr;
     }
 
     std::shared_ptr<keto::asn1::SerializationHelper<SignedBlock>> serializationHelperPtr =
@@ -432,7 +471,12 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
     BlockChainTangleMetaPtr blockChainTangleMetaPtr =
             this->blockChainMetaPtr->getTangleEntryByLastBlock(parentHash);
     if (!blockChainTangleMetaPtr) {
-        checkForParent(blockTransaction, parentHash);
+        if (!checkForParent(blockTransaction, parentHash)){
+            KETO_LOG_INFO << "[BlockChain::writeBlock] parent hash [" << parentHash.getHash(keto::common::StringEncoding::HEX)
+                << "] was not found syncronization is required";
+            blockWriteResponsePtr->addAccountSyncHash(parentHash);
+            return blockWriteResponsePtr;
+        }
         KETO_LOG_INFO << "[BlockChain::writeBlock] parent hash is [" << parentHash.getHash(keto::common::StringEncoding::HEX)
                        << "] Add a new block chain tangle : " << blockHash.getHash(keto::common::StringEncoding::HEX);
         blockChainTangleMetaPtr = this->blockChainMetaPtr->addTangle(blockHash);
@@ -548,6 +592,9 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
     keto::rocks_db::SliceHelper parentKeyHelper((std::string(Constants::PARENT_KEY)));
     blockTransaction->Put(parentKeyHelper,blockHashHelper);
 
+    // add the parent transaction
+    parentTransaction->Put(blockHashHelper,parentHashHelper);
+
     // add the entries into the accounting store
     callback.postPersistBlock(blockChainMetaPtr->getHashId(),signedBlock);
 
@@ -555,7 +602,7 @@ bool BlockChain::writeBlock(BlockResourcePtr resource, SignedBlock& signedBlock,
     blockChainWriteCachePtr->addToCache(blockHash);
 
     KETO_LOG_INFO << "[BlockChain::writeBlock] Completed writing the block : " << blockHash.getHash(keto::common::StringEncoding::HEX);
-    return true;
+    return blockWriteResponsePtr;
 }
 
 
@@ -631,41 +678,94 @@ bool BlockChain::requestBlocks(const std::vector<keto::asn1::HashHelper>& tangle
     return successfull;
 }
 
-bool BlockChain::processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage, const BlockChainCallback& callback) {
+bool BlockChain::requestBlocksByHash(const std::vector<keto::asn1::HashHelper>& blockHashes, keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage) {
     //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
 
-    bool complete = true;
+    // If a hash is successful for one of the blocks we assume that we are dealing with orphaned nodes. This logic
+    // promotes a stable broken chain that can be fixed by intervention rather than an unstable perfect chain
+    bool successfull = true;
+    bool currentVal = false;
+
+
+    for (keto::asn1::HashHelper hash : blockHashes) {
+        try {
+            keto::transaction::TransactionPtr transactionPtr = keto::server_common::createTransaction();
+            BlockResourcePtr resource = blockResourceManagerPtr->getResource();
+            // recurse 6 blocks back and pull from there
+            KETO_LOG_INFO << "[BlockChain::requestBlocks]: retrieve the parent for and get blocks ["
+                << hash.getHash(keto::common::StringEncoding::HEX) << "]";
+            *signedBlockBatchMessage.add_tangle_batches() = getBlockBatch(recurseParentBlockParentHash(hash, 6), resource);
+            transactionPtr->commit();
+        } catch (keto::common::Exception& ex) {
+            KETO_LOG_ERROR << "[BlockChain::requestBlocks]: [" << hash.getHash(keto::common::StringEncoding::HEX)
+            << "] Block node is orphaned because : " << boost::diagnostic_information(ex,true);
+            KETO_LOG_ERROR << "[BlockChain::requestBlocks]: cause : " << ex.what();
+            successfull = currentVal | false;
+            continue;
+        } catch (boost::exception& ex) {
+            KETO_LOG_ERROR << "[BlockChain::requestBlocks]: [" << hash.getHash(keto::common::StringEncoding::HEX)
+            << "] Block node is orphaned because : " << boost::diagnostic_information(ex,true);
+            successfull = currentVal | false;
+            continue;
+        } catch (std::exception& ex) {
+            KETO_LOG_ERROR << "[BlockChain::requestBlocks]: [" << hash.getHash(keto::common::StringEncoding::HEX)
+            << "] Block node is orphaned because : " << ex.what();
+            successfull = currentVal | false;
+            continue;
+        } catch (...) {
+            KETO_LOG_ERROR << "[BlockChain::requestBlocks]: [" << hash.getHash(keto::common::StringEncoding::HEX)
+            << "] Block node is orphaned because : unknown" << std::endl;
+            successfull = currentVal | false;
+            continue;
+        }
+        // if a hash is successful for one of the blocks we assume that we are dealing with orphaned nodes.
+        // This logic promotes a stable broken chain that can be fixed by intervention over an unstable perfect chain
+        successfull = currentVal = true;
+    }
+
+    return successfull;
+}
+
+BlockWriteResponsePtr BlockChain::processBlockSyncResponse(const keto::proto::SignedBlockBatchMessage& signedBlockBatchMessage, const BlockChainCallback& callback) {
+    //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
+
+    BlockWriteResponsePtr blockWriteResponsePtr = BlockWriteResponsePtr(new BlockWriteResponse());
     for (int index = 0; index < signedBlockBatchMessage.tangle_batches_size(); index++) {
         const keto::proto::SignedBlockBatch& signedBlockBatch = signedBlockBatchMessage.tangle_batches(index);
-        if (!processBlockSyncResponse(signedBlockBatch,callback) && complete) {
-            complete = false;
+        BlockWriteResponsePtr writeResponse = processBlockSyncResponse(signedBlockBatch,callback);
+        if (!writeResponse->isSuccess()) {
+            blockWriteResponsePtr->addSignedBlockBatchRequest(writeResponse->getSignedBlockBatchRequest());
         }
     }
-    return complete;
+    return blockWriteResponsePtr;
 }
 
 
-bool BlockChain::processBlockSyncResponse(const keto::proto::SignedBlockBatch& signedBlockBatch, const BlockChainCallback& callback) {
+BlockWriteResponsePtr BlockChain::processBlockSyncResponse(const keto::proto::SignedBlockBatch& signedBlockBatch, const BlockChainCallback& callback) {
     //std::lock_guard<std::recursive_mutex> guard(this->classMutex);
-    bool complete = true;
+    BlockWriteResponsePtr blockWriteResponsePtr = BlockWriteResponsePtr(new BlockWriteResponse());
     KETO_LOG_INFO << "[BlockChain::processBlockSyncResponse] process the block : " << signedBlockBatch.blocks_size();
     // check the number of blocks does not exceed max if it does than we will have to re-request.
-    if (signedBlockBatch.blocks_size() >= Constants::MAX_BLOCK_REQUEST) {
-        complete = false;
-    }
+    //if (signedBlockBatch.blocks_size() >= Constants::MAX_BLOCK_REQUEST) {
+    //    complete = false;
+    //}
     for (int index = 0; index < signedBlockBatch.blocks_size(); index++) {
         const keto::proto::SignedBlockWrapperMessage& signedBlockWrapperMessage = signedBlockBatch.blocks(index);
-        this->writeBlock(signedBlockWrapperMessage,callback);
+        BlockWriteResponsePtr writeResponse = this->writeBlock(signedBlockWrapperMessage,callback);
+        if (!writeResponse->isSuccess()) {
+            blockWriteResponsePtr->addSignedBlockBatchRequest(writeResponse->getSignedBlockBatchRequest());
+        }
     }
     //KETO_LOG_DEBUG << "[BlockChain::processBlockSyncResponse] process the tangle block : " << signedBlockBatch.tangle_batches_size();
     for (int index = 0; index < signedBlockBatch.tangle_batches_size(); index++) {
         KETO_LOG_INFO << "[BlockChain::processBlockSyncResponse] process the tangle index : " << index;
-        if (!processBlockSyncResponse(signedBlockBatch.tangle_batches(index),callback) && complete) {
-            complete = false;
+        BlockWriteResponsePtr writeResponse = processBlockSyncResponse(signedBlockBatch.tangle_batches(index),callback);
+        if (!writeResponse->isSuccess()) {
+            blockWriteResponsePtr->addSignedBlockBatchRequest(writeResponse->getSignedBlockBatchRequest());
         }
     }
-    KETO_LOG_INFO << "[BlockChain::processBlockSyncResponse] complete : " << complete;
-    return complete;
+    KETO_LOG_INFO << "[BlockChain::processBlockSyncResponse] complete : " << blockWriteResponsePtr->isSuccess();
+    return blockWriteResponsePtr;
 }
 
 
@@ -1113,10 +1213,10 @@ bool BlockChain::duplicateCheck(rocksdb::Transaction* blockTransaction, keto::as
     return this->blockChainWriteCachePtr->checkCache(blockHash);
 }
 
-void BlockChain::checkForParent(rocksdb::Transaction* blockTransaction, keto::asn1::HashHelper parentHash) {
+bool BlockChain::checkForParent(rocksdb::Transaction* blockTransaction, keto::asn1::HashHelper parentHash) {
     // ignore the genesis hash as it will not be found in the store.
     if (parentHash == keto::block_db::Constants::GENESIS_HASH) {
-        return;
+        return true;
     }
     rocksdb::ReadOptions readOptions;
     keto::rocks_db::SliceHelper keyHelper((const std::vector<uint8_t>)parentHash);
@@ -1125,10 +1225,10 @@ void BlockChain::checkForParent(rocksdb::Transaction* blockTransaction, keto::as
 
     if (rocksdb::Status::OK() != blockStatus && rocksdb::Status::NotFound() == blockStatus) {
         std::stringstream ss;
-        ss << "The parent [" << parentHash.getHash(keto::common::StringEncoding::HEX) << "] does not exist in the store.";
-        BOOST_THROW_EXCEPTION(keto::block_db::ParentHashIdentifierNotFoundException(ss.str()));
+        KETO_LOG_INFO << "The parent [" << parentHash.getHash(keto::common::StringEncoding::HEX) << "] does not exist in the store.";
+        return false;
     }
-
+    return true;
 }
 
 

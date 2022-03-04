@@ -21,6 +21,7 @@ add_library( keto_block_db
             SignedBlockWrapperProtoHelper.cpp
             SignedBlockWrapperMessageProtoHelper.cpp
             SignedBlockBatchRequestProtoHelper.cpp
+            BlockWriteResponse.cpp
 
              ${HEADERS}
            )
